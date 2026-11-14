@@ -150,15 +150,22 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $vector = $query->getVector();
-        $documents = $this->request('search', [
+        $payload = [
             'table' => $this->table,
             'knn' => [
                 'field' => $this->field,
                 'query' => $vector->getData(),
-                'k' => $options['k'] ?? 250,
+                'k' => $options['limit'] ?? 250,
                 'ef' => $options['ef'] ?? 1000,
             ],
-        ]);
+        ];
+
+        // the hits are capped by "limit", which defaults to 20
+        if (isset($options['limit'])) {
+            $payload['limit'] = $options['limit'];
+        }
+
+        $documents = $this->request('search', $payload);
 
         foreach ($documents['hits']['hits'] as $item) {
             yield $this->convertToVectorDocument($item);

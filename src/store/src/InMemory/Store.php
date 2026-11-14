@@ -92,9 +92,9 @@ final class Store implements ManagedStoreInterface, StoreInterface, ResetInterfa
 
     /**
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool
-     * } $options If maxItems is provided, only the top N results will be returned.
+     * } $options If limit is provided, only the top N results will be returned.
      *            If filter is provided, only documents matching the filter will be considered.
      */
     public function query(QueryInterface $query, array $options = []): iterable
@@ -123,7 +123,7 @@ final class Store implements ManagedStoreInterface, StoreInterface, ResetInterfa
     }
 
     /**
-     * @param array{maxItems?: positive-int, filter?: callable(VectorDocumentInterface): bool} $options
+     * @param array{limit?: positive-int, filter?: callable(VectorDocumentInterface): bool} $options
      *
      * @return iterable<VectorDocumentInterface>
      */
@@ -135,11 +135,11 @@ final class Store implements ManagedStoreInterface, StoreInterface, ResetInterfa
             $documents = array_values(array_filter($documents, $options['filter']));
         }
 
-        yield from $this->distanceCalculator->calculate($documents, $query->getVector(), $options['maxItems'] ?? null);
+        yield from $this->distanceCalculator->calculate($documents, $query->getVector(), $options['limit'] ?? null);
     }
 
     /**
-     * @param array{maxItems?: positive-int, filter?: callable(VectorDocumentInterface): bool} $options
+     * @param array{limit?: positive-int, filter?: callable(VectorDocumentInterface): bool} $options
      *
      * @return iterable<VectorDocumentInterface>
      */
@@ -162,12 +162,12 @@ final class Store implements ManagedStoreInterface, StoreInterface, ResetInterfa
             $documents = array_values(array_filter($documents, $options['filter']));
         }
 
-        $maxItems = $options['maxItems'] ?? null;
-        yield from null !== $maxItems ? \array_slice($documents, 0, $maxItems) : $documents;
+        $limit = $options['limit'] ?? null;
+        yield from null !== $limit ? \array_slice($documents, 0, $limit) : $documents;
     }
 
     /**
-     * @param array{maxItems?: positive-int, filter?: callable(VectorDocumentInterface): bool} $options
+     * @param array{limit?: positive-int, filter?: callable(VectorDocumentInterface): bool} $options
      *
      * @return iterable<VectorDocumentInterface>
      */

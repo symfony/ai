@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * [BC BREAK] Rename the `k` option of `Store::query()` to `limit`, which also sets `per_page` and can't exceed 250
  * [BC BREAK] Rename the `embeddingsDimension` argument of `Store` and `StoreFactory` to `dimensions`
 
 0.14

@@ -49,7 +49,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly string $vectorBucketName,
         private readonly string $indexName,
         private readonly array $filter = [],
-        private readonly int $topK = 3,
+        private readonly int $limit = 3,
         private readonly int $dimensions = 1536,
         private readonly string $metric = DistanceMetric::COSINE,
         private readonly string $dataType = DataType::FLOAT_32,
@@ -211,7 +211,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @param array{
      *     filter?: array<string, mixed>,
-     *     topK?: int,
+     *     limit?: int,
      *     returnMetadata?: bool,
      *     returnDistance?: bool,
      * } $options
@@ -226,7 +226,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'vectorBucketName' => $this->vectorBucketName,
             'indexName' => $this->indexName,
             'queryVector' => new VectorDataMemberFloat32(['float32' => $query->getVector()->getData()]),
-            'topK' => $options['topK'] ?? $this->topK,
+            'topK' => $options['limit'] ?? $this->limit,
             'filter' => $options['filter'] ?? $this->filter,
             'returnMetadata' => $options['returnMetadata'] ?? true,
             'returnDistance' => $options['returnDistance'] ?? true,

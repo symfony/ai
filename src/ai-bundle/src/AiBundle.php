@@ -2237,8 +2237,8 @@ final class AiBundle extends AbstractBundle
                     $store['filter'],
                 ];
 
-                if (\array_key_exists('top_k', $store)) {
-                    $arguments[5] = $store['top_k'];
+                if (\array_key_exists('limit', $store)) {
+                    $arguments[5] = $store['limit'];
                 }
 
                 foreach (['dimensions', 'metric', 'cloud', 'region'] as $key) {
@@ -2422,8 +2422,8 @@ final class AiBundle extends AbstractBundle
                     $arguments[3] = $store['filter'];
                 }
 
-                if (\array_key_exists('top_k', $store)) {
-                    $arguments[4] = $store['top_k'];
+                if (\array_key_exists('limit', $store)) {
+                    $arguments[4] = $store['limit'];
                 }
 
                 if (isset($store['dimensions'])) {

@@ -219,14 +219,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
             unset($options['minScore']);
         }
 
+        $limit = $options['limit'] ?? 5;
+
         $pipeline = [
             [
                 '$vectorSearch' => array_merge([
                     'index' => $this->indexName,
                     'path' => $this->vectorFieldName,
                     'queryVector' => $vector->getData(),
-                    'numCandidates' => 200,
-                    'limit' => 5,
+                    'numCandidates' => max($limit * 2, 200),
+                    'limit' => $limit,
                 ], $options),
             ],
             [

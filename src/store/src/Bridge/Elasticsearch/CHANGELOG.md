@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * [BC BREAK] Rename the `k` option of `Store::query()` to `limit`, which also sets the size of the search
  * [BC BREAK] Remove the `dimensions` and `similarity` options of `Store::setup()`, use the arguments of `Store` instead
  * [BC BREAK] Rename the `similarity` argument of `Store` and `StoreFactory` to `metric`
 

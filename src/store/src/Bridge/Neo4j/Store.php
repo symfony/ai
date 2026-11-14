@@ -122,8 +122,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $vector = $query->getVector();
         $response = $this->request('POST', \sprintf('db/%s/query/v2', $this->databaseName), [
-            'statement' => \sprintf('CALL db.index.vector.queryNodes("%s", 5, $vectors) YIELD node, score RETURN node, score', $this->vectorIndexName),
+            'statement' => \sprintf('CALL db.index.vector.queryNodes("%s", $limit, $vectors) YIELD node, score RETURN node, score', $this->vectorIndexName),
             'parameters' => [
+                'limit' => $options['limit'] ?? 5,
                 'vectors' => $vector->getData(),
             ],
         ]);

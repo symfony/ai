@@ -113,12 +113,14 @@ class StoreTest extends TestCase
 
     public function testQueryHandlesLimitOption()
     {
-        $httpClient = new MockHttpClient(new JsonMockResponse([]));
+        $response = new JsonMockResponse([]);
+        $httpClient = new MockHttpClient($response);
         $store = $this->createStore($httpClient);
         $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0])), ['limit' => 1]));
 
         $this->assertSame([], $result);
         $this->assertSame(1, $httpClient->getRequestsCount());
+        $this->assertSame(1, json_decode($response->getRequestOptions()['body'], true)['match_count']);
     }
 
     public function testQueryThrowsExceptionForWrongVectorDimension()
@@ -144,7 +146,7 @@ class StoreTest extends TestCase
         ];
         $httpClient = new MockHttpClient(new JsonMockResponse($expectedResponse));
         $store = $this->createStore($httpClient, 3);
-        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0, 3.0])), ['max_items' => 5, 'min_score' => 0.7]));
+        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0, 3.0])), ['limit' => 5, 'min_score' => 0.7]));
 
         $this->assertCount(1, $result);
         $this->assertInstanceOf(VectorDocument::class, $result[0]);
@@ -176,7 +178,7 @@ class StoreTest extends TestCase
         $httpClient = new MockHttpClient(new JsonMockResponse($expectedResponse));
         $store = $this->createStore($httpClient, 2);
 
-        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0])), ['max_items' => 2, 'min_score' => 0.8]));
+        $result = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0])), ['limit' => 2, 'min_score' => 0.8]));
 
         $this->assertCount(2, $result);
         $this->assertInstanceOf(VectorDocument::class, $result[0]);

@@ -223,7 +223,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      */
@@ -239,7 +239,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
@@ -257,12 +257,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $documents = array_values(array_filter($documents, $options['filter']));
         }
 
-        yield from $this->distanceCalculator->calculate($documents, $query->getVector(), $options['maxItems'] ?? null);
+        yield from $this->distanceCalculator->calculate($documents, $query->getVector(), $options['limit'] ?? null);
     }
 
     /**
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
@@ -280,8 +280,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $this->tableName,
         );
 
-        if (isset($options['maxItems'])) {
-            $sql .= \sprintf(' LIMIT %d', $options['maxItems']);
+        if (isset($options['limit'])) {
+            $sql .= \sprintf(' LIMIT %d', $options['limit']);
         }
 
         $statement = $this->getConnection()->prepare($sql);
@@ -330,11 +330,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $orderedDocuments = array_values(array_filter($orderedDocuments, $options['filter']));
         }
 
-        $maxItems = $options['maxItems'] ?? null;
+        $limit = $options['limit'] ?? null;
         $count = 0;
 
         foreach ($orderedDocuments as $document) {
-            if (null !== $maxItems && $count >= $maxItems) {
+            if (null !== $limit && $count >= $limit) {
                 break;
             }
 
@@ -352,11 +352,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
      * and the no-overlap scenario where vector and text results are entirely disjoint.
      *
      * Each sub-query fetches a candidate pool of `rrfCandidatePoolSize` documents (defaults
-     * to `maxItems * 10`, minimum 100). RRF merges and re-ranks the pool, then `maxItems`
+     * to `limit * 10`, minimum 100). RRF merges and re-ranks the pool, then `limit`
      * is applied. Override via `$options['rrfCandidatePoolSize']`.
      *
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     rrfCandidatePoolSize?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
@@ -365,20 +365,20 @@ final class Store implements ManagedStoreInterface, StoreInterface
      */
     private function queryHybrid(HybridQuery $query, array $options): iterable
     {
-        $maxItems = $options['maxItems'] ?? null;
+        $limit = $options['limit'] ?? null;
 
-        // Each sub-query fetches a candidate pool larger than maxItems so RRF has
+        // Each sub-query fetches a candidate pool larger than limit so RRF has
         // enough documents to rank before trimming. Falls back to no limit when
-        // maxItems is not set (caller explicitly requested all results).
+        // limit is not set (caller explicitly requested all results).
         $candidatePoolSize = $options['rrfCandidatePoolSize']
-            ?? (null !== $maxItems ? max($maxItems * 10, 100) : null);
+            ?? (null !== $limit ? max($limit * 10, 100) : null);
 
         $subOptions = $options;
         unset($subOptions['rrfCandidatePoolSize']);
         if (null !== $candidatePoolSize) {
-            $subOptions['maxItems'] = $candidatePoolSize;
+            $subOptions['limit'] = $candidatePoolSize;
         } else {
-            unset($subOptions['maxItems']);
+            unset($subOptions['limit']);
         }
 
         $vectorResults = iterator_to_array($this->queryVector(
@@ -417,7 +417,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $count = 0;
 
         foreach ($scores as ['doc' => $doc, 'score' => $score]) {
-            if (null !== $maxItems && $count >= $maxItems) {
+            if (null !== $limit && $count >= $limit) {
                 break;
             }
 

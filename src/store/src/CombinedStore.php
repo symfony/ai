@@ -12,6 +12,7 @@
 namespace Symfony\AI\Store;
 
 use Symfony\AI\Store\Document\VectorDocumentInterface;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -28,11 +29,18 @@ use Symfony\AI\Store\Query\VectorQuery;
  */
 final class CombinedStore implements StoreInterface
 {
+    /**
+     * @param positive-int $overFetchFactor multiplies the "limit" passed to the sub-stores of a hybrid query
+     */
     public function __construct(
         private readonly StoreInterface $vectorStore,
         private readonly StoreInterface $textStore,
         private readonly int $rrfK = 60,
+        private readonly int $overFetchFactor = 1,
     ) {
+        if ($overFetchFactor < 1) {
+            throw new InvalidArgumentException(\sprintf('The over-fetch factor must be at least 1, %d given.', $overFetchFactor));
+        }
     }
 
     public function add(VectorDocumentInterface|array $documents): void
@@ -106,15 +114,26 @@ final class CombinedStore implements StoreInterface
      */
     private function hybridQuery(HybridQuery $query, array $options): array
     {
+        $subOptions = $options;
+        if (isset($options['limit'])) {
+            $subOptions['limit'] = $options['limit'] * $this->overFetchFactor;
+        }
+
         $vectorResults = iterator_to_array(
-            $this->vectorStore->query(new VectorQuery($query->getVector()), $options),
+            $this->vectorStore->query(new VectorQuery($query->getVector()), $subOptions),
         );
 
         $textResults = iterator_to_array(
-            $this->textStore->query(new TextQuery($query->getText()), $options),
+            $this->textStore->query(new TextQuery($query->getText()), $subOptions),
         );
 
-        return $this->reciprocalRankFusion($vectorResults, $textResults);
+        $results = $this->reciprocalRankFusion($vectorResults, $textResults);
+
+        if (isset($options['limit'])) {
+            $results = \array_slice($results, 0, $options['limit']);
+        }
+
+        return $results;
     }
 
     /**

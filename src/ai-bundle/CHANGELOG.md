@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Reuse parameter constraints from MCP SDK `#[Schema]` attributes for agent tools when the SDK is installed, with Symfony schema attributes taking precedence
+ * [BC BREAK] Rename the `top_k` option of the `pinecone` and `s3vectors` stores to `limit`
  * [BC BREAK] Replace the `client` option of the `pinecone` store by the required `api_key` and the `http_client` options
  * Add the `model_catalog` platform option with `service`, `models`, `api` and `cache` options to use a custom catalog, add models, fetch the models from the provider API and cache the model lookups; a string is short for `service`
  * [BC BREAK] Replace the `setup_options` of the `mariadb`, `mongodb`, `pinecone`, `postgres`, `redis` and `s3vectors` stores by store keys: `dimensions`, `metric`, `cloud`, `region`, `vector_type`, `index_method`, `index_opclass` and `index_fields`

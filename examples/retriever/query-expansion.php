@@ -81,7 +81,9 @@ $dispatcher->addListener(PreQueryEvent::class, static function (PreQueryEvent $e
 });
 
 // Post-retrieval: rerank with cross-encoder
-$dispatcher->addListener(PostQueryEvent::class, new RerankerListener($reranker, topK: 5));
+$rerankerListener = new RerankerListener($reranker, limit: 5, overFetchFactor: 4);
+$dispatcher->addListener(PreQueryEvent::class, $rerankerListener);
+$dispatcher->addListener(PostQueryEvent::class, $rerankerListener);
 
 $expandedRetriever = new Retriever($combinedStore, $vectorizer, $dispatcher, logger: logger());
 $results = iterator_to_array($expandedRetriever->retrieve($vagueQuery));

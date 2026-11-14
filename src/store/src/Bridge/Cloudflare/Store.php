@@ -163,6 +163,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return VectorQuery::class === $queryClass;
     }
 
+    /**
+     * @param array{limit?: positive-int} $options
+     */
     public function query(QueryInterface $query, array $options = []): iterable
     {
         if (!$query instanceof VectorQuery) {
@@ -170,11 +173,22 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $vector = $query->getVector();
-        $results = $this->request('POST', \sprintf('vectorize/v2/indexes/%s/query', $this->index), [
+        $payload = [
             'vector' => $vector->getData(),
             'returnValues' => true,
             'returnMetadata' => 'all',
-        ]);
+        ];
+
+        if (isset($options['limit'])) {
+            // Vectorize caps "topK" at 50 when returning values or all metadata
+            if ($options['limit'] > 50) {
+                throw new InvalidArgumentException(\sprintf('The "limit" option must not exceed 50, %d given.', $options['limit']));
+            }
+
+            $payload['topK'] = $options['limit'];
+        }
+
+        $results = $this->request('POST', \sprintf('vectorize/v2/indexes/%s/query', $this->index), $payload);
 
         $result = $results['result'] ?? null;
         if (!\is_array($result)) {

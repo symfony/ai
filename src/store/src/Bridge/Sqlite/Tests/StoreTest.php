@@ -230,7 +230,7 @@ final class StoreTest extends TestCase
         $this->assertSame('doc-1', $results[0]->getId());
     }
 
-    public function testQueryVectorWithMaxItems()
+    public function testQueryVectorWithLimit()
     {
         $store = $this->createStore();
         $store->setup();
@@ -241,7 +241,7 @@ final class StoreTest extends TestCase
             new VectorDocument('doc-3', new Vector([0.0, 0.0, 1.0]), new Metadata(['name' => 'third'])),
         ]);
 
-        $results = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])), ['maxItems' => 2]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])), ['limit' => 2]));
 
         $this->assertCount(2, $results);
     }
@@ -510,7 +510,7 @@ final class StoreTest extends TestCase
         $this->assertSame('doc-both', $results[0]->getId());
     }
 
-    public function testQueryHybridRespectsMaxItems()
+    public function testQueryHybridRespectsLimit()
     {
         $store = $this->createStore();
         $store->setup();
@@ -527,7 +527,7 @@ final class StoreTest extends TestCase
 
         $results = iterator_to_array($store->query(
             new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.5),
-            ['maxItems' => 3],
+            ['limit' => 3],
         ));
 
         $this->assertCount(3, $results);
@@ -623,7 +623,7 @@ final class StoreTest extends TestCase
 
         $results = iterator_to_array($store->query(
             new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.5),
-            ['maxItems' => 3, 'rrfCandidatePoolSize' => 5],
+            ['limit' => 3, 'rrfCandidatePoolSize' => 5],
         ));
 
         $this->assertCount(3, $results);

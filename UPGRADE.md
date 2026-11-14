@@ -79,6 +79,17 @@ AI Bundle
                     index_name: 'my-index'
    ```
 
+ * The `top_k` option of the `pinecone` and `s3vectors` stores is renamed to `limit`:
+
+   ```diff
+    ai:
+        store:
+            pinecone:
+                my_store:
+   -                top_k: 3
+   +                limit: 3
+   ```
+
  * The `setup_options` key of the `mariadb`, `mongodb`, `pinecone`, `postgres`, `redis`, `s3vectors` and
    `surrealdb` stores is removed. Its values are store keys, some of them renamed:
 
@@ -437,6 +448,28 @@ Store
 
    -final class ArticleDocument implements EmbeddableDocumentInterface
    +final class ArticleDocument implements DocumentInterface
+   ```
+
+ * All stores read the `limit` option for the number of documents returned by `query()`. The options the stores
+   read before are removed: `maxItems` (`InMemory\Store`, Cache, Sqlite), `max_items` (Supabase), `k`
+   (Elasticsearch, ManticoreSearch, Typesense, Vektor), `size` (OpenSearch) and `topK` (Pinecone, S3Vectors).
+   On OpenSearch, `k` stays as the number of neighbors searched per shard and defaults to `limit`. The `topK` argument
+   of the Pinecone and S3Vectors stores and the `maxItems` argument of `Distance\DistanceCalculator::calculate()` are
+   renamed to `limit` as well.
+   `EventListener\RerankerListener` reads `limit` instead of `topK` as well, and the `topK` arguments of its constructor
+   and of `Reranker\RerankerInterface::rerank()` are renamed to `limit`. To rerank more documents than the `limit`, pass
+   its `overFetchFactor` argument and register it on `PreQueryEvent` too:
+
+   ```diff
+   -$store->query($query, ['maxItems' => 10]);
+   +$store->query($query, ['limit' => 10]);
+
+   -$dispatcher->addListener(PostQueryEvent::class, new RerankerListener($reranker));
+   -$retriever->retrieve($query, ['maxItems' => 20, 'topK' => 5]);
+   +$rerankerListener = new RerankerListener($reranker, overFetchFactor: 4);
+   +$dispatcher->addListener(PreQueryEvent::class, $rerankerListener);
+   +$dispatcher->addListener(PostQueryEvent::class, $rerankerListener);
+   +$retriever->retrieve($query, ['limit' => 5]);
    ```
 
  * `Command\SetupStoreCommand` no longer accepts the setup options of the stores as second constructor

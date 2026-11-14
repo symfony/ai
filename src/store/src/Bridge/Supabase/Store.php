@@ -156,7 +156,6 @@ final class Store implements StoreInterface
 
     /**
      * @param array{
-     *      max_items?: int,
      *      limit?: int,
      *      min_score?: float
      *  } $options
@@ -172,7 +171,7 @@ final class Store implements StoreInterface
             throw new InvalidArgumentException("Vector dimension mismatch: expected {$this->dimensions}.");
         }
 
-        $matchCount = $options['max_items'] ?? ($options['limit'] ?? 10);
+        $matchCount = $options['limit'] ?? 10;
         $threshold = $options['min_score'] ?? 0.0;
 
         $response = $this->httpClient->request(
