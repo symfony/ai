@@ -12,6 +12,7 @@
 namespace Symfony\AI\Agent\Tests\Toolbox\ToolFactory;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolDeferred;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithMetadata;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
@@ -43,6 +44,12 @@ final class ReflectionToolFactoryTest extends TestCase
         $this->assertSame([], $tool->getMetadata());
         $this->assertNull($tool->getMetadataValue('needs_confirmation'));
         $this->assertTrue($tool->getMetadataValue('needs_confirmation', true));
+    }
+
+    public function testDeferredFromAttributeIsCarriedToTheTool()
+    {
+        $this->assertTrue($this->firstTool(ToolDeferred::class)->isDeferred());
+        $this->assertFalse($this->firstTool(ToolNoParams::class)->isDeferred());
     }
 
     private function firstTool(string $className): Tool

@@ -77,6 +77,36 @@ Both are enabled together through the single ``code_execution`` server tool::
         ],
     ]);
 
+Tool Search
+~~~~~~~~~~~
+
+With many tools, sending every definition costs tokens and makes it harder for the model to pick the right one.
+Tools marked as deferred are sent with ``defer_loading``, and the bridge adds Anthropic's tool search to the request.
+The model searches the deferred tools on Anthropic's side and only the found ones reach its context. Because found
+tools are referenced inline in the conversation, the prompt cache stays intact::
+
+    use Symfony\AI\Platform\Tool\ExecutionReference;
+    use Symfony\AI\Platform\Tool\Tool;
+
+    $tool = new Tool(new ExecutionReference(Weather::class), 'get_weather', 'Get the weather of a city', deferred: true);
+
+    $result = $platform->invoke('claude-sonnet-4-5', $messages, [
+        'tools' => [$tool, $clock],
+    ]);
+
+The request uses the BM25 search by default. The regex search is a server tool like the others::
+
+    $result = $platform->invoke('claude-sonnet-4-5', $messages, [
+        'tools' => [$tool, $clock],
+        'server_tools' => ['tool_search_tool_regex' => true],
+    ]);
+
+At least one tool has to stay non-deferred, Anthropic recommends three to five frequently used ones. Tool search is
+available for Claude 4.5 models and newer. For older models the deferred tools are sent like any other tool.
+
+In an agent, the ``deferred`` argument of ``#[AsTool]`` or the
+:class:`Symfony\\AI\\Agent\\Toolbox\\DeferredToolbox` decorator mark the tools, see :doc:`../agent`.
+
 Other Server Tools
 ~~~~~~~~~~~~~~~~~~
 
@@ -102,6 +132,9 @@ The individual parts can be any `ResultInterface` instances, but in practice the
 - :class:`Symfony\\AI\\Platform\\Result\\TextResult` - Normal text response.
 - :class:`Symfony\\AI\\Platform\\Result\\ExecutableCodeResult` - The code the model intended to run.
 - :class:`Symfony\\AI\\Platform\\Result\\CodeExecutionResult` - The output of the executed code (stdout/stderr).
+- :class:`Symfony\\AI\\Platform\\Result\\ServerToolCallResult` - One tool search. The call and its result are merged
+  into a single part named ``tool_search``. Its details carry the query and the names of the found tools. It replays
+  like a web search. A replayed search is dropped if a tool it found is no longer part of the request.
 - :class:`Symfony\\AI\\Platform\\Result\\WebSearchResult` - One search the model performed. The converter merges
   the ``server_tool_use`` call and its matching ``web_search_tool_result`` into a single part carrying the query,
   id, and status together.

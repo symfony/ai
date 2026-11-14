@@ -39,6 +39,8 @@ final class ModelClient implements ModelClientInterface
     private const SERVER_TOOLS = [
         'web_search' => ['type' => 'web_search_20250305', 'name' => 'web_search'],
         'code_execution' => ['type' => 'code_execution_20250825', 'name' => 'code_execution'],
+        'tool_search_tool_bm25' => ['type' => 'tool_search_tool_bm25_20251119', 'name' => 'tool_search_tool_bm25'],
+        'tool_search_tool_regex' => ['type' => 'tool_search_tool_regex_20251119', 'name' => 'tool_search_tool_regex'],
     ];
 
     private readonly EventSourceHttpClient $httpClient;
@@ -88,6 +90,8 @@ final class ModelClient implements ModelClientInterface
             unset($options[PlatformOptions::MAX_OUTPUT_TOKENS]);
         }
 
+        $payload = $this->dropOrphanedToolSearches($payload, $options['tools'] ?? []);
+
         $cacheControl = $this->getCacheControl($this->cacheRetention);
         $payload = $this->injectMessagesCacheControl($payload, $cacheControl);
         $payload = $this->injectSystemCacheControl($payload, $cacheControl);
@@ -105,6 +109,10 @@ final class ModelClient implements ModelClientInterface
                 $options['tools'] = array_merge($options['tools'] ?? [], $serverTools);
                 $options['tool_choice'] ??= ['type' => 'auto'];
             }
+        }
+
+        if ($this->hasDeferredTools($options['tools'] ?? []) && !$this->hasToolSearchTool($options['tools'])) {
+            $options['tools'][] = self::SERVER_TOOLS['tool_search_tool_bm25'];
         }
 
         // Adaptive thinking enables interleaved thinking on its own; the beta
@@ -131,6 +139,86 @@ final class ModelClient implements ModelClientInterface
             'headers' => $headers,
             'body' => $this->encodeJsonBody(array_merge($options, $payload)),
         ]));
+    }
+
+    /**
+     * Anthropic rejects a replayed tool search whose found tools are not part of the request.
+     *
+     * @param array<string, mixed>       $payload
+     * @param list<array<string, mixed>> $tools
+     *
+     * @return array<string, mixed>
+     */
+    private function dropOrphanedToolSearches(array $payload, array $tools): array
+    {
+        if (!\is_array($payload['messages'] ?? null)) {
+            return $payload;
+        }
+
+        $available = [];
+        foreach ($tools as $tool) {
+            if (\is_string($tool['name'] ?? null)) {
+                $available[$tool['name']] = true;
+            }
+        }
+
+        foreach ($payload['messages'] as $messageIndex => $message) {
+            if (!\is_array($message) || !\is_array($message['content'] ?? null)) {
+                continue;
+            }
+
+            $orphaned = [];
+            foreach ($message['content'] as $block) {
+                if ('tool_search_tool_result' !== ($block['type'] ?? null) || !\is_string($block['tool_use_id'] ?? null)) {
+                    continue;
+                }
+
+                foreach ($block['content']['tool_references'] ?? [] as $reference) {
+                    if (!isset($available[$reference['tool_name'] ?? ''])) {
+                        $orphaned[$block['tool_use_id']] = true;
+                    }
+                }
+            }
+
+            if ([] === $orphaned) {
+                continue;
+            }
+
+            $payload['messages'][$messageIndex]['content'] = array_values(array_filter(
+                $message['content'],
+                static fn (mixed $block): bool => !isset($orphaned[$block['id'] ?? $block['tool_use_id'] ?? '']),
+            ));
+        }
+
+        return $payload;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $tools
+     */
+    private function hasDeferredTools(array $tools): bool
+    {
+        foreach ($tools as $tool) {
+            if (true === ($tool['defer_loading'] ?? false)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $tools
+     */
+    private function hasToolSearchTool(array $tools): bool
+    {
+        foreach ($tools as $tool) {
+            if (\is_string($tool['type'] ?? null) && str_starts_with($tool['type'], 'tool_search_tool_')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -974,6 +974,32 @@ tools option with a list of tool names::
 
     $this->agent->call($messages, ['tools' => ['tavily_search']]);
 
+Deferred Tools
+~~~~~~~~~~~~~~
+
+A deferred tool is not sent to the model upfront. The model finds it with the tool search of the provider first.
+This keeps the context small for agents with many tools, e.g. when attaching MCP servers. Mark single tools with the
+``deferred`` argument::
+
+    #[AsTool('convert_currency', 'Convert an amount from one currency into another', deferred: true)]
+    final class CurrencyConverter
+    {
+        // ...
+    }
+
+To defer all tools of a toolbox, or a selection of them, wrap it in the
+:class:`Symfony\\AI\\Agent\\Toolbox\\DeferredToolbox`::
+
+    use Symfony\AI\Agent\Toolbox\DeferredToolbox;
+
+    $toolbox = new ChainToolbox([new Toolbox([new Clock()]), new DeferredToolbox($mcpToolbox)]);
+
+    $toolbox = new DeferredToolbox($mcpToolbox, ['mcp_search', 'mcp_fetch']);
+
+The provider has to support tool search, which currently the Anthropic bridge does for Claude 4.5 models and newer, see
+:doc:`platform/anthropic-server-tools`. Other providers ignore the flag and receive all tools. Keep a few frequently
+used tools non-deferred.
+
 Tool Result Interception
 ~~~~~~~~~~~~~~~~~~~~~~~~
 

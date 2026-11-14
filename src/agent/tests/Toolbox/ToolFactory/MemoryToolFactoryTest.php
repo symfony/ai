@@ -35,6 +35,15 @@ final class MemoryToolFactoryTest extends TestCase
         $this->assertSame(['readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false], $tools[0]->getMetadata());
     }
 
+    public function testDeferredTool()
+    {
+        $factory = new MemoryToolFactory();
+        $factory->addTool(ToolNoParams::class, 'tool', 'description', deferred: true);
+        $tools = iterator_to_array($factory->getTool(ToolNoParams::class));
+
+        $this->assertTrue($tools[0]->isDeferred());
+    }
+
     public function testDefaultEffectHints()
     {
         $factory = new MemoryToolFactory();
