@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by lazerg at 2026-10-31T19:05:11Z
+
+The red jobs fail before tests run: Composer cannot install `probots-io/pinecone-php`, because security advisories now block `saloonphp/saloon`. This is not caused by my change, and #2866 removes that package.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-11-14T01:08:36Z
+
+Rebased onto main so the CI runs again, and changed the docs to name the SecurityBundle as the requirement for `#[IsGrantedTool]`.
