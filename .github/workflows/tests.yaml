@@ -31,12 +31,15 @@ jobs:
         name: Unit / PHP ${{ matrix.php-version }}${{ matrix.symfony-version && format(' / Symfony {0}', matrix.symfony-version) || '' }}
         if: inputs.affected-packages != '[]'
         runs-on: ubuntu-latest
+        # PHP 8.6 is a release candidate until 2026-11-19
+        continue-on-error: ${{ matrix.php-version == '8.6' }}
         strategy:
             fail-fast: false
             matrix:
                 include:
                     -   php-version: '8.2'
                     -   php-version: '8.5'
+                    -   php-version: '8.6'
                     # LTS version of Symfony
                     -   php-version: '8.2'
                         symfony-version: '7.4.*'
@@ -70,7 +73,7 @@ jobs:
             # The Sqlite bridge tests only load the extension on PHP >= 8.4 and fall back to plain
             # PDO otherwise, so installing it on 8.2 would have no effect.
             - name: Install sqlite-vec extension
-              if: steps.packages.outputs.count != '0' && matrix.php-version == '8.5'
+              if: steps.packages.outputs.count != '0' && matrix.php-version != '8.2'
               run: |
                   # Without --fail curl exits 0 on an HTTP error and pipes the error page into sh, and
                   # without pipefail only sh's status is checked. The extension would then be missing
@@ -349,10 +352,12 @@ jobs:
         # The demo is skipped when it is not affected, which must not skip the examples
         if: ${{ !cancelled() && needs.demo.result != 'failure' && contains(fromJson(inputs.affected-packages), 'examples') }}
         runs-on: ubuntu-latest
+        # PHP 8.6 is a release candidate until 2026-11-19
+        continue-on-error: ${{ matrix.php-version == '8.6' }}
         strategy:
             fail-fast: false
             matrix:
-                php-version: ['8.2', '8.5']
+                php-version: ['8.2', '8.5', '8.6']
                 dependency-version: ['']
                 symfony-version: ['']
                 include:
