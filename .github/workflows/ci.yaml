@@ -1,0 +1,35 @@
+name: CI
+
+on:
+    pull_request:
+    push:
+        branches: [main]
+    # Catches new releases of dependencies while main is quiet
+    schedule:
+        -   cron: '0 2 * * *'
+    workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+    cancel-in-progress: true
+
+jobs:
+    matrix:
+        name: Matrix
+        if: github.event_name != 'schedule' || github.repository == 'symfony/ai'
+        uses: ./.github/workflows/build-matrix.yaml
+
+    tests:
+        name: Tests
+        needs: matrix
+        uses: ./.github/workflows/tests.yaml
+        with:
+            affected-packages: ${{ needs.matrix.outputs.affected-packages }}
+            store-bridges-integration: ${{ needs.matrix.outputs.store-bridges-integration }}
+
+    code-quality:
+        name: Code Quality
+        needs: matrix
+        uses: ./.github/workflows/code-quality.yaml
+        with:
+            affected-packages: ${{ needs.matrix.outputs.affected-packages }}
