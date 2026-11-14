@@ -447,6 +447,80 @@ final class FailoverPlatformTest extends TestCase
         $this->assertSame('ok', $failoverPlatform->invoke('foo', 'foo')->asText());
     }
 
+    public function testSkippedPlatformIsTriedWhenNoOtherPlatformIsLeft()
+    {
+        $calls = 0;
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->exactly(2))->method('invoke')
+            ->willReturnCallback(static function () use (&$calls): DeferredResult {
+                if (1 === ++$calls) {
+                    throw new RuntimeException('The platform is down.');
+                }
+
+                return new DeferredResult(new PlainConverter(new TextResult('ok')), new InMemoryRawResult());
+            });
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('error');
+
+        $failoverPlatform = new FailoverPlatform([$platform], new RateLimiterFactory([
+            'policy' => 'fixed_window',
+            'id' => 'failover',
+            'interval' => '1 hour',
+            'limit' => 1,
+        ], new InMemoryStorage()), logger: $logger);
+
+        try {
+            $failoverPlatform->invoke('foo', 'foo');
+            $this->fail('The first call must fail.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('All platforms failed.', $exception->getMessage());
+        }
+
+        $this->assertSame('ok', $failoverPlatform->invoke('foo', 'foo')->asText());
+    }
+
+    public function testSkippedPlatformsAreTriedInOrderWhenAllPlatformsFailed()
+    {
+        $firstPlatform = $this->createMock(PlatformInterface::class);
+        $firstPlatform->expects($this->exactly(2))->method('invoke')
+            ->willThrowException(new RuntimeException('The first platform is down.'));
+
+        $calls = 0;
+        $secondPlatform = $this->createMock(PlatformInterface::class);
+        $secondPlatform->expects($this->exactly(3))->method('invoke')
+            ->willReturnCallback(static function () use (&$calls): DeferredResult {
+                if (1 === ++$calls) {
+                    throw new RuntimeException('The second platform is down.');
+                }
+
+                return new DeferredResult(new PlainConverter(new TextResult('ok')), new InMemoryRawResult());
+            });
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->exactly(3))->method('error');
+
+        $failoverPlatform = new FailoverPlatform([
+            $firstPlatform,
+            $secondPlatform,
+        ], new RateLimiterFactory([
+            'policy' => 'fixed_window',
+            'id' => 'failover',
+            'interval' => '1 hour',
+            'limit' => 1,
+        ], new InMemoryStorage()), logger: $logger);
+
+        try {
+            $failoverPlatform->invoke('foo', 'foo');
+            $this->fail('The first call must fail.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('All platforms failed.', $exception->getMessage());
+        }
+
+        $this->assertSame('ok', $failoverPlatform->invoke('foo', 'foo')->asText());
+        $this->assertSame('ok', $failoverPlatform->invoke('foo', 'foo')->asText());
+    }
+
     private static function createRateLimiterFactory(): RateLimiterFactoryInterface
     {
         return new RateLimiterFactory([
