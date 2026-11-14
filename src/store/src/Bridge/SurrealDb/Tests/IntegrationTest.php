@@ -31,4 +31,10 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
     {
         return ['forceDatabaseCreation' => true];
     }
+
+    protected function waitForIndexing(): void
+    {
+        // HNSW writes are compacted in the background, a DELETE racing that compaction conflicts
+        sleep(2);
+    }
 }
