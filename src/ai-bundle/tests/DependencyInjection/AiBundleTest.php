@@ -6590,6 +6590,41 @@ class AiBundleTest extends TestCase
         $this->assertSame('my_custom_http_client', (string) $arguments[3]);
     }
 
+    public function testMistralPlatformUsesDefaultBaseUrl()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'mistral' => [
+                        'api_key' => 'mistral-test-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $arguments = $container->getDefinition('ai.platform.mistral')->getArguments();
+
+        $this->assertSame('https://api.mistral.ai', $arguments[7]);
+    }
+
+    public function testMistralPlatformUsesCustomBaseUrl()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'mistral' => [
+                        'api_key' => 'mistral-test-key',
+                        'base_url' => 'https://api.eu.mistral.ai',
+                    ],
+                ],
+            ],
+        ]);
+
+        $arguments = $container->getDefinition('ai.platform.mistral')->getArguments();
+
+        $this->assertSame('https://api.eu.mistral.ai', $arguments[7]);
+    }
+
     public function testTogetherPlatformConfiguration()
     {
         $container = $this->buildContainer([

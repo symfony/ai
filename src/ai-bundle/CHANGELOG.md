@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add the `base_url` option to the `mistral` platform
  * Reuse parameter constraints from MCP SDK `#[Schema]` attributes for agent tools when the SDK is installed, with Symfony schema attributes taking precedence
  * [BC BREAK] Rename the `top_k` option of the `pinecone` and `s3vectors` stores to `limit`
  * [BC BREAK] Replace the `client` option of the `pinecone` store by the required `api_key` and the `http_client` options
