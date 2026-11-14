@@ -57,7 +57,7 @@ final class CassetteHttpClientTest extends TestCase
     public function testRecordsRealResponseAndReturnsBufferedCopy()
     {
         $realClient = new MockHttpClient(new JsonMockResponse(['foo' => 'bar']));
-        $client = new CassetteHttpClient(new HttpCassette($this->path), $realClient, record: true);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), $realClient, true);
 
         $response = $client->request('POST', 'https://api.mistral.ai/v1/chat/completions', [
             'auth_bearer' => 'sk-secret',
@@ -87,14 +87,14 @@ final class CassetteHttpClientTest extends TestCase
 
         try {
             $realClient = new MockHttpClient(new JsonMockResponse(['text' => 'hi']));
-            $recorder = new CassetteHttpClient(new HttpCassette($this->path), $realClient, record: true);
+            $recorder = new CassetteHttpClient(new HttpCassette($this->path), $realClient, true);
 
             $handle = fopen($file, 'r');
             $response = $recorder->request('POST', 'https://example.com/v1/audio/transcriptions', ['body' => ['model' => 'whisper-1', 'file' => $handle]]);
             $this->assertSame(['text' => 'hi'], $response->toArray());
             fclose($handle);
 
-            $replayer = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+            $replayer = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
             $handle = fopen($file, 'r');
             $response = $replayer->request('POST', 'https://example.com/v1/audio/transcriptions', ['body' => ['model' => 'whisper-1', 'file' => $handle]]);
@@ -111,7 +111,7 @@ final class CassetteHttpClientTest extends TestCase
             new JsonMockResponse(['roleCredentials' => ['accessKeyId' => 'AKIDEXAMPLE', 'secretAccessKey' => 'secret']]),
             new JsonMockResponse(['answer' => 'recorded']),
         ]);
-        $client = new CassetteHttpClient(new HttpCassette($this->path), $realClient, record: true);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), $realClient, true);
 
         $credentials = $client->request('GET', 'https://portal.sso.eu-central-1.amazonaws.com/federation/credentials')->toArray();
         $response = $client->request('POST', 'https://bedrock-mantle.eu-central-1.api.aws/anthropic/v1/messages')->toArray();
@@ -148,7 +148,7 @@ final class CassetteHttpClientTest extends TestCase
             new JsonMockResponse(['secretAccessKey' => 'super-secret']),
             new JsonMockResponse(['answer' => 'recorded']),
         ]);
-        $client = new CassetteHttpClient(new HttpCassette($this->path), $realClient, record: true);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), $realClient, true);
 
         $client->request('GET', $url)->toArray();
         $client->request('POST', 'https://bedrock-mantle.eu-central-1.api.aws/anthropic/v1/messages')->toArray();
@@ -161,7 +161,7 @@ final class CassetteHttpClientTest extends TestCase
     public function testNonCredentialAwsHostsAreStillRecorded()
     {
         $realClient = new MockHttpClient([new JsonMockResponse(['answer' => 'recorded'])]);
-        $client = new CassetteHttpClient(new HttpCassette($this->path), $realClient, record: true);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), $realClient, true);
 
         $client->request('POST', 'https://bedrock-runtime.us-east-1.amazonaws.com/openai/v1/chat/completions')->toArray();
 
@@ -186,7 +186,7 @@ final class CassetteHttpClientTest extends TestCase
         $recorder->record('POST', 'https://example.com', [], 200, ['content-type' => ['application/json']], '{"n":1}');
         $recorder->record('POST', 'https://example.com', [], 200, ['content-type' => ['application/json']], '{"n":2}');
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         $this->assertSame(['n' => 1], $client->request('POST', 'https://example.com')->toArray());
         $this->assertSame(['n' => 2], $client->request('POST', 'https://example.com')->toArray());
@@ -197,7 +197,7 @@ final class CassetteHttpClientTest extends TestCase
         $recorder = new HttpCassette($this->path);
         $recorder->record('GET', 'https://example.com', [], 200, [], 'only');
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
         $client->request('GET', 'https://example.com')->getContent();
 
         $this->expectException(RuntimeException::class);
@@ -216,7 +216,7 @@ final class CassetteHttpClientTest extends TestCase
             self::REPLAY_RESPONSE,
         );
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('does not match the recorded request signature');
@@ -236,7 +236,7 @@ final class CassetteHttpClientTest extends TestCase
             self::REPLAY_RESPONSE,
         );
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('does not match the recorded request signature');
@@ -256,7 +256,7 @@ final class CassetteHttpClientTest extends TestCase
             self::REPLAY_RESPONSE,
         );
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('does not match the recorded request signature');
@@ -284,7 +284,7 @@ final class CassetteHttpClientTest extends TestCase
             ],
         ], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)."\n");
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         $this->assertSame(['ok' => true], $client->request(self::GET_METHOD, self::REQUEST_URL)->toArray());
     }
@@ -311,7 +311,7 @@ final class CassetteHttpClientTest extends TestCase
             ],
         ], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE)."\n");
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         $this->assertSame(
             ['ok' => true],
@@ -324,7 +324,7 @@ final class CassetteHttpClientTest extends TestCase
     public function testRecordRequiresRealClient()
     {
         $this->expectException(InvalidArgumentException::class);
-        new CassetteHttpClient(new HttpCassette($this->path), null, record: true);
+        new CassetteHttpClient(new HttpCassette($this->path), null, true);
     }
 
     public function testReplaysServerSentEventStream()
@@ -333,7 +333,7 @@ final class CassetteHttpClientTest extends TestCase
         $recorder = new HttpCassette($this->path);
         $recorder->record('POST', 'https://example.com', [], 200, ['content-type' => ['text/event-stream']], $sse);
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
         $response = (new EventSourceHttpClient($client))->request('POST', 'https://example.com');
 
         $deltas = iterator_to_array((new RawHttpResult($response, new SseStream()))->getDataStream());
@@ -347,13 +347,13 @@ final class CassetteHttpClientTest extends TestCase
 
         // A provider may omit the content type; the body shape still identifies the framing.
         $realClient = new MockHttpClient(new MockResponse($sse));
-        $recording = new CassetteHttpClient(new HttpCassette($this->path), $realClient, record: true);
+        $recording = new CassetteHttpClient(new HttpCassette($this->path), $realClient, true);
         $recording->request('POST', 'https://example.com')->getContent();
 
         $data = json_decode((string) file_get_contents($this->path), true, flags: \JSON_THROW_ON_ERROR);
         $this->assertSame('sse', $data['interactions'][0]['response']['body_format']);
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
         $response = (new EventSourceHttpClient($client))->request('POST', 'https://example.com');
 
         $deltas = iterator_to_array((new RawHttpResult($response, new SseStream()))->getDataStream());
@@ -366,7 +366,7 @@ final class CassetteHttpClientTest extends TestCase
         $bytes = "\x00\x01\xff\xfeRIFF-fake-audio-bytes";
 
         $realClient = new MockHttpClient(new MockResponse($bytes, ['response_headers' => ['content-type' => 'audio/mpeg']]));
-        $recording = new CassetteHttpClient(new HttpCassette($this->path), $realClient, record: true);
+        $recording = new CassetteHttpClient(new HttpCassette($this->path), $realClient, true);
 
         // During recording the caller still receives the real bytes.
         $this->assertSame($bytes, $recording->request('GET', 'https://example.com/speech')->getContent());
@@ -379,7 +379,7 @@ final class CassetteHttpClientTest extends TestCase
         $this->assertSame(['audio/mpeg'], $data['interactions'][0]['response']['headers']['content-type']);
 
         // Replay serves a small, diffable placeholder body with the recorded metadata.
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
         $response = $client->request('GET', 'https://example.com/speech');
 
         $this->assertSame(200, $response->getStatusCode());
@@ -390,7 +390,7 @@ final class CassetteHttpClientTest extends TestCase
     public function testDetectsBinaryBodyWithoutContentType()
     {
         $realClient = new MockHttpClient(new MockResponse("plain-prefix-then\x00binary"));
-        $recording = new CassetteHttpClient(new HttpCassette($this->path), $realClient, record: true);
+        $recording = new CassetteHttpClient(new HttpCassette($this->path), $realClient, true);
         $recording->request('GET', 'https://example.com')->getContent();
 
         $data = json_decode((string) file_get_contents($this->path), true, flags: \JSON_THROW_ON_ERROR);
@@ -407,7 +407,7 @@ final class CassetteHttpClientTest extends TestCase
             'content-encoding' => ['gzip'],
         ], '{"ok":true}');
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
         $response = $client->request('GET', 'https://example.com');
 
         $this->assertSame(['ok' => true], $response->toArray());
@@ -420,7 +420,7 @@ final class CassetteHttpClientTest extends TestCase
         $recorder = new HttpCassette($this->path);
         $recorder->record('GET', 'https://example.com', [], 200, ['content-type' => ['application/json']], '{"ok":true}');
 
-        $client = (new CassetteHttpClient(new HttpCassette($this->path), record: false))->withOptions(['base_uri' => 'https://example.com']);
+        $client = (new CassetteHttpClient(new HttpCassette($this->path), null, false))->withOptions(['base_uri' => 'https://example.com']);
 
         $this->assertInstanceOf(CassetteHttpClient::class, $client);
         $this->assertSame(['ok' => true], $client->request('GET', 'https://example.com')->toArray());
@@ -438,7 +438,7 @@ final class CassetteHttpClientTest extends TestCase
             self::REPLAY_RESPONSE,
         );
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('body differs');
@@ -458,7 +458,7 @@ final class CassetteHttpClientTest extends TestCase
             self::REPLAY_RESPONSE,
         );
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('url differs');
@@ -478,7 +478,7 @@ final class CassetteHttpClientTest extends TestCase
             self::REPLAY_RESPONSE,
         );
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('method differs');
@@ -498,7 +498,7 @@ final class CassetteHttpClientTest extends TestCase
             self::REPLAY_RESPONSE,
         );
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('query differs');
@@ -518,7 +518,7 @@ final class CassetteHttpClientTest extends TestCase
             self::REPLAY_RESPONSE,
         );
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         try {
             $client->request('POST', self::REQUEST_URL, ['json' => [self::TEMPERATURE_KEY => self::REPLAYED_TEMPERATURE]])->getContent();
@@ -547,7 +547,7 @@ final class CassetteHttpClientTest extends TestCase
         $this->assertStringContainsString('1.0', file_get_contents($this->path));
 
         // Replaying the very request that was recorded must match its own stored signature.
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
         $this->assertSame(self::REPLAY_RESPONSE, $client->request('POST', self::REQUEST_URL, ['json' => [self::TEMPERATURE_KEY => self::RECORDED_TEMPERATURE]])->getContent());
     }
 
@@ -563,7 +563,7 @@ final class CassetteHttpClientTest extends TestCase
             self::REPLAY_RESPONSE,
         );
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         // A cassette stores no `body` key when none was sent, so an added body is still a body
         // difference rather than an unknown one.
@@ -585,7 +585,7 @@ final class CassetteHttpClientTest extends TestCase
             self::REPLAY_RESPONSE,
         );
 
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         // `json_encode(0)` is the falsy string "0"; treating that as an encoding failure would
         // clear the body and let the elimination branch blame a query this request never had.
@@ -610,7 +610,7 @@ final class CassetteHttpClientTest extends TestCase
         // The cassette stores `[redacted-email]`, the live request still carries the real address,
         // so the raw hashes cannot agree. Without the redacted retry this throws on exactly the
         // requests redaction was added to protect.
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         $this->assertSame(
             self::REPLAY_RESPONSE,
@@ -632,7 +632,7 @@ final class CassetteHttpClientTest extends TestCase
 
         // The retry must not become a wildcard: the address is the same, the surrounding prompt is
         // not, and that is a genuine payload change.
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('body differs');
@@ -656,7 +656,7 @@ final class CassetteHttpClientTest extends TestCase
         // the parts redaction leaves alone: the cassette no longer holds what would tell these two
         // requests apart, so the check cannot either. Asserted here so that changing it is a
         // deliberate decision and not an accident.
-        $client = new CassetteHttpClient(new HttpCassette($this->path), record: false);
+        $client = new CassetteHttpClient(new HttpCassette($this->path), null, false);
 
         $this->assertSame(
             self::REPLAY_RESPONSE,

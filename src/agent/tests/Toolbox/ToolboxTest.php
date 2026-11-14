@@ -13,6 +13,7 @@ namespace Symfony\AI\Agent\Tests\Toolbox;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolCustomException;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolDate;
@@ -32,6 +33,7 @@ use Symfony\AI\Agent\Toolbox\Source\Source;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
+use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ChainFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\MemoryToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
@@ -368,7 +370,7 @@ final class ToolboxTest extends TestCase
                 return $event;
             });
 
-        $toolbox = new Toolbox([new ToolSources()], eventDispatcher: $dispatcher);
+        $toolbox = new Toolbox([new ToolSources()], new ReflectionToolFactory(), new ToolCallArgumentResolver(), new NullLogger(), $dispatcher);
         $result = $toolbox->execute(new ToolCall('call_1234', 'tool_sources', ['query' => 'random']));
 
         $this->assertIsString($result->getResult());
@@ -387,7 +389,7 @@ final class ToolboxTest extends TestCase
                 return $event;
             });
 
-        $toolbox = new Toolbox([new ToolSources()], eventDispatcher: $dispatcher);
+        $toolbox = new Toolbox([new ToolSources()], new ReflectionToolFactory(), new ToolCallArgumentResolver(), new NullLogger(), $dispatcher);
         $result = $toolbox->execute(new ToolCall('call_1234', 'tool_sources', ['query' => 'random']));
 
         $this->assertIsArray($result->getResult());

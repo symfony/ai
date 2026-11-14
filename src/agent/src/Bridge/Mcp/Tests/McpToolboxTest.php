@@ -18,6 +18,7 @@ use Mcp\Schema\Tool as McpTool;
 use Mcp\Schema\ToolAnnotations;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Bridge\Mcp\Exception\ConnectionException;
 use Symfony\AI\Agent\Bridge\Mcp\Exception\ToolCallException;
 use Symfony\AI\Agent\Bridge\Mcp\Exception\ToolErrorException;
@@ -191,7 +192,7 @@ final class McpToolboxTest extends TestCase
     {
         $clock = new MockClock();
         $toolset = new StaticToolset(tools: [$this->remoteTool('echo')], listFailure: $this->unreachable());
-        $toolbox = new McpToolbox($toolset, retryAfter: 60, clock: $clock);
+        $toolbox = new McpToolbox($toolset, '', new NullLogger(), null, 60, $clock);
 
         $this->assertSame([], $toolbox->getTools());
 
@@ -348,7 +349,7 @@ final class McpToolboxTest extends TestCase
         });
 
         $toolset = $this->toolset('echo', new CallToolResult([new TextContent('hi')]));
-        $toolbox = new McpToolbox($toolset, eventDispatcher: $dispatcher);
+        $toolbox = new McpToolbox($toolset, '', new NullLogger(), $dispatcher);
 
         $toolbox->execute(new ToolCall('call_8', 'demo_echo', ['msg' => 'hi']));
 
@@ -367,7 +368,7 @@ final class McpToolboxTest extends TestCase
 
         $toolset = $this->toolset('echo', new CallToolResult([new TextContent('hi')]));
 
-        $result = (new McpToolbox($toolset, eventDispatcher: $dispatcher))->execute(new ToolCall('call_9', 'demo_echo'));
+        $result = (new McpToolbox($toolset, '', new NullLogger(), $dispatcher))->execute(new ToolCall('call_9', 'demo_echo'));
 
         $this->assertSame('not allowed', $result->getResult());
         $this->assertSame([], $toolset->calls);
@@ -392,14 +393,14 @@ final class McpToolboxTest extends TestCase
                 ['exception' => $failure],
             );
 
-        (new McpToolbox(new StaticToolset(listFailure: $failure), logger: $logger))->getTools();
+        (new McpToolbox(new StaticToolset(listFailure: $failure), '', $logger))->getTools();
     }
 
     public function testAFailedListingIsNotRetriedBeforeTheDelayElapsed()
     {
         $clock = new MockClock();
         $toolset = new StaticToolset(tools: [$this->remoteTool('echo')], listFailure: $this->unreachable());
-        $toolbox = new McpToolbox($toolset, retryAfter: 60, clock: $clock);
+        $toolbox = new McpToolbox($toolset, '', new NullLogger(), null, 60, $clock);
 
         $this->assertSame([], $toolbox->getTools());
 
@@ -414,7 +415,7 @@ final class McpToolboxTest extends TestCase
     {
         $clock = new MockClock();
         $toolset = new StaticToolset(tools: [$this->remoteTool('echo')], listFailure: $this->unreachable());
-        $toolbox = new McpToolbox($toolset, retryAfter: 60, clock: $clock);
+        $toolbox = new McpToolbox($toolset, '', new NullLogger(), null, 60, $clock);
 
         $this->assertSame([], $toolbox->getTools());
 
@@ -431,7 +432,7 @@ final class McpToolboxTest extends TestCase
     {
         $unreachable = new StaticToolset('broken', listFailure: $this->unreachable());
         $chain = new ChainToolbox([
-            new McpToolbox($unreachable, clock: new MockClock()),
+            new McpToolbox($unreachable, '', new NullLogger(), null, 60, new MockClock()),
             new McpToolbox($this->toolset('echo', new CallToolResult([new TextContent('pong')]))),
         ]);
 
@@ -445,7 +446,7 @@ final class McpToolboxTest extends TestCase
     public function testAFailedListingIsRetriedRightAwayWithoutADelay()
     {
         $toolset = new StaticToolset(tools: [$this->remoteTool('echo')], listFailure: $this->unreachable());
-        $toolbox = new McpToolbox($toolset, retryAfter: 0, clock: new MockClock());
+        $toolbox = new McpToolbox($toolset, '', new NullLogger(), null, 0, new MockClock());
 
         $this->assertSame([], $toolbox->getTools());
 

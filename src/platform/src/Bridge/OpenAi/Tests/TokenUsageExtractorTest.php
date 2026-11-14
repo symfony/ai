@@ -50,7 +50,7 @@ final class TokenUsageExtractorTest extends TestCase
                     'cached_tokens' => 40,
                 ],
             ],
-        ], object: $this->createResponseObject());
+        ], [], $this->createResponseObject());
 
         $tokenUsage = $extractor->extract($result);
 
@@ -72,7 +72,7 @@ final class TokenUsageExtractorTest extends TestCase
                 // Missing some fields
                 'input_tokens' => 10,
             ],
-        ], object: $this->createResponseObject());
+        ], [], $this->createResponseObject());
 
         $tokenUsage = $extractor->extract($result);
 

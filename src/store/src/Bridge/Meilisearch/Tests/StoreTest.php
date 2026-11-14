@@ -193,7 +193,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store($httpClient, 'test', dimensions: 3);
+        $store = new Store($httpClient, 'test', 'default', '_vectors', 3);
 
         $vectors = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
@@ -228,7 +228,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store($httpClient, 'test', dimensions: 3);
+        $store = new Store($httpClient, 'test', 'default', '_vectors', 3);
 
         $vectors = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
         $expected = [
@@ -243,7 +243,7 @@ final class StoreTest extends TestCase
     {
         $httpClient = new MockHttpClient();
 
-        $store = new Store($httpClient, 'index', semanticRatio: 0.5);
+        $store = new Store($httpClient, 'index', 'default', '_vectors', 1536, 0.5);
 
         $this->assertInstanceOf(Store::class, $store);
     }
@@ -254,7 +254,7 @@ final class StoreTest extends TestCase
         $this->expectExceptionMessage('The semantic ratio must be between 0.0 and 1.0');
 
         $httpClient = new MockHttpClient();
-        new Store($httpClient, 'index', semanticRatio: 1.5);
+        new Store($httpClient, 'index', 'default', '_vectors', 1536, 1.5);
     }
 
     public function testConstructorThrowsExceptionForNegativeSemanticRatio()
@@ -263,7 +263,7 @@ final class StoreTest extends TestCase
         $this->expectExceptionMessage('The semantic ratio must be between 0.0 and 1.0');
 
         $httpClient = new MockHttpClient();
-        new Store($httpClient, 'index', semanticRatio: -0.1);
+        new Store($httpClient, 'index', 'default', '_vectors', 1536, -0.1);
     }
 
     public function testQueryUsesDefaultSemanticRatio()
@@ -286,7 +286,7 @@ final class StoreTest extends TestCase
         ];
 
         $httpClient = new MockHttpClient($responses);
-        $store = new Store($httpClient, 'index', semanticRatio: 0.7);
+        $store = new Store($httpClient, 'index', 'default', '_vectors', 1536, 0.7);
 
         $vector = new Vector([0.1, 0.2, 0.3]);
         iterator_to_array($store->query(new VectorQuery($vector)));
@@ -307,7 +307,7 @@ final class StoreTest extends TestCase
         ];
 
         $httpClient = new MockHttpClient($responses);
-        $store = new Store($httpClient, 'index', semanticRatio: 0.5);
+        $store = new Store($httpClient, 'index', 'default', '_vectors', 1536, 0.5);
 
         iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['semanticRatio' => 0.2]));
 
@@ -371,7 +371,7 @@ final class StoreTest extends TestCase
         ];
 
         $httpClient = new MockHttpClient($responses);
-        $store = new Store($httpClient, 'index', semanticRatio: 0.5);
+        $store = new Store($httpClient, 'index', 'default', '_vectors', 1536, 0.5);
 
         $vector = new Vector([0.1, 0.2, 0.3]);
         iterator_to_array($store->query(new VectorQuery($vector)));
@@ -522,7 +522,7 @@ final class StoreTest extends TestCase
         ];
 
         $httpClient = new MockHttpClient($responses);
-        $store = new Store($httpClient, 'index', semanticRatio: 1.0);
+        $store = new Store($httpClient, 'index', 'default', '_vectors', 1536, 1.0);
 
         $vector = new Vector([0.1, 0.2, 0.3]);
         $results = iterator_to_array($store->query(new HybridQuery($vector, 'symfony', 0.3)));

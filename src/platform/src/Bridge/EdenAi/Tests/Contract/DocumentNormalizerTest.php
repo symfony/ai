@@ -29,13 +29,13 @@ final class DocumentNormalizerTest extends TestCase
         $normalizer = new DocumentNormalizer();
         $document = new Document('binary-pdf-content', 'application/pdf');
 
-        $this->assertTrue($normalizer->supportsNormalization($document, context: [
+        $this->assertTrue($normalizer->supportsNormalization($document, null, [
             Contract::CONTEXT_MODEL => new Ocr('ocr/ocr/google'),
         ]));
-        $this->assertTrue($normalizer->supportsNormalization($document, context: [
+        $this->assertTrue($normalizer->supportsNormalization($document, null, [
             Contract::CONTEXT_MODEL => new DocumentParser('ocr/resume_parser/affinda'),
         ]));
-        $this->assertFalse($normalizer->supportsNormalization($document, context: [
+        $this->assertFalse($normalizer->supportsNormalization($document, null, [
             Contract::CONTEXT_MODEL => new CompletionsModel('openai/gpt-4o'),
         ]));
     }

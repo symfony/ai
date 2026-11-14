@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\Decision\Evaluation;
 use Symfony\AI\Platform\Bridge\Decision\Question\ChoiceQuestion;
 use Symfony\AI\Platform\Bridge\Decision\Question\NoulQuestion;
 use Symfony\AI\Platform\Bridge\TypeSafe\Factory;
+use Symfony\AI\Platform\Bridge\TypeSafe\ModelCatalog;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -30,7 +31,7 @@ final class FactoryTest extends TestCase
 
     public function testItCreatesProviderWithCustomName()
     {
-        $this->assertSame('typesafe-eu', Factory::createProvider('test-key', new MockHttpClient(), name: 'typesafe-eu')->getName());
+        $this->assertSame('typesafe-eu', Factory::createProvider('test-key', new MockHttpClient(), new ModelCatalog(), null, null, 'typesafe-eu')->getName());
     }
 
     public function testItEvaluatesQuestions()

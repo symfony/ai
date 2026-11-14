@@ -28,7 +28,7 @@ final class FactoryTest extends TestCase
 {
     public function testCreatePlatformReturnsPlatformInterface()
     {
-        $platform = Factory::createPlatform(apiKey: 'test-key');
+        $platform = Factory::createPlatform('https://api.deepgram.com/v1/', 'test-key');
 
         $this->assertInstanceOf(PlatformInterface::class, $platform);
         $this->assertInstanceOf(Platform::class, $platform);
@@ -36,21 +36,21 @@ final class FactoryTest extends TestCase
 
     public function testCreateProviderUsesDeepgramModelCatalog()
     {
-        $provider = Factory::createProvider(apiKey: 'test-key');
+        $provider = Factory::createProvider('https://api.deepgram.com/v1/', 'test-key');
 
         $this->assertInstanceOf(ModelCatalog::class, $provider->getModelCatalog());
     }
 
     public function testProviderNameDefaultsToDeepgram()
     {
-        $provider = Factory::createProvider(apiKey: 'test-key');
+        $provider = Factory::createProvider('https://api.deepgram.com/v1/', 'test-key');
 
         $this->assertSame('deepgram', $provider->getName());
     }
 
     public function testProviderNameIsCustomizable()
     {
-        $provider = Factory::createProvider(apiKey: 'test-key', name: 'deepgram-eu');
+        $provider = Factory::createProvider('https://api.deepgram.com/v1/', 'test-key', null, null, null, 'deepgram-eu');
 
         $this->assertSame('deepgram-eu', $provider->getName());
     }
@@ -66,7 +66,7 @@ final class FactoryTest extends TestCase
             return new JsonMockResponse(['tts' => [], 'stt' => []]);
         });
 
-        $provider = Factory::createProvider(apiKey: 'secret-token', httpClient: $upstream);
+        $provider = Factory::createProvider('https://api.deepgram.com/v1/', 'secret-token', $upstream);
         $provider->getModelCatalog()->getModels();
 
         $this->assertSame('https://api.deepgram.com/v1/models', $requestedUrl);
@@ -82,7 +82,7 @@ final class FactoryTest extends TestCase
             return new JsonMockResponse(['tts' => [], 'stt' => []]);
         });
 
-        $provider = Factory::createProvider(endpoint: 'https://api.deepgram.com/v1', apiKey: 'secret-token', httpClient: $upstream);
+        $provider = Factory::createProvider('https://api.deepgram.com/v1', 'secret-token', $upstream);
         $provider->getModelCatalog()->getModels();
 
         $this->assertSame('https://api.deepgram.com/v1/models', $requestedUrl);
@@ -97,7 +97,7 @@ final class FactoryTest extends TestCase
             return new JsonMockResponse(['tts' => [], 'stt' => []]);
         }, 'https://scoped.example.com/v1/');
 
-        $provider = Factory::createProvider(httpClient: $upstream);
+        $provider = Factory::createProvider('https://api.deepgram.com/v1/', null, $upstream);
         $provider->getModelCatalog()->getModels();
 
         $this->assertSame('', $authorizationHeader);
@@ -118,7 +118,7 @@ final class FactoryTest extends TestCase
             return new MockResponse('audio-bytes', ['response_headers' => ['content-type' => 'audio/mpeg']]);
         });
 
-        $platform = Factory::createPlatform(apiKey: 'test-key', httpClient: $httpClient);
+        $platform = Factory::createPlatform('https://api.deepgram.com/v1/', 'test-key', $httpClient);
 
         $result = $platform->invoke('aura-2-thalia-en', new Text('Hello world'));
 
@@ -149,7 +149,7 @@ final class FactoryTest extends TestCase
         $catalog = $this->createStub(ModelCatalogInterface::class);
         $catalog->method('getModel')->willReturn($model);
 
-        $platform = Factory::createPlatform(apiKey: 'secret', httpClient: new MockHttpClient(), modelCatalog: $catalog);
+        $platform = Factory::createPlatform('https://api.deepgram.com/v1/', 'secret', new MockHttpClient(), null, null, 'deepgram', null, $catalog);
 
         $this->assertSame($model, $platform->getModelCatalog()->getModel('custom-model'));
     }

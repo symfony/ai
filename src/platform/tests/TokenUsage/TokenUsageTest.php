@@ -40,18 +40,18 @@ class TokenUsageTest extends TestCase
     public function testValuesAreSetCorrectly()
     {
         $usage = new TokenUsage(
-            promptTokens: 1,
-            completionTokens: 2,
-            thinkingTokens: 3,
-            toolTokens: 4,
-            cachedTokens: 5,
-            cacheCreationTokens: 6,
-            cacheReadTokens: 7,
-            remainingTokens: 8,
-            remainingTokensMinute: 9,
-            remainingTokensMonth: 10,
-            totalTokens: 11,
-            model: 'gpt-4o',
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            'gpt-4o',
         );
 
         $this->assertSame(1, $usage->getPromptTokens());

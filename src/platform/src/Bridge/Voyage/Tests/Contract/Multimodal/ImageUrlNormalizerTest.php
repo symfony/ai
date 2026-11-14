@@ -44,7 +44,7 @@ final class ImageUrlNormalizerTest extends TestCase
     public function testSupportsNormalization(mixed $data, Model $model, bool $result)
     {
         $normalizer = new ImageUrlNormalizer();
-        $this->assertEquals($result, $normalizer->supportsNormalization($data, context: [
+        $this->assertEquals($result, $normalizer->supportsNormalization($data, null, [
             Contract::CONTEXT_MODEL => $model,
         ]));
     }

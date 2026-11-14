@@ -16,6 +16,7 @@ use Google\Auth\ApplicationDefaultCredentials;
 use Google\Auth\FetchAuthTokenInterface;
 use Mcp\Server\Capability\Attribute\Schema as McpSchema;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\Attribute\AsInputProcessor;
@@ -713,12 +714,14 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client']),
                     new Reference('ai.platform.contract.'.$type),
                     new Reference('event_dispatcher'),
+                    $type,
+                    null,
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(ElevenLabsFactory::class, [
+                        $platform['endpoint'],
+                        $platform['api_key'] ?? null,
+                        new Reference($platform['http_client']),
+                    ])),
                 ])
-                ->setArgument('$modelCatalog', $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(ElevenLabsFactory::class, [
-                    $platform['endpoint'],
-                    $platform['api_key'] ?? null,
-                    new Reference($platform['http_client']),
-                ])))
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->addTag('ai.platform.speech', ['name' => $type])
                 ->addTag('ai.platform', ['name' => $type]);
@@ -897,12 +900,14 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client']),
                     new Reference('ai.platform.contract.'.$type),
                     new Reference('event_dispatcher'),
+                    $type,
+                    null,
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(VeniceFactory::class, [
+                        $platform['api_key'],
+                        $platform['endpoint'],
+                        new Reference($platform['http_client']),
+                    ])),
                 ])
-                ->setArgument('$modelCatalog', $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(VeniceFactory::class, [
-                    $platform['api_key'],
-                    $platform['endpoint'],
-                    new Reference($platform['http_client']),
-                ])))
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->addTag('ai.platform', ['name' => $type]);
 
@@ -1165,12 +1170,14 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client']),
                     new Reference('ai.platform.contract.ollama'),
                     new Reference('event_dispatcher'),
+                    $type,
+                    null,
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(OllamaFactory::class, [
+                        $platform['endpoint'] ?? null,
+                        $platform['api_key'] ?? null,
+                        new Reference($platform['http_client']),
+                    ])),
                 ])
-                ->setArgument('$modelCatalog', $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(OllamaFactory::class, [
-                    $platform['endpoint'] ?? null,
-                    $platform['api_key'] ?? null,
-                    new Reference($platform['http_client']),
-                ])))
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->addTag('ai.platform', ['name' => 'ollama']);
 
@@ -1278,12 +1285,14 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client']),
                     new Reference('ai.platform.contract.deepgram'),
                     new Reference('event_dispatcher'),
+                    $type,
+                    null,
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(DeepgramFactory::class, [
+                        $platform['endpoint'],
+                        $platform['api_key'] ?? null,
+                        new Reference($platform['http_client']),
+                    ])),
                 ])
-                ->setArgument('$modelCatalog', $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(DeepgramFactory::class, [
-                    $platform['endpoint'],
-                    $platform['api_key'] ?? null,
-                    new Reference($platform['http_client']),
-                ])))
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->addTag('ai.platform.speech', ['name' => $type])
                 ->addTag('ai.platform', ['name' => 'deepgram']);
@@ -1332,11 +1341,13 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     null, // $contract, defaults to Contract::create() inside the factory
                     new Reference('event_dispatcher'),
+                    $type,
+                    null,
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(FireworksFactory::class, [
+                        $platform['api_key'],
+                        new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    ])),
                 ])
-                ->setArgument('$modelCatalog', $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(FireworksFactory::class, [
-                    $platform['api_key'],
-                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                ])))
                 ->addTag('ai.platform', ['name' => 'fireworks']);
 
             $container->setDefinition($platformId, $definition);
@@ -1480,12 +1491,14 @@ final class AiBundle extends AbstractBundle
                     new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     new Reference('ai.platform.contract.together'),
                     new Reference('event_dispatcher'),
+                    $type,
+                    null,
+                    $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(TogetherFactory::class, [
+                        $platform['endpoint'] ?? null,
+                        $platform['api_key'],
+                        new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    ])),
                 ])
-                ->setArgument('$modelCatalog', $this->createModelCatalog($platformId, $platform['model_catalog'], $this->createApiModelCatalog(TogetherFactory::class, [
-                    $platform['endpoint'] ?? null,
-                    $platform['api_key'],
-                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
-                ])))
                 ->addTag('ai.platform', ['name' => 'together']);
 
             $container->setDefinition($platformId, $definition);
@@ -1550,8 +1563,20 @@ final class AiBundle extends AbstractBundle
         $agentId = 'ai.agent.'.$name;
         $agentDefinition = (new Definition(Agent::class))
             ->addTag('ai.agent', ['name' => $name])
-            ->setArgument('$platform', new Reference($config['platform']))
-            ->setArgument('$model', $config['model']);
+            ->setArguments([
+                new Reference($config['platform']),
+                $config['model'],
+                [], // placeholder until ProcessorCompilerPass process.
+                [], // placeholder until ProcessorCompilerPass process.
+                $name,
+                null,
+                null,
+                $config['max_tool_calls'],
+                $config['include_sources'],
+                null,
+                new Reference('ai.tool_result_converter'),
+                null,
+            ]);
 
         // TOOLBOX
         if ($config['tools']['enabled']) {
@@ -1606,11 +1631,8 @@ final class AiBundle extends AbstractBundle
             }
 
             $agentDefinition
-                ->setArgument('$toolbox', new Reference('ai.toolbox.'.$name))
-                ->setArgument('$maxToolCalls', $config['max_tool_calls'])
-                ->setArgument('$includeSources', $config['include_sources'])
-                ->setArgument('$eventDispatcher', new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE))
-                ->setArgument('$toolResultConverter', new Reference('ai.tool_result_converter'));
+                ->replaceArgument(5, new Reference('ai.toolbox.'.$name))
+                ->replaceArgument(9, new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE));
 
             // Define specific list of tools if are explicitly defined
             if ([] !== $services) {
@@ -1645,9 +1667,9 @@ final class AiBundle extends AbstractBundle
                 if ('fiber' === $executionStrategy) {
                     $executorDefinition = new Definition(FiberToolExecutor::class, [new Reference('ai.toolbox.'.$name)]);
                     $container->setDefinition('ai.tool_executor.'.$name, $executorDefinition);
-                    $agentDefinition->setArgument('$toolExecutor', new Reference('ai.tool_executor.'.$name));
+                    $agentDefinition->replaceArgument(6, new Reference('ai.tool_executor.'.$name));
                 } else {
-                    $agentDefinition->setArgument('$toolExecutor', new Reference($executionStrategy));
+                    $agentDefinition->replaceArgument(6, new Reference($executionStrategy));
                 }
             }
         }
@@ -1729,14 +1751,8 @@ final class AiBundle extends AbstractBundle
         }
 
         if (null !== $config['message_store']) {
-            $agentDefinition->setArgument('$messageStore', new Reference($config['message_store']));
+            $agentDefinition->replaceArgument(11, new Reference($config['message_store']));
         }
-
-        $agentDefinition
-            ->setArgument('$inputProcessors', []) // placeholder until ProcessorCompilerPass process.
-            ->setArgument('$outputProcessors', []) // placeholder until ProcessorCompilerPass process.
-            ->setArgument('$name', $name)
-        ;
 
         $container->setDefinition($agentId, $agentDefinition);
         $container->registerAliasForArgument($agentId, AgentInterface::class, (new Target($name))->getParsedName());
@@ -1745,10 +1761,10 @@ final class AiBundle extends AbstractBundle
         if (isset($config['speech']) && $config['speech']['enabled']) {
             $container->setDefinition('ai.agent.'.$name.'.speech_configuration', new Definition(SpeechConfiguration::class))
                 ->setArguments([
-                    '$ttsModel' => $config['speech']['tts_model'],
-                    '$ttsOptions' => $config['speech']['tts_options'],
-                    '$sttModel' => $config['speech']['stt_model'],
-                    '$sttOptions' => $config['speech']['stt_options'],
+                    $config['speech']['tts_model'],
+                    $config['speech']['tts_options'],
+                    $config['speech']['stt_model'],
+                    $config['speech']['stt_options'],
                 ]);
 
             $container->setDefinition('ai.speech_agent.'.$name, new Definition(SpeechAgent::class))
@@ -2026,7 +2042,7 @@ final class AiBundle extends AbstractBundle
                     ->addTag('ai.store', ['name' => $name]);
 
                 if (isset($store['dimensions'])) {
-                    $definition->setArgument('$dimensions', $store['dimensions']);
+                    $definition->addArgument($store['dimensions']);
                 }
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
@@ -2123,34 +2139,21 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $arguments = [
-                    new Reference($store['client']),
-                    $store['database'],
-                    $store['collection'] ?? $name,
-                    $store['index_name'],
-                    $store['vector_field'],
-                ];
-
-                if (\array_key_exists('bulk_write', $store)) {
-                    $arguments[5] = $store['bulk_write'];
-                }
-
-                if (isset($store['dimensions'])) {
-                    $arguments['$dimensions'] = $store['dimensions'];
-                }
-
-                if (isset($store['metric'])) {
-                    $arguments['$metric'] = MongoDbMetric::from($store['metric']);
-                }
-
-                if (isset($store['index_fields'])) {
-                    $arguments['$indexFields'] = $store['index_fields'];
-                }
-
                 $definition = new Definition(MongoDbStore::class);
                 $definition
                     ->setLazy(true)
-                    ->setArguments($arguments)
+                    ->setArguments([
+                        new Reference($store['client']),
+                        $store['database'],
+                        $store['collection'] ?? $name,
+                        $store['index_name'],
+                        $store['vector_field'],
+                        $store['bulk_write'],
+                        new Definition(NullLogger::class),
+                        $store['dimensions'],
+                        MongoDbMetric::from($store['metric']),
+                        $store['index_fields'],
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store', ['name' => $name]);
@@ -2228,28 +2231,21 @@ final class AiBundle extends AbstractBundle
             }
 
             foreach ($stores as $name => $store) {
-                $arguments = [
-                    new Reference($store['http_client']),
-                    $store['api_key'],
-                    $store['index_name'],
-                    $store['namespace'] ?? $name,
-                    $store['filter'],
-                ];
-
-                if (\array_key_exists('top_k', $store)) {
-                    $arguments[5] = $store['top_k'];
-                }
-
-                foreach (['dimensions', 'metric', 'cloud', 'region'] as $key) {
-                    if (isset($store[$key])) {
-                        $arguments['$'.$key] = $store[$key];
-                    }
-                }
-
                 $definition = new Definition(PineconeStore::class);
                 $definition
                     ->setLazy(true)
-                    ->setArguments($arguments)
+                    ->setArguments([
+                        new Reference($store['http_client']),
+                        $store['api_key'],
+                        $store['index_name'],
+                        $store['namespace'] ?? $name,
+                        $store['filter'],
+                        $store['top_k'],
+                        $store['dimensions'],
+                        $store['metric'],
+                        $store['cloud'],
+                        $store['region'],
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store', ['name' => $name]);
@@ -2390,7 +2386,7 @@ final class AiBundle extends AbstractBundle
                     ->addTag('ai.store', ['name' => $name]);
 
                 if (isset($store['dimensions'])) {
-                    $definition->setArgument('$dimensions', $store['dimensions']);
+                    $definition->addArgument($store['dimensions']);
                 }
 
                 $container->setDefinition('ai.store.'.$type.'.'.$name, $definition);
@@ -2411,32 +2407,18 @@ final class AiBundle extends AbstractBundle
                     $s3VectorsClient->setArguments([$store['configuration'] ?? []]);
                 }
 
-                $arguments = [
-                    $s3VectorsClient,
-                    $store['vector_bucket_name'],
-                    $store['index_name'] ?? $name,
-                ];
-
-                if (\array_key_exists('filter', $store)) {
-                    $arguments[3] = $store['filter'];
-                }
-
-                if (\array_key_exists('top_k', $store)) {
-                    $arguments[4] = $store['top_k'];
-                }
-
-                if (isset($store['dimensions'])) {
-                    $arguments['$dimensions'] = $store['dimensions'];
-                }
-
-                if (isset($store['metric'])) {
-                    $arguments['$metric'] = $store['metric'];
-                }
-
                 $definition = new Definition(S3VectorsStore::class);
                 $definition
                     ->setLazy(true)
-                    ->setArguments($arguments)
+                    ->setArguments([
+                        $s3VectorsClient,
+                        $store['vector_bucket_name'],
+                        $store['index_name'] ?? $name,
+                        $store['filter'],
+                        $store['top_k'],
+                        $store['dimensions'],
+                        $store['metric'],
+                    ])
                     ->addTag('proxy', ['interface' => StoreInterface::class])
                     ->addTag('proxy', ['interface' => ManagedStoreInterface::class])
                     ->addTag('ai.store', ['name' => $name]);
@@ -2723,11 +2705,9 @@ final class AiBundle extends AbstractBundle
         $entityIndexer = new Definition(EntityIndexer::class, [
             new Reference($store['entity_manager']),
             new Reference($embedderId),
+            100,
+            null !== $mirrorListenerId ? new Reference($mirrorListenerId) : null,
         ]);
-
-        if (null !== $mirrorListenerId) {
-            $entityIndexer->setArgument('$mirror', new Reference($mirrorListenerId));
-        }
 
         $container->setDefinition($entityIndexerId, $entityIndexer);
 

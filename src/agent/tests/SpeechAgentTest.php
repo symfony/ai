@@ -79,7 +79,7 @@ final class SpeechAgentTest extends TestCase
             }))
             ->willReturn($this->execution(new TextResult('response')));
 
-        $configuration = new SpeechConfiguration(sttModel: 'whisper-1');
+        $configuration = new SpeechConfiguration(null, [], 'whisper-1');
 
         $messageBag = new MessageBag(
             Message::ofUser(Audio::fromFile(\dirname(__DIR__).'/../../fixtures/audio.mp3')),
@@ -101,7 +101,7 @@ final class SpeechAgentTest extends TestCase
             ->method('call')
             ->willReturn($this->execution(new TextResult('response')));
 
-        $configuration = new SpeechConfiguration(sttModel: 'whisper-1');
+        $configuration = new SpeechConfiguration(null, [], 'whisper-1');
 
         $agent = new SpeechAgent($innerAgent, $configuration, $platform, $platform);
         $result = $agent->call(new MessageBag(Message::ofUser('Hello text')));
@@ -119,7 +119,7 @@ final class SpeechAgentTest extends TestCase
             ->method('call')
             ->willReturn($this->execution(new TextResult('response')));
 
-        $configuration = new SpeechConfiguration(sttModel: 'whisper-1');
+        $configuration = new SpeechConfiguration(null, [], 'whisper-1');
 
         $agent = new SpeechAgent($innerAgent, $configuration, $platform, $platform);
         $result = $agent->call(new MessageBag());
@@ -139,7 +139,7 @@ final class SpeechAgentTest extends TestCase
             ->method('call')
             ->willReturn($this->execution(new TextResult('hello')));
 
-        $configuration = new SpeechConfiguration(ttsModel: 'eleven_multilingual_v2');
+        $configuration = new SpeechConfiguration('eleven_multilingual_v2');
 
         $agent = new SpeechAgent($innerAgent, $configuration, $platform, $platform);
         $result = $agent->call(new MessageBag(Message::ofUser('Say hello')))->getResult();
@@ -155,7 +155,7 @@ final class SpeechAgentTest extends TestCase
         $platform = $this->createMock(PlatformInterface::class);
         $platform->method('invoke')->willReturn($ttsResult);
 
-        $agent = new SpeechAgent(new MockAgent(['Say hello' => 'hello']), new SpeechConfiguration(ttsModel: 'tts-1'), $platform, $platform);
+        $agent = new SpeechAgent(new MockAgent(['Say hello' => 'hello']), new SpeechConfiguration('tts-1'), $platform, $platform);
         $execution = $agent->call(new MessageBag(Message::ofUser('Say hello')));
 
         $this->assertInstanceOf(BinaryResult::class, $execution->getResult());
@@ -179,7 +179,7 @@ final class SpeechAgentTest extends TestCase
             ->method('call')
             ->willReturn($this->execution(new MultiPartResult([new ThinkingResult('reasoning'), new TextResult('hello')])));
 
-        $agent = new SpeechAgent($innerAgent, new SpeechConfiguration(ttsModel: 'tts-1'), $platform, $platform);
+        $agent = new SpeechAgent($innerAgent, new SpeechConfiguration('tts-1'), $platform, $platform);
         $result = $agent->call(new MessageBag(Message::ofUser('Say hello')))->getResult();
 
         $this->assertInstanceOf(BinaryResult::class, $result);
@@ -218,8 +218,9 @@ final class SpeechAgentTest extends TestCase
             ->willReturn($this->execution(new TextResult('LLM response')));
 
         $configuration = new SpeechConfiguration(
-            ttsModel: 'eleven_multilingual_v2',
-            sttModel: 'whisper-1',
+            'eleven_multilingual_v2',
+            [],
+            'whisper-1',
         );
 
         $messageBag = new MessageBag(
@@ -246,7 +247,7 @@ final class SpeechAgentTest extends TestCase
             ->method('call')
             ->willReturn($this->execution(new TextResult('hello')));
 
-        $configuration = new SpeechConfiguration(ttsModel: 'eleven_multilingual_v2');
+        $configuration = new SpeechConfiguration('eleven_multilingual_v2');
 
         $agent = new SpeechAgent($innerAgent, $configuration, $platform, $platform);
 
@@ -282,8 +283,9 @@ final class SpeechAgentTest extends TestCase
             ->willReturn($this->execution(new TextResult('It is sunny')));
 
         $configuration = new SpeechConfiguration(
-            ttsModel: 'tts-1',
-            sttModel: 'whisper-1',
+            'tts-1',
+            [],
+            'whisper-1',
         );
 
         $messageBag = new MessageBag(

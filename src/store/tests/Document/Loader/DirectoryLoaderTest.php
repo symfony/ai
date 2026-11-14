@@ -67,7 +67,7 @@ final class DirectoryLoaderTest extends TestCase
 
     public function testNonRecursiveSkipsSubdirectories()
     {
-        $loader = new DirectoryLoader(['md' => new MarkdownLoader()], recursive: false);
+        $loader = new DirectoryLoader(['md' => new MarkdownLoader()], false);
 
         $documents = iterator_to_array($loader->load($this->directory), false);
 
@@ -89,7 +89,7 @@ final class DirectoryLoaderTest extends TestCase
 
     public function testNormalizesExtensionKeysAndMatchesCaseInsensitively()
     {
-        $loader = new DirectoryLoader(['MD' => new MarkdownLoader()], recursive: false);
+        $loader = new DirectoryLoader(['MD' => new MarkdownLoader()], false);
 
         $documents = iterator_to_array($loader->load($this->directory), false);
 
@@ -102,7 +102,7 @@ final class DirectoryLoaderTest extends TestCase
     {
         $this->fs->dumpFile($this->directory.'/formatted.md', "# Formatted\n\n**bold** text.\n");
 
-        $loader = new DirectoryLoader(['md' => new MarkdownLoader()], recursive: false);
+        $loader = new DirectoryLoader(['md' => new MarkdownLoader()], false);
 
         $documents = iterator_to_array($loader->load($this->directory, ['strip_formatting' => true]), false);
 
@@ -134,7 +134,7 @@ final class DirectoryLoaderTest extends TestCase
             }
         };
 
-        $loader = new DirectoryLoader(['md' => $recording], recursive: false);
+        $loader = new DirectoryLoader(['md' => $recording], false);
 
         iterator_to_array($loader->load($this->directory), false);
 

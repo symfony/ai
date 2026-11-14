@@ -31,7 +31,7 @@ final class StoreFactoryTest extends TestCase
 
     public function testStoreCanBeCreatedWithScopingHttpClient()
     {
-        $store = StoreFactory::create('neo4j', 'vector_index', 'Document', httpClient: ScopingHttpClient::forBaseUri(HttpClient::create(), 'http://127.0.0.1:7474/'));
+        $store = StoreFactory::create('neo4j', 'vector_index', 'Document', null, null, null, ScopingHttpClient::forBaseUri(HttpClient::create(), 'http://127.0.0.1:7474/'));
 
         $this->assertInstanceOf(Store::class, $store);
     }
@@ -45,7 +45,7 @@ final class StoreFactoryTest extends TestCase
             return new JsonMockResponse([]);
         });
 
-        $store = StoreFactory::create('neo4j', 'vector_index', 'Document', 'http://127.0.0.1:7474/', httpClient: $httpClient);
+        $store = StoreFactory::create('neo4j', 'vector_index', 'Document', 'http://127.0.0.1:7474/', null, null, $httpClient);
         $store->setup();
 
         $this->assertSame('http://127.0.0.1:7474/db/neo4j/query/v2', $requestedUrl);
@@ -61,7 +61,7 @@ final class StoreFactoryTest extends TestCase
             return new JsonMockResponse([]);
         });
 
-        $store = StoreFactory::create('neo4j', 'vector_index', 'Document', 'https://example.com/neo4j', httpClient: $httpClient);
+        $store = StoreFactory::create('neo4j', 'vector_index', 'Document', 'https://example.com/neo4j', null, null, $httpClient);
         $store->setup();
 
         $this->assertSame('https://example.com/neo4j/db/neo4j/query/v2', $requestedUrl);
@@ -91,7 +91,7 @@ final class StoreFactoryTest extends TestCase
             return new JsonMockResponse([]);
         });
 
-        $store = StoreFactory::create('neo4j', 'vector_index', 'Document', 'http://127.0.0.1:7474', httpClient: $httpClient);
+        $store = StoreFactory::create('neo4j', 'vector_index', 'Document', 'http://127.0.0.1:7474', null, null, $httpClient);
         $store->setup();
 
         $this->assertArrayNotHasKey('authorization', $requestHeaders);
@@ -102,7 +102,7 @@ final class StoreFactoryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The Neo4j "username" and "password" require an "endpoint"');
 
-        StoreFactory::create('neo4j', 'vector_index', 'Document', username: 'neo4j', password: 'password', httpClient: new MockHttpClient());
+        StoreFactory::create('neo4j', 'vector_index', 'Document', null, 'neo4j', 'password', new MockHttpClient());
     }
 
     public function testPasswordWithoutUsernameThrows()
@@ -110,6 +110,6 @@ final class StoreFactoryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The Neo4j "password" requires a "username".');
 
-        StoreFactory::create('neo4j', 'vector_index', 'Document', 'http://127.0.0.1:7474', password: 'password');
+        StoreFactory::create('neo4j', 'vector_index', 'Document', 'http://127.0.0.1:7474', null, 'password');
     }
 }

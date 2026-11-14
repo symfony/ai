@@ -219,12 +219,12 @@ final class ExtensionConfigSynchronizerTest extends TestCase
     private function skill(string $package, string $originalName): DiscoveredSkill
     {
         return new DiscoveredSkill(
-            package: $package,
-            originalName: $originalName,
-            installedName: 'mate-'.$originalName,
-            source: 'skills/'.$originalName,
-            absolutePath: $this->rootDir.'/skills/'.$originalName,
-            description: 'Test skill.',
+            $package,
+            $originalName,
+            'mate-'.$originalName,
+            'skills/'.$originalName,
+            $this->rootDir.'/skills/'.$originalName,
+            'Test skill.',
         );
     }
 }

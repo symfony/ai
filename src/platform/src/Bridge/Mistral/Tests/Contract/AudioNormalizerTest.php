@@ -24,7 +24,7 @@ final class AudioNormalizerTest extends TestCase
     {
         $normalizer = new AudioNormalizer();
 
-        $this->assertTrue($normalizer->supportsNormalization(new Audio('audio-data', 'audio/mpeg'), context: [
+        $this->assertTrue($normalizer->supportsNormalization(new Audio('audio-data', 'audio/mpeg'), null, [
             Contract::CONTEXT_MODEL => new Mistral('voxtral-small-latest'),
         ]));
     }
@@ -40,7 +40,7 @@ final class AudioNormalizerTest extends TestCase
     {
         $normalizer = new AudioNormalizer();
 
-        $this->assertFalse($normalizer->supportsNormalization(new Text('not audio'), context: [
+        $this->assertFalse($normalizer->supportsNormalization(new Text('not audio'), null, [
             Contract::CONTEXT_MODEL => new Mistral('voxtral-small-latest'),
         ]));
     }

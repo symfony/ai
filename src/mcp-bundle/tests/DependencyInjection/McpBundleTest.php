@@ -914,14 +914,14 @@ class McpBundleTest extends TestCase
             $this->assertSame(Psr16NotificationBus::class, $definition->getClass());
             $arguments[$name] = $definition->getArguments();
 
-            $this->assertSame('cache.mcp.notifications', (string) $arguments[$name]['$cache']);
-            $this->assertSame('logger', (string) $arguments[$name]['$logger']);
+            $this->assertSame('cache.mcp.notifications', (string) $arguments[$name][0]);
+            $this->assertSame('logger', (string) $arguments[$name][4]);
         }
 
         // Both servers sit on the same default pool, so only the key prefix keeps one server's
         // notifications — and its cursor — out of the other's listen streams.
-        $this->assertSame('mcp-first-notifications.', $arguments['first']['$prefix']);
-        $this->assertSame('mcp-second-notifications.', $arguments['second']['$prefix']);
+        $this->assertSame('mcp-first-notifications.', $arguments['first'][1]);
+        $this->assertSame('mcp-second-notifications.', $arguments['second'][1]);
     }
 
     public function testTheDefaultNotificationPoolIsCreatedButACustomOneIsNot()
@@ -940,7 +940,7 @@ class McpBundleTest extends TestCase
 
         // An application-provided pool is referenced as configured, never invented: a typo has
         // to surface as an unknown service rather than as a silently working cache.
-        $this->assertSame('app.my_psr16', (string) $container->getDefinition('mcp.server.default.notification_bus')->getArgument('$cache'));
+        $this->assertSame('app.my_psr16', (string) $container->getDefinition('mcp.server.default.notification_bus')->getArgument(0));
         $this->assertFalse($container->hasDefinition('app.my_psr16'));
     }
 

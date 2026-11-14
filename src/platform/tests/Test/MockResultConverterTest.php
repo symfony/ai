@@ -58,7 +58,7 @@ final class MockResultConverterTest extends TestCase
     {
         $converter = new MockResultConverter();
 
-        $converted = $converter->convert(new InMemoryRawResult(object: $result));
+        $converted = $converter->convert(new InMemoryRawResult([], [], $result));
 
         $this->assertSame($result, $converted);
     }

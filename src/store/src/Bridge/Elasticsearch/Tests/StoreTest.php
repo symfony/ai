@@ -80,7 +80,7 @@ final class StoreTest extends TestCase
             $createResponse,
         ]);
 
-        $store = new Store($httpClient, 'foo', dimensions: 768, metric: 'dot_product');
+        $store = new Store($httpClient, 'foo', '_vectors', 768, 'dot_product');
         $store->setup();
 
         $this->assertSame(2, $httpClient->getRequestsCount());

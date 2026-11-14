@@ -30,10 +30,10 @@ final class ToolCallNormalizerTest extends TestCase
 
     public function testSupportsNormalization()
     {
-        $this->assertTrue($this->normalizer->supportsNormalization(new ToolCall('id1', 'function1'), context: [
+        $this->assertTrue($this->normalizer->supportsNormalization(new ToolCall('id1', 'function1'), null, [
             Contract::CONTEXT_MODEL => new Ollama('llama3.2'),
         ]));
-        $this->assertFalse($this->normalizer->supportsNormalization(new ToolCall('id1', 'function1'), context: [
+        $this->assertFalse($this->normalizer->supportsNormalization(new ToolCall('id1', 'function1'), null, [
             Contract::CONTEXT_MODEL => new Model('any-model'),
         ]));
         $this->assertFalse($this->normalizer->supportsNormalization('not a tool call'));

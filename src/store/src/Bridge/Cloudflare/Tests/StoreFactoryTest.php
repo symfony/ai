@@ -28,7 +28,7 @@ final class StoreFactoryTest extends TestCase
 
     public function testStoreCanBeCreatedWithScopingHttpClient()
     {
-        $store = StoreFactory::create('my-index', httpClient: ScopingHttpClient::forBaseUri(HttpClient::create(), 'https://api.cloudflare.com/client/v4/accounts/account-id/', [
+        $store = StoreFactory::create('my-index', null, null, ScopingHttpClient::forBaseUri(HttpClient::create(), 'https://api.cloudflare.com/client/v4/accounts/account-id/', [
             'auth_bearer' => 'api-key',
         ]));
 

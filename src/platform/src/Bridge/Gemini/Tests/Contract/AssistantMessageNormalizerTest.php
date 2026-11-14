@@ -29,7 +29,7 @@ final class AssistantMessageNormalizerTest extends TestCase
     {
         $normalizer = new AssistantMessageNormalizer();
 
-        $this->assertTrue($normalizer->supportsNormalization(new AssistantMessage(new Text('Hello')), context: [
+        $this->assertTrue($normalizer->supportsNormalization(new AssistantMessage(new Text('Hello')), null, [
             Contract::CONTEXT_MODEL => new Gemini('gemini-2.0-flash'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not an assistant message'));

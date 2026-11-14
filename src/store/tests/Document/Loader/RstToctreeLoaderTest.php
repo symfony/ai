@@ -12,7 +12,9 @@
 namespace Symfony\AI\Store\Tests\Document\Loader;
 
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\AI\Store\Document\DocumentInterface;
+use Symfony\AI\Store\Document\Loader\RstLoader;
 use Symfony\AI\Store\Document\Loader\RstToctreeLoader;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
@@ -242,7 +244,7 @@ final class RstToctreeLoaderTest extends TestCase
         file_put_contents($tempDir.'/index.rst', "Title\n=====\n\n.. toctree::\n\n   missing_page\n");
 
         try {
-            $loader = new RstToctreeLoader(throwOnMissingEntry: true);
+            $loader = new RstToctreeLoader(new RstLoader(), true);
 
             $this->expectException(RuntimeException::class);
             $this->expectExceptionMessage('does not exist');
@@ -274,12 +276,12 @@ final class RstToctreeLoaderTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The maximum depth must be a non-negative integer or null, -1 given.');
-        new RstToctreeLoader(maxDepth: -1);
+        new RstToctreeLoader(new RstLoader(), false, new NullLogger(), -1);
     }
 
     public function testMaxDepthZeroLoadsOnlySourceFile()
     {
-        $loader = new RstToctreeLoader(maxDepth: 0);
+        $loader = new RstToctreeLoader(new RstLoader(), false, new NullLogger(), 0);
         $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_absolute_toctree/index.rst'), false);
 
         $titles = array_map(
@@ -294,7 +296,7 @@ final class RstToctreeLoaderTest extends TestCase
 
     public function testMaxDepthOneFollowsDirectEntriesOnly()
     {
-        $loader = new RstToctreeLoader(maxDepth: 1);
+        $loader = new RstToctreeLoader(new RstLoader(), false, new NullLogger(), 1);
         $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_absolute_toctree/index.rst'), false);
 
         $titles = array_map(
@@ -309,7 +311,7 @@ final class RstToctreeLoaderTest extends TestCase
 
     public function testNullMaxDepthLoadsEntireTree()
     {
-        $loader = new RstToctreeLoader(maxDepth: null);
+        $loader = new RstToctreeLoader(new RstLoader(), false, new NullLogger(), null);
         $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_absolute_toctree/index.rst'), false);
 
         $titles = array_map(

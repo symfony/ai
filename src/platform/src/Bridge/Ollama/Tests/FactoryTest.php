@@ -62,7 +62,7 @@ final class FactoryTest extends TestCase
             },
         ]);
 
-        $result = Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('nimble', new Evaluation('Our checkout has returned 500 errors since 9am.', [
+        $result = Factory::createPlatform('http://127.0.0.1:11434', null, $httpClient)->invoke('nimble', new Evaluation('Our checkout has returned 500 errors since 9am.', [
             'is_urgent' => new NoulQuestion('Is this urgent?'),
             'label' => new ChoiceQuestion('Which label fits this ticket?', ['billing' => 'Payments and refunds', 'bug' => 'Software errors']),
         ]));
@@ -94,10 +94,10 @@ final class FactoryTest extends TestCase
                 return new JsonMockResponse(['model' => 'clef-flash', 'answers' => ['portrait' => ['type' => 'noul', 'noul' => 0.98]]]);
             },
         ]);
-        $result = Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('clef-flash', new Evaluation(
+        $result = Factory::createPlatform('http://127.0.0.1:11434', null, $httpClient)->invoke('clef-flash', new Evaluation(
             ['caption' => 'Graduating class'],
             ['portrait' => new NoulQuestion('Does the crop show a portrait?')],
-            images: [new Image('page image', 'image/png'), new Image('crop image', 'image/jpeg')],
+            [new Image('page image', 'image/png'), new Image('crop image', 'image/jpeg')],
         ));
 
         $this->assertSame(0.98, $result->asObject(Answers::class)->getNoul('portrait')->getProbability());
@@ -111,10 +111,10 @@ final class FactoryTest extends TestCase
         ]);
 
         try {
-            Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('nimble', new Evaluation(
+            Factory::createPlatform('http://127.0.0.1:11434', null, $httpClient)->invoke('nimble', new Evaluation(
                 'A photo',
                 ['portrait' => new NoulQuestion('Is this a portrait?')],
-                images: [new Image('image bytes', 'image/png')],
+                [new Image('image bytes', 'image/png')],
             ));
             $this->fail('Text-only decision models must reject images.');
         } catch (InvalidArgumentException $e) {
@@ -140,7 +140,7 @@ final class FactoryTest extends TestCase
             },
         ]);
 
-        $result = Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('qwen3:8b?think=false', new MessageBag(Message::ofUser('Hello')));
+        $result = Factory::createPlatform('http://127.0.0.1:11434', null, $httpClient)->invoke('qwen3:8b?think=false', new MessageBag(Message::ofUser('Hello')));
 
         $this->assertSame('Hello', $result->asText());
     }
@@ -163,7 +163,7 @@ final class FactoryTest extends TestCase
             },
         ], 'http://127.0.0.1:11434');
 
-        $result = Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('phonon', 'Hello from Ollama.', [
+        $result = Factory::createPlatform('http://127.0.0.1:11434', null, $httpClient)->invoke('phonon', 'Hello from Ollama.', [
             'voice' => 'Zoey',
             'response_format' => 'wav',
         ]);
@@ -185,7 +185,7 @@ final class FactoryTest extends TestCase
             ->with('llama3.2')
             ->willReturn($model);
 
-        $platform = Factory::createPlatform('http://127.0.0.1:11434', httpClient: new MockHttpClient(), modelCatalog: $catalog);
+        $platform = Factory::createPlatform('http://127.0.0.1:11434', null, new MockHttpClient(), null, null, 'ollama', null, $catalog);
 
         $this->assertSame($model, $platform->getModelCatalog()->getModel('llama3.2'));
     }

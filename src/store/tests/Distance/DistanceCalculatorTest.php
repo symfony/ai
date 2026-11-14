@@ -317,7 +317,7 @@ final class DistanceCalculatorTest extends TestCase
         $queryVector = new Vector([0.0, 0.0]);
 
         $fullCalculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE);
-        $batchedCalculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, batchSize: 2);
+        $batchedCalculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, 2);
 
         $fullResult = $fullCalculator->calculate($documents, $queryVector, 3);
         $batchedResult = $batchedCalculator->calculate($documents, $queryVector, 3);
@@ -343,7 +343,7 @@ final class DistanceCalculatorTest extends TestCase
             );
         }
 
-        $calculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, batchSize: 3);
+        $calculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, 3);
         $result = $calculator->calculate($documents, new Vector([0.0, 0.0]), 2);
 
         $this->assertCount(2, $result);
@@ -358,7 +358,7 @@ final class DistanceCalculatorTest extends TestCase
         $doc1 = new VectorDocument(Uuid::v4(), new Vector([1.0, 0.0]), new Metadata(['id' => 'a']));
         $doc2 = new VectorDocument(Uuid::v4(), new Vector([0.0, 1.0]), new Metadata(['id' => 'b']));
 
-        $calculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, batchSize: 1);
+        $calculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, 1);
         $result = $calculator->calculate([$doc1, $doc2], new Vector([1.0, 0.0]));
 
         // Without maxItems, all documents are returned (full calculation path)
@@ -375,7 +375,7 @@ final class DistanceCalculatorTest extends TestCase
             new VectorDocument(Uuid::v4(), new Vector([1.0, 0.0]), new Metadata(['id' => 'b'])),
         ];
 
-        $calculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, batchSize: 1000);
+        $calculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, 1000);
         $result = $calculator->calculate($documents, new Vector([0.0, 0.0]), 1);
 
         $this->assertCount(1, $result);
@@ -385,7 +385,7 @@ final class DistanceCalculatorTest extends TestCase
     #[TestDox('Batched calculation returns empty array for empty documents')]
     public function testBatchedCalculationWithEmptyDocuments()
     {
-        $calculator = new DistanceCalculator(batchSize: 100);
+        $calculator = new DistanceCalculator(DistanceStrategy::COSINE_DISTANCE, 100);
 
         $result = $calculator->calculate([], new Vector([1.0, 2.0]), 5);
 
@@ -398,7 +398,7 @@ final class DistanceCalculatorTest extends TestCase
         $doc = new VectorDocument(Uuid::v4(), new Vector([3.0, 4.0]));
 
         $fullCalculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE);
-        $batchedCalculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, batchSize: 1);
+        $batchedCalculator = new DistanceCalculator(DistanceStrategy::EUCLIDEAN_DISTANCE, 1);
 
         $fullResult = $fullCalculator->calculate([$doc], new Vector([0.0, 0.0]), 1);
         $batchedResult = $batchedCalculator->calculate([$doc], new Vector([0.0, 0.0]), 1);
@@ -423,7 +423,7 @@ final class DistanceCalculatorTest extends TestCase
 
         $queryVector = new Vector([1.0, 0.0, 0.0]);
 
-        $calculator = new DistanceCalculator($strategy, batchSize: 2);
+        $calculator = new DistanceCalculator($strategy, 2);
         $result = $calculator->calculate($documents, $queryVector, 2);
 
         $this->assertCount(2, $result);

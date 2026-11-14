@@ -91,7 +91,7 @@ final class ModelClientTest extends TestCase
             return new JsonMockResponse(['candidates' => []]);
         });
 
-        $client = new ModelClient($httpClient, apiKey: 'test-key');
+        $client = new ModelClient($httpClient, null, null, 'test-key');
         $client->request(new Model('gemini-2.0-flash'), ['contents' => []]);
     }
 

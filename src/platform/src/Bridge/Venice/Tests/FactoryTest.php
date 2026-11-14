@@ -28,9 +28,9 @@ final class FactoryTest extends TestCase
     public function testProviderCanBeCreatedWithHttpClientAndApiKey()
     {
         $provider = Factory::createProvider(
-            endpoint: 'https://api.venice.ai/api/v1/',
-            apiKey: 'venice-api-key',
-            httpClient: HttpClient::create(),
+            'https://api.venice.ai/api/v1/',
+            'venice-api-key',
+            HttpClient::create(),
         );
 
         $this->assertInstanceOf(ModelCatalog::class, $provider->getModelCatalog());
@@ -40,8 +40,9 @@ final class FactoryTest extends TestCase
     public function testProviderCanBeCreatedWithoutApiKey()
     {
         $provider = Factory::createProvider(
-            endpoint: 'https://api.venice.ai/api/v1/',
-            httpClient: HttpClient::create(),
+            'https://api.venice.ai/api/v1/',
+            null,
+            HttpClient::create(),
         );
 
         $this->assertInstanceOf(ModelCatalog::class, $provider->getModelCatalog());
@@ -50,8 +51,9 @@ final class FactoryTest extends TestCase
     public function testProviderCanBeCreatedWithScopingHttpClient()
     {
         $provider = Factory::createProvider(
-            endpoint: 'https://api.venice.ai/api/v1/',
-            httpClient: ScopingHttpClient::forBaseUri(HttpClient::create(), 'https://api.venice.ai/api/v1/', [
+            'https://api.venice.ai/api/v1/',
+            null,
+            ScopingHttpClient::forBaseUri(HttpClient::create(), 'https://api.venice.ai/api/v1/', [
                 'auth_bearer' => 'venice-api-key',
             ]),
         );
@@ -62,10 +64,12 @@ final class FactoryTest extends TestCase
     public function testProviderCanBeCreatedWithCustomName()
     {
         $provider = Factory::createProvider(
-            endpoint: 'https://api.venice.ai/api/v1/',
-            apiKey: 'venice-api-key',
-            httpClient: HttpClient::create(),
-            name: 'venice-custom',
+            'https://api.venice.ai/api/v1/',
+            'venice-api-key',
+            HttpClient::create(),
+            null,
+            null,
+            'venice-custom',
         );
 
         $this->assertSame('venice-custom', $provider->getName());
@@ -73,7 +77,7 @@ final class FactoryTest extends TestCase
 
     public function testPlatformCanBeCreatedWithDefaultEndpoint()
     {
-        $platform = Factory::createPlatform(apiKey: 'venice-api-key', httpClient: HttpClient::create());
+        $platform = Factory::createPlatform('venice-api-key', 'https://api.venice.ai/api/v1/', HttpClient::create());
 
         $this->assertInstanceOf(Platform::class, $platform);
     }
@@ -81,9 +85,9 @@ final class FactoryTest extends TestCase
     public function testPlatformCanBeCreatedWithCustomEndpoint()
     {
         $platform = Factory::createPlatform(
-            apiKey: 'venice-api-key',
-            endpoint: 'https://custom-venice.example.com/v1/',
-            httpClient: HttpClient::create(),
+            'venice-api-key',
+            'https://custom-venice.example.com/v1/',
+            HttpClient::create(),
         );
 
         $this->assertInstanceOf(Platform::class, $platform);
@@ -113,7 +117,7 @@ final class FactoryTest extends TestCase
         $catalog = $this->createStub(ModelCatalogInterface::class);
         $catalog->method('getModel')->willReturn($model);
 
-        $platform = Factory::createPlatform('secret', httpClient: new MockHttpClient(), modelCatalog: $catalog);
+        $platform = Factory::createPlatform('secret', 'https://api.venice.ai/api/v1/', new MockHttpClient(), null, null, 'venice', null, $catalog);
 
         $this->assertSame($model, $platform->getModelCatalog()->getModel('custom-model'));
     }

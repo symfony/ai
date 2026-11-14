@@ -78,7 +78,7 @@ final class ModelClientTest extends TestCase
     public function testUsesCustomBaseUrlWithoutTrailingSlash()
     {
         $response = new MockResponse('{}');
-        $modelClient = new ModelClient(new MockHttpClient($response), 'test-api-key', baseUrl: 'https://hf.example.com/');
+        $modelClient = new ModelClient(new MockHttpClient($response), 'test-api-key', null, 'https://hf.example.com/');
 
         $modelClient->request(new Completions('Qwen/Qwen3-32B'), ['model' => 'Qwen/Qwen3-32B', 'messages' => []]);
 

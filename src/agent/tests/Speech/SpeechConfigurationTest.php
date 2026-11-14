@@ -18,7 +18,7 @@ final class SpeechConfigurationTest extends TestCase
 {
     public function testConfigurationCanBeConfigured()
     {
-        $speechConfiguration = new SpeechConfiguration(ttsModel: 'foo');
+        $speechConfiguration = new SpeechConfiguration('foo');
 
         $this->assertFalse($speechConfiguration->supportsSpeechToText());
         $this->assertTrue($speechConfiguration->supportsTextToSpeech());
@@ -27,8 +27,8 @@ final class SpeechConfigurationTest extends TestCase
     public function testConfigurationCanReturnTextToSpeechConfiguration()
     {
         $speechConfiguration = new SpeechConfiguration(
-            ttsModel: 'foo',
-            ttsOptions: ['foo' => 'bar'],
+            'foo',
+            ['foo' => 'bar'],
         );
 
         $this->assertSame(['foo' => 'bar'], $speechConfiguration->getTextToSpeechOptions());
@@ -37,8 +37,10 @@ final class SpeechConfigurationTest extends TestCase
     public function testConfigurationCanReturnSpeechToTextConfiguration()
     {
         $speechConfiguration = new SpeechConfiguration(
-            sttModel: 'foo',
-            sttOptions: ['foo' => 'bar'],
+            null,
+            [],
+            'foo',
+            ['foo' => 'bar'],
         );
 
         $this->assertSame(['foo' => 'bar'], $speechConfiguration->getSpeechToTextOptions());
@@ -47,8 +49,9 @@ final class SpeechConfigurationTest extends TestCase
     public function testConfigurationSupportsBothSttAndTts()
     {
         $speechConfiguration = new SpeechConfiguration(
-            ttsModel: 'tts-model',
-            sttModel: 'stt-model',
+            'tts-model',
+            [],
+            'stt-model',
         );
 
         $this->assertTrue($speechConfiguration->supportsTextToSpeech());
@@ -75,7 +78,7 @@ final class SpeechConfigurationTest extends TestCase
 
     public function testDefaultOptionsAreEmpty()
     {
-        $speechConfiguration = new SpeechConfiguration(ttsModel: 'foo');
+        $speechConfiguration = new SpeechConfiguration('foo');
 
         $this->assertSame([], $speechConfiguration->getTextToSpeechOptions());
         $this->assertSame([], $speechConfiguration->getSpeechToTextOptions());

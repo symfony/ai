@@ -118,7 +118,7 @@ final class JobRunnerTest extends TestCase
         $jobClient = $this->jobClient(...array_fill(0, 200, new JobStatus(JobStateCase::RUNNING, 'Processing')));
 
         try {
-            (new JobRunner(new MockClock(), 2.0))->wait($jobClient, new JobHandle('task-1', maxDuration: 300));
+            (new JobRunner(new MockClock(), 2.0))->wait($jobClient, new JobHandle('task-1', [], null, 300));
             $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
         } catch (JobTimeoutException) {
         }
@@ -132,7 +132,7 @@ final class JobRunnerTest extends TestCase
         $jobClient = $this->jobClient(...array_fill(0, 10, new JobStatus(JobStateCase::RUNNING, 'Processing')));
 
         try {
-            (new JobRunner(new MockClock(), 1.0, 3))->wait($jobClient, new JobHandle('task-1', maxDuration: 600));
+            (new JobRunner(new MockClock(), 1.0, 3))->wait($jobClient, new JobHandle('task-1', [], null, 600));
             $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
         } catch (JobTimeoutException) {
         }
@@ -151,7 +151,7 @@ final class JobRunnerTest extends TestCase
         $runner = new JobRunner(new MockClock(), 1.0, 300);
 
         try {
-            $runner->wait($jobClient, new JobHandle('task-1', maxDuration: 600), maxDuration: 4);
+            $runner->wait($jobClient, new JobHandle('task-1', [], null, 600), 4);
             $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
         } catch (JobTimeoutException $exception) {
             $this->assertStringContainsString('did not finish within 4 second(s)', $exception->getMessage());
@@ -165,7 +165,7 @@ final class JobRunnerTest extends TestCase
         $jobClient = $this->jobClient(...array_fill(0, 10, new JobStatus(JobStateCase::RUNNING, 'Processing')));
 
         try {
-            (new JobRunner(new MockClock(), 2.0))->wait($jobClient, new JobHandle('task-1'), maxDuration: 10);
+            (new JobRunner(new MockClock(), 2.0))->wait($jobClient, new JobHandle('task-1'), 10);
             $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
         } catch (JobTimeoutException) {
         }
@@ -179,7 +179,7 @@ final class JobRunnerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('at least one second');
 
-        (new JobRunner(new MockClock()))->wait($this->jobClient(), new JobHandle('task-1'), maxDuration: 0);
+        (new JobRunner(new MockClock()))->wait($this->jobClient(), new JobHandle('task-1'), 0);
     }
 
     public function testAHandleWithoutAnExpectationFallsBackToTheDefaultBudget()
@@ -221,7 +221,7 @@ final class JobRunnerTest extends TestCase
         $jobClient->onStatus = static fn () => $clock->sleep(2.0);
 
         try {
-            (new JobRunner($clock, 1.0))->wait($jobClient, new JobHandle('task-1'), maxDuration: 9);
+            (new JobRunner($clock, 1.0))->wait($jobClient, new JobHandle('task-1'), 9);
             $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
         } catch (JobTimeoutException) {
         }
@@ -247,7 +247,7 @@ final class JobRunnerTest extends TestCase
         $jobClient = $this->jobClient(...array_fill(0, 200, new JobStatus(JobStateCase::RUNNING, 'Processing')));
 
         try {
-            (new JobRunner(new MockClock()))->wait($jobClient, new JobHandle('task-1', maxDuration: 300, pollInterval: 5.0));
+            (new JobRunner(new MockClock()))->wait($jobClient, new JobHandle('task-1', [], null, 300, 5.0));
             $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
         } catch (JobTimeoutException) {
         }
@@ -261,7 +261,7 @@ final class JobRunnerTest extends TestCase
         $jobClient = $this->jobClient(...array_fill(0, 200, new JobStatus(JobStateCase::RUNNING, 'Processing')));
 
         try {
-            (new JobRunner(new MockClock(), 2.0))->wait($jobClient, new JobHandle('task-1', maxDuration: 60, pollInterval: 5.0));
+            (new JobRunner(new MockClock(), 2.0))->wait($jobClient, new JobHandle('task-1', [], null, 60, 5.0));
             $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
         } catch (JobTimeoutException) {
         }
@@ -275,7 +275,7 @@ final class JobRunnerTest extends TestCase
         $clock = new MockClock('2026-01-01 00:00:00');
 
         try {
-            (new JobRunner($clock, 2.0))->wait($jobClient, new JobHandle('task-1', maxDuration: 60, pollInterval: 5.0), pollInterval: 10.0);
+            (new JobRunner($clock, 2.0))->wait($jobClient, new JobHandle('task-1', [], null, 60, 5.0), null, 10.0);
             $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
         } catch (JobTimeoutException) {
         }
@@ -291,7 +291,7 @@ final class JobRunnerTest extends TestCase
         $jobClient = $this->jobClient(...array_fill(0, 200, new JobStatus(JobStateCase::RUNNING, 'Processing')));
 
         try {
-            (new JobRunner(new MockClock()))->wait($jobClient, new JobHandle('task-1'), maxDuration: 7);
+            (new JobRunner(new MockClock()))->wait($jobClient, new JobHandle('task-1'), 7);
             $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
         } catch (JobTimeoutException) {
         }
@@ -320,7 +320,7 @@ final class JobRunnerTest extends TestCase
         $jobClient = $this->jobClient(...array_fill(0, 200, new JobStatus(JobStateCase::RUNNING, 'Processing')));
 
         try {
-            (new JobRunner(new MockClock(), 1.0, 300, 50))->wait($jobClient, new JobHandle('task-1'), maxPolls: 2);
+            (new JobRunner(new MockClock(), 1.0, 300, 50))->wait($jobClient, new JobHandle('task-1'), null, null, 2);
             $this->fail(\sprintf('Expected a "%s".', JobTimeoutException::class));
         } catch (JobTimeoutException) {
         }
@@ -360,7 +360,7 @@ final class JobRunnerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('greater than zero');
 
-        (new JobRunner(new MockClock()))->wait($this->jobClient(), new JobHandle('task-1'), pollInterval: 0.0);
+        (new JobRunner(new MockClock()))->wait($this->jobClient(), new JobHandle('task-1'), null, 0.0);
     }
 
     public function testItRejectsANonsensicalPollLimit()
@@ -376,7 +376,7 @@ final class JobRunnerTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('at least one');
 
-        (new JobRunner(new MockClock()))->wait($this->jobClient(), new JobHandle('task-1'), maxPolls: 0);
+        (new JobRunner(new MockClock()))->wait($this->jobClient(), new JobHandle('task-1'), null, null, 0);
     }
 
     public function testItRejectsANonsensicalPollInterval()

@@ -17,6 +17,7 @@ use Symfony\AI\Agent\TraceableAgent;
 use Symfony\AI\Platform\TraceablePlatform;
 use Symfony\AI\Store\TraceableStore;
 use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -77,7 +78,8 @@ final class DebugCompilerPass implements CompilerPassInterface
                 ->setDecoratedService($agent, priority: -1024)
                 ->setArguments([
                     new Reference('.inner'),
-                    '$stopwatch' => new Reference('debug.stopwatch', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Definition(MonotonicClock::class),
+                    new Reference('debug.stopwatch', ContainerInterface::NULL_ON_INVALID_REFERENCE),
                 ])
                 ->addTag('ai.traceable_agent')
                 ->addTag('kernel.reset', ['method' => 'reset']);

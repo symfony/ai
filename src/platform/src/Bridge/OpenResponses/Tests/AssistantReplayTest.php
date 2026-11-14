@@ -55,7 +55,7 @@ final class AssistantReplayTest extends TestCase
         $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
 
-        $result = (new ResultConverter())->convert(new InMemoryRawResult(dataStream: [
+        $result = (new ResultConverter())->convert(new InMemoryRawResult([], [
             [
                 'type' => 'response.output_item.done',
                 'item' => [
@@ -67,7 +67,7 @@ final class AssistantReplayTest extends TestCase
             ],
             ['type' => 'response.output_text.delta', 'delta' => 'Symfony AI integrates AI capabilities.'],
             ['type' => 'response.completed', 'response' => ['output' => []]],
-        ], object: $response), ['stream' => true]);
+        ], $response), ['stream' => true]);
 
         $payload = OpenResponsesContract::create()->createRequestPayload(new ResponsesModel('gpt-5'), new MessageBag(
             Message::ofUser('What is Symfony AI?'),

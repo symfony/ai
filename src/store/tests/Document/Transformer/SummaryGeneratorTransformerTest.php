@@ -49,7 +49,7 @@ final class SummaryGeneratorTransformerTest extends TestCase
     public function testDualDocModeYieldsAdditionalSummaryDocument()
     {
         $platform = PlatformTestHandler::createPlatform(new TextResult('A short summary.'));
-        $transformer = new SummaryGeneratorTransformer($platform, 'gpt-4o-mini', yieldSummaryDocuments: true);
+        $transformer = new SummaryGeneratorTransformer($platform, 'gpt-4o-mini', true);
 
         $document = new TextDocument('doc-1', 'Full content here.');
         $result = iterator_to_array($transformer->transform([$document]));
@@ -67,7 +67,7 @@ final class SummaryGeneratorTransformerTest extends TestCase
     public function testSummaryDocumentHasSameMetadata()
     {
         $platform = PlatformTestHandler::createPlatform(new TextResult('Summary.'));
-        $transformer = new SummaryGeneratorTransformer($platform, 'gpt-4o-mini', yieldSummaryDocuments: true);
+        $transformer = new SummaryGeneratorTransformer($platform, 'gpt-4o-mini', true);
 
         $metadata = new Metadata([Metadata::KEY_SOURCE => 'test.rst']);
         $document = new TextDocument('doc-1', 'Content.', $metadata);

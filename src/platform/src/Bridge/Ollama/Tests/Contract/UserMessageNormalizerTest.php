@@ -39,10 +39,10 @@ final class UserMessageNormalizerTest extends TestCase
     {
         $message = new UserMessage(new Text('Hello'));
 
-        $this->assertTrue($this->normalizer->supportsNormalization($message, context: [
+        $this->assertTrue($this->normalizer->supportsNormalization($message, null, [
             Contract::CONTEXT_MODEL => new Ollama('qwen3-vl'),
         ]));
-        $this->assertFalse($this->normalizer->supportsNormalization($message, context: [
+        $this->assertFalse($this->normalizer->supportsNormalization($message, null, [
             Contract::CONTEXT_MODEL => new Model('any-model'),
         ]));
         $this->assertFalse($this->normalizer->supportsNormalization('not a user message'));

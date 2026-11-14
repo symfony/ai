@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Bridge\Filesystem\Exception\OperationNotPermittedException;
 use Symfony\AI\Agent\Bridge\Filesystem\Exception\PathSecurityException;
 use Symfony\AI\Agent\Bridge\Filesystem\Filesystem;
+use Symfony\AI\Agent\Bridge\Filesystem\PathValidator;
 use Symfony\AI\Agent\Bridge\Filesystem\Tests\Fixtures\StatTrackingStreamWrapper;
 use Symfony\Component\Filesystem\Filesystem as SymfonyFilesystem;
 
@@ -341,7 +342,7 @@ class FilesystemTest extends TestCase
     public function testListRecursive()
     {
         $filesystem = $this->createFilesystem();
-        $items = $filesystem->list('.', recursive: true);
+        $items = $filesystem->list('.', true);
 
         $names = array_column($items, 'name');
         $this->assertContains('sample.txt', $names);
@@ -566,8 +567,10 @@ class FilesystemTest extends TestCase
             $this->tempPath,
             $allowWrite,
             $allowDelete,
-            deniedPatterns: $deniedPatterns,
-            maxReadSize: $maxReadSize,
+            [],
+            PathValidator::DEFAULT_DENIED_EXTENSIONS,
+            $deniedPatterns,
+            $maxReadSize,
         );
     }
 }

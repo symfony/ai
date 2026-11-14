@@ -170,9 +170,9 @@ final class VecStoreTest extends TestCase
         $metadata->setText('Some text content');
 
         $store->add(new VectorDocument(
-            id: 'doc-1',
-            vector: new Vector([0.1, 0.2, 0.3]),
-            metadata: $metadata,
+            'doc-1',
+            new Vector([0.1, 0.2, 0.3]),
+            $metadata,
         ));
 
         $results = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['maxItems' => 10]));

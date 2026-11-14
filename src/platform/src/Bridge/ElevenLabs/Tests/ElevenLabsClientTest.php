@@ -193,7 +193,7 @@ final class ElevenLabsClientTest extends TestCase
             ]);
         }, 'https://api.elevenlabs.io/v1/');
 
-        $platform = Factory::createPlatform(apiKey: 'sk-test', httpClient: $httpClient);
+        $platform = Factory::createPlatform('https://api.elevenlabs.io/v1/', 'sk-test', $httpClient);
 
         $model = new ElevenLabs('scribe_v2', [
             Capability::INPUT_AUDIO,
@@ -229,7 +229,7 @@ final class ElevenLabsClientTest extends TestCase
             return new MockResponse($audioFixture->asBinary());
         }, 'https://api.elevenlabs.io/v1/');
 
-        $platform = Factory::createPlatform(apiKey: 'sk-test', httpClient: $httpClient);
+        $platform = Factory::createPlatform('https://api.elevenlabs.io/v1/', 'sk-test', $httpClient);
 
         $model = new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH], [
             'voice' => 'Dslrhjl3ZpzrctukrQSN',

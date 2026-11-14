@@ -43,7 +43,7 @@ final class TextNormalizerTest extends TestCase
     public function testSupportsNormalization(mixed $data, Model $model, bool $result)
     {
         $normalizer = new TextNormalizer();
-        $this->assertEquals($result, $normalizer->supportsNormalization($data, context: [
+        $this->assertEquals($result, $normalizer->supportsNormalization($data, null, [
             Contract::CONTEXT_MODEL => $model,
         ]));
     }

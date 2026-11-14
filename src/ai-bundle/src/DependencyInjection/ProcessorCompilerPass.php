@@ -66,8 +66,8 @@ class ProcessorCompilerPass implements CompilerPassInterface
             usort($agentOutputProcessors, $sortCb);
 
             $agentDefinition
-                ->setArgument('$inputProcessors', array_column($agentInputProcessors, 1))
-                ->setArgument('$outputProcessors', array_column($agentOutputProcessors, 1));
+                ->replaceArgument(2, array_column($agentInputProcessors, 1))
+                ->replaceArgument(3, array_column($agentOutputProcessors, 1));
         }
     }
 }

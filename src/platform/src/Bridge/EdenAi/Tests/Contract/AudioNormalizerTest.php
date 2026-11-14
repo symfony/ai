@@ -28,10 +28,10 @@ final class AudioNormalizerTest extends TestCase
         $normalizer = new AudioNormalizer();
         $audio = new Audio('binary-audio-content', 'audio/mpeg');
 
-        $this->assertTrue($normalizer->supportsNormalization($audio, context: [
+        $this->assertTrue($normalizer->supportsNormalization($audio, null, [
             Contract::CONTEXT_MODEL => new SpeechToText('audio/speech_to_text_async/openai'),
         ]));
-        $this->assertFalse($normalizer->supportsNormalization($audio, context: [
+        $this->assertFalse($normalizer->supportsNormalization($audio, null, [
             Contract::CONTEXT_MODEL => new CompletionsModel('openai/gpt-4o'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not an audio'));

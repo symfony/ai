@@ -29,7 +29,7 @@ final class EmbeddingsTest extends TestCase
 
     public function testItCreatesEmbeddingsWithCustomSettings()
     {
-        $embeddings = new Embeddings('text-embedding-3-large', options: ['dimensions' => 256]);
+        $embeddings = new Embeddings('text-embedding-3-large', [], ['dimensions' => 256]);
 
         $this->assertSame('text-embedding-3-large', $embeddings->getName());
         $this->assertSame(['dimensions' => 256], $embeddings->getOptions());

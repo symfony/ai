@@ -27,7 +27,11 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
         return StoreFactory::create(
             'test_collection',
             'http://127.0.0.1:9308',
-            dimensions: 3,
+            null,
+            '_vectors',
+            'hnsw',
+            'cosine',
+            3,
         );
     }
 }

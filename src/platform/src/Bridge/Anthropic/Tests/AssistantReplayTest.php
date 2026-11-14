@@ -82,7 +82,7 @@ final class AssistantReplayTest extends TestCase
         $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
 
-        $result = (new ResultConverter())->convert(new InMemoryRawResult(dataStream: [
+        $result = (new ResultConverter())->convert(new InMemoryRawResult([], [
             ['type' => 'message_start', 'message' => ['id' => 'msg_1', 'role' => 'assistant', 'content' => []]],
             ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'thinking', 'thinking' => '']],
             ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'thinking_delta', 'thinking' => 'I should search the web.']],
@@ -109,7 +109,7 @@ final class AssistantReplayTest extends TestCase
             ['type' => 'content_block_stop', 'index' => 3],
             ['type' => 'message_delta', 'delta' => ['stop_reason' => 'end_turn']],
             ['type' => 'message_stop'],
-        ], object: $response), ['stream' => true]);
+        ], $response), ['stream' => true]);
 
         $payload = AnthropicContract::create()->createRequestPayload(new Claude(Claude::SONNET_4_0), new MessageBag(
             Message::ofUser('What is Symfony AI?'),
@@ -151,7 +151,7 @@ final class AssistantReplayTest extends TestCase
         $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
 
-        $result = (new ResultConverter())->convert(new InMemoryRawResult(dataStream: [
+        $result = (new ResultConverter())->convert(new InMemoryRawResult([], [
             ['type' => 'message_start', 'message' => ['id' => 'msg_1', 'role' => 'assistant', 'content' => []]],
             ['type' => 'content_block_start', 'index' => 0, 'content_block' => [
                 'type' => 'server_tool_use',
@@ -163,7 +163,7 @@ final class AssistantReplayTest extends TestCase
             ['type' => 'content_block_stop', 'index' => 0],
             ['type' => 'message_delta', 'delta' => ['stop_reason' => 'pause_turn']],
             ['type' => 'message_stop'],
-        ], object: $response), ['stream' => true]);
+        ], $response), ['stream' => true]);
 
         $payload = AnthropicContract::create()->createRequestPayload(new Claude(Claude::SONNET_4_0), new MessageBag(
             Message::ofUser('What is Symfony AI?'),

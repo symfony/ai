@@ -34,7 +34,7 @@ final class RoutingDecisionTest extends TestCase
     {
         $provider = $this->createStub(ProviderInterface::class);
 
-        $decision = new RoutingDecision($provider, 'gpt-4o', reason: 'image detected');
+        $decision = new RoutingDecision($provider, 'gpt-4o', null, 'image detected');
 
         $this->assertSame('gpt-4o', $decision->getModel());
         $this->assertSame('image detected', $decision->getReason());

@@ -74,7 +74,7 @@ final class FallbackModelCatalogTest extends TestCase
             return new JsonMockResponse(['data' => [['embedding' => [0.1, 0.2]]]]);
         });
 
-        $platform = Factory::createPlatform('http://localhost:11434', httpClient: $httpClient, eventDispatcher: $dispatcher);
+        $platform = Factory::createPlatform('http://localhost:11434', null, $httpClient, new FallbackModelCatalog(), null, $dispatcher);
 
         $this->assertCount(1, $platform->invoke('nomic-embed-text', 'A text to embed')->asVectors());
     }

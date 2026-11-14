@@ -38,7 +38,7 @@ class ToolNormalizerTest extends TestCase
     public function testEffectHintsStayOutsideTheModelSchema()
     {
         $tool = new Tool(new ExecutionReference(ToolNoParams::class), 'tool', 'description',
-            effectHints: new ToolEffectHints(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false));
+            null, [], new ToolEffectHints(true, false, true, false));
 
         $this->assertSame(
             '{"type":"function","function":{"name":"tool","description":"description","parameters":{"type":"object","properties":{}}}}',

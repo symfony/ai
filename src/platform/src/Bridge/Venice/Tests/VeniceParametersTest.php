@@ -25,17 +25,17 @@ final class VeniceParametersTest extends TestCase
     public function testAllFieldsAreSerialized()
     {
         $parameters = new VeniceParameters(
-            characterSlug: 'alan-watts',
-            enableWebSearch: VeniceParameters::WEB_SEARCH_AUTO,
-            enableWebScraping: true,
-            enableXSearch: false,
-            enableWebCitations: true,
-            returnSearchResultsAsDocuments: false,
-            includeSearchResultsInStream: true,
-            includeVeniceSystemPrompt: false,
-            disableThinking: true,
-            stripThinkingResponse: false,
-            enableE2ee: true,
+            'alan-watts',
+            VeniceParameters::WEB_SEARCH_AUTO,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
         );
 
         $this->assertSame([
@@ -55,7 +55,7 @@ final class VeniceParametersTest extends TestCase
 
     public function testExtraFieldsAreForwardedVerbatim()
     {
-        $parameters = new VeniceParameters(extra: ['custom_flag' => 'on']);
+        $parameters = new VeniceParameters(null, null, null, null, null, null, null, null, null, null, null, ['custom_flag' => 'on']);
 
         $this->assertSame(['custom_flag' => 'on'], $parameters->toArray());
     }
@@ -64,13 +64,13 @@ final class VeniceParametersTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('"enableWebSearch" must be one of "off", "on", "auto"; got "yes".');
-        new VeniceParameters(enableWebSearch: 'yes');
+        new VeniceParameters(null, 'yes');
     }
 
     public function testWebSearchAcceptsAllAllowedValues()
     {
-        $this->assertSame(['enable_web_search' => 'off'], (new VeniceParameters(enableWebSearch: VeniceParameters::WEB_SEARCH_OFF))->toArray());
-        $this->assertSame(['enable_web_search' => 'on'], (new VeniceParameters(enableWebSearch: VeniceParameters::WEB_SEARCH_ON))->toArray());
-        $this->assertSame(['enable_web_search' => 'auto'], (new VeniceParameters(enableWebSearch: VeniceParameters::WEB_SEARCH_AUTO))->toArray());
+        $this->assertSame(['enable_web_search' => 'off'], (new VeniceParameters(null, VeniceParameters::WEB_SEARCH_OFF))->toArray());
+        $this->assertSame(['enable_web_search' => 'on'], (new VeniceParameters(null, VeniceParameters::WEB_SEARCH_ON))->toArray());
+        $this->assertSame(['enable_web_search' => 'auto'], (new VeniceParameters(null, VeniceParameters::WEB_SEARCH_AUTO))->toArray());
     }
 }

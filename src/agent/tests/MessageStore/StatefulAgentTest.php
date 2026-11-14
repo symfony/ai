@@ -18,6 +18,7 @@ use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\MessageStore\InMemoryMessageStore;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
+use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -43,7 +44,7 @@ final class StatefulAgentTest extends TestCase
             return new TextResult(\sprintf('Answer %d', \count($requests)));
         });
         $store = new InMemoryMessageStore();
-        $agent = new Agent($platform, 'gpt-4', [new SystemPromptInputProcessor('Be brief.')], messageStore: $store);
+        $agent = new Agent($platform, 'gpt-4', [new SystemPromptInputProcessor('Be brief.')], [], 'agent', null, null, 50, false, null, new ToolResultConverter(), $store);
         $id = Uuid::v7();
 
         $agent->call(MessageBag::forId($id, 'First'))->getResult();
@@ -61,7 +62,7 @@ final class StatefulAgentTest extends TestCase
     public function testPassingTheWholeConversationDoesNotDuplicateIt()
     {
         $store = new InMemoryMessageStore();
-        $agent = new Agent(MockPlatformFactory::createPlatform('Hi'), 'gpt-4', messageStore: $store);
+        $agent = new Agent(MockPlatformFactory::createPlatform('Hi'), 'gpt-4', [], [], 'agent', null, null, 50, false, null, new ToolResultConverter(), $store);
 
         $messages = $agent->call(new MessageBag(Message::ofUser('Hello')))->getMessages();
         $messages = $agent->call($messages->with(Message::ofUser('Hello again')))->getMessages();
@@ -75,7 +76,7 @@ final class StatefulAgentTest extends TestCase
     public function testItKeepsTheMetadataOfTheGivenMessages()
     {
         $store = new InMemoryMessageStore();
-        $agent = new Agent(MockPlatformFactory::createPlatform('Hi'), 'gpt-4', messageStore: $store);
+        $agent = new Agent(MockPlatformFactory::createPlatform('Hi'), 'gpt-4', [], [], 'agent', null, null, 50, false, null, new ToolResultConverter(), $store);
         $messages = new MessageBag(Message::ofUser('Hello'));
         $messages->getMetadata()->add('user', 'alice');
 
@@ -87,9 +88,9 @@ final class StatefulAgentTest extends TestCase
     public function testPassingTheWholeConversationDoesNotAggregateItsMetadataAgain()
     {
         $store = new InMemoryMessageStore();
-        $agent = new Agent(MockPlatformFactory::createPlatform('Hi'), 'gpt-4', messageStore: $store);
+        $agent = new Agent(MockPlatformFactory::createPlatform('Hi'), 'gpt-4', [], [], 'agent', null, null, 50, false, null, new ToolResultConverter(), $store);
         $messages = new MessageBag(Message::ofUser('Hello'));
-        $messages->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 10));
+        $messages->getMetadata()->add('token_usage', new TokenUsage(10));
 
         $messages = $agent->call($messages)->getMessages();
         $agent->call($messages->with(Message::ofUser('Hello again')))->getResult();
@@ -112,7 +113,7 @@ final class StatefulAgentTest extends TestCase
             throw new \LogicException('The model is unavailable.');
         });
         $store = new InMemoryMessageStore();
-        $agent = new Agent($platform, 'gpt-4', toolbox: $toolbox, messageStore: $store);
+        $agent = new Agent($platform, 'gpt-4', [], [], 'agent', $toolbox, null, 50, false, null, new ToolResultConverter(), $store);
         $messages = new MessageBag(Message::ofUser('What time is it?'));
 
         try {
@@ -136,7 +137,7 @@ final class StatefulAgentTest extends TestCase
 
             return new TextResult('Hi');
         });
-        $agent = new Agent($platform, 'gpt-4', messageStore: $store);
+        $agent = new Agent($platform, 'gpt-4', [], [], 'agent', null, null, 50, false, null, new ToolResultConverter(), $store);
 
         $this->expectException(ConflictException::class);
 

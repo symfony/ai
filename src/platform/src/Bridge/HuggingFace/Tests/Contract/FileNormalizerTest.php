@@ -25,10 +25,10 @@ final class FileNormalizerTest extends TestCase
     {
         $normalizer = new FileNormalizer();
 
-        $this->assertTrue($normalizer->supportsNormalization(new File('some content', 'image/jpeg'), context: [
+        $this->assertTrue($normalizer->supportsNormalization(new File('some content', 'image/jpeg'), null, [
             Contract::CONTEXT_MODEL => new Classification('test-model'),
         ]));
-        $this->assertFalse($normalizer->supportsNormalization(new File('some content', 'image/jpeg'), context: [
+        $this->assertFalse($normalizer->supportsNormalization(new File('some content', 'image/jpeg'), null, [
             Contract::CONTEXT_MODEL => new Completions('test-model'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not a file'));

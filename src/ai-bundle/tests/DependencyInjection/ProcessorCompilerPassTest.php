@@ -31,9 +31,11 @@ class ProcessorCompilerPassTest extends TestCase
         $container = new ContainerBuilder();
         $container
             ->register('agent1', Agent::class)
+            ->setArguments([new Reference('platform'), 'gpt-4', [], []])
             ->addTag('ai.agent');
         $container
             ->register('agent2', Agent::class)
+            ->setArguments([new Reference('platform'), 'gpt-4', [], []])
             ->addTag('ai.agent');
         $container
             ->register(DummyInputProcessor1::class, DummyInputProcessor1::class)
@@ -79,28 +81,28 @@ class ProcessorCompilerPassTest extends TestCase
                 new Reference(DummyInputProcessor3::class),
                 new Reference(DummyInputProcessor1::class),
             ],
-            $container->getDefinition('agent1')->getArgument('$inputProcessors')
+            $container->getDefinition('agent1')->getArgument(2)
         );
         $this->assertEquals(
             [
                 new Reference(DummyOutputProcessor3::class),
                 new Reference(DummyOutputProcessor1::class),
             ],
-            $container->getDefinition('agent1')->getArgument('$outputProcessors')
+            $container->getDefinition('agent1')->getArgument(3)
         );
         $this->assertEquals(
             [
                 new Reference(DummyInputProcessor3::class),
                 new Reference(DummyInputProcessor2::class),
             ],
-            $container->getDefinition('agent2')->getArgument('$inputProcessors')
+            $container->getDefinition('agent2')->getArgument(2)
         );
         $this->assertEquals(
             [
                 new Reference(DummyOutputProcessor3::class),
                 new Reference(DummyOutputProcessor2::class),
             ],
-            $container->getDefinition('agent2')->getArgument('$outputProcessors')
+            $container->getDefinition('agent2')->getArgument(3)
         );
     }
 
@@ -111,6 +113,7 @@ class ProcessorCompilerPassTest extends TestCase
         // Regular Agent service - should be processed
         $container
             ->register('agent1', Agent::class)
+            ->setArguments([new Reference('platform'), 'gpt-4', [], []])
             ->addTag('ai.agent');
 
         // MultiAgent service - should NOT be processed
@@ -137,11 +140,11 @@ class ProcessorCompilerPassTest extends TestCase
         // Regular agent should have processors injected
         $this->assertEquals(
             [new Reference(DummyInputProcessor1::class)],
-            $container->getDefinition('agent1')->getArgument('$inputProcessors')
+            $container->getDefinition('agent1')->getArgument(2)
         );
         $this->assertEquals(
             [new Reference(DummyOutputProcessor1::class)],
-            $container->getDefinition('agent1')->getArgument('$outputProcessors')
+            $container->getDefinition('agent1')->getArgument(3)
         );
 
         // MultiAgent arguments should remain unchanged

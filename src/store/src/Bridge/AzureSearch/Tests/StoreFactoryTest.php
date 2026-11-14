@@ -26,13 +26,13 @@ final class StoreFactoryTest extends TestCase
 {
     public function testStoreCanBeCreated()
     {
-        $store = StoreFactory::create('foo', endpoint: 'https://test.search.windows.net/', apiKey: 'foo', apiVersion: '2023-11-01', httpClient: HttpClient::create());
+        $store = StoreFactory::create('foo', 'vector', 'https://test.search.windows.net/', 'foo', '2023-11-01', HttpClient::create());
         $this->assertInstanceOf(SearchStore::class, $store);
     }
 
     public function testStoreCanBeCreatedWithScopedHttpClient()
     {
-        $store = StoreFactory::create('foo', httpClient: ScopingHttpClient::forBaseUri(HttpClient::create(), 'https://test.search.windows.net/', [
+        $store = StoreFactory::create('foo', 'vector', null, null, null, ScopingHttpClient::forBaseUri(HttpClient::create(), 'https://test.search.windows.net/', [
             'headers' => [
                 'api-key' => 'foo',
             ],
@@ -54,7 +54,7 @@ final class StoreFactoryTest extends TestCase
             return new JsonMockResponse([], ['http_code' => 200]);
         });
 
-        $store = StoreFactory::create('foo', endpoint: 'https://test.search.windows.net/proxy', httpClient: $httpClient);
+        $store = StoreFactory::create('foo', 'vector', 'https://test.search.windows.net/proxy', null, null, $httpClient);
         $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
 
         $this->assertSame('https://test.search.windows.net/proxy/indexes/foo/docs/index', $resolvedUrl);

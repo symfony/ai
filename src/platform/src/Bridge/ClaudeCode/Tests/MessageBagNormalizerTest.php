@@ -30,7 +30,8 @@ final class MessageBagNormalizerTest extends TestCase
 
         $this->assertTrue($normalizer->supportsNormalization(
             new MessageBag(),
-            context: [Contract::CONTEXT_MODEL => new ClaudeCode('sonnet')],
+            null,
+            [Contract::CONTEXT_MODEL => new ClaudeCode('sonnet')],
         ));
     }
 
@@ -40,7 +41,8 @@ final class MessageBagNormalizerTest extends TestCase
 
         $this->assertFalse($normalizer->supportsNormalization(
             new MessageBag(),
-            context: [Contract::CONTEXT_MODEL => new Claude('claude-3-5-sonnet-latest')],
+            null,
+            [Contract::CONTEXT_MODEL => new Claude('claude-3-5-sonnet-latest')],
         ));
     }
 
@@ -50,7 +52,8 @@ final class MessageBagNormalizerTest extends TestCase
 
         $this->assertFalse($normalizer->supportsNormalization(
             'not a message bag',
-            context: [Contract::CONTEXT_MODEL => new ClaudeCode('sonnet')],
+            null,
+            [Contract::CONTEXT_MODEL => new ClaudeCode('sonnet')],
         ));
     }
 

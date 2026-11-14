@@ -31,7 +31,7 @@ final class StoreFactoryTest extends TestCase
 
     public function testStoreCanBeCreatedWithScopingHttpClient()
     {
-        $store = StoreFactory::create('my_database', 'my_collection', httpClient: ScopingHttpClient::forBaseUri(HttpClient::create(), 'http://127.0.0.1:19530/'));
+        $store = StoreFactory::create('my_database', 'my_collection', null, null, ScopingHttpClient::forBaseUri(HttpClient::create(), 'http://127.0.0.1:19530/'));
 
         $this->assertInstanceOf(Store::class, $store);
     }
@@ -45,7 +45,7 @@ final class StoreFactoryTest extends TestCase
             return new JsonMockResponse(['code' => 0, 'data' => []]);
         });
 
-        $store = StoreFactory::create('my_database', 'my_collection', 'http://127.0.0.1:19530/', httpClient: $httpClient);
+        $store = StoreFactory::create('my_database', 'my_collection', 'http://127.0.0.1:19530/', null, $httpClient);
         $store->drop();
 
         $this->assertSame('http://127.0.0.1:19530/v2/vectordb/databases/drop', $requestedUrl);
@@ -61,7 +61,7 @@ final class StoreFactoryTest extends TestCase
             return new JsonMockResponse(['code' => 0, 'data' => []]);
         });
 
-        $store = StoreFactory::create('my_database', 'my_collection', 'https://example.com/milvus', httpClient: $httpClient);
+        $store = StoreFactory::create('my_database', 'my_collection', 'https://example.com/milvus', null, $httpClient);
         $store->drop();
 
         $this->assertSame('https://example.com/milvus/v2/vectordb/databases/drop', $requestedUrl);
@@ -91,7 +91,7 @@ final class StoreFactoryTest extends TestCase
             return new JsonMockResponse(['code' => 0, 'data' => []]);
         });
 
-        $store = StoreFactory::create('my_database', 'my_collection', 'http://127.0.0.1:19530', httpClient: $httpClient);
+        $store = StoreFactory::create('my_database', 'my_collection', 'http://127.0.0.1:19530', null, $httpClient);
         $store->drop();
 
         $this->assertNull($authorization);
@@ -102,6 +102,6 @@ final class StoreFactoryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The Milvus "apiKey" requires an "endpoint"');
 
-        StoreFactory::create('my_database', 'my_collection', apiKey: 'test-api-key', httpClient: new MockHttpClient());
+        StoreFactory::create('my_database', 'my_collection', null, 'test-api-key', new MockHttpClient());
     }
 }

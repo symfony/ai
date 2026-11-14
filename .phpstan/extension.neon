@@ -18,3 +18,11 @@ services:
         class: Symfony\AI\PHPStan\ForbidTestCoverageAttributesRule
         tags:
             - phpstan.rules.rule
+    -
+        class: Symfony\AI\PHPStan\ForbidNamedArgumentsInTestsRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: Symfony\AI\PHPStan\ForbidNamedServiceArgumentsRule
+        tags:
+            - phpstan.rules.rule

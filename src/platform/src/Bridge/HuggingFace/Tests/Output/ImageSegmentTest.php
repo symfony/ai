@@ -25,9 +25,9 @@ final class ImageSegmentTest extends TestCase
     public function testConstruction()
     {
         $segment = new ImageSegment(
-            label: 'person',
-            score: 0.95,
-            mask: 'base64_encoded_mask_data'
+            'person',
+            0.95,
+            'base64_encoded_mask_data'
         );
 
         $this->assertSame('person', $segment->getLabel());
@@ -39,9 +39,9 @@ final class ImageSegmentTest extends TestCase
     public function testConstructionWithNullScore()
     {
         $segment = new ImageSegment(
-            label: 'background',
-            score: null,
-            mask: 'mask_data'
+            'background',
+            null,
+            'mask_data'
         );
 
         $this->assertSame('background', $segment->getLabel());

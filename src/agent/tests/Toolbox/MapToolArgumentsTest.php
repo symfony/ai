@@ -12,6 +12,7 @@
 namespace Symfony\AI\Agent\Tests\Toolbox;
 
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\MappedRecipe;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\Recipe;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\StatusProvider;
@@ -253,7 +254,9 @@ class MapToolArgumentsTest extends TestCase
         $toolbox = new Toolbox(
             [new ToolWithMappedArguments()],
             new ReflectionToolFactory($this->factoryWithProviders()),
-            eventDispatcher: $dispatcher,
+            new ToolCallArgumentResolver(),
+            new NullLogger(),
+            $dispatcher,
         );
 
         $result = $toolbox->execute(new ToolCall('1', 'tool_with_mapped_arguments', [

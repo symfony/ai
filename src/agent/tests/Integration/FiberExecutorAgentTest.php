@@ -58,7 +58,7 @@ final class FiberExecutorAgentTest extends TestCase
             };
         });
 
-        $agent = new Agent($platform, 'gpt-4', toolbox: $toolbox, toolExecutor: new FiberToolExecutor($toolbox));
+        $agent = new Agent($platform, 'gpt-4', [], [], 'agent', $toolbox, new FiberToolExecutor($toolbox));
 
         $messages = new MessageBag(
             Message::ofUser('What is Symfony?'),
@@ -112,7 +112,7 @@ final class FiberExecutorAgentTest extends TestCase
             };
         });
 
-        $agent = new Agent($platform, 'gpt-4', toolbox: $toolbox, toolExecutor: new FiberToolExecutor($toolbox), includeSources: true);
+        $agent = new Agent($platform, 'gpt-4', [], [], 'agent', $toolbox, new FiberToolExecutor($toolbox), 50, true);
 
         $messages = new MessageBag(
             Message::ofUser('Compare Symfony and Laravel.'),
@@ -147,18 +147,18 @@ final class FiberExecutorAgentTest extends TestCase
 
             if (1 === $invocationCount) {
                 $result = new ToolCallResult([new ToolCall('call_php', 'wikipedia_search', ['query' => 'PHP programming'])]);
-                $result->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 100, completionTokens: 20, totalTokens: 120));
+                $result->getMetadata()->add('token_usage', new TokenUsage(100, 20, null, null, null, null, null, null, null, null, 120));
 
                 return $result;
             }
 
             $result = new TextResult('PHP is a server-side scripting language.');
-            $result->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 150, completionTokens: 30, totalTokens: 180));
+            $result->getMetadata()->add('token_usage', new TokenUsage(150, 30, null, null, null, null, null, null, null, null, 180));
 
             return $result;
         });
 
-        $agent = new Agent($platform, 'gpt-4', toolbox: $toolbox, toolExecutor: new FiberToolExecutor($toolbox));
+        $agent = new Agent($platform, 'gpt-4', [], [], 'agent', $toolbox, new FiberToolExecutor($toolbox));
 
         $messages = new MessageBag(
             Message::ofUser('Tell me about PHP.'),

@@ -30,7 +30,7 @@ final class StoreFactoryTest extends TestCase
 
     public function testStoreCanBeCreatedWithScopingHttpClient()
     {
-        $store = StoreFactory::create('my-index', httpClient: ScopingHttpClient::forBaseUri(HttpClient::create(), 'http://127.0.0.1:9200/'));
+        $store = StoreFactory::create('my-index', null, ScopingHttpClient::forBaseUri(HttpClient::create(), 'http://127.0.0.1:9200/'));
 
         $this->assertInstanceOf(Store::class, $store);
     }
@@ -77,7 +77,7 @@ final class StoreFactoryTest extends TestCase
             return new JsonMockResponse(['count' => 3]);
         });
 
-        $store = StoreFactory::create('foo', httpClient: ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:9200/'));
+        $store = StoreFactory::create('foo', null, ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:9200/'));
 
         $this->assertSame(3, $store->count());
         $this->assertSame('http://127.0.0.1:9200/foo/_count', $requestedUrl);

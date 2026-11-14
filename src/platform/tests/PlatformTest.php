@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
 use Symfony\AI\Platform\ModelRouter\RoutingDecision;
 use Symfony\AI\Platform\ModelRouterInterface;
 use Symfony\AI\Platform\PlainConverter;
@@ -69,7 +70,7 @@ final class PlatformTest extends TestCase
             ->willReturn($deferredResult);
 
         $router = $this->createStub(ModelRouterInterface::class);
-        $router->method('resolve')->willReturn(new RoutingDecision($provider, 'gpt-4o', reason: 'image detected'));
+        $router->method('resolve')->willReturn(new RoutingDecision($provider, 'gpt-4o', null, 'image detected'));
 
         $platform = new Platform([$provider], $router);
 
@@ -106,7 +107,7 @@ final class PlatformTest extends TestCase
             ->willReturn($deferredResult);
 
         $router = $this->createStub(ModelRouterInterface::class);
-        $router->method('resolve')->willReturn(new RoutingDecision($provider, options: ['max_tokens' => 100]));
+        $router->method('resolve')->willReturn(new RoutingDecision($provider, null, ['max_tokens' => 100]));
 
         $platform = new Platform([$provider], $router);
 
@@ -298,7 +299,7 @@ final class PlatformTest extends TestCase
                 return $event;
             });
 
-        $platform = new Platform([$provider], eventDispatcher: $eventDispatcher);
+        $platform = new Platform([$provider], new CatalogBasedModelRouter(), $eventDispatcher);
 
         $platform->invoke($model, 'Hello');
 

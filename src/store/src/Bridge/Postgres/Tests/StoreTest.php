@@ -442,7 +442,7 @@ final class StoreTest extends TestCase
     {
         $pdo = $this->createMock(\PDO::class);
 
-        $store = new Store($pdo, 'embeddings_table', 'embedding', dimensions: 768);
+        $store = new Store($pdo, 'embeddings_table', 'embedding', Metric::L2, 'english', 768);
 
         $pdo->expects($this->exactly(3))
             ->method('exec')
@@ -503,7 +503,7 @@ final class StoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $pdo->expects($this->never())->method('exec');
 
-        $store = new Store($pdo, 'embeddings_table', vectorType: 'bit');
+        $store = new Store($pdo, 'embeddings_table', 'embedding', Metric::L2, 'english', 1536, 'bit');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The "bit" vector type is not supported, use "vector" or "halfvec".');
@@ -516,7 +516,7 @@ final class StoreTest extends TestCase
         $pdo = $this->createMock(\PDO::class);
         $pdo->expects($this->never())->method('exec');
 
-        $store = new Store($pdo, 'embeddings_table', 'embedding', Metric::L1, indexMethod: 'ivfflat');
+        $store = new Store($pdo, 'embeddings_table', 'embedding', Metric::L1, 'english', 1536, 'vector', 'ivfflat');
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The "ivfflat" index method does not support the L1 distance, use "hnsw".');

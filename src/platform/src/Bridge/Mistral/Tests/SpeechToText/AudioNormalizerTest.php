@@ -25,7 +25,7 @@ final class AudioNormalizerTest extends TestCase
     {
         $normalizer = new AudioNormalizer();
 
-        $this->assertTrue($normalizer->supportsNormalization(new Audio('audio-data', 'audio/mpeg'), context: [
+        $this->assertTrue($normalizer->supportsNormalization(new Audio('audio-data', 'audio/mpeg'), null, [
             Contract::CONTEXT_MODEL => new SpeechToText('voxtral-mini-latest'),
         ]));
     }
@@ -34,7 +34,7 @@ final class AudioNormalizerTest extends TestCase
     {
         $normalizer = new AudioNormalizer();
 
-        $this->assertFalse($normalizer->supportsNormalization(new Audio('audio-data', 'audio/mpeg'), context: [
+        $this->assertFalse($normalizer->supportsNormalization(new Audio('audio-data', 'audio/mpeg'), null, [
             Contract::CONTEXT_MODEL => new Mistral('mistral-large-latest'),
         ]));
     }
@@ -43,7 +43,7 @@ final class AudioNormalizerTest extends TestCase
     {
         $normalizer = new AudioNormalizer();
 
-        $this->assertFalse($normalizer->supportsNormalization(new Text('not audio'), context: [
+        $this->assertFalse($normalizer->supportsNormalization(new Text('not audio'), null, [
             Contract::CONTEXT_MODEL => new SpeechToText('voxtral-mini-latest'),
         ]));
     }
@@ -60,7 +60,7 @@ final class AudioNormalizerTest extends TestCase
         $normalizer = new AudioNormalizer();
 
         $audio = Audio::fromFile(\dirname(__DIR__, 7).'/fixtures/audio.mp3');
-        $normalized = $normalizer->normalize($audio, context: [
+        $normalized = $normalizer->normalize($audio, null, [
             Contract::CONTEXT_MODEL => new SpeechToText('voxtral-mini-latest'),
         ]);
 

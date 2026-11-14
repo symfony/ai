@@ -144,7 +144,7 @@ final class DotenvToolTest extends TestCase
         $this->writeFile('.env', "APP_ENV=dev\n");
         $this->setRuntimeEnv('HUGGINGFACE_API_KEY', 'hf_totally-real-secret-value');
 
-        $result = $this->decode((new DotenvTool($this->projectDir))->check(key: 'HUGGINGFACE_API_KEY'));
+        $result = $this->decode((new DotenvTool($this->projectDir))->check('HUGGINGFACE_API_KEY'));
 
         $this->assertCount(1, $result['variables']);
         $variable = $result['variables'][0];
@@ -159,7 +159,7 @@ final class DotenvToolTest extends TestCase
     {
         $this->writeFile('.env', "APP_ENV=dev\n");
 
-        $result = $this->decode((new DotenvTool($this->projectDir))->check(key: 'TOTALLY_UNKNOWN_VAR_XYZ'));
+        $result = $this->decode((new DotenvTool($this->projectDir))->check('TOTALLY_UNKNOWN_VAR_XYZ'));
 
         $variable = $result['variables'][0];
         $this->assertSame([], $variable['declared_in']);
@@ -318,7 +318,7 @@ final class DotenvToolTest extends TestCase
         }
         $this->writeFile('.env', implode("\n", $lines)."\n");
 
-        $result = $this->decode((new DotenvTool($this->projectDir))->check(limit: 2));
+        $result = $this->decode((new DotenvTool($this->projectDir))->check(null, 2));
 
         $this->assertSame(5, $result['count']);
         $this->assertTrue($result['truncated']);

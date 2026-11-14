@@ -25,9 +25,9 @@ final class CollectorDataTest extends TestCase
         $summary = ['requests' => 1, 'status' => 200];
 
         $collectorData = new CollectorData(
-            name: 'request',
-            data: $data,
-            summary: $summary
+            'request',
+            $data,
+            $summary
         );
 
         $this->assertSame('request', $collectorData->getName());
@@ -38,9 +38,9 @@ final class CollectorDataTest extends TestCase
     public function testDataCanBeEmpty()
     {
         $collectorData = new CollectorData(
-            name: 'request',
-            data: [],
-            summary: []
+            'request',
+            [],
+            []
         );
 
         $this->assertSame([], $collectorData->getData());
@@ -49,9 +49,9 @@ final class CollectorDataTest extends TestCase
     public function testSummaryCanBeEmpty()
     {
         $collectorData = new CollectorData(
-            name: 'request',
-            data: ['method' => 'GET'],
-            summary: []
+            'request',
+            ['method' => 'GET'],
+            []
         );
 
         $this->assertSame([], $collectorData->getSummary());
@@ -60,9 +60,9 @@ final class CollectorDataTest extends TestCase
     public function testPropertiesAreReadonly()
     {
         $collectorData = new CollectorData(
-            name: 'request',
-            data: [],
-            summary: []
+            'request',
+            [],
+            []
         );
 
         $reflection = new \ReflectionClass($collectorData);

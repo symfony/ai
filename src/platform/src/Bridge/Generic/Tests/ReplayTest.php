@@ -86,7 +86,7 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
     public function testStreamingUsageIsNotCountedTwice()
     {
         // Recorded from OpenCode Go: usage appears on both the terminal choice and the trailing usage-only chunk.
-        $httpClient = new CassetteHttpClient(new HttpCassette($this->cassetteDirectory().'/opencode_go_duplicate_usage.json'), record: false);
+        $httpClient = new CassetteHttpClient(new HttpCassette($this->cassetteDirectory().'/opencode_go_duplicate_usage.json'), null, false);
         $platform = Factory::createPlatform('https://opencode.ai/zen/go', 'test-api-key', $httpClient);
 
         $result = $platform->invoke('deepseek-v4.1-flash', new MessageBag(Message::ofUser('Reply with the word hello.')), [
@@ -106,7 +106,7 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
     public function testStreamingToolCallIsCompletedOnceWhenTheUsageChunkRepeatsTheFinishReason()
     {
         // Recorded from OpenRouter: the trailing usage chunk repeats the terminal choice, finish_reason included.
-        $httpClient = new CassetteHttpClient(new HttpCassette($this->cassetteDirectory().'/openrouter_repeated_finish_reason.json'), record: false);
+        $httpClient = new CassetteHttpClient(new HttpCassette($this->cassetteDirectory().'/openrouter_repeated_finish_reason.json'), null, false);
         $platform = Factory::createPlatform('https://openrouter.ai/api', 'test-api-key', $httpClient);
 
         $result = $platform->invoke('openai/gpt-4o-mini', new MessageBag(Message::ofUser('What time is it right now?')), [

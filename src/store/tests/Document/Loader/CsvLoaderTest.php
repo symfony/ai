@@ -73,7 +73,7 @@ final class CsvLoaderTest extends TestCase
 
     public function testLoadWithIdColumn()
     {
-        $loader = new CsvLoader(idColumn: 'id');
+        $loader = new CsvLoader('content', 'id');
 
         $documents = iterator_to_array(
             $loader->load($this->getFixturePath())
@@ -87,7 +87,7 @@ final class CsvLoaderTest extends TestCase
 
     public function testLoadWithMetadataColumns()
     {
-        $loader = new CsvLoader(metadataColumns: ['author', 'category']);
+        $loader = new CsvLoader('content', null, ['author', 'category']);
 
         $documents = iterator_to_array(
             $loader->load($this->getFixturePath())
@@ -118,7 +118,7 @@ final class CsvLoaderTest extends TestCase
 
     public function testEmptyContentRowsAreSkipped()
     {
-        $loader = new CsvLoader(idColumn: 'id');
+        $loader = new CsvLoader('content', 'id');
 
         $documents = iterator_to_array(
             $loader->load($this->getFixturePath())
@@ -133,7 +133,7 @@ final class CsvLoaderTest extends TestCase
 
     public function testContentWithCommasIsHandledCorrectly()
     {
-        $loader = new CsvLoader(idColumn: 'id');
+        $loader = new CsvLoader('content', 'id');
 
         $documents = iterator_to_array(
             $loader->load($this->getFixturePath())
@@ -153,7 +153,7 @@ final class CsvLoaderTest extends TestCase
 
     public function testContentWithQuotesIsHandledCorrectly()
     {
-        $loader = new CsvLoader(idColumn: 'id');
+        $loader = new CsvLoader('content', 'id');
 
         $documents = iterator_to_array(
             $loader->load($this->getFixturePath())
@@ -173,7 +173,7 @@ final class CsvLoaderTest extends TestCase
 
     public function testRowIndexInMetadata()
     {
-        $loader = new CsvLoader(idColumn: 'id');
+        $loader = new CsvLoader('content', 'id');
 
         $documents = iterator_to_array(
             $loader->load($this->getFixturePath())

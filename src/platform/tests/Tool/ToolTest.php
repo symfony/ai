@@ -101,7 +101,7 @@ final class ToolTest extends TestCase
     public function testExplicitEffectHints()
     {
         $tool = new Tool(new ExecutionReference('MyClass'), 'tool', 'description',
-            effectHints: new ToolEffectHints(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false));
+            null, [], new ToolEffectHints(true, false, true, false));
 
         $this->assertTrue($tool->isReadOnly());
         $this->assertFalse($tool->isDestructive());
@@ -124,7 +124,7 @@ final class ToolTest extends TestCase
     public function testReadOnlyToolsCannotBeDestructive()
     {
         $tool = new Tool(new ExecutionReference('MyClass'), 'tool', 'description',
-            effectHints: new ToolEffectHints(readOnlyHint: true, destructiveHint: true, idempotentHint: false));
+            null, [], new ToolEffectHints(true, true, false));
 
         $this->assertFalse($tool->isDestructive());
         $this->assertTrue($tool->isIdempotent());
@@ -135,8 +135,8 @@ final class ToolTest extends TestCase
     public function testExplicitHintsOverrideMetadataWithoutDuplicatingState()
     {
         $tool = new Tool(new ExecutionReference('MyClass'), 'tool', 'description',
-            metadata: ['readOnlyHint' => false, 'openWorldHint' => false, 'custom' => 'value'],
-            effectHints: new ToolEffectHints(readOnlyHint: true));
+            null, ['readOnlyHint' => false, 'openWorldHint' => false, 'custom' => 'value'],
+            new ToolEffectHints(true));
 
         $this->assertTrue($tool->isReadOnly());
         $this->assertFalse($tool->isOpenWorld());

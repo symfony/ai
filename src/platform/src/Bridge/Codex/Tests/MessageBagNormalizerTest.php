@@ -30,7 +30,8 @@ final class MessageBagNormalizerTest extends TestCase
 
         $this->assertTrue($normalizer->supportsNormalization(
             new MessageBag(),
-            context: [Contract::CONTEXT_MODEL => new Codex('gpt-5-codex')],
+            null,
+            [Contract::CONTEXT_MODEL => new Codex('gpt-5-codex')],
         ));
     }
 
@@ -40,7 +41,8 @@ final class MessageBagNormalizerTest extends TestCase
 
         $this->assertFalse($normalizer->supportsNormalization(
             new MessageBag(),
-            context: [Contract::CONTEXT_MODEL => new Model('sonnet')],
+            null,
+            [Contract::CONTEXT_MODEL => new Model('sonnet')],
         ));
     }
 
@@ -50,7 +52,8 @@ final class MessageBagNormalizerTest extends TestCase
 
         $this->assertFalse($normalizer->supportsNormalization(
             'not a message bag',
-            context: [Contract::CONTEXT_MODEL => new Codex('gpt-5-codex')],
+            null,
+            [Contract::CONTEXT_MODEL => new Codex('gpt-5-codex')],
         ));
     }
 

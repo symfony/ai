@@ -43,7 +43,7 @@ final class ResultSerializerTest extends TestCase
 
     public function testTextRoundTripPreservesPhase()
     {
-        $result = ResultSerializer::fromArray(ResultSerializer::toArray(new TextResult('Hello', phase: 'final_answer')));
+        $result = ResultSerializer::fromArray(ResultSerializer::toArray(new TextResult('Hello', null, 'final_answer')));
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('Hello', $result->getContent());
@@ -208,11 +208,18 @@ final class ResultSerializerTest extends TestCase
     {
         $source = new TextResult('Hello');
         $source->getMetadata()->add('token_usage', new TokenUsage(
-            promptTokens: 12,
-            completionTokens: 34,
-            cachedTokens: 5,
-            totalTokens: 46,
-            model: 'gpt-4o-2024-08-06',
+            12,
+            34,
+            null,
+            null,
+            5,
+            null,
+            null,
+            null,
+            null,
+            null,
+            46,
+            'gpt-4o-2024-08-06',
         ));
 
         $usage = ResultSerializer::fromArray(ResultSerializer::toArray($source))->getMetadata()->get('token_usage');
@@ -229,7 +236,7 @@ final class ResultSerializerTest extends TestCase
     public function testRoundTripPreservesTokenUsageWithoutModel()
     {
         $source = new TextResult('Hello');
-        $source->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 12, totalTokens: 12));
+        $source->getMetadata()->add('token_usage', new TokenUsage(12, null, null, null, null, null, null, null, null, null, 12));
 
         $usage = ResultSerializer::fromArray(ResultSerializer::toArray($source))->getMetadata()->get('token_usage');
 
@@ -259,8 +266,8 @@ final class ResultSerializerTest extends TestCase
     {
         $source = new TextResult('Hello');
         $source->getMetadata()->add('token_usage', new TokenUsageAggregation([
-            new TokenUsage(promptTokens: 10, totalTokens: 10),
-            new TokenUsage(promptTokens: 7, totalTokens: 7),
+            new TokenUsage(10, null, null, null, null, null, null, null, null, null, 10),
+            new TokenUsage(7, null, null, null, null, null, null, null, null, null, 7),
         ]));
 
         $usage = ResultSerializer::fromArray(ResultSerializer::toArray($source))->getMetadata()->get('token_usage');
@@ -275,7 +282,7 @@ final class ResultSerializerTest extends TestCase
     {
         $stream = new StreamResult((static function (): \Generator {
             yield new TextDelta('Hel');
-            yield new TokenUsage(promptTokens: 4, completionTokens: 2, totalTokens: 6);
+            yield new TokenUsage(4, 2, null, null, null, null, null, null, null, null, 6);
             yield new TextDelta('lo');
         })(), [new StreamListener()]);
 
@@ -332,10 +339,10 @@ final class ResultSerializerTest extends TestCase
     {
         $source = new TextResult('Hello');
         $source->getMetadata()->add('token_usage', new TokenUsageAggregation([
-            new TokenUsage(promptTokens: 10, totalTokens: 10),
+            new TokenUsage(10, null, null, null, null, null, null, null, null, null, 10),
             new TokenUsageAggregation([
-                new TokenUsage(promptTokens: 3, totalTokens: 3),
-                new TokenUsage(promptTokens: 4, totalTokens: 4),
+                new TokenUsage(3, null, null, null, null, null, null, null, null, null, 3),
+                new TokenUsage(4, null, null, null, null, null, null, null, null, null, 4),
             ]),
         ]));
 
@@ -467,7 +474,7 @@ final class ResultSerializerTest extends TestCase
     {
         $source = new TextResult('Hello');
         $source->getMetadata()->add('usage', ['seconds' => 2.0, 'ratio' => 1.5, 'score' => 0.0, 'count' => 3]);
-        $source->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 12, totalTokens: 12));
+        $source->getMetadata()->add('token_usage', new TokenUsage(12, null, null, null, null, null, null, null, null, null, 12));
 
         $encoded = json_encode(ResultSerializer::toArray($source), \JSON_PRESERVE_ZERO_FRACTION | \JSON_THROW_ON_ERROR);
         $metadata = ResultSerializer::fromArray(json_decode((string) $encoded, true, flags: \JSON_THROW_ON_ERROR))->getMetadata();

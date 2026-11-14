@@ -108,27 +108,27 @@ final class StreamingAgentToolCallTest extends TestCase
                 1 => $this->createStreamResultWithToolCall(
                     'Let me check the current date first.',
                     new ToolCall('call_clock_1', 'clock', []),
-                    new TokenUsage(promptTokens: 150, completionTokens: 25, totalTokens: 175)
+                    new TokenUsage(150, 25, null, null, null, null, null, null, null, null, 175)
                 ),
                 2 => $this->createStreamResultWithToolCall(
                     'Now I\'ll search Wikipedia for the mayor of Berlin.',
                     new ToolCall('call_wiki_search_1', 'wikipedia_search', ['query' => 'Berlin mayor 2025']),
-                    new TokenUsage(promptTokens: 250, completionTokens: 30, totalTokens: 280)
+                    new TokenUsage(250, 30, null, null, null, null, null, null, null, null, 280)
                 ),
                 3 => $this->createStreamResultWithToolCall(
                     'Let me read about Kai Wegner.',
                     new ToolCall('call_wiki_article_1', 'wikipedia_article', ['title' => 'Kai Wegner']),
-                    new TokenUsage(promptTokens: 350, completionTokens: 35, totalTokens: 385)
+                    new TokenUsage(350, 35, null, null, null, null, null, null, null, null, 385)
                 ),
                 4 => $this->createTextResultWithTokenUsage(
                     'The Governing Mayor of Berlin is Kai Wegner (CDU), serving since April 2023.',
-                    new TokenUsage(promptTokens: 500, completionTokens: 60, totalTokens: 560)
+                    new TokenUsage(500, 60, null, null, null, null, null, null, null, null, 560)
                 ),
                 default => new TextResult('Unexpected call'),
             };
         });
 
-        $agent = new Agent($platform, 'gpt-4', toolbox: $toolbox, includeSources: true);
+        $agent = new Agent($platform, 'gpt-4', [], [], 'agent', $toolbox, null, 50, true);
 
         $messages = new MessageBag(
             Message::forSystem('You are a helpful assistant. Check the current date for time-sensitive questions.'),

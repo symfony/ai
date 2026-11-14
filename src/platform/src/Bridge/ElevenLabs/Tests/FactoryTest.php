@@ -36,20 +36,20 @@ final class FactoryTest extends TestCase
             return new JsonMockResponse([]);
         });
 
-        $provider = Factory::createProvider($endpoint, apiKey: 'foo', httpClient: $httpClient);
+        $provider = Factory::createProvider($endpoint, 'foo', $httpClient);
         $provider->getModelCatalog()->getModels();
     }
 
     public function testProviderCanBeCreatedWithHttpClientAndRequiredInfos()
     {
-        $provider = Factory::createProvider(apiKey: 'foo', httpClient: HttpClient::create());
+        $provider = Factory::createProvider('https://api.elevenlabs.io/v1/', 'foo', HttpClient::create());
 
         $this->assertInstanceOf(ModelCatalog::class, $provider->getModelCatalog());
     }
 
     public function testProviderCanBeCreatedWithScopingHttpClient()
     {
-        $provider = Factory::createProvider(httpClient: ScopingHttpClient::forBaseUri(HttpClient::create(), 'https://api.elevenlabs.io/v1/', [
+        $provider = Factory::createProvider('https://api.elevenlabs.io/v1/', null, ScopingHttpClient::forBaseUri(HttpClient::create(), 'https://api.elevenlabs.io/v1/', [
             'headers' => [
                 'xi-api-key' => 'bar',
             ],
@@ -82,7 +82,7 @@ final class FactoryTest extends TestCase
         $catalog = $this->createStub(ModelCatalogInterface::class);
         $catalog->method('getModel')->willReturn($model);
 
-        $platform = Factory::createPlatform(apiKey: 'secret', httpClient: new MockHttpClient(), modelCatalog: $catalog);
+        $platform = Factory::createPlatform('https://api.elevenlabs.io/v1/', 'secret', new MockHttpClient(), null, null, 'elevenlabs', null, $catalog);
 
         $this->assertSame($model, $platform->getModelCatalog()->getModel('custom-model'));
     }

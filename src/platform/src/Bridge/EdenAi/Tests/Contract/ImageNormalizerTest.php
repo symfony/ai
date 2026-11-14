@@ -29,13 +29,13 @@ final class ImageNormalizerTest extends TestCase
         $normalizer = new ImageNormalizer();
         $image = new Image('binary-image-content', 'image/jpeg');
 
-        $this->assertTrue($normalizer->supportsNormalization($image, context: [
+        $this->assertTrue($normalizer->supportsNormalization($image, null, [
             Contract::CONTEXT_MODEL => new Ocr('ocr/ocr/google'),
         ]));
-        $this->assertTrue($normalizer->supportsNormalization($image, context: [
+        $this->assertTrue($normalizer->supportsNormalization($image, null, [
             Contract::CONTEXT_MODEL => new ImageAnalysis('image/object_detection/google'),
         ]));
-        $this->assertFalse($normalizer->supportsNormalization($image, context: [
+        $this->assertFalse($normalizer->supportsNormalization($image, null, [
             Contract::CONTEXT_MODEL => new CompletionsModel('openai/gpt-4o'),
         ]));
     }

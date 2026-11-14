@@ -19,10 +19,14 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Bridge\Doctrine\DoctrineDbalMessageStore;
 use Symfony\AI\Agent\Exception\ConflictException;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
+use Symfony\AI\Agent\Toolbox\Source\SourceCollectionNormalizer;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageInterface;
+use Symfony\AI\Platform\Serializer\MessageBagNormalizer;
 use Symfony\Component\Clock\MockClock;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Serializer;
 use Symfony\Component\Uid\Uuid;
 
 final class DoctrineDbalMessageStoreTest extends TestCase
@@ -189,7 +193,7 @@ final class DoctrineDbalMessageStoreTest extends TestCase
     public function testRowKeepsTheIdOfTheLastMessageAsVersion()
     {
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
-        $messageStore = new DoctrineDbalMessageStore('foo', $connection, clock: $clock = new MockClock('2026-10-25 12:00:00'));
+        $messageStore = new DoctrineDbalMessageStore('foo', $connection, new Serializer([new MessageBagNormalizer(), new SourceCollectionNormalizer()], [new JsonEncoder()]), $clock = new MockClock('2026-10-25 12:00:00'));
         $messageStore->setup();
         $answer = Message::ofAssistant('Hi');
         $messages = new MessageBag(Message::ofUser('Hello'), $answer);

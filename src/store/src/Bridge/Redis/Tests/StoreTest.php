@@ -386,7 +386,7 @@ final class StoreTest extends TestCase
     public function testInitializeWithCustomDimensions()
     {
         $redis = $this->createMock(\Redis::class);
-        $store = new Store($redis, 'test_index', 'vector:', dimensions: 768);
+        $store = new Store($redis, 'test_index', 'vector:', Metric::Cosine, 768);
 
         $redis->expects($this->once())
             ->method('rawCommand')
@@ -422,7 +422,7 @@ final class StoreTest extends TestCase
     public function testInitializeWithExtraSchema()
     {
         $redis = $this->createMock(\Redis::class);
-        $store = new Store($redis, 'test_index', 'vector:', extraSchema: ['$.metadata.title', 'AS', 'title', 'TEXT']);
+        $store = new Store($redis, 'test_index', 'vector:', Metric::Cosine, 1536, 'FLAT', ['$.metadata.title', 'AS', 'title', 'TEXT']);
 
         $redis->expects($this->once())
             ->method('rawCommand')

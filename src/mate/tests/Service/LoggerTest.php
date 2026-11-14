@@ -49,7 +49,7 @@ final class LoggerTest extends TestCase
 
     public function testSuccessfulLogWrite()
     {
-        $logger = new Logger($this->logFile, fileLogEnabled: true);
+        $logger = new Logger($this->logFile, true);
         $logger->info('Test message');
 
         $this->assertFileExists($this->logFile);
@@ -61,7 +61,7 @@ final class LoggerTest extends TestCase
     public function testConfigurableLogPath()
     {
         $customLogFile = $this->tempDir.'/custom.log';
-        $logger = new Logger($customLogFile, fileLogEnabled: true);
+        $logger = new Logger($customLogFile, true);
         $logger->warning('Custom path message');
 
         $this->assertFileExists($customLogFile);
@@ -74,7 +74,7 @@ final class LoggerTest extends TestCase
     {
         $customLogFile = $this->tempDir.'/custom.log';
 
-        $logger = new Logger($customLogFile, fileLogEnabled: true, debugEnabled: true);
+        $logger = new Logger($customLogFile, true, true);
         $logger->error('Custom parameters message');
 
         $this->assertFileExists($customLogFile);
@@ -90,7 +90,7 @@ final class LoggerTest extends TestCase
 
         $this->assertDirectoryDoesNotExist($nonExistentDir);
 
-        $logger = new Logger($logFile, fileLogEnabled: true, debugEnabled: true);
+        $logger = new Logger($logFile, true, true);
         $logger->info('Test message');
 
         $this->assertDirectoryExists($nonExistentDir);
@@ -102,7 +102,7 @@ final class LoggerTest extends TestCase
     public function testFileWriteFailureThrowsException()
     {
         $invalidPath = '/invalid/path/that/does/not/exist/test.log';
-        $logger = new Logger($invalidPath, fileLogEnabled: true);
+        $logger = new Logger($invalidPath, true);
 
         $this->expectException(FileWriteException::class);
         $this->expectExceptionMessage('Failed to create log directory: "/invalid/path/that/does/not/exist"');
@@ -121,7 +121,7 @@ final class LoggerTest extends TestCase
         mkdir($readOnlyDir, 0444);
 
         $logFile = $readOnlyDir.'/logs/app.log';
-        $logger = new Logger($logFile, fileLogEnabled: true, debugEnabled: true);
+        $logger = new Logger($logFile, true, true);
 
         $this->expectException(FileWriteException::class);
         $this->expectExceptionMessage('Failed to create log directory');
@@ -138,7 +138,7 @@ final class LoggerTest extends TestCase
         // When fileLogEnabled is false and STDERR is defined, it should write to STDERR
         // We can't easily test STDERR output, but we can verify no file is created
 
-        $logger = new Logger($this->logFile, fileLogEnabled: false);
+        $logger = new Logger($this->logFile, false);
         $logger->info('STDERR message');
 
         $this->assertFileDoesNotExist($this->logFile);
@@ -146,13 +146,13 @@ final class LoggerTest extends TestCase
 
     public function testDebugMessagesRespectDebugFlag()
     {
-        $logger = new Logger($this->logFile, fileLogEnabled: true, debugEnabled: false);
+        $logger = new Logger($this->logFile, true, false);
         $logger->debug('Debug message without flag');
 
         // Without debugEnabled, debug messages should not be logged
         $this->assertFileDoesNotExist($this->logFile);
 
-        $logger = new Logger($this->logFile, fileLogEnabled: true, debugEnabled: true);
+        $logger = new Logger($this->logFile, true, true);
         $logger->debug('Debug message with flag');
 
         $this->assertFileExists($this->logFile);
@@ -163,7 +163,7 @@ final class LoggerTest extends TestCase
 
     public function testContextIsIncludedWithDebugMode()
     {
-        $logger = new Logger($this->logFile, fileLogEnabled: true, debugEnabled: true);
+        $logger = new Logger($this->logFile, true, true);
         $context = ['user' => 'john', 'action' => 'login'];
         $logger->info('User action', $context);
 
@@ -176,7 +176,7 @@ final class LoggerTest extends TestCase
 
     public function testContextIsNotIncludedWithoutDebugMode()
     {
-        $logger = new Logger($this->logFile, fileLogEnabled: true, debugEnabled: false);
+        $logger = new Logger($this->logFile, true, false);
         $context = ['user' => 'john', 'action' => 'login'];
         $logger->info('User action', $context);
 
@@ -188,7 +188,7 @@ final class LoggerTest extends TestCase
 
     public function testMultipleMessagesAppendToFile()
     {
-        $logger = new Logger($this->logFile, fileLogEnabled: true);
+        $logger = new Logger($this->logFile, true);
         $logger->info('First message');
         $logger->warning('Second message');
         $logger->error('Third message');
@@ -202,7 +202,7 @@ final class LoggerTest extends TestCase
 
     public function testLogMessageWithStringableLevel()
     {
-        $logger = new Logger($this->logFile, fileLogEnabled: true);
+        $logger = new Logger($this->logFile, true);
         $stringableLevel = new class implements \Stringable {
             public function __toString(): string
             {
@@ -224,7 +224,7 @@ final class LoggerTest extends TestCase
             $this->markTestSkipped('Permission-based tests are not reliable on Windows');
         }
 
-        $logger = new Logger($this->logFile, fileLogEnabled: true);
+        $logger = new Logger($this->logFile, true);
         $logger->info('Test message');
 
         $this->assertFileExists($this->logFile);
@@ -238,7 +238,7 @@ final class LoggerTest extends TestCase
         }
 
         $logDir = $this->tempDir.'/nested/logs';
-        $logger = new Logger($logDir.'/app.log', fileLogEnabled: true);
+        $logger = new Logger($logDir.'/app.log', true);
         $logger->info('Test message');
 
         $this->assertDirectoryExists($logDir);

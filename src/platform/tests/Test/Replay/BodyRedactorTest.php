@@ -117,7 +117,7 @@ final class BodyRedactorTest extends TestCase
     #[Test]
     public function itAppliesUserSuppliedPatternsOnTopOfTheDefaults(): void
     {
-        $redactor = new BodyRedactor(extraPatterns: ['/\bCUST-\d{5}\b/' => '[redacted-customer]']);
+        $redactor = new BodyRedactor(true, ['/\bCUST-\d{5}\b/' => '[redacted-customer]']);
 
         $this->assertSame(
             '[redacted-customer] sk [redacted-key]',
@@ -128,7 +128,7 @@ final class BodyRedactorTest extends TestCase
     #[Test]
     public function itNeverLetsAUserPatternOverrideACredential(): void
     {
-        $redactor = new BodyRedactor(extraPatterns: ['/sk-[A-Za-z0-9_\-]{16,}/' => '[mine]']);
+        $redactor = new BodyRedactor(true, ['/sk-[A-Za-z0-9_\-]{16,}/' => '[mine]']);
 
         $this->assertSame('[redacted-key]', $redactor->redact('sk-proj-AbCdEf0123456789XyZ'));
     }
@@ -139,7 +139,7 @@ final class BodyRedactorTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('is not a valid regular expression');
 
-        new BodyRedactor(extraPatterns: ['/[unclosed/' => 'x']);
+        new BodyRedactor(true, ['/[unclosed/' => 'x']);
     }
 
     #[Test]

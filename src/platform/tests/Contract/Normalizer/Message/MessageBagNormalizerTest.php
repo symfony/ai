@@ -101,7 +101,7 @@ final class MessageBagNormalizerTest extends TestCase
             'model' => 'gpt-4o',
         ];
 
-        $this->assertSame($expected, $this->normalizer->normalize($messageBag, context: [
+        $this->assertSame($expected, $this->normalizer->normalize($messageBag, null, [
             Contract::CONTEXT_MODEL => new Gpt('gpt-4o'),
         ]));
     }

@@ -29,13 +29,13 @@ final class ImageUrlNormalizerTest extends TestCase
         $normalizer = new ImageUrlNormalizer();
         $imageUrl = new ImageUrl('https://example.com/scan.png');
 
-        $this->assertTrue($normalizer->supportsNormalization($imageUrl, context: [
+        $this->assertTrue($normalizer->supportsNormalization($imageUrl, null, [
             Contract::CONTEXT_MODEL => new Ocr('ocr/ocr/google'),
         ]));
-        $this->assertTrue($normalizer->supportsNormalization($imageUrl, context: [
+        $this->assertTrue($normalizer->supportsNormalization($imageUrl, null, [
             Contract::CONTEXT_MODEL => new DocumentParser('ocr/identity_parser/amazon'),
         ]));
-        $this->assertFalse($normalizer->supportsNormalization($imageUrl, context: [
+        $this->assertFalse($normalizer->supportsNormalization($imageUrl, null, [
             Contract::CONTEXT_MODEL => new CompletionsModel('openai/gpt-4o'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not an image url'));

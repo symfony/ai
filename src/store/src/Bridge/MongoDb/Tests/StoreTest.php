@@ -140,7 +140,7 @@ final class StoreTest extends TestCase
             'test-collection',
             'test-index',
             'vector',
-            bulkWrite: true,
+            true,
         );
 
         $document1 = new VectorDocument($uuid1, new Vector([0.1, 0.2, 0.3]));
@@ -416,7 +416,12 @@ final class StoreTest extends TestCase
             'test-db',
             'test-collection',
             'test-index',
-            indexFields: [
+            'vector',
+            false,
+            new NullLogger(),
+            1536,
+            Metric::Euclidean,
+            [
                 [
                     'path' => 'title',
                     'type' => 'string',
@@ -462,8 +467,11 @@ final class StoreTest extends TestCase
             'test-db',
             'test-collection',
             'test-index',
-            dimensions: 768,
-            metric: $metric,
+            'vector',
+            false,
+            new NullLogger(),
+            768,
+            $metric,
         );
 
         $store->setup();
@@ -493,7 +501,11 @@ final class StoreTest extends TestCase
             'test-collection',
             'test-index',
             'embedding',
-            indexFields: [
+            false,
+            new NullLogger(),
+            1536,
+            Metric::Euclidean,
+            [
                 [
                     'numDimensions' => 1536,
                     'path' => 'embedding',
@@ -780,7 +792,7 @@ final class StoreTest extends TestCase
             'test-collection',
             'test-index',
             'vector',
-            bulkWrite: true,
+            true,
         );
 
         $store->remove([$uuid1->toString(), $uuid2->toString()]);

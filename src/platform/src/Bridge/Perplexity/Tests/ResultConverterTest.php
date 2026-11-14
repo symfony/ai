@@ -306,7 +306,7 @@ final class ResultConverterTest extends TestCase
         $httpResponse = $this->createMock(ResponseInterface::class);
         $httpResponse->method('getStatusCode')->willReturn(200);
 
-        return new InMemoryRawResult(dataStream: $events, object: $httpResponse);
+        return new InMemoryRawResult([], $events, $httpResponse);
     }
 
     /**

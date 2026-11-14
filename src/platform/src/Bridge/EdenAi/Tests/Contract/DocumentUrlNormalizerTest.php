@@ -29,13 +29,13 @@ final class DocumentUrlNormalizerTest extends TestCase
         $normalizer = new DocumentUrlNormalizer();
         $documentUrl = new DocumentUrl('https://example.com/document.pdf');
 
-        $this->assertTrue($normalizer->supportsNormalization($documentUrl, context: [
+        $this->assertTrue($normalizer->supportsNormalization($documentUrl, null, [
             Contract::CONTEXT_MODEL => new Ocr('ocr/ocr/google'),
         ]));
-        $this->assertTrue($normalizer->supportsNormalization($documentUrl, context: [
+        $this->assertTrue($normalizer->supportsNormalization($documentUrl, null, [
             Contract::CONTEXT_MODEL => new DocumentParser('ocr/resume_parser/affinda'),
         ]));
-        $this->assertFalse($normalizer->supportsNormalization($documentUrl, context: [
+        $this->assertFalse($normalizer->supportsNormalization($documentUrl, null, [
             Contract::CONTEXT_MODEL => new CompletionsModel('openai/gpt-4o'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not a document url'));

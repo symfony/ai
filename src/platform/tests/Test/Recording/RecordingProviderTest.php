@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ProviderInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
@@ -56,7 +57,7 @@ final class RecordingProviderTest extends TestCase
         $provider = new RecordingProvider(
             MockFactory::createProvider('hello'),
             new Cassette($this->path),
-            record: true,
+            true,
         );
 
         $result = $provider->invoke('any-model', 'q');
@@ -67,10 +68,10 @@ final class RecordingProviderTest extends TestCase
 
     public function testReplaysWithoutInvokingInnerProvider()
     {
-        $recorder = new RecordingProvider(MockFactory::createProvider('hello'), new Cassette($this->path), record: true);
+        $recorder = new RecordingProvider(MockFactory::createProvider('hello'), new Cassette($this->path), true);
         $recorder->invoke('any-model', 'q');
 
-        $replay = new RecordingProvider($this->throwingProvider(), new Cassette($this->path), record: false);
+        $replay = new RecordingProvider($this->throwingProvider(), new Cassette($this->path), false);
 
         $this->assertSame('hello', $replay->invoke('any-model', 'q')->asText());
     }
@@ -148,14 +149,14 @@ final class RecordingProviderTest extends TestCase
         $recorder = new RecordingProvider(
             AnthropicFactory::createProvider('test-key', $httpClient),
             new Cassette($this->path),
-            record: true,
+            true,
         );
 
         $messages = new MessageBag(Message::ofUser('Hello'));
 
         $this->assertSame('Recorded by Anthropic', $recorder->invoke('claude-3-7-sonnet-20250219', $messages)->asText());
 
-        $replay = new RecordingProvider($this->throwingProvider(), new Cassette($this->path), record: false);
+        $replay = new RecordingProvider($this->throwingProvider(), new Cassette($this->path), false);
 
         $this->assertSame('Recorded by Anthropic', $replay->invoke('claude-3-7-sonnet-20250219', new MessageBag(Message::ofUser('Hello')))->asText());
     }
@@ -164,7 +165,7 @@ final class RecordingProviderTest extends TestCase
     {
         $this->record(MockFactory::createProvider(static function (): TextResult {
             $result = new TextResult('hello');
-            $result->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 12, completionTokens: 34, totalTokens: 46));
+            $result->getMetadata()->add('token_usage', new TokenUsage(12, 34, null, null, null, null, null, null, null, null, 46));
 
             return $result;
         }));
@@ -187,7 +188,7 @@ final class RecordingProviderTest extends TestCase
         // listener itself, which is what promotes the delta to result metadata at record time.
         $this->record(MockFactory::createProvider(static fn (): StreamResult => new StreamResult((static function (): \Generator {
             yield new TextDelta('Hel');
-            yield new TokenUsage(promptTokens: 4, completionTokens: 2, totalTokens: 6);
+            yield new TokenUsage(4, 2, null, null, null, null, null, null, null, null, 6);
             yield new TextDelta('lo');
         })())));
 
@@ -222,10 +223,10 @@ final class RecordingProviderTest extends TestCase
 
     public function testReplayThrowsOnSignatureMiss()
     {
-        $recorder = new RecordingProvider(MockFactory::createProvider('hello'), new Cassette($this->path), record: true);
+        $recorder = new RecordingProvider(MockFactory::createProvider('hello'), new Cassette($this->path), true);
         $recorder->invoke('any-model', 'q');
 
-        $replay = new RecordingProvider($this->throwingProvider(), new Cassette($this->path), record: false);
+        $replay = new RecordingProvider($this->throwingProvider(), new Cassette($this->path), false);
 
         $this->expectException(RuntimeException::class);
         $replay->invoke('any-model', 'different-input');
@@ -235,18 +236,18 @@ final class RecordingProviderTest extends TestCase
     {
         $signature = static fn (string|Model $model, array|string|object $input, array $options): string => 'fixed';
 
-        $recorder = new RecordingProvider(MockFactory::createProvider('hello'), new Cassette($this->path), record: true, signature: $signature);
+        $recorder = new RecordingProvider(MockFactory::createProvider('hello'), new Cassette($this->path), true, $signature);
         $recorder->invoke('any-model', 'question asked at 2026-01-01');
 
-        $replay = new RecordingProvider($this->throwingProvider(), new Cassette($this->path), record: false, signature: $signature);
+        $replay = new RecordingProvider($this->throwingProvider(), new Cassette($this->path), false, $signature);
 
         $this->assertSame('hello', $replay->invoke('any-model', 'question asked at 2026-08-16')->asText());
     }
 
     public function testDelegatesMetadataMethods()
     {
-        $inner = MockFactory::createProvider('hello', name: 'inner');
-        $provider = new RecordingProvider($inner, new Cassette($this->path), record: false);
+        $inner = MockFactory::createProvider('hello', new FallbackModelCatalog(), null, null, 'inner');
+        $provider = new RecordingProvider($inner, new Cassette($this->path), false);
 
         $this->assertSame('inner', $provider->getName());
         $this->assertTrue($provider->supports('any-model'));
@@ -255,13 +256,13 @@ final class RecordingProviderTest extends TestCase
 
     private function record(ProviderInterface $inner): void
     {
-        $provider = new RecordingProvider($inner, new Cassette($this->path), record: true);
+        $provider = new RecordingProvider($inner, new Cassette($this->path), true);
         $provider->invoke('any-model', 'q');
     }
 
     private function replay(): RecordingProvider
     {
-        return new RecordingProvider($this->throwingProvider(), new Cassette($this->path), record: false);
+        return new RecordingProvider($this->throwingProvider(), new Cassette($this->path), false);
     }
 
     private function throwingProvider(): ProviderInterface

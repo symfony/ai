@@ -71,8 +71,9 @@ class PathValidatorTest extends TestCase
     {
         $validator = new PathValidator(
             $this->fixturesPath,
-            deniedExtensions: ['txt'],
-            deniedPatterns: [],
+            [],
+            ['txt'],
+            [],
         );
         $this->expectException(PathSecurityException::class);
         $this->expectExceptionMessage('Extension "txt" is not allowed');
@@ -84,9 +85,9 @@ class PathValidatorTest extends TestCase
     {
         $validator = new PathValidator(
             $this->fixturesPath,
-            allowedExtensions: ['md', 'json'],
-            deniedExtensions: [],
-            deniedPatterns: [],
+            ['md', 'json'],
+            [],
+            [],
         );
         $this->expectException(PathSecurityException::class);
         $this->expectExceptionMessage('Extension "txt" is not in the allowed list');
@@ -100,15 +101,16 @@ class PathValidatorTest extends TestCase
         $this->expectException(PathSecurityException::class);
         $this->expectExceptionMessage('Extension "phtml" is not allowed');
 
-        $validator->validate('shell.phtml', mustExist: false);
+        $validator->validate('shell.phtml', false);
     }
 
     public function testValidateDirectoryContentsThrowsOnDeniedExtension()
     {
         $validator = new PathValidator(
             $this->fixturesPath,
-            deniedExtensions: ['txt'],
-            deniedPatterns: [],
+            [],
+            ['txt'],
+            [],
         );
         $this->expectException(PathSecurityException::class);
         $this->expectExceptionMessage('Extension "txt" is not allowed');
@@ -120,9 +122,9 @@ class PathValidatorTest extends TestCase
     {
         $validator = new PathValidator(
             $this->fixturesPath,
-            allowedExtensions: ['md'],
-            deniedExtensions: [],
-            deniedPatterns: [],
+            ['md'],
+            [],
+            [],
         );
         $this->expectException(PathSecurityException::class);
         $this->expectExceptionMessage('Extension "txt" is not in the allowed list');
@@ -134,8 +136,9 @@ class PathValidatorTest extends TestCase
     {
         $validator = new PathValidator(
             $this->fixturesPath,
-            deniedExtensions: [],
-            deniedPatterns: ['*.txt'],
+            [],
+            [],
+            ['*.txt'],
         );
         $this->expectException(PathSecurityException::class);
         $this->expectExceptionMessage('matches denied pattern');
@@ -147,8 +150,9 @@ class PathValidatorTest extends TestCase
     {
         $validator = new PathValidator(
             $this->fixturesPath,
-            deniedExtensions: [],
-            deniedPatterns: ['nested/*'],
+            [],
+            [],
+            ['nested/*'],
         );
         $this->expectException(PathSecurityException::class);
         $this->expectExceptionMessage('Path "nested/file.txt" matches denied pattern "nested/*"');
@@ -160,19 +164,20 @@ class PathValidatorTest extends TestCase
     {
         $validator = new PathValidator(
             $this->fixturesPath,
-            deniedExtensions: [],
-            deniedPatterns: ['nested/*.txt'],
+            [],
+            [],
+            ['nested/*.txt'],
         );
         $this->expectException(PathSecurityException::class);
         $this->expectExceptionMessage('Path "nested/newfile.txt" matches denied pattern "nested/*.txt"');
 
-        $validator->validate('nested/newfile.txt', mustExist: false);
+        $validator->validate('nested/newfile.txt', false);
     }
 
     public function testValidateNonExistentFileWithMustExistFalse()
     {
         $validator = new PathValidator($this->fixturesPath, [], [], []);
-        $resolved = $validator->validate('newfile.txt', mustExist: false);
+        $resolved = $validator->validate('newfile.txt', false);
 
         $this->assertSame(realpath($this->fixturesPath).'/newfile.txt', $resolved);
     }
@@ -188,7 +193,7 @@ class PathValidatorTest extends TestCase
     public function testValidateDirectoryNonExistentWithMustExistFalse()
     {
         $validator = new PathValidator($this->fixturesPath, [], [], []);
-        $resolved = $validator->validateDirectory('newdir', mustExist: false);
+        $resolved = $validator->validateDirectory('newdir', false);
 
         $this->assertSame(realpath($this->fixturesPath).'/newdir', $resolved);
     }
@@ -263,7 +268,7 @@ class PathValidatorTest extends TestCase
             $this->expectException(PathSecurityException::class);
             $this->expectExceptionMessage('outside the allowed base path');
 
-            $validator->validateDirectory($sibling, mustExist: false);
+            $validator->validateDirectory($sibling, false);
         } finally {
             @rmdir($base);
             @rmdir(\dirname($base));

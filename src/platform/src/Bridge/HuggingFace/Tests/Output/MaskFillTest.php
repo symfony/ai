@@ -25,10 +25,10 @@ final class MaskFillTest extends TestCase
     public function testConstruction()
     {
         $maskFill = new MaskFill(
-            token: 12345,
-            tokenStr: 'happy',
-            sequence: 'I am feeling happy today',
-            score: 0.85
+            12345,
+            'happy',
+            'I am feeling happy today',
+            0.85
         );
 
         $this->assertSame(12345, $maskFill->getToken());
