@@ -27,6 +27,7 @@ use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -41,13 +42,13 @@ final class Agent implements AgentInterface
     /**
      * @param InputProcessorInterface[]  $inputProcessors
      * @param OutputProcessorInterface[] $outputProcessors
-     * @param non-empty-string           $model
+     * @param non-empty-string|Model     $model
      * @param bool                       $includeSources   exposes the sources collected during tool calling as `sources` result metadata
      * @param MessageStoreInterface|null $messageStore     continues the conversation stored under the id of the given messages and saves its progress
      */
     public function __construct(
         PlatformInterface $platform,
-        private readonly string $model,
+        private readonly string|Model $model,
         private readonly iterable $inputProcessors = [],
         private readonly iterable $outputProcessors = [],
         private readonly string $name = 'agent',
@@ -74,7 +75,10 @@ final class Agent implements AgentInterface
         );
     }
 
-    public function getModel(): string
+    /**
+     * @return non-empty-string|Model
+     */
+    public function getModel(): string|Model
     {
         return $this->model;
     }

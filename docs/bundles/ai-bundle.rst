@@ -1044,8 +1044,9 @@ single call::
 
     $result = $agent->call($messages, ['model' => 'gpt-4o']);
 
-The model must be available on the platform of the agent. If the option isn't a string, the call throws
-an :class:`Symfony\\AI\\Agent\\Exception\\InvalidArgumentException`.
+The model must be available on the platform of the agent. The option also accepts a
+:class:`Symfony\\AI\\Platform\\Model` instance. For any other value, the call throws an
+:class:`Symfony\\AI\\Agent\\Exception\\InvalidArgumentException`.
 
 The agent removes the ``model`` option before it calls the platform, so output processors don't find it in
 the options of the :class:`Symfony\\AI\\Agent\\Output`.

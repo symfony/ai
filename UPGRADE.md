@@ -63,6 +63,16 @@ Agent
    +new Agent($platform, 'gpt-5', toolbox: $toolbox, includeSources: true);
    ```
 
+ * `Agent::getModel()`, `Input::getModel()` and `Output::getModel()` return `string|Model` instead of `string`, since
+   an agent and the `model` option accept a `Symfony\AI\Platform\Model` instance. Processors that need the name
+   must handle both:
+
+   ```diff
+   -$name = $input->getModel();
+   +$model = $input->getModel();
+   +$name = $model instanceof Model ? $model->getName() : $model;
+   ```
+
 AI Bundle
 ---------
 
