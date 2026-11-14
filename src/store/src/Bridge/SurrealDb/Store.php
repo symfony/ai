@@ -91,6 +91,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('POST', 'sql', \sprintf('DELETE %s;', implode(', ', $recordIds)));
     }
 
+    /**
+     * Fails with a transaction conflict while SurrealDB still compacts recent writes into the HNSW index.
+     *
+     * @throws RuntimeException
+     */
     public function clear(array $options = []): void
     {
         $this->request('POST', 'sql', \sprintf('DELETE %s;', $this->table));
