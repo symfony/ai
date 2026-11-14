@@ -19,6 +19,7 @@ use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Input;
+use Symfony\AI\Agent\InputProcessor\ModelOverrideInputProcessor;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
@@ -36,6 +37,7 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
@@ -84,6 +86,52 @@ final class AgentTest extends TestCase
         $agent = new Agent($platform, 'gpt-4o');
 
         $this->assertSame('gpt-4o', $agent->getModel());
+    }
+
+    public function testCallInvokesPlatformWithModelInstance()
+    {
+        $model = new Model('gpt-4o');
+        $messages = new MessageBag(Message::ofUser('Hello'));
+        $result = new TextResult('Hi');
+        $response = new DeferredResult(new PlainConverter($result), $this->createStub(RawResultInterface::class), []);
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())
+            ->method('invoke')
+            ->with($model, $messages, [])
+            ->willReturn($response);
+
+        $agent = new Agent($platform, $model);
+
+        $this->assertSame($model, $agent->getModel());
+        $this->assertSame($result, $agent->call($messages)->getResult());
+    }
+
+    public function testCallWithModelInstanceOptionReachesPlatformAndOutput()
+    {
+        $model = new Model('gpt-4o');
+        $messages = new MessageBag(Message::ofUser('Hello'));
+        $response = new DeferredResult(new PlainConverter(new TextResult('Hi')), $this->createStub(RawResultInterface::class), []);
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())
+            ->method('invoke')
+            ->with($model, $messages, [])
+            ->willReturn($response);
+
+        $outputProcessor = new class implements OutputProcessorInterface {
+            public ?Output $output = null;
+
+            public function processOutput(Output $output): void
+            {
+                $this->output = $output;
+            }
+        };
+
+        $agent = new Agent($platform, 'gpt-4o-mini', [new ModelOverrideInputProcessor()], [$outputProcessor]);
+        $agent->call($messages, ['model' => $model])->getResult();
+
+        $this->assertSame($model, $outputProcessor->output?->getModel());
     }
 
     public function testCallNormalizesStringInputIntoUserMessage()

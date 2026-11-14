@@ -12,6 +12,7 @@
 namespace Symfony\AI\Agent;
 
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ResultInterface;
 
 /**
@@ -20,17 +21,21 @@ use Symfony\AI\Platform\Result\ResultInterface;
 final class Output
 {
     /**
-     * @param array<string, mixed> $options
+     * @param non-empty-string|Model $model
+     * @param array<string, mixed>   $options
      */
     public function __construct(
-        private readonly string $model,
+        private readonly string|Model $model,
         private ResultInterface $result,
         private readonly MessageBag $messageBag,
         private readonly array $options = [],
     ) {
     }
 
-    public function getModel(): string
+    /**
+     * @return non-empty-string|Model
+     */
+    public function getModel(): string|Model
     {
         return $this->model;
     }
