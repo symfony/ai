@@ -23,18 +23,20 @@ Using a file-based SQLite database for persistence::
 
     use Symfony\AI\Store\Bridge\Sqlite\Store;
 
+    $store = new Store('sqlite:/path/to/vectors.db', 'my_vectors');
+    $store->setup();
+
+Given a DSN, the store opens the connection on its first query and keeps it.
+It also accepts a ``\PDO`` instance::
+
     $pdo = new \PDO('sqlite:/path/to/vectors.db');
     $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
     $store = new Store($pdo, 'my_vectors');
-    $store->setup();
 
 Using an in-memory SQLite database (for testing)::
 
-    $pdo = new \PDO('sqlite::memory:');
-    $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-
-    $store = new Store($pdo, 'my_vectors');
+    $store = new Store('sqlite::memory:', 'my_vectors');
     $store->setup();
 
 Factory Methods
@@ -152,6 +154,13 @@ You can check if the extension is available before creating the store::
     if (VecStore::isExtensionAvailable($pdo)) {
         $store = new VecStore($pdo, 'my_vectors');
     }
+
+.. note::
+
+    Given a DSN instead of a ``\PDO`` instance, the ``VecStore`` opens the connection
+    itself and cannot load the extension. Use a DSN only when ``sqlite-vec`` is built
+    into your SQLite library. Otherwise, pass a ``\PDO`` instance on which you called
+    ``loadExtension()``. The same applies to ``StoreFactory::createVecStore()``.
 
 Factory Methods
 ---------------

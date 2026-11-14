@@ -888,6 +888,24 @@ final class VecStoreTest extends TestCase
         $this->assertSame('doc-1', $results[0]->getId());
     }
 
+    public function testConnectsToTheDsnOnTheFirstQuery()
+    {
+        $store = new VecStore('missing-driver:dbname=test', 'test_vectors');
+
+        $this->expectException(\PDOException::class);
+        $this->expectExceptionMessage('could not find driver');
+
+        $store->count();
+    }
+
+    public function testRejectsConnectionOptionsWithAPdoInstance()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The connection options can only be used with a DSN, not with a PDO instance.');
+
+        new VecStore(new \PDO('sqlite::memory:'), 'test_vectors', Metric::Cosine, 1536, ['db_connection_options' => []]);
+    }
+
     /**
      * @param array<string, mixed> $options
      */

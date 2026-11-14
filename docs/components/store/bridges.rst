@@ -124,8 +124,16 @@ PHP ``ext-pdo``
 The table and index are created by ``setup()``::
 
     use Symfony\AI\Store\Bridge\Postgres\Metric;
+    use Symfony\AI\Store\Bridge\Postgres\Store;
     use Symfony\AI\Store\Bridge\Postgres\StoreFactory;
 
+    // the connection is opened on the first query
+    $store = new Store('pgsql:host=localhost;dbname=mydb', 'documents', metric: Metric::Cosine, connectionOptions: [
+        'db_username' => $user,
+        'db_password' => $password,
+    ]);
+
+    // or from a PDO instance
     $pdo = new \PDO('pgsql:host=localhost;dbname=mydb', $user, $password);
     $store = StoreFactory::createStoreFromPdo($pdo, 'documents', vectorFieldName: 'embedding', metric: Metric::Cosine);
 
@@ -179,6 +187,13 @@ Vector storage using MariaDB's native ``VECTOR`` column type.
     use Symfony\AI\Store\Bridge\MariaDb\Metric;
     use Symfony\AI\Store\Bridge\MariaDb\Store;
 
+    // the connection is opened on the first query
+    $store = new Store('mysql:host=localhost;dbname=mydb', 'documents', 'embedding_idx', 'embedding', Metric::Cosine, connectionOptions: [
+        'db_username' => $user,
+        'db_password' => $password,
+    ]);
+
+    // or from a PDO instance
     $store = Store::fromPdo($pdo, 'documents', indexName: 'embedding_idx', vectorFieldName: 'embedding', metric: Metric::Cosine);
 
     // or from a Doctrine DBAL connection
@@ -219,7 +234,7 @@ search through the `sqlite-vec`_ extension.
 
     $store = StoreFactory::create('sqlite:/path/to/store.db', 'documents');
 
-    // or with the sqlite-vec extension for native vector search
+    // or with the sqlite-vec extension for native vector search, if it is built into SQLite
     $store = StoreFactory::createVecStore('sqlite:/path/to/store.db', 'documents');
 
 .. code-block:: yaml
