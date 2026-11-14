@@ -197,6 +197,35 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testStoreCannotAddWhenAnObjectFailed()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            [
+                'class' => 'test',
+                'id' => 'a2a1b0a6-7f04-4d4b-9f0c-4b8d1c7e8f10',
+                'result' => ['status' => 'SUCCESS'],
+            ],
+            [
+                'class' => 'test',
+                'id' => 'f15f7662-5a00-42d9-852f-8f2070183967',
+                'result' => [
+                    'errors' => ['error' => [['message' => 'Validate vector index for f15f7662-5a00-42d9-852f-8f2070183967: new node has a vector with length 4. Existing nodes have vectors with length 3: vector dimensions do not match the index dimensions']]],
+                    'status' => 'FAILED',
+                ],
+            ],
+        ], ['http_code' => 200]), 'http://127.0.0.1:8080');
+
+        $store = new Store($httpClient, 'test');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to add 1 of 2 object(s) to the "test" collection, first error for object "f15f7662-5a00-42d9-852f-8f2070183967": Validate vector index for f15f7662-5a00-42d9-852f-8f2070183967: new node has a vector with length 4. Existing nodes have vectors with length 3: vector dimensions do not match the index dimensions.');
+
+        $store->add([
+            new VectorDocument(Uuid::fromString('a2a1b0a6-7f04-4d4b-9f0c-4b8d1c7e8f10'), new Vector([0.1, 0.2, 0.3])),
+            new VectorDocument(Uuid::fromString('f15f7662-5a00-42d9-852f-8f2070183967'), new Vector([0.1, 0.2, 0.3, 0.4])),
+        ]);
+    }
+
     public function testStoreCannotQueryOnInvalidResponse()
     {
         $httpClient = new MockHttpClient([
