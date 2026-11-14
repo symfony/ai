@@ -364,7 +364,7 @@ final class ResultConverterTest extends TestCase
         $streamResult = $converter->convert($raw, ['stream' => true]);
 
         $this->expectException(MalformedToolCallException::class);
-        $this->expectExceptionMessage('Anthropic returned malformed JSON arguments for the "get_weather" tool: "Syntax error"');
+        $this->expectExceptionMessage('Anthropic returned malformed JSON arguments for the "get_weather" tool: "Syntax error');
 
         iterator_to_array($streamResult->getContent(), false);
     }

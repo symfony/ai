@@ -36,11 +36,11 @@ jobs:
             matrix:
                 include:
                     -   php-version: '8.2'
-                    -   php-version: '8.5'
+                    -   php-version: '8.6'
                     # LTS version of Symfony
                     -   php-version: '8.2'
                         symfony-version: '7.4.*'
-                    -   php-version: '8.5'
+                    -   php-version: '8.6'
                         symfony-version: '8.2.*'
 
         steps:
@@ -70,7 +70,7 @@ jobs:
             # The Sqlite bridge tests only load the extension on PHP >= 8.4 and fall back to plain
             # PDO otherwise, so installing it on 8.2 would have no effect.
             - name: Install sqlite-vec extension
-              if: steps.packages.outputs.count != '0' && matrix.php-version == '8.5'
+              if: steps.packages.outputs.count != '0' && matrix.php-version != '8.2'
               run: |
                   # Without --fail curl exits 0 on an HTTP error and pipes the error page into sh, and
                   # without pipefail only sh's status is checked. The extension would then be missing
@@ -352,7 +352,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php-version: ['8.2', '8.5']
+                php-version: ['8.2', '8.6']
                 dependency-version: ['']
                 symfony-version: ['']
                 include:

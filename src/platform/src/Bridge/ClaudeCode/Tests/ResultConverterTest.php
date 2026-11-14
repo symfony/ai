@@ -308,7 +308,7 @@ final class ResultConverterTest extends TestCase
         $result = $converter->convert($rawResult, ['stream' => true]);
 
         $this->expectException(MalformedToolCallException::class);
-        $this->expectExceptionMessage('Claude Code returned malformed JSON arguments for the "get_weather" tool: "Syntax error"');
+        $this->expectExceptionMessage('Claude Code returned malformed JSON arguments for the "get_weather" tool: "Syntax error');
 
         iterator_to_array($result->getContent(), false);
     }
