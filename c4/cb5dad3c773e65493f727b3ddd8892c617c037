@@ -1,0 +1,9 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-11-14T01:20:22Z
+
+Rebased and pushed two commits on top:
+
+* The old option names (`maxItems`, `max_items`, `k`, `size`, `topK`) are removed instead of deprecated, documented in `UPGRADE.md` - OpenSearch keeps `k` for the neighbors searched per shard, defaulting to `limit`.
+* `RerankerListener` reranks down to `limit`, and registered on `PreQueryEvent` as well, its new `overFetchFactor` fetches that many times more documents from the store.
+* `CombinedStore` caps hybrid results at `limit`, and Cloudflare rejects a `limit` above 50, its `topK` cap when returning values.
