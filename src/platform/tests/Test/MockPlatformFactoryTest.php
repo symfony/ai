@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Event\ResultConvertedEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -49,7 +50,7 @@ final class MockPlatformFactoryTest extends TestCase
             });
         }
 
-        $platform = MockPlatformFactory::createPlatform('hi', eventDispatcher: $eventDispatcher);
+        $platform = MockPlatformFactory::createPlatform('hi', new FallbackModelCatalog(), null, $eventDispatcher);
         $platform->invoke('any-model', 'q')->asText();
 
         $this->assertSame([InvocationEvent::class, ResultEvent::class, ResultConvertedEvent::class], $dispatched);
@@ -125,7 +126,7 @@ final class MockPlatformFactoryTest extends TestCase
     {
         $dispatcher = new EventDispatcher();
         $dispatcher->addSubscriber(new PlatformSubscriber());
-        $platform = MockPlatformFactory::createPlatform('{"name": "Berlin", "population": 3850000}', eventDispatcher: $dispatcher);
+        $platform = MockPlatformFactory::createPlatform('{"name": "Berlin", "population": 3850000}', new FallbackModelCatalog(), null, $dispatcher);
 
         $deferred = $platform->invoke('any-model', 'q', ['stream' => true, 'response_format' => City::class]);
         $partials = iterator_to_array($deferred->asStreamedObject(), false);
@@ -148,11 +149,11 @@ final class MockPlatformFactoryTest extends TestCase
     {
         $providerA = MockPlatformFactory::createProvider('from A', new MockModelCatalog([
             'model-a' => ['class' => Model::class, 'capabilities' => []],
-        ]), name: 'fake-a');
+        ]), null, null, 'fake-a');
 
         $providerB = MockPlatformFactory::createProvider('from B', new MockModelCatalog([
             'model-b' => ['class' => Model::class, 'capabilities' => []],
-        ]), name: 'fake-b');
+        ]), null, null, 'fake-b');
 
         $platform = new Platform([$providerA, $providerB]);
 

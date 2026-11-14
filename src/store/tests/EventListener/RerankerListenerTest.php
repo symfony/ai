@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Tests\EventListener;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Event\PostQueryEvent;
 use Symfony\AI\Store\EventListener\RerankerListener;
@@ -24,7 +25,7 @@ final class RerankerListenerTest extends TestCase
     {
         $doc1 = new VectorDocument('doc-1', new Vector([0.1, 0.2]));
         $doc2 = new VectorDocument('doc-2', new Vector([0.3, 0.4]));
-        $rerankedDoc = new VectorDocument('doc-2', new Vector([0.3, 0.4]), score: 0.95);
+        $rerankedDoc = new VectorDocument('doc-2', new Vector([0.3, 0.4]), new Metadata(), 0.95);
 
         $reranker = $this->createMock(RerankerInterface::class);
         $reranker->expects($this->once())

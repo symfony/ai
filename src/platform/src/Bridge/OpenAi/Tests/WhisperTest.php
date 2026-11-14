@@ -29,7 +29,7 @@ final class WhisperTest extends TestCase
 
     public function testItCreatesWhisperWithCustomSettings()
     {
-        $whisper = new Whisper('whisper-1', options: ['language' => 'en', 'response_format' => 'json']);
+        $whisper = new Whisper('whisper-1', [], ['language' => 'en', 'response_format' => 'json']);
 
         $this->assertSame('whisper-1', $whisper->getName());
         $this->assertSame(['language' => 'en', 'response_format' => 'json'], $whisper->getOptions());

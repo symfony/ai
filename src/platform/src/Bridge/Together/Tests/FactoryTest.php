@@ -29,7 +29,7 @@ final class FactoryTest extends TestCase
 {
     public function testItCreatesPlatformWithDefaultSettings()
     {
-        $platform = Factory::createPlatform(apiKey: 'together-test-api-key');
+        $platform = Factory::createPlatform(null, 'together-test-api-key');
 
         $this->assertInstanceOf(Platform::class, $platform);
     }
@@ -43,21 +43,21 @@ final class FactoryTest extends TestCase
 
     public function testItCreatesPlatformWithCustomHttpClient()
     {
-        $platform = Factory::createPlatform(apiKey: 'together-test-api-key', httpClient: new MockHttpClient());
+        $platform = Factory::createPlatform(null, 'together-test-api-key', new MockHttpClient());
 
         $this->assertInstanceOf(Platform::class, $platform);
     }
 
     public function testItCreatesPlatformWithEventSourceHttpClient()
     {
-        $platform = Factory::createPlatform(apiKey: 'together-test-api-key', httpClient: new EventSourceHttpClient(new MockHttpClient()));
+        $platform = Factory::createPlatform(null, 'together-test-api-key', new EventSourceHttpClient(new MockHttpClient()));
 
         $this->assertInstanceOf(Platform::class, $platform);
     }
 
     public function testItCreatesProvider()
     {
-        $provider = Factory::createProvider(apiKey: 'together-test-api-key');
+        $provider = Factory::createProvider(null, 'together-test-api-key');
 
         $this->assertInstanceOf(Provider::class, $provider);
         $this->assertSame('together', $provider->getName());
@@ -87,7 +87,7 @@ final class FactoryTest extends TestCase
         $catalog = $this->createStub(ModelCatalogInterface::class);
         $catalog->method('getModel')->willReturn($model);
 
-        $platform = Factory::createPlatform(apiKey: 'secret', httpClient: new MockHttpClient(), modelCatalog: $catalog);
+        $platform = Factory::createPlatform(null, 'secret', new MockHttpClient(), null, null, 'together', null, $catalog);
 
         $this->assertSame($model, $platform->getModelCatalog()->getModel('custom-model'));
     }

@@ -36,7 +36,9 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
             ]),
             'test-bucket',
             'test-index',
-            dimensions: 3,
+            [],
+            3,
+            3,
         );
 
         // Bucket and index outlive a previous run that did not reach drop(), and creating them again would fail

@@ -91,7 +91,7 @@ final class FactoryTest extends TestCase
         $catalog = $this->createStub(ModelCatalogInterface::class);
         $catalog->method('getModel')->willReturn($model);
 
-        $platform = Factory::createPlatform('secret', new MockHttpClient(), modelCatalog: $catalog);
+        $platform = Factory::createPlatform('secret', new MockHttpClient(), null, null, 'fireworks', null, $catalog);
 
         $this->assertSame($model, $platform->getModelCatalog()->getModel('custom-model'));
     }

@@ -107,7 +107,8 @@ final class ResultConverterCassetteTest extends TestCase
     {
         $platform = Factory::createPlatform('test-key', new CassetteHttpClient(
             new HttpCassette(__DIR__.'/../Fixtures/cassettes/'.$cassette),
-            record: false,
+            null,
+            false,
         ));
 
         return $platform->invoke($model, new MessageBag(Message::ofUser($prompt)), $options);

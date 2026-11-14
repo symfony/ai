@@ -26,7 +26,7 @@ final class ImageTest extends TestCase
 
     public function testItCreatesImageWithCustomSettings()
     {
-        $image = new Image('gpt-image-1', options: ['n' => 2]);
+        $image = new Image('gpt-image-1', [], ['n' => 2]);
 
         $this->assertSame('gpt-image-1', $image->getName());
         $this->assertSame(['n' => 2], $image->getOptions());

@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Tests\Bridge\OpenAi;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
+use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog;
 use Symfony\AI\Platform\Platform;
 
 final class FactoryTest extends TestCase
@@ -26,7 +27,7 @@ final class FactoryTest extends TestCase
 
     public function testCreateProviderWithCustomName()
     {
-        $provider = Factory::createProvider('sk-test', name: 'openai-eu');
+        $provider = Factory::createProvider('sk-test', null, new ModelCatalog(), null, null, null, 'openai-eu');
 
         $this->assertSame('openai-eu', $provider->getName());
     }

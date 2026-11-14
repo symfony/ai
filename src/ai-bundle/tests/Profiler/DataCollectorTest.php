@@ -22,6 +22,7 @@ use Symfony\AI\Agent\Toolbox\TraceableToolbox;
 use Symfony\AI\Agent\TraceableAgent;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
+use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Message\Content\Text;
@@ -312,7 +313,7 @@ class DataCollectorTest extends TestCase
         $httpClient = new MockHttpClient(new MockResponse(json_encode($response, \JSON_THROW_ON_ERROR)));
         $dispatcher = new EventDispatcher();
         $dispatcher->addSubscriber(new PlatformSubscriber());
-        $platform = new TraceablePlatform(Factory::createPlatform('sk-placeholder', $httpClient, eventDispatcher: $dispatcher));
+        $platform = new TraceablePlatform(Factory::createPlatform('sk-placeholder', $httpClient, new ModelCatalog(), null, null, $dispatcher));
 
         $result = $platform->invoke('gpt-5-mini', new MessageBag(Message::ofUser('What are the planned hours?')), ['response_format' => ['type' => 'json_object']]);
         $this->assertInstanceOf(MultiPartResult::class, $result->getResult());

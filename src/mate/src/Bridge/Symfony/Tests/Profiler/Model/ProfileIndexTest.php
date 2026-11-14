@@ -22,15 +22,15 @@ final class ProfileIndexTest extends TestCase
     public function testToArrayReturnsCorrectStructure()
     {
         $profile = new ProfileIndex(
-            token: 'abc123',
-            ip: '127.0.0.1',
-            method: 'GET',
-            url: '/api/users',
-            time: 1704448800,
-            statusCode: 200,
-            parentToken: null,
-            context: null,
-            type: 'request',
+            'abc123',
+            '127.0.0.1',
+            'GET',
+            '/api/users',
+            1704448800,
+            200,
+            null,
+            null,
+            'request',
         );
 
         $array = $profile->toArray();
@@ -49,15 +49,15 @@ final class ProfileIndexTest extends TestCase
     public function testToArrayIncludesContextWhenPresent()
     {
         $profile = new ProfileIndex(
-            token: 'abc123',
-            ip: '127.0.0.1',
-            method: 'GET',
-            url: '/api/users',
-            time: 1704448800,
-            statusCode: 200,
-            parentToken: null,
-            context: 'test-context',
-            type: 'request',
+            'abc123',
+            '127.0.0.1',
+            'GET',
+            '/api/users',
+            1704448800,
+            200,
+            null,
+            'test-context',
+            'request',
         );
 
         $array = $profile->toArray();
@@ -70,11 +70,11 @@ final class ProfileIndexTest extends TestCase
     {
         $timestamp = 1704448800;
         $profile = new ProfileIndex(
-            token: 'abc123',
-            ip: '127.0.0.1',
-            method: 'GET',
-            url: '/api/users',
-            time: $timestamp,
+            'abc123',
+            '127.0.0.1',
+            'GET',
+            '/api/users',
+            $timestamp,
         );
 
         $array = $profile->toArray();

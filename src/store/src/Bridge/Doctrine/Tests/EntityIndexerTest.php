@@ -197,7 +197,7 @@ final class EntityIndexerTest extends TestCase
     {
         $this->persist(new Product('Cats'), new Place('Dogs'));
         $embedder = new EntityEmbedder($this->vectorizer);
-        $indexer = new EntityIndexer($this->entityManager, $embedder, mirror: new MirrorListener($embedder, new ArrayStore(), Product::class));
+        $indexer = new EntityIndexer($this->entityManager, $embedder, 100, new MirrorListener($embedder, new ArrayStore(), Product::class));
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(\sprintf('does not handle "%s" entities', Place::class));
@@ -246,7 +246,7 @@ final class EntityIndexerTest extends TestCase
     {
         $embedder = new EntityEmbedder($this->vectorizer);
 
-        return new EntityIndexer($this->entityManager, $embedder, mirror: null === $mirror ? null : new MirrorListener($embedder, $mirror));
+        return new EntityIndexer($this->entityManager, $embedder, 100, null === $mirror ? null : new MirrorListener($embedder, $mirror));
     }
 
     private function persist(object ...$entities): void

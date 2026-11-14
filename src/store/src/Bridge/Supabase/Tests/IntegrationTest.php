@@ -29,11 +29,13 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
     protected static function createStore(): StoreInterface
     {
         return StoreFactory::create(
-            endpoint: 'http://127.0.0.1:3000',
-            table: 'documents',
-            vectorFieldName: 'embedding',
-            dimensions: 3,
-            functionName: 'match_documents',
+            'http://127.0.0.1:3000',
+            null,
+            null,
+            'documents',
+            'embedding',
+            3,
+            'match_documents',
         );
     }
 }

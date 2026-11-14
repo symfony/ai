@@ -25,12 +25,12 @@ final class DetectedObjectTest extends TestCase
     public function testConstruction()
     {
         $object = new DetectedObject(
-            label: 'person',
-            score: 0.95,
-            xmin: 10.5,
-            ymin: 20.5,
-            xmax: 100.5,
-            ymax: 200.5
+            'person',
+            0.95,
+            10.5,
+            20.5,
+            100.5,
+            200.5
         );
 
         $this->assertSame('person', $object->getLabel());

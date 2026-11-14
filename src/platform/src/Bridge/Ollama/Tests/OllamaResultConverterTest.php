@@ -210,9 +210,9 @@ final class OllamaResultConverterTest extends TestCase
     public function testConvertStreamingResponse()
     {
         $converter = new OllamaResultConverter();
-        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertStreamingStream());
+        $rawResult = new InMemoryRawResult([], $this->generateConvertStreamingStream());
 
-        $result = $converter->convert($rawResult, options: ['stream' => true]);
+        $result = $converter->convert($rawResult, ['stream' => true]);
 
         $this->assertInstanceOf(StreamResult::class, $result);
 
@@ -234,9 +234,9 @@ final class OllamaResultConverterTest extends TestCase
     public function testConvertThinkingStreamingResponse()
     {
         $converter = new OllamaResultConverter();
-        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertThinkingStreamingStream());
+        $rawResult = new InMemoryRawResult([], $this->generateConvertThinkingStreamingStream());
 
-        $result = $converter->convert($rawResult, options: ['stream' => true]);
+        $result = $converter->convert($rawResult, ['stream' => true]);
 
         $this->assertInstanceOf(StreamResult::class, $result);
 
@@ -262,7 +262,7 @@ final class OllamaResultConverterTest extends TestCase
     {
         $deferredResult = new DeferredResult(
             new OllamaResultConverter(),
-            new InMemoryRawResult(dataStream: $this->generateConvertStreamingStream()),
+            new InMemoryRawResult([], $this->generateConvertStreamingStream()),
             ['stream' => true],
         );
 
@@ -278,9 +278,9 @@ final class OllamaResultConverterTest extends TestCase
     public function testConvertStreamingToolCallResponse()
     {
         $converter = new OllamaResultConverter();
-        $rawResult = new InMemoryRawResult(dataStream: $this->generateConvertToolCallStreamingStream());
+        $rawResult = new InMemoryRawResult([], $this->generateConvertToolCallStreamingStream());
 
-        $result = $converter->convert($rawResult, options: ['stream' => true]);
+        $result = $converter->convert($rawResult, ['stream' => true]);
 
         $this->assertInstanceOf(StreamResult::class, $result);
 
@@ -305,13 +305,13 @@ final class OllamaResultConverterTest extends TestCase
     public function testConvertStreamingToolCallsArrivingInSeparateChunksKeepDistinctIds()
     {
         $converter = new OllamaResultConverter();
-        $rawResult = new InMemoryRawResult(dataStream: (static function (): iterable {
+        $rawResult = new InMemoryRawResult([], (static function (): iterable {
             yield ['model' => 'llama3.2', 'message' => ['role' => 'assistant', 'content' => '', 'tool_calls' => [['function' => ['name' => 'clock', 'arguments' => ['timezone' => 'UTC']]]]], 'done' => false];
             yield ['model' => 'llama3.2', 'message' => ['role' => 'assistant', 'content' => '', 'tool_calls' => [['function' => ['name' => 'weather', 'arguments' => ['city' => 'Berlin']]]]], 'done' => false];
             yield ['model' => 'llama3.2', 'message' => ['role' => 'assistant', 'content' => ''], 'done' => true, 'done_reason' => 'stop'];
         })());
 
-        $chunks = iterator_to_array($converter->convert($rawResult, options: ['stream' => true])->getContent());
+        $chunks = iterator_to_array($converter->convert($rawResult, ['stream' => true])->getContent());
 
         $this->assertInstanceOf(ToolCallStart::class, $chunks[0]);
         $this->assertSame('0', $chunks[0]->getId());
@@ -330,13 +330,13 @@ final class OllamaResultConverterTest extends TestCase
     public function testConvertStreamingThrowsWhenDoneIsMissing()
     {
         $converter = new OllamaResultConverter();
-        $rawResult = new InMemoryRawResult(dataStream: (static function (): iterable {
+        $rawResult = new InMemoryRawResult([], (static function (): iterable {
             yield ['model' => 'llama3.2', 'message' => ['role' => 'assistant', 'content' => 'Hello'], 'done' => false];
             yield ['model' => 'llama3.2', 'message' => ['role' => 'assistant', 'content' => ' world'], 'done' => false];
             // stream cut off: no object with done => true
         })());
 
-        $result = $converter->convert($rawResult, options: ['stream' => true]);
+        $result = $converter->convert($rawResult, ['stream' => true]);
 
         $this->expectException(IncompleteStreamException::class);
         $this->expectExceptionMessage('Ollama stream ended before a "done" message.');
@@ -347,12 +347,12 @@ final class OllamaResultConverterTest extends TestCase
     public function testConvertStreamingThrowsOnErrorObject()
     {
         $converter = new OllamaResultConverter();
-        $rawResult = new InMemoryRawResult(dataStream: (static function (): iterable {
+        $rawResult = new InMemoryRawResult([], (static function (): iterable {
             yield ['model' => 'llama3.2', 'message' => ['role' => 'assistant', 'content' => 'Hello'], 'done' => false];
             yield ['error' => 'model runner crashed'];
         })());
 
-        $result = $converter->convert($rawResult, options: ['stream' => true]);
+        $result = $converter->convert($rawResult, ['stream' => true]);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Ollama stream error: "model runner crashed".');
@@ -363,12 +363,12 @@ final class OllamaResultConverterTest extends TestCase
     public function testConvertStreamingResponseWithCachedPromptTokens()
     {
         $converter = new OllamaResultConverter();
-        $rawResult = new InMemoryRawResult(dataStream: (static function (): iterable {
+        $rawResult = new InMemoryRawResult([], (static function (): iterable {
             yield ['model' => 'llama3.2', 'created_at' => '2026-11-11T21:00:00.000000Z', 'message' => ['role' => 'assistant', 'content' => 'Hello'], 'done' => true,
                 'done_reason' => 'stop', 'prompt_eval_count' => 42, 'prompt_eval_cached_count' => 36, 'eval_count' => 17];
         })());
 
-        $result = $converter->convert($rawResult, options: ['stream' => true]);
+        $result = $converter->convert($rawResult, ['stream' => true]);
 
         $tokenUsages = array_values(array_filter(iterator_to_array($result->getContent(), false), static fn ($chunk) => $chunk instanceof TokenUsageInterface));
 

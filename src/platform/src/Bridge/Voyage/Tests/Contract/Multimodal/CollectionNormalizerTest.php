@@ -60,7 +60,7 @@ class CollectionNormalizerTest extends TestCase
         $normalizer = new CollectionNormalizer();
         $this->assertEquals(
             $expected,
-            $normalizer->supportsNormalization($data, context: $context)
+            $normalizer->supportsNormalization($data, null, $context)
         );
     }
 

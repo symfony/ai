@@ -123,7 +123,7 @@ final class ModelCatalogTest extends TestCase
 
     public function testAdditionalModelsAreMerged()
     {
-        $catalog = new ModelCatalog('deepseek', additionalModels: [
+        $catalog = new ModelCatalog('deepseek', null, [
             'custom-model' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT],

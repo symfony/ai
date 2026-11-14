@@ -41,7 +41,7 @@ final class FactoryTest extends TestCase
     #[DataProvider('provideApis')]
     public function testItCreatesPlatformForEveryApi(string $api)
     {
-        $platform = Factory::createPlatform('bedrock-api-key', api: $api, httpClient: new MockHttpClient());
+        $platform = Factory::createPlatform('bedrock-api-key', 'us-west-2', $api, null, new MockHttpClient());
 
         $this->assertInstanceOf(Platform::class, $platform);
     }
@@ -49,14 +49,14 @@ final class FactoryTest extends TestCase
     #[DataProvider('provideApis')]
     public function testItCreatesPlatformWithoutApiKeyForSigV4Authentication(string $api)
     {
-        $platform = Factory::createPlatform(api: $api, httpClient: new MockHttpClient());
+        $platform = Factory::createPlatform(null, 'us-west-2', $api, null, new MockHttpClient());
 
         $this->assertInstanceOf(Platform::class, $platform);
     }
 
     public function testItCreatesPlatformWithEventSourceHttpClient()
     {
-        $platform = Factory::createPlatform('bedrock-api-key', httpClient: new EventSourceHttpClient(new MockHttpClient()));
+        $platform = Factory::createPlatform('bedrock-api-key', 'us-west-2', 'completions', null, new EventSourceHttpClient(new MockHttpClient()));
 
         $this->assertInstanceOf(Platform::class, $platform);
     }
@@ -80,7 +80,7 @@ final class FactoryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(\sprintf('Invalid Bedrock Mantle API "%s". Supported values are "completions", "responses", "messages".', $api));
 
-        Factory::createPlatform('bedrock-api-key', api: $api);
+        Factory::createPlatform('bedrock-api-key', 'us-west-2', $api);
     }
 
     public function testItThrowsWhenApiKeyIsEmpty()
@@ -104,7 +104,7 @@ final class FactoryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The "cacheRetention" and "workspace" arguments are only supported by the Bedrock Mantle Messages API.');
 
-        Factory::createPlatform('bedrock-api-key', api: 'responses', workspace: 'proj_example');
+        Factory::createPlatform('bedrock-api-key', 'us-west-2', 'responses', null, null, null, null, null, null, 'proj_example');
     }
 
     public function testItThrowsWhenPathIsUsedOnTheMessagesApi()
@@ -112,7 +112,7 @@ final class FactoryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The "path" argument is not supported by the Bedrock Mantle Messages API, which is served on a single path.');
 
-        Factory::createPlatform('bedrock-api-key', api: 'messages', path: '/anthropic/v2/messages');
+        Factory::createPlatform('bedrock-api-key', 'us-west-2', 'messages', null, null, null, null, null, null, null, '/anthropic/v2/messages');
     }
 
     public function testItSendsCompletionsRequestToTheMantleEndpointForTheGivenRegion()
@@ -132,7 +132,7 @@ final class FactoryTest extends TestCase
             ]));
         };
 
-        $platform = Factory::createPlatform('bedrock-api-key', 'eu-central-1', httpClient: new MockHttpClient($responseCallback));
+        $platform = Factory::createPlatform('bedrock-api-key', 'eu-central-1', 'completions', null, new MockHttpClient($responseCallback));
 
         $platform->invoke('openai.gpt-oss-120b', new MessageBag(Message::ofUser('Hello')))->getResult();
     }
@@ -156,8 +156,15 @@ final class FactoryTest extends TestCase
         $platform = Factory::createPlatform(
             'bedrock-api-key',
             'us-east-1',
-            httpClient: new MockHttpClient($responseCallback),
-            path: '/openai/v1/chat/completions',
+            'completions',
+            null,
+            new MockHttpClient($responseCallback),
+            null,
+            null,
+            null,
+            null,
+            null,
+            '/openai/v1/chat/completions',
         );
 
         $platform->invoke('openai.gpt-oss-120b', new MessageBag(Message::ofUser('Hello')))->getResult();
@@ -180,7 +187,7 @@ final class FactoryTest extends TestCase
             ]));
         };
 
-        $platform = Factory::createPlatform('bedrock-api-key', 'us-east-1', 'responses', httpClient: new MockHttpClient($responseCallback));
+        $platform = Factory::createPlatform('bedrock-api-key', 'us-east-1', 'responses', null, new MockHttpClient($responseCallback));
 
         $platform->invoke('google.gemma-4-31b', new MessageBag(Message::ofUser('Hello')))->getResult();
     }
@@ -201,7 +208,7 @@ final class FactoryTest extends TestCase
             ]));
         };
 
-        $platform = Factory::createPlatform('bedrock-api-key', 'us-east-1', 'responses', httpClient: new MockHttpClient($responseCallback), path: '/v1/responses');
+        $platform = Factory::createPlatform('bedrock-api-key', 'us-east-1', 'responses', null, new MockHttpClient($responseCallback), null, null, null, null, null, '/v1/responses');
 
         $platform->invoke('google.gemma-4-31b', new MessageBag(Message::ofUser('Hello')))->getResult();
     }
@@ -223,7 +230,7 @@ final class FactoryTest extends TestCase
             ]));
         };
 
-        $platform = Factory::createPlatform('bedrock-api-key', 'us-east-1', 'messages', httpClient: new MockHttpClient($responseCallback));
+        $platform = Factory::createPlatform('bedrock-api-key', 'us-east-1', 'messages', null, new MockHttpClient($responseCallback));
 
         $platform->invoke('anthropic.claude-haiku-4-5', new MessageBag(Message::ofUser('Hello')))->getResult();
     }
@@ -245,7 +252,7 @@ final class FactoryTest extends TestCase
             ]));
         };
 
-        $platform = Factory::createPlatform('bedrock-api-key', 'us-east-1', 'messages', httpClient: new MockHttpClient($responseCallback));
+        $platform = Factory::createPlatform('bedrock-api-key', 'us-east-1', 'messages', null, new MockHttpClient($responseCallback));
 
         $platform->invoke('anthropic.claude-haiku-4-5', new MessageBag(Message::ofUser('Hello')))->getResult();
     }

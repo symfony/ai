@@ -29,7 +29,7 @@ final class ToolCallMessageNormalizerTest extends TestCase
     {
         $normalizer = new ToolCallMessageNormalizer();
 
-        $this->assertTrue($normalizer->supportsNormalization(new ToolCallMessage(new ToolCall('', '', []), new Text('')), context: [
+        $this->assertTrue($normalizer->supportsNormalization(new ToolCallMessage(new ToolCall('', '', []), new Text('')), null, [
             Contract::CONTEXT_MODEL => new Model('gemini-2.5-pro'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not a tool call'));

@@ -36,7 +36,7 @@ final class NoulQuestionTest extends TestCase
 
     public function testItSerializesWithOnlyOneCriterion()
     {
-        $question = new NoulQuestion('Does this convey urgency?', false: 'No urgency expressed');
+        $question = new NoulQuestion('Does this convey urgency?', null, 'No urgency expressed');
 
         $this->assertSame(['false' => 'No urgency expressed'], $question->jsonSerialize()['criteria']);
     }

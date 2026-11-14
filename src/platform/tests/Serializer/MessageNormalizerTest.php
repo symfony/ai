@@ -114,8 +114,8 @@ final class MessageNormalizerTest extends TestCase
     public function testRoundTripKeepsThePlatformMetadataObjects()
     {
         $message = Message::ofAssistant('Hi');
-        $message->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 10, completionTokens: 5, model: 'gpt-4'));
-        $message->getMetadata()->add('aggregated', new TokenUsageAggregation([new TokenUsage(promptTokens: 1), new TokenUsage(promptTokens: 2)]));
+        $message->getMetadata()->add('token_usage', new TokenUsage(10, 5, null, null, null, null, null, null, null, null, null, 'gpt-4'));
+        $message->getMetadata()->add('aggregated', new TokenUsageAggregation([new TokenUsage(1), new TokenUsage(2)]));
         $message->getMetadata()->add('finish_reason', new FinishReason(FinishReasonCase::STOP, 'end_turn'));
         $serializer = new Serializer([new MessageNormalizer()], [new JsonEncoder()]);
 
@@ -151,14 +151,14 @@ final class MessageNormalizerTest extends TestCase
     public function testMetadataObjectsWithReorderedKeysKeepTheirType()
     {
         $message = Message::ofAssistant('Hi');
-        $message->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 10));
+        $message->getMetadata()->add('token_usage', new TokenUsage(10));
         $normalizer = new MessageNormalizer();
         $normalized = $normalizer->normalize($message);
         $normalized['metadata']['token_usage'] = array_reverse($normalized['metadata']['token_usage'], true);
 
         $restored = $normalizer->denormalize($normalized, MessageInterface::class);
 
-        $this->assertEquals(new TokenUsage(promptTokens: 10), $restored->getMetadata()->get('token_usage'));
+        $this->assertEquals(new TokenUsage(10), $restored->getMetadata()->get('token_usage'));
     }
 
     public function testIgnoredAttributesAreLeftOutWithoutNormalizingTheMetadata()
@@ -166,7 +166,7 @@ final class MessageNormalizerTest extends TestCase
         $message = Message::ofAssistant('Berlin');
         $message->getMetadata()->add('city', new City('Berlin'));
 
-        $normalized = (new MessageNormalizer())->normalize($message, context: [AbstractNormalizer::IGNORED_ATTRIBUTES => ['id', 'metadata', 'addedAt']]);
+        $normalized = (new MessageNormalizer())->normalize($message, null, [AbstractNormalizer::IGNORED_ATTRIBUTES => ['id', 'metadata', 'addedAt']]);
 
         $this->assertSame(['type', 'content', 'parts', 'toolCall'], array_keys($normalized));
     }
@@ -199,11 +199,11 @@ final class MessageNormalizerTest extends TestCase
         $message = Message::ofUser('Hello');
         $normalizer = new MessageNormalizer();
 
-        $normalized = $normalizer->normalize($message, context: ['identifier' => '_id']);
+        $normalized = $normalizer->normalize($message, null, ['identifier' => '_id']);
 
         $this->assertSame($message->getId()->toRfc4122(), $normalized['_id']);
         $this->assertArrayNotHasKey('id', $normalized);
-        $this->assertTrue($message->getId()->equals($normalizer->denormalize($normalized, MessageInterface::class, context: ['identifier' => '_id'])->getId()));
+        $this->assertTrue($message->getId()->equals($normalizer->denormalize($normalized, MessageInterface::class, null, ['identifier' => '_id'])->getId()));
     }
 
     /**

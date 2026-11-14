@@ -119,7 +119,7 @@ final class FactoryTest extends TestCase
         ];
         $body = implode('', array_map(static fn (array $chunk): string => 'data: '.json_encode($chunk)."\n\n", $chunks))."data: [DONE]\n\n";
         $httpClient = new MockHttpClient(new MockResponse($body, ['response_headers' => ['content-type' => 'text/event-stream']]));
-        $platform = Factory::createPlatform('test-api-key', httpClient: $httpClient, modelCatalog: self::createModelCatalog());
+        $platform = Factory::createPlatform('test-api-key', null, $httpClient, self::createModelCatalog());
 
         $text = '';
         foreach ($platform->invoke('test/model', new MessageBag(Message::ofUser('Hi')), ['stream' => true])->asTextStream() as $delta) {
@@ -144,7 +144,7 @@ final class FactoryTest extends TestCase
     public function testReranksTexts()
     {
         $response = new JsonMockResponse([['score' => 9.18, 'index' => 1], ['score' => -11.34, 'index' => 0]]);
-        $platform = Factory::createPlatform('test-api-key', httpClient: new MockHttpClient($response), modelCatalog: self::createModelCatalog());
+        $platform = Factory::createPlatform('test-api-key', null, new MockHttpClient($response), self::createModelCatalog());
 
         $result = $platform->invoke('test/reranker', ['query' => 'What is PHP?', 'texts' => ['Bananas are yellow', 'PHP is a language']])->getResult();
 
@@ -155,7 +155,7 @@ final class FactoryTest extends TestCase
 
     public function testReplayToolCall()
     {
-        $httpClient = new CassetteHttpClient(new HttpCassette(__DIR__.'/Fixtures/cassettes/tool_call.json'), record: false);
+        $httpClient = new CassetteHttpClient(new HttpCassette(__DIR__.'/Fixtures/cassettes/tool_call.json'), null, false);
         $platform = Factory::createPlatform('test-api-key', Provider::CEREBRAS, $httpClient, self::createModelCatalog());
 
         $calls = $platform->invoke('openai/gpt-oss-120b', new MessageBag(Message::ofUser('What is the current date and time?')))->asToolCalls();

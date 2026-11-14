@@ -30,7 +30,7 @@ final class StoreFactoryTest extends TestCase
 
     public function testStoreCanBeCreatedWithScopingHttpClient()
     {
-        $store = StoreFactory::create('bar', httpClient: ScopingHttpClient::forBaseUri(HttpClient::create(), 'http://127.0.0.1:9308/'));
+        $store = StoreFactory::create('bar', null, ScopingHttpClient::forBaseUri(HttpClient::create(), 'http://127.0.0.1:9308/'));
 
         $this->assertInstanceOf(Store::class, $store);
     }
@@ -81,7 +81,7 @@ final class StoreFactoryTest extends TestCase
             ]);
         });
 
-        $store = StoreFactory::create('bar', httpClient: ScopingHttpClient::forBaseUri($httpClient, 'http://manticore:9308/'));
+        $store = StoreFactory::create('bar', null, ScopingHttpClient::forBaseUri($httpClient, 'http://manticore:9308/'));
         $store->clear();
 
         $this->assertSame('http://manticore:9308/cli', $requestedUrl);

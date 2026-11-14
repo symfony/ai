@@ -23,6 +23,7 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\Clock\MockClock;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\Stopwatch\Stopwatch;
 
 final class TraceableAgentTest extends TestCase
@@ -65,7 +66,7 @@ final class TraceableAgentTest extends TestCase
     public function testStopwatchEventSpansTheConsumptionOfTheExecution()
     {
         $stopwatch = new Stopwatch();
-        $traceableAgent = new TraceableAgent(new MockAgent(['Hello there' => 'General Kenobi']), stopwatch: $stopwatch);
+        $traceableAgent = new TraceableAgent(new MockAgent(['Hello there' => 'General Kenobi']), new MonotonicClock(), $stopwatch);
 
         $execution = $traceableAgent->call('Hello there');
 
@@ -87,7 +88,7 @@ final class TraceableAgentTest extends TestCase
 
             throw new RuntimeException('Agent failed');
         });
-        $traceableAgent = new TraceableAgent($this->createAgent($execution), stopwatch: $stopwatch);
+        $traceableAgent = new TraceableAgent($this->createAgent($execution), new MonotonicClock(), $stopwatch);
 
         try {
             $traceableAgent->call('Hello there')->getResult();
@@ -106,7 +107,7 @@ final class TraceableAgentTest extends TestCase
         $execution = new Execution(static function (): \Generator {
             yield new Result(new TextResult('General Kenobi'));
         }, true);
-        $traceableAgent = new TraceableAgent($this->createAgent($execution), stopwatch: new Stopwatch());
+        $traceableAgent = new TraceableAgent($this->createAgent($execution), new MonotonicClock(), new Stopwatch());
 
         $this->assertTrue($traceableAgent->call('Hello there')->isStreamed());
     }
@@ -118,7 +119,7 @@ final class TraceableAgentTest extends TestCase
             yield new Progress('model', 'Calling the model.');
             yield new Result(new TextResult('General Kenobi'));
         });
-        $traceableAgent = new TraceableAgent($this->createAgent($execution), stopwatch: $stopwatch);
+        $traceableAgent = new TraceableAgent($this->createAgent($execution), new MonotonicClock(), $stopwatch);
 
         $traceableExecution = $traceableAgent->call('Hello there');
         foreach ($traceableExecution as $update) {
@@ -141,7 +142,7 @@ final class TraceableAgentTest extends TestCase
             $ran = true;
             yield new Result(new TextResult('General Kenobi'));
         });
-        $traceableAgent = new TraceableAgent($this->createAgent($execution), stopwatch: $stopwatch);
+        $traceableAgent = new TraceableAgent($this->createAgent($execution), new MonotonicClock(), $stopwatch);
 
         $traceableExecution = $traceableAgent->call('Hello there');
         $traceableExecution->cancel();
@@ -167,7 +168,7 @@ final class TraceableAgentTest extends TestCase
             $finished = true;
             yield new Result(new TextResult('General Kenobi'));
         });
-        $traceableAgent = new TraceableAgent($this->createAgent($execution), stopwatch: $stopwatch);
+        $traceableAgent = new TraceableAgent($this->createAgent($execution), new MonotonicClock(), $stopwatch);
 
         $traceableExecution = $traceableAgent->call('Hello there');
         $traceableExecution->onProgress(static function () use ($traceableExecution): void {

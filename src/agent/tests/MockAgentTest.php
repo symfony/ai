@@ -430,7 +430,7 @@ final class MockAgentTest extends TestCase
 
     public function testGetNameReturnsProvidedName()
     {
-        $agent = new MockAgent(name: 'custom');
+        $agent = new MockAgent([], 'custom');
 
         $this->assertSame('custom', $agent->getName());
     }

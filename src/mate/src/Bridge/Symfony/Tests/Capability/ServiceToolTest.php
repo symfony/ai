@@ -70,7 +70,7 @@ final class ServiceToolTest extends TestCase
         $this->assertFalse($full['truncated']);
         $this->assertSame(\count($full['services']), $full['count']);
 
-        $capped = $this->decodeUntrusted($tool->getServices(limit: 1));
+        $capped = $this->decodeUntrusted($tool->getServices(null, null, null, 1));
         $this->assertTrue($capped['truncated']);
         $this->assertCount(1, $capped['services']);
         $this->assertSame($full['count'], $capped['count']);
@@ -191,7 +191,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = $this->decodeUntrusted($tool->getServices(tag: 'kernel.event_listener'))['services'];
+        $services = $this->decodeUntrusted($tool->getServices(null, 'kernel.event_listener'))['services'];
 
         $this->assertArrayHasKey('app.event_listener', $services);
         $this->assertSame('App\EventListener\RequestListener', $services['app.event_listener']);
@@ -202,7 +202,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = $this->decodeUntrusted($tool->getServices(tag: 'cache.pool'))['services'];
+        $services = $this->decodeUntrusted($tool->getServices(null, 'cache.pool'))['services'];
 
         $this->assertArrayHasKey('cache.app', $services);
         $this->assertArrayNotHasKey('logger', $services);
@@ -215,7 +215,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = $this->decodeUntrusted($tool->getServices(tag: 'nonexistent.tag'), DecodeOptions::lenient())['services'];
+        $services = $this->decodeUntrusted($tool->getServices(null, 'nonexistent.tag'), DecodeOptions::lenient())['services'];
 
         $this->assertEmpty($services);
     }
@@ -225,7 +225,7 @@ final class ServiceToolTest extends TestCase
         $provider = new ContainerProvider();
         $tool = new ServiceTool($this->fixturesDir, $provider);
 
-        $services = $this->decodeUntrusted($tool->getServices(query: 'listener', tag: 'kernel.event_listener'))['services'];
+        $services = $this->decodeUntrusted($tool->getServices('listener', 'kernel.event_listener'))['services'];
 
         $this->assertArrayHasKey('app.event_listener', $services);
         $this->assertArrayNotHasKey('cache.app', $services);
@@ -383,7 +383,7 @@ final class ServiceToolTest extends TestCase
     {
         $tool = $this->createMultiKernelTool();
 
-        $byContext = $this->decodeUntrusted($tool->getServices(context: 'admin'));
+        $byContext = $this->decodeUntrusted($tool->getServices(null, null, 'admin'));
 
         $this->assertSame(['admin'], array_keys($byContext));
         $this->assertArrayHasKey('admin.dashboard', $byContext['admin']['services']);
@@ -393,7 +393,7 @@ final class ServiceToolTest extends TestCase
     {
         $tool = $this->createMultiKernelTool();
 
-        $byContext = $this->decodeUntrusted($tool->getServices(tag: 'cache.pool'));
+        $byContext = $this->decodeUntrusted($tool->getServices(null, 'cache.pool'));
 
         $this->assertArrayNotHasKey('logger', $byContext['website']['services']);
         $this->assertSame(['cache.app'], array_keys($byContext['admin']['services']));

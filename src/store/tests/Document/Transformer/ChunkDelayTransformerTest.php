@@ -67,7 +67,7 @@ final class ChunkDelayTransformerTest extends TestCase
             ->method('sleep')
             ->with(5); // custom delay from constructor
 
-        $transformer = new ChunkDelayTransformer($clock, chunkSize: 20, delay: 5);
+        $transformer = new ChunkDelayTransformer($clock, 20, 5);
 
         $documents = [];
         for ($i = 0; $i < 30; ++$i) {
@@ -86,7 +86,7 @@ final class ChunkDelayTransformerTest extends TestCase
             ->method('sleep')
             ->with(3); // options should override constructor
 
-        $transformer = new ChunkDelayTransformer($clock, chunkSize: 20, delay: 5);
+        $transformer = new ChunkDelayTransformer($clock, 20, 5);
 
         $documents = [];
         for ($i = 0; $i < 15; ++$i) {

@@ -236,7 +236,7 @@ final class ResultNormalizerTest extends TestCase
             ],
         ];
         yield TextResult::class.' with phase' => [
-            new TextResult('foo', phase: 'final_answer'),
+            new TextResult('foo', null, 'final_answer'),
             [
                 'class' => TextResult::class,
                 'payload' => ['content' => 'foo', 'signature' => null, 'phase' => 'final_answer'],

@@ -14,7 +14,7 @@ namespace Symfony\AI\Agent\Tests\Fixtures\Tool;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
 use Symfony\AI\Platform\Tool\ToolEffectHints;
 
-#[AsTool('tool_with_metadata', 'A tool carrying metadata', metadata: ['needs_confirmation' => true, 'category' => 'admin'], effectHints: new ToolEffectHints(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false))]
+#[AsTool('tool_with_metadata', 'A tool carrying metadata', metadata: ['needs_confirmation' => true, 'category' => 'admin'], effectHints: new ToolEffectHints(true, false, true, false))]
 final class ToolWithMetadata
 {
     public function __invoke(): string

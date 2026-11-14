@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\MiniMax\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\MiniMax\Factory;
+use Symfony\AI\Platform\Bridge\MiniMax\ModelCatalog;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -25,7 +26,7 @@ final class FactoryTest extends TestCase
     {
         $httpClient = new MockHttpClient(new JsonMockResponse(['task_id' => '789', 'base_resp' => ['status_code' => 0]]));
 
-        $handle = Factory::createProvider('key', $httpClient, name: 'minimax-eu')
+        $handle = Factory::createProvider('key', $httpClient, 'https://api.minimax.io/v1', new ModelCatalog(), null, null, 'minimax-eu')
             ->invoke('MiniMax-Hailuo-02', 'A cat playing piano')
             ->asJob();
 

@@ -56,7 +56,7 @@ final class FailoverPlatformTest extends TestCase
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
             $mainPlatform,
-        ], self::createRateLimiterFactory(), logger: $logger);
+        ], self::createRateLimiterFactory(), new MonotonicClock(), $logger);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('All platforms failed.');
@@ -80,7 +80,7 @@ final class FailoverPlatformTest extends TestCase
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
             $mainPlatform,
-        ], self::createRateLimiterFactory(), logger: $logger);
+        ], self::createRateLimiterFactory(), new MonotonicClock(), $logger);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('All platforms failed.');
@@ -100,7 +100,7 @@ final class FailoverPlatformTest extends TestCase
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
             MockPlatformFactory::createPlatform(static fn (): string => 'foo'),
-        ], self::createRateLimiterFactory(), logger: $logger);
+        ], self::createRateLimiterFactory(), new MonotonicClock(), $logger);
 
         $result = $failoverPlatform->invoke('foo', 'foo');
 
@@ -119,7 +119,7 @@ final class FailoverPlatformTest extends TestCase
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
             MockPlatformFactory::createPlatform(static fn (): string => 'foo'),
-        ], self::createRateLimiterFactory(), logger: $logger);
+        ], self::createRateLimiterFactory(), new MonotonicClock(), $logger);
 
         $this->assertInstanceOf(CompositeModelCatalog::class, $failoverPlatform->getModelCatalog());
     }
@@ -149,7 +149,7 @@ final class FailoverPlatformTest extends TestCase
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
             MockPlatformFactory::createPlatform(static fn (): string => 'bar'),
-        ], self::createRateLimiterFactory(), logger: $logger);
+        ], self::createRateLimiterFactory(), new MonotonicClock(), $logger);
 
         $firstResult = $failoverPlatform->invoke('foo', 'foo');
 
@@ -184,7 +184,7 @@ final class FailoverPlatformTest extends TestCase
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
             MockPlatformFactory::createPlatform(static fn (): string => 'bar'),
-        ], self::createRateLimiterFactory(), logger: $logger);
+        ], self::createRateLimiterFactory(), new MonotonicClock(), $logger);
 
         $modelCatalog = $failoverPlatform->getModelCatalog();
         $this->assertInstanceOf(CompositeModelCatalog::class, $modelCatalog);
@@ -231,7 +231,7 @@ final class FailoverPlatformTest extends TestCase
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
             $firstPlatform,
-        ], self::createRateLimiterFactory(), logger: $logger);
+        ], self::createRateLimiterFactory(), new MonotonicClock(), $logger);
 
         $firstResult = $failoverPlatform->invoke('foo', 'foo');
 
@@ -279,7 +279,7 @@ final class FailoverPlatformTest extends TestCase
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
             $firstPlatform,
-        ], self::createRateLimiterFactory(), logger: $logger);
+        ], self::createRateLimiterFactory(), new MonotonicClock(), $logger);
 
         $this->assertInstanceOf(FallbackModelCatalog::class, $failoverPlatform->getModelCatalog());
 
@@ -332,7 +332,7 @@ final class FailoverPlatformTest extends TestCase
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
             $firstPlatform,
-        ], self::createRateLimiterFactory(), logger: $logger);
+        ], self::createRateLimiterFactory(), new MonotonicClock(), $logger);
 
         $failoverPlatform->invoke('foo', 'foo');
 
@@ -385,7 +385,7 @@ final class FailoverPlatformTest extends TestCase
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
             $firstPlatform,
-        ], self::createRateLimiterFactory(), logger: $logger);
+        ], self::createRateLimiterFactory(), new MonotonicClock(), $logger);
 
         $failoverPlatform->getModelCatalog();
 

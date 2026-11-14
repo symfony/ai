@@ -39,7 +39,7 @@ final class TokenUsageExtractorTest extends TestCase
                 'prompt_tokens' => 10,
                 'total_tokens' => 10,
             ],
-        ], object: $this->createResponseObject());
+        ], [], $this->createResponseObject());
 
         $tokenUsage = $extractor->extract($result);
 
@@ -59,7 +59,7 @@ final class TokenUsageExtractorTest extends TestCase
             'usage' => [
                 'prompt_tokens' => 10,
             ],
-        ], object: $this->createResponseObject());
+        ], [], $this->createResponseObject());
 
         $tokenUsage = $extractor->extract($result);
 

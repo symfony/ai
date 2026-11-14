@@ -48,7 +48,7 @@ final class ModelClientTest extends TestCase
             return new MockResponse();
         };
 
-        $modelClient = new ModelClient(new MockHttpClient($responseCallback), 'https://bedrock-mantle.us-east-1.api.aws', 'us-east-1', 'bedrock-api-key', cacheRetention: 'none', workspace: 'proj_example');
+        $modelClient = new ModelClient(new MockHttpClient($responseCallback), 'https://bedrock-mantle.us-east-1.api.aws', 'us-east-1', 'bedrock-api-key', null, 'none', 'proj_example');
         $modelClient->request(new Claude('anthropic.claude-haiku-4-5'), ['messages' => [['role' => 'user', 'content' => 'Hello']]]);
     }
 
@@ -91,7 +91,7 @@ final class ModelClientTest extends TestCase
             return new MockResponse();
         };
 
-        $modelClient = new ModelClient(new MockHttpClient($responseCallback), 'https://bedrock-mantle.us-east-1.api.aws', 'us-east-1', 'bedrock-api-key', cacheRetention: 'long');
+        $modelClient = new ModelClient(new MockHttpClient($responseCallback), 'https://bedrock-mantle.us-east-1.api.aws', 'us-east-1', 'bedrock-api-key', null, 'long');
         $modelClient->request(new Claude('anthropic.claude-sonnet-5'), [
             'system' => [['type' => 'text', 'text' => 'Be helpful']],
             'messages' => [['role' => 'user', 'content' => 'Hello']],

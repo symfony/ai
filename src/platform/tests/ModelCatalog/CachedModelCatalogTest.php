@@ -124,8 +124,8 @@ final class CachedModelCatalogTest extends TestCase
     public function testCatalogsOfSameClassAreSeparatedByNamespace()
     {
         $cache = new ArrayAdapter();
-        $first = new CachedModelCatalog($this->createCatalog('first'), $cache, namespace: 'first');
-        $second = new CachedModelCatalog($this->createCatalog('second'), $cache, namespace: 'second');
+        $first = new CachedModelCatalog($this->createCatalog('first'), $cache, null, 'first');
+        $second = new CachedModelCatalog($this->createCatalog('second'), $cache, null, 'second');
 
         $this->assertSame('first', $first->getModel('llama3')->getName());
         $this->assertSame('second', $second->getModel('llama3')->getName());

@@ -324,7 +324,7 @@ final class VenicePayloadTest extends TestCase
 
         $this->assertSame(
             ['image' => 'https://example.com/in.png', 'prompt' => 'Make it sepia'],
-            $payload->asImageEditPayload(requirePrompt: true),
+            $payload->asImageEditPayload([], true),
         );
     }
 
@@ -343,7 +343,7 @@ final class VenicePayloadTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Payload must contain a non-empty "prompt" string for image edition.');
-        $payload->asImageEditPayload(requirePrompt: true);
+        $payload->asImageEditPayload([], true);
     }
 
     public function testAsImageEditPayloadFailsWhenPayloadIsString()
@@ -369,7 +369,7 @@ final class VenicePayloadTest extends TestCase
         $this->assertSame([
             'image' => 'https://example.com/in.png',
             'prompt' => 'Make it sepia',
-        ], $payload->asImageEditPayload(['prompt' => 'Make it sepia'], requirePrompt: true));
+        ], $payload->asImageEditPayload(['prompt' => 'Make it sepia'], true));
     }
 
     public function testAsVideoGenerationPayloadReadsTheNormalizedImageShapeAndTheOptionPrompt()

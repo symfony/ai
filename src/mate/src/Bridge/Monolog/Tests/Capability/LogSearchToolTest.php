@@ -58,7 +58,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchByLevel()
     {
-        $result = $this->decodeUntrusted($this->tool->search('', level: 'ERROR'));
+        $result = $this->decodeUntrusted($this->tool->search('', false, 'ERROR'));
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -70,7 +70,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchByChannel()
     {
-        $result = $this->decodeUntrusted($this->tool->search('', channel: 'security'));
+        $result = $this->decodeUntrusted($this->tool->search('', false, null, 'security'));
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -82,7 +82,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchWithLimit()
     {
-        $result = $this->decodeUntrusted($this->tool->search('', limit: 2));
+        $result = $this->decodeUntrusted($this->tool->search('', false, null, null, null, null, null, 2));
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertLessThanOrEqual(2, \count($result['entries']));
@@ -90,7 +90,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchReportsExactTotalWhenNotTruncated()
     {
-        $result = $this->decodeUntrusted($this->tool->search('', level: 'ERROR'));
+        $result = $this->decodeUntrusted($this->tool->search('', false, 'ERROR'));
 
         // sample.log + sample.json.log carry exactly 2 ERROR entries (see testReadAllWithLevelFilter)
         $this->assertCount(2, $result['entries']);
@@ -114,7 +114,7 @@ final class LogSearchToolTest extends TestCase
 
             // default limit is 100, the file carries 150 matching entries: reading still
             // stops at limit, total_matched does not reach past it
-            $result = $this->decodeUntrusted($tool->search('', level: 'ERROR'));
+            $result = $this->decodeUntrusted($tool->search('', false, 'ERROR'));
 
             $this->assertCount(100, $result['entries']);
             $this->assertSame(100, $result['total_matched'], 'total_matched is the size of the returned page, not an exact total beyond limit');
@@ -126,7 +126,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchRegex()
     {
-        $result = $this->decodeUntrusted($this->tool->search('Database.*failed', regex: true));
+        $result = $this->decodeUntrusted($this->tool->search('Database.*failed', true));
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -135,7 +135,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchRegexWithDelimiters()
     {
-        $result = $this->decodeUntrusted($this->tool->search('/User.*logged/i', regex: true));
+        $result = $this->decodeUntrusted($this->tool->search('/User.*logged/i', true));
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -143,7 +143,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchRegexByLevel()
     {
-        $result = $this->decodeUntrusted($this->tool->search('.*', regex: true, level: 'WARNING'));
+        $result = $this->decodeUntrusted($this->tool->search('.*', true, 'WARNING'));
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -173,7 +173,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchContextByLevel()
     {
-        $result = $this->decodeUntrusted($this->tool->searchContext('error', 'Connection', level: 'ERROR'));
+        $result = $this->decodeUntrusted($this->tool->searchContext('error', 'Connection', 'ERROR'));
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -209,7 +209,7 @@ final class LogSearchToolTest extends TestCase
         try {
             $tool = new LogSearchTool(new LogReader(new LogParser(), $tempDir));
 
-            $result = $this->decodeUntrusted($tool->tail(10, level: 'ERROR'));
+            $result = $this->decodeUntrusted($tool->tail(10, 'ERROR'));
 
             $this->assertCount(10, $result['entries']);
             $this->assertSame(30, $result['total_matched']);
@@ -221,7 +221,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testTailWithLevel()
     {
-        $result = $this->decodeUntrusted($this->tool->tail(10, level: 'INFO'));
+        $result = $this->decodeUntrusted($this->tool->tail(10, 'INFO'));
 
         $this->assertArrayHasKey('entries', $result);
         foreach ($result['entries'] as $entry) {
@@ -231,7 +231,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testTailWithChannel()
     {
-        $result = $this->decodeUntrusted($this->tool->tail(10, channel: 'security'));
+        $result = $this->decodeUntrusted($this->tool->tail(10, null, null, 'security'));
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -267,7 +267,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testByLevel()
     {
-        $result = $this->decodeUntrusted($this->tool->search('', level: 'INFO'));
+        $result = $this->decodeUntrusted($this->tool->search('', false, 'INFO'));
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertNotEmpty($result['entries']);
@@ -279,7 +279,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testByLevelWithLimit()
     {
-        $result = $this->decodeUntrusted($this->tool->search('', level: 'INFO', limit: 1));
+        $result = $this->decodeUntrusted($this->tool->search('', false, 'INFO', null, null, null, null, 1));
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertLessThanOrEqual(1, \count($result['entries']));
@@ -324,7 +324,7 @@ final class LogSearchToolTest extends TestCase
     {
         $tool = $this->createMultiKernelTool();
 
-        $result = $this->decodeUntrusted($tool->search('', level: 'ERROR', kernelContext: 'admin'));
+        $result = $this->decodeUntrusted($tool->search('', false, 'ERROR', null, null, null, null, 100, 'admin'));
 
         $this->assertCount(1, $result['entries']);
         $this->assertSame('admin', $result['entries'][0]['kernel_context']);
@@ -335,7 +335,7 @@ final class LogSearchToolTest extends TestCase
     {
         $tool = $this->createMultiKernelTool();
 
-        $result = $this->decodeUntrusted($tool->searchContext('test', 'UserControllerTest', kernelContext: 'admin'));
+        $result = $this->decodeUntrusted($tool->searchContext('test', 'UserControllerTest', null, null, 100, 'admin'));
 
         $this->assertCount(2, $result['entries']);
         foreach ($result['entries'] as $entry) {
@@ -347,7 +347,7 @@ final class LogSearchToolTest extends TestCase
     {
         $tool = $this->createMultiKernelTool();
 
-        $result = $this->decodeUntrusted($tool->listFiles(kernelContext: 'admin'));
+        $result = $this->decodeUntrusted($tool->listFiles(null, 'admin'));
 
         $this->assertCount(2, $result['files']);
         foreach ($result['files'] as $file) {
@@ -369,7 +369,7 @@ final class LogSearchToolTest extends TestCase
     {
         $tool = $this->createMultiKernelTool();
 
-        $result = $this->decodeUntrusted($tool->tail(10, kernelContext: 'admin'));
+        $result = $this->decodeUntrusted($tool->tail(10, null, null, null, 'admin'));
 
         $this->assertCount(2, $result['entries']);
         foreach ($result['entries'] as $entry) {
@@ -381,7 +381,7 @@ final class LogSearchToolTest extends TestCase
     {
         // Regression test: an ERROR-level entry whose message never contains the literal
         // word "error" must still be found when filtering by level alone, without a term.
-        $result = $this->decodeUntrusted($this->createTermOptionalTool()->search(level: 'ERROR'));
+        $result = $this->decodeUntrusted($this->createTermOptionalTool()->search(null, false, 'ERROR'));
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertCount(1, $result['entries']);
@@ -391,7 +391,7 @@ final class LogSearchToolTest extends TestCase
 
     public function testSearchWithoutTermFiltersByChannelOnly()
     {
-        $result = $this->decodeUntrusted($this->createTermOptionalTool()->search(channel: 'security'));
+        $result = $this->decodeUntrusted($this->createTermOptionalTool()->search(null, false, null, 'security'));
 
         $this->assertArrayHasKey('entries', $result);
         $this->assertCount(1, $result['entries']);
@@ -419,7 +419,7 @@ final class LogSearchToolTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $this->createTermOptionalTool()->search(regex: true);
+        $this->createTermOptionalTool()->search(null, true);
     }
 
     public function testSearchSchemaDoesNotRequireTerm()
@@ -474,7 +474,7 @@ final class LogSearchToolTest extends TestCase
         $dir = $this->createDirectoryWithCompressedRotation();
 
         try {
-            $tool = new LogSearchTool(new LogReader(new LogParser(), $dir, compressedBytes: 10));
+            $tool = new LogSearchTool(new LogReader(new LogParser(), $dir, 10));
 
             $result = $this->decodeUntrusted($tool->search('Deploy'), DecodeOptions::lenient());
 

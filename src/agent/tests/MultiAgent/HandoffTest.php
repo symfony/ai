@@ -23,7 +23,7 @@ class HandoffTest extends TestCase
 {
     public function testConstructorWithValidConditions()
     {
-        $agent = new MockAgent(name: 'technical');
+        $agent = new MockAgent([], 'technical');
         $when = ['code', 'debug', 'programming'];
 
         $handoff = new Handoff($agent, $when);
@@ -34,7 +34,7 @@ class HandoffTest extends TestCase
 
     public function testConstructorWithSingleCondition()
     {
-        $agent = new MockAgent(name: 'error-handler');
+        $agent = new MockAgent([], 'error-handler');
         $when = ['error'];
 
         $handoff = new Handoff($agent, $when);
@@ -55,7 +55,7 @@ class HandoffTest extends TestCase
 
     public function testGetToReturnsAgent()
     {
-        $agent = new MockAgent(name: 'technical');
+        $agent = new MockAgent([], 'technical');
 
         $handoff = new Handoff($agent, ['code']);
 
@@ -65,7 +65,7 @@ class HandoffTest extends TestCase
 
     public function testGetWhenReturnsConditions()
     {
-        $agent = new MockAgent(name: 'billing');
+        $agent = new MockAgent([], 'billing');
         $when = ['payment', 'billing', 'invoice', 'subscription'];
 
         $handoff = new Handoff($agent, $when);

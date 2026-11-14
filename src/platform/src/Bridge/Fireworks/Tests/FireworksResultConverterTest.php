@@ -205,7 +205,7 @@ final class FireworksResultConverterTest extends TestCase
             ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'stop']]],
         ];
 
-        $raw = new InMemoryRawResult(dataStream: $events);
+        $raw = new InMemoryRawResult([], $events);
         $streamResult = $converter->convert($raw, ['stream' => true]);
 
         $this->assertInstanceOf(StreamResult::class, $streamResult);
@@ -237,7 +237,7 @@ final class FireworksResultConverterTest extends TestCase
             ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'stop']]],
         ];
 
-        $raw = new InMemoryRawResult(dataStream: $events);
+        $raw = new InMemoryRawResult([], $events);
         $streamResult = $converter->convert($raw, ['stream' => true]);
 
         $this->assertInstanceOf(StreamResult::class, $streamResult);

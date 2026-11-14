@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Bridge\Redis\Tests;
 
 use PHPUnit\Framework\Attributes\Group;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\AI\Store\Bridge\Redis\Metric;
 use Symfony\AI\Store\Bridge\Redis\Store;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -29,7 +30,7 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
     public function testQueryReturnsAsManyDocumentsAsTheLimit()
     {
         // own index and key prefix, so the documents stay out of the shared store of the parent test case
-        $store = new Store(self::createRedis(), 'test_index_limit', 'vector_limit:', dimensions: 3);
+        $store = new Store(self::createRedis(), 'test_index_limit', 'vector_limit:', Metric::Cosine, 3);
         $store->setup();
 
         try {
@@ -50,7 +51,7 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
 
     protected static function createStore(): StoreInterface
     {
-        return new Store(self::createRedis(), 'test_index', dimensions: 3);
+        return new Store(self::createRedis(), 'test_index', 'vector:', Metric::Cosine, 3);
     }
 
     private static function createRedis(): \Redis

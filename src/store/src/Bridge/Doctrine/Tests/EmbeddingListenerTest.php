@@ -138,7 +138,7 @@ final class EmbeddingListenerTest extends TestCase
     public function testEmbedsOnlyTheGivenEntityClass()
     {
         $eventManager = new EventManager();
-        $eventManager->addEventListener(Events::onFlush, new EmbeddingListener(new EntityEmbedder($this->vectorizer), entityClass: Note::class));
+        $eventManager->addEventListener(Events::onFlush, new EmbeddingListener(new EntityEmbedder($this->vectorizer), Note::class));
         $this->entityManager = $this->createEntityManager($eventManager);
 
         $article = $this->persisted(new Article('Cats'));
@@ -183,7 +183,7 @@ final class EmbeddingListenerTest extends TestCase
         $this->logger = new MessageLogger();
 
         $eventManager = new EventManager();
-        $eventManager->addEventListener(Events::onFlush, new EmbeddingListener(new EntityEmbedder($this->vectorizer), logger: $this->logger));
+        $eventManager->addEventListener(Events::onFlush, new EmbeddingListener(new EntityEmbedder($this->vectorizer), null, $this->logger));
 
         $this->entityManager = $this->createEntityManager($eventManager);
     }

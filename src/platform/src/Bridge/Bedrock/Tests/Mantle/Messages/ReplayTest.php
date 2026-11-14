@@ -66,11 +66,15 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
     protected function createPlatform(HttpClientInterface $httpClient): PlatformInterface
     {
         return Factory::createPlatform(
-            apiKey: 'test-api-key',
-            region: 'us-east-1',
-            api: 'messages',
-            httpClient: $httpClient,
-            cacheRetention: 'none',
+            'test-api-key',
+            'us-east-1',
+            'messages',
+            null,
+            $httpClient,
+            null,
+            null,
+            null,
+            'none',
         );
     }
 

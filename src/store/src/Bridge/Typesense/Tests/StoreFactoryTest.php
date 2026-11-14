@@ -30,7 +30,7 @@ final class StoreFactoryTest extends TestCase
 
     public function testStoreCanBeCreatedWithScopingHttpClient()
     {
-        $store = StoreFactory::create('foo', httpClient: ScopingHttpClient::forBaseUri(HttpClient::create(), 'http://127.0.0.1:8108', [
+        $store = StoreFactory::create('foo', null, null, ScopingHttpClient::forBaseUri(HttpClient::create(), 'http://127.0.0.1:8108', [
             'headers' => [
                 'X-TYPESENSE-API-KEY' => 'bar',
             ],
@@ -49,7 +49,7 @@ final class StoreFactoryTest extends TestCase
             return new JsonMockResponse([], ['http_code' => 200]);
         });
 
-        $store = StoreFactory::create('foo', 'http://localhost:8108/proxy', httpClient: $httpClient);
+        $store = StoreFactory::create('foo', 'http://localhost:8108/proxy', null, $httpClient);
         $store->drop();
 
         $this->assertSame('http://localhost:8108/proxy/collections/foo', $resolvedUrl);

@@ -77,7 +77,7 @@ final class RequestBodyBuilderTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Decision images must be a list of base64-encoded strings.');
 
-        RequestBodyBuilder::build(new Model('clef'), ['state' => 'text', 'questions' => [], 'images' => [42]], supportsImages: true);
+        RequestBodyBuilder::build(new Model('clef'), ['state' => 'text', 'questions' => [], 'images' => [42]], true);
     }
 
     public function testItOmitsAnEmptyImageList()

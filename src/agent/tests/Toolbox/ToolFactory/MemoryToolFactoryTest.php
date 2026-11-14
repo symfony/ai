@@ -25,7 +25,7 @@ final class MemoryToolFactoryTest extends TestCase
     {
         $factory = new MemoryToolFactory();
         $factory->addTool(ToolNoParams::class, 'tool', 'description',
-            effectHints: new ToolEffectHints(readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false));
+            '__invoke', [], new ToolEffectHints(true, false, true, false));
         $tools = iterator_to_array($factory->getTool(ToolNoParams::class));
 
         $this->assertTrue($tools[0]->isReadOnly());

@@ -35,8 +35,8 @@ final class ToolCallMessageNormalizerTest extends TestCase
     {
         $message = new ToolCallMessage(new ToolCall('id', 'name'), new Text('result'));
 
-        $this->assertTrue($this->normalizer->supportsNormalization($message, context: [Contract::CONTEXT_MODEL => new Claude('claude')]));
-        $this->assertFalse($this->normalizer->supportsNormalization($message, context: [Contract::CONTEXT_MODEL => new Gpt('gpt-4o')]));
+        $this->assertTrue($this->normalizer->supportsNormalization($message, null, [Contract::CONTEXT_MODEL => new Claude('claude')]));
+        $this->assertFalse($this->normalizer->supportsNormalization($message, null, [Contract::CONTEXT_MODEL => new Gpt('gpt-4o')]));
     }
 
     public function testNormalizeStringContent()

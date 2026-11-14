@@ -30,7 +30,7 @@ final class StoreFactoryTest extends TestCase
 
     public function testStoreCanBeCreatedWithScopingHttpClient()
     {
-        $store = StoreFactory::create(httpClient: ScopingHttpClient::forBaseUri(HttpClient::create(), 'http://127.0.0.1:8123/'));
+        $store = StoreFactory::create('default', 'embedding', null, ScopingHttpClient::forBaseUri(HttpClient::create(), 'http://127.0.0.1:8123/'));
 
         $this->assertInstanceOf(Store::class, $store);
     }
@@ -71,7 +71,7 @@ final class StoreFactoryTest extends TestCase
             return new JsonMockResponse(['data' => [['cnt' => '0']]]);
         });
 
-        $store = StoreFactory::create(dsn: 'http://127.0.0.1:8123/', httpClient: $httpClient);
+        $store = StoreFactory::create('default', 'embedding', 'http://127.0.0.1:8123/', $httpClient);
         $store->count();
 
         $this->assertStringStartsWith('http://127.0.0.1:8123/?', $requestedUrl);
@@ -87,7 +87,7 @@ final class StoreFactoryTest extends TestCase
             return new JsonMockResponse(['data' => [['cnt' => '0']]]);
         });
 
-        $store = StoreFactory::create(dsn: 'https://example.com/clickhouse', httpClient: $httpClient);
+        $store = StoreFactory::create('default', 'embedding', 'https://example.com/clickhouse', $httpClient);
         $store->count();
 
         $this->assertStringStartsWith('https://example.com/clickhouse/?', $requestedUrl);
@@ -102,7 +102,7 @@ final class StoreFactoryTest extends TestCase
             return new JsonMockResponse(['data' => [['cnt' => '0']]]);
         });
 
-        $store = StoreFactory::create(httpClient: ScopingHttpClient::forBaseUri($httpClient, 'https://example.com/clickhouse/'));
+        $store = StoreFactory::create('default', 'embedding', null, ScopingHttpClient::forBaseUri($httpClient, 'https://example.com/clickhouse/'));
         $store->count();
 
         $this->assertStringStartsWith('https://example.com/clickhouse/?', $requestedUrl);

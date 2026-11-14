@@ -40,7 +40,9 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
             'http://127.0.0.1:7474',
             'neo4j',
             'symfonyai',
-            dimensions: 3,
+            null,
+            'embeddings',
+            3,
         );
     }
 }

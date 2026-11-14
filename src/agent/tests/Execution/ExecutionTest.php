@@ -136,7 +136,7 @@ final class ExecutionTest extends TestCase
             $stages = [];
             $results = [];
 
-            $execution = (new Execution($factory, streamed: true))
+            $execution = (new Execution($factory, true))
                 ->onProgress(static function (Progress $progress) use (&$stages): void {
                     $stages[] = $progress->getStage();
                 })
@@ -265,7 +265,7 @@ final class ExecutionTest extends TestCase
             yield new Progress('delta', 'Received a streamed delta.', new TextDelta('First'));
             yield new Progress('delta', 'Received a streamed delta.', new TextDelta('Second'));
             yield new ResultUpdate(new TextResult('FirstSecond'));
-        }, streamed: true);
+        }, true);
 
         $deltas = [];
         foreach ($execution->asTextStream() as $delta) {
@@ -283,7 +283,7 @@ final class ExecutionTest extends TestCase
             yield new Progress('delta', 'Received a streamed delta.', new TextDelta('First'));
             yield new Progress('delta', 'Received a streamed delta.', new TextDelta('Second'));
             yield new ResultUpdate(new TextResult('FirstSecond'));
-        }, streamed: true);
+        }, true);
 
         $deltas = [];
         foreach ($execution->asStream() as $delta) {
@@ -331,7 +331,7 @@ final class ExecutionTest extends TestCase
             yield new Progress('delta', 'Received a streamed delta.', new TextDelta('Hello '));
             yield new Progress('delta', 'Received a streamed delta.', new TextDelta('world'));
             yield new ResultUpdate(new TextResult('Hello world'));
-        }, streamed: true);
+        }, true);
 
         $text = '';
         foreach ($execution->getContent() as $delta) {
@@ -446,7 +446,7 @@ final class ExecutionTest extends TestCase
             yield new Progress('delta', 'Received a streamed delta.', new TextDelta('Hello '));
             yield new Progress('delta', 'Received a streamed delta.', new TextDelta('world!'));
             yield new ResultUpdate(new TextResult('Hello world!'));
-        }, streamed: true);
+        }, true);
 
         $deltas = iterator_to_array($execution->asStream(), false);
 
@@ -465,7 +465,7 @@ final class ExecutionTest extends TestCase
             yield new Progress('delta', 'Received a streamed delta.', new TextDelta('{'));
             yield new Progress('delta', 'Received a streamed delta.', new PartialObjectDelta($object, '{'));
             yield new ResultUpdate(new TextResult('{'));
-        }, streamed: true);
+        }, true);
 
         $this->assertSame([$object], iterator_to_array($execution->asStreamedObject(), false));
 
@@ -473,7 +473,7 @@ final class ExecutionTest extends TestCase
             yield new Progress('delta', 'Received a streamed delta.', new TextDelta('{'));
             yield new Progress('delta', 'Received a streamed delta.', new PartialObjectDelta($object, '{'));
             yield new ResultUpdate(new TextResult('{'));
-        }, streamed: true);
+        }, true);
 
         $texts = iterator_to_array($execution->asTextStream(), false);
 
@@ -490,7 +490,7 @@ final class ExecutionTest extends TestCase
             yield new Progress('delta', 'Received a streamed delta.', new TextDelta('{'));
             yield new Progress('delta', 'Received a streamed delta.', new PartialObjectDelta(new \stdClass(), '{'));
             yield new ResultUpdate(new ObjectResult($object));
-        }, streamed: true);
+        }, true);
 
         $this->assertSame($object, $execution->asObject());
     }

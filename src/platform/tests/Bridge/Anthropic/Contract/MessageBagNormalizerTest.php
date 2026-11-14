@@ -53,7 +53,7 @@ final class MessageBagNormalizerTest extends TestCase
             new UserMessage(new Text('Hello')),
         );
 
-        $result = $this->normalizer->normalize($messageBag, context: [
+        $result = $this->normalizer->normalize($messageBag, null, [
             Contract::CONTEXT_MODEL => new Claude(Claude::SONNET_4),
         ]);
 
@@ -68,7 +68,7 @@ final class MessageBagNormalizerTest extends TestCase
             new UserMessage(new Text('Hello')),
         );
 
-        $result = $this->normalizer->normalize($messageBag, context: [
+        $result = $this->normalizer->normalize($messageBag, null, [
             Contract::CONTEXT_MODEL => new Claude(Claude::SONNET_4),
         ]);
 

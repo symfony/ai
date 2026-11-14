@@ -463,7 +463,7 @@ final class StoreTest extends TestCase
             ->with($this->stringContains('`embedding` VECTOR(768) NOT NULL'))
             ->willReturn(0);
 
-        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', dimensions: 768);
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding', Metric::Euclidean, 768);
         $store->setup();
     }
 

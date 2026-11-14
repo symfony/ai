@@ -50,7 +50,7 @@ final class LogReaderTest extends TestCase
 
     public function testReadAllWithLimit()
     {
-        $criteria = new SearchCriteria(limit: 5);
+        $criteria = new SearchCriteria(null, null, null, null, null, null, null, null, 5);
         $entries = iterator_to_array($this->reader->readAll($criteria));
 
         $this->assertCount(5, $entries);
@@ -58,7 +58,7 @@ final class LogReaderTest extends TestCase
 
     public function testReadAllWithLevelFilter()
     {
-        $criteria = new SearchCriteria(level: 'ERROR');
+        $criteria = new SearchCriteria(null, null, 'ERROR');
         $entries = iterator_to_array($this->reader->readAll($criteria));
 
         // 1 ERROR in sample.log + 1 ERROR in sample.json.log = 2 total
@@ -70,7 +70,7 @@ final class LogReaderTest extends TestCase
 
     public function testReadAllWithChannelFilter()
     {
-        $criteria = new SearchCriteria(channel: 'security');
+        $criteria = new SearchCriteria(null, null, null, 'security');
         $entries = iterator_to_array($this->reader->readAll($criteria));
 
         // 1 in sample.log + 1 in sample.json.log = 2 total
@@ -82,7 +82,7 @@ final class LogReaderTest extends TestCase
 
     public function testReadAllWithTermSearch()
     {
-        $criteria = new SearchCriteria(term: 'database');
+        $criteria = new SearchCriteria('database');
         $entries = iterator_to_array($this->reader->readAll($criteria));
 
         $this->assertCount(1, $entries);
@@ -260,7 +260,7 @@ final class LogReaderTest extends TestCase
     {
         $reader = $this->createMultiKernelReader();
 
-        $entries = $reader->tail(10, kernelContext: 'admin')['entries'];
+        $entries = $reader->tail(10, null, null, null, 'admin')['entries'];
 
         $this->assertCount(2, $entries);
         foreach ($entries as $entry) {
@@ -416,12 +416,12 @@ final class LogReaderTest extends TestCase
         file_put_contents($dir.'/dev.log.1.gz', (string) gzencode(str_repeat($line, 10)));
 
         try {
-            $reader = new LogReader(new LogParser(), $dir, compressedBytes: 3 * \strlen($line));
+            $reader = new LogReader(new LogParser(), $dir, 3 * \strlen($line));
 
             $this->assertCount(3, iterator_to_array($reader->readAll(), false));
             $this->assertSame(['dev.log.1.gz'], $reader->getSkippedLogFiles());
             // The next read starts from scratch.
-            iterator_to_array($reader->readAll(new SearchCriteria(limit: 1)), false);
+            iterator_to_array($reader->readAll(new SearchCriteria(null, null, null, null, null, null, null, null, 1)), false);
             $this->assertSame([], $reader->getSkippedLogFiles());
         } finally {
             $this->removeDirectory($dir);
@@ -435,7 +435,7 @@ final class LogReaderTest extends TestCase
         file_put_contents($dir.'/dev.log.1.gz', (string) gzencode('[2026-09-26 16:11:00] app.INFO: '.str_repeat('x', 6 * 1024 * 1024)." {} []\n"));
 
         try {
-            $reader = new LogReader(new LogParser(), $dir, compressedBytes: 2 * 1024 * 1024);
+            $reader = new LogReader(new LogParser(), $dir, 2 * 1024 * 1024);
 
             $this->assertSame([], iterator_to_array($reader->readAll(), false));
             $this->assertSame(['dev.log.1.gz'], $reader->getSkippedLogFiles());
@@ -453,7 +453,7 @@ final class LogReaderTest extends TestCase
         file_put_contents($dir.'/dev.log.1.gz', (string) gzencode($huge.$last));
 
         try {
-            $entries = iterator_to_array((new LogReader(new LogParser(), $dir))->readAll(new SearchCriteria(term: 'After')), false);
+            $entries = iterator_to_array((new LogReader(new LogParser(), $dir))->readAll(new SearchCriteria('After')), false);
 
             $this->assertCount(1, $entries);
             $this->assertSame(2, $entries[0]->getLineNumber());

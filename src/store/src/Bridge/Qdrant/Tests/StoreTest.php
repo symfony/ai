@@ -206,7 +206,7 @@ final class StoreTest extends TestCase
             ]);
         }, 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'test', async: true);
+        $store = new Store($httpClient, 'test', 1536, 'Cosine', true);
 
         $store->add($document);
 
@@ -349,7 +349,7 @@ final class StoreTest extends TestCase
             ]);
         }, 'http://127.0.0.1:6333');
 
-        $store = new Store($httpClient, 'test', async: true);
+        $store = new Store($httpClient, 'test', 1536, 'Cosine', true);
 
         $store->clear();
 

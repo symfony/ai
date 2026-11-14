@@ -27,8 +27,8 @@ final class ProfileDataTest extends TestCase
         $profile->setUrl('/test');
 
         $profileData = new ProfileData(
-            profile: $profile,
-            context: 'website'
+            $profile,
+            'website'
         );
 
         $this->assertSame($profile, $profileData->getProfile());
@@ -40,8 +40,8 @@ final class ProfileDataTest extends TestCase
         $profile = new Profile('abc123');
 
         $profileData = new ProfileData(
-            profile: $profile,
-            context: null
+            $profile,
+            null
         );
 
         $this->assertSame($profile, $profileData->getProfile());
@@ -53,7 +53,7 @@ final class ProfileDataTest extends TestCase
         $profile = new Profile('abc123');
 
         $profileData = new ProfileData(
-            profile: $profile
+            $profile
         );
 
         $this->assertSame($profile, $profileData->getProfile());
@@ -64,8 +64,8 @@ final class ProfileDataTest extends TestCase
     {
         $profile = new Profile('abc123');
         $profileData = new ProfileData(
-            profile: $profile,
-            context: 'admin'
+            $profile,
+            'admin'
         );
 
         $reflection = new \ReflectionClass($profileData);
@@ -84,7 +84,7 @@ final class ProfileDataTest extends TestCase
         $profile->setUrl('/api/users');
         $profile->setIp('192.168.1.1');
 
-        $profileData = new ProfileData(profile: $profile);
+        $profileData = new ProfileData($profile);
 
         $this->assertSame('abc123', $profileData->getProfile()->getToken());
         $this->assertSame('POST', $profileData->getProfile()->getMethod());

@@ -24,14 +24,14 @@ final class FactoryTest extends TestCase
 {
     public function testItCreatesPlatformWithDefaultSettings()
     {
-        $platform = Factory::createPlatform('key-id', 'key-secret', httpClient: new MockHttpClient());
+        $platform = Factory::createPlatform('key-id', 'key-secret', null, new MockHttpClient());
 
         $this->assertInstanceOf(Platform::class, $platform);
     }
 
     public function testItCreatesProvider()
     {
-        $provider = Factory::createProvider('key-id', 'key-secret', httpClient: new MockHttpClient());
+        $provider = Factory::createProvider('key-id', 'key-secret', null, new MockHttpClient());
 
         $this->assertInstanceOf(Provider::class, $provider);
         $this->assertSame('higgsfield', $provider->getName());
@@ -46,7 +46,7 @@ final class FactoryTest extends TestCase
             return new JsonMockResponse(['items' => []]);
         });
 
-        Factory::createProvider('key-id', 'key-secret', httpClient: $httpClient)
+        Factory::createProvider('key-id', 'key-secret', null, $httpClient)
             ->getModelCatalog()
             ->getModels();
 

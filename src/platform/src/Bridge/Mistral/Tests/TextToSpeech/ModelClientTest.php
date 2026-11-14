@@ -86,7 +86,7 @@ final class ModelClientTest extends TestCase
 
         $client = new ModelClient($httpClient, 'test-key');
 
-        $client->request(new TextToSpeech('voxtral-mini-tts-3-0', options: ['voice' => 'voice_592']), 'Bonjour');
+        $client->request(new TextToSpeech('voxtral-mini-tts-3-0', [], ['voice' => 'voice_592']), 'Bonjour');
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }

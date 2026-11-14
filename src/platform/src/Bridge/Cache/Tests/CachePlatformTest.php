@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Cache\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Cache\CacheKeyGenerator;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
+use Symfony\AI\Platform\Bridge\Cache\ResultNormalizer;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\DocumentUrl;
 use Symfony\AI\Platform\Message\Message;
@@ -27,6 +28,15 @@ use Symfony\AI\Platform\Result\TextResult;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\Cache\Adapter\TagAwareAdapter;
 use Symfony\Component\Clock\MonotonicClock;
+use Symfony\Component\PropertyInfo\Extractor\PhpDocExtractor;
+use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
+use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
+use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Symfony\Component\Serializer\Mapping\ClassDiscriminatorFromClassMetadata;
+use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
+use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\Serializer;
 
 final class CachePlatformTest extends TestCase
 {
@@ -39,7 +49,8 @@ final class CachePlatformTest extends TestCase
 
         $cachedPlatform = new CachePlatform(
             $platform,
-            cache: new TagAwareAdapter(new ArrayAdapter()),
+            new MonotonicClock(),
+            new TagAwareAdapter(new ArrayAdapter()),
         );
 
         $deferredResult = $cachedPlatform->invoke('foo', 'bar', [
@@ -70,7 +81,8 @@ final class CachePlatformTest extends TestCase
 
         $cachedPlatform = new CachePlatform(
             $platform,
-            cache: new TagAwareAdapter($adapter),
+            new MonotonicClock(),
+            new TagAwareAdapter($adapter),
         );
 
         $messageBag = new MessageBag(
@@ -102,7 +114,7 @@ final class CachePlatformTest extends TestCase
             new PlainConverter(new TextResult('test content')), new InMemoryRawResult(),
         ));
 
-        $cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
+        $cachedPlatform = new CachePlatform($platform, new MonotonicClock(), new TagAwareAdapter(new ArrayAdapter()));
 
         $deferredResult = $cachedPlatform->invoke('foo', new MessageBag(Message::ofUser('Hello there')), ['prompt_cache_key' => 'symfony']);
         $secondDeferredResult = $cachedPlatform->invoke('foo', new MessageBag(Message::ofUser('Hello there')), ['prompt_cache_key' => 'symfony']);
@@ -119,7 +131,7 @@ final class CachePlatformTest extends TestCase
             new DeferredResult(new PlainConverter(new TextResult('second')), new InMemoryRawResult()),
         );
 
-        $cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
+        $cachedPlatform = new CachePlatform($platform, new MonotonicClock(), new TagAwareAdapter(new ArrayAdapter()));
         $messageBag = new MessageBag(Message::ofUser('Hello there'));
 
         $first = $cachedPlatform->invoke('foo', $messageBag, ['prompt_cache_key' => 'symfony']);
@@ -136,7 +148,7 @@ final class CachePlatformTest extends TestCase
             new PlainConverter(new TextResult('test content')), new InMemoryRawResult(),
         ));
 
-        $cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
+        $cachedPlatform = new CachePlatform($platform, new MonotonicClock(), new TagAwareAdapter(new ArrayAdapter()));
 
         $cachedPlatform->invoke('foo', 'bar', ['prompt_cache_key' => 'symfony', 'temperature' => 0.1]);
         $cachedPlatform->invoke('foo', 'bar', ['prompt_cache_key' => 'symfony', 'temperature' => 0.9]);
@@ -149,7 +161,7 @@ final class CachePlatformTest extends TestCase
             new PlainConverter(new TextResult('test content')), new InMemoryRawResult(),
         ));
 
-        $cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
+        $cachedPlatform = new CachePlatform($platform, new MonotonicClock(), new TagAwareAdapter(new ArrayAdapter()));
 
         $cachedPlatform->invoke(new Model('foo', [], ['temperature' => 0.1]), 'bar', ['prompt_cache_key' => 'symfony']);
         $cachedPlatform->invoke(new Model('foo', [], ['temperature' => 0.9]), 'bar', ['prompt_cache_key' => 'symfony']);
@@ -163,7 +175,7 @@ final class CachePlatformTest extends TestCase
             new PlainConverter(new TextResult('test content')), new InMemoryRawResult(),
         ));
 
-        $cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
+        $cachedPlatform = new CachePlatform($platform, new MonotonicClock(), new TagAwareAdapter(new ArrayAdapter()));
 
         $cachedPlatform->invoke(new Model('foo', [], ['temperature' => 0.1]), 'bar', ['prompt_cache_key' => 'symfony']);
         $cachedPlatform->invoke(new Model('foo'), 'bar', ['prompt_cache_key' => 'symfony', 'temperature' => 0.1]);
@@ -176,7 +188,7 @@ final class CachePlatformTest extends TestCase
             new PlainConverter(new TextResult('test content')), new InMemoryRawResult(),
         ));
 
-        $cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
+        $cachedPlatform = new CachePlatform($platform, new MonotonicClock(), new TagAwareAdapter(new ArrayAdapter()));
         $options = ['prompt_cache_key' => 'symfony', 'callback' => static fn () => null];
 
         $this->assertFalse($cachedPlatform->invoke('foo', 'bar', $options)->getMetadata()->has('cached_at'));
@@ -191,7 +203,7 @@ final class CachePlatformTest extends TestCase
         ));
 
         $document = new DocumentUrl('https://example.com/document.pdf');
-        $cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
+        $cachedPlatform = new CachePlatform($platform, new MonotonicClock(), new TagAwareAdapter(new ArrayAdapter()));
 
         $deferredResult = $cachedPlatform->invoke('foo', $document, ['prompt_cache_key' => 'symfony']);
         $this->assertSame('test content', $deferredResult->getResult()->getContent());
@@ -209,7 +221,7 @@ final class CachePlatformTest extends TestCase
             new PlainConverter(new TextResult('test content')), new InMemoryRawResult(),
         ));
 
-        $cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
+        $cachedPlatform = new CachePlatform($platform, new MonotonicClock(), new TagAwareAdapter(new ArrayAdapter()));
 
         $cachedPlatform->invoke('foo', new DocumentUrl('https://example.com/first.pdf'), ['prompt_cache_key' => 'symfony']);
         $cachedPlatform->invoke('foo', new DocumentUrl('https://example.com/second.pdf'), ['prompt_cache_key' => 'symfony']);
@@ -220,7 +232,7 @@ final class CachePlatformTest extends TestCase
         $platform = $this->createMock(PlatformInterface::class);
         $platform->expects($this->never())->method('invoke');
 
-        $cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
+        $cachedPlatform = new CachePlatform($platform, new MonotonicClock(), new TagAwareAdapter(new ArrayAdapter()));
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Unsupported input type: "stdClass".');
@@ -250,7 +262,7 @@ final class CachePlatformTest extends TestCase
         $input = new \stdClass();
         $input->id = 'custom-key';
 
-        $cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()), cacheKeyGenerators: [$generator]);
+        $cachedPlatform = new CachePlatform($platform, new MonotonicClock(), new TagAwareAdapter(new ArrayAdapter()), $this->createSerializer(), null, null, [$generator]);
 
         $deferredResult = $cachedPlatform->invoke('foo', $input, ['prompt_cache_key' => 'symfony']);
         $this->assertSame('test content', $deferredResult->getResult()->getContent());
@@ -270,8 +282,8 @@ final class CachePlatformTest extends TestCase
 
         $cachedPlatform = new CachePlatform(
             $platform,
-            clock: $clock,
-            cache: new TagAwareAdapter(new ArrayAdapter()),
+            $clock,
+            new TagAwareAdapter(new ArrayAdapter()),
         );
 
         $deferredResult = $cachedPlatform->invoke('foo', 'bar', [
@@ -305,8 +317,8 @@ final class CachePlatformTest extends TestCase
 
         $cachedPlatform = new CachePlatform(
             $platform,
-            clock: $clock,
-            cache: new TagAwareAdapter(new ArrayAdapter()),
+            $clock,
+            new TagAwareAdapter(new ArrayAdapter()),
         );
 
         $deferredResult = $cachedPlatform->invoke('foo', 'bar', [
@@ -327,5 +339,18 @@ final class CachePlatformTest extends TestCase
         $this->assertSame('test content', $secondDeferredResult->getResult()->getContent());
         $this->assertTrue($secondDeferredResult->getMetadata()->has('cached_at'));
         $this->assertSame($deferredResult->getMetadata()->get('cached_at'), $secondDeferredResult->getMetadata()->get('cached_at'));
+    }
+
+    private function createSerializer(): Serializer
+    {
+        return new Serializer([
+            new ResultNormalizer(new ObjectNormalizer(
+                null,
+                null,
+                null,
+                new PropertyInfoExtractor([], [new PhpDocExtractor(), new ReflectionExtractor()]),
+                new ClassDiscriminatorFromClassMetadata(new ClassMetadataFactory(new AttributeLoader())),
+            )),
+        ], [new JsonEncoder()]);
     }
 }

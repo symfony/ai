@@ -283,9 +283,16 @@ final class VeniceClientTest extends TestCase
             new Venice('venice-uncensored', [Capability::INPUT_MESSAGES]),
             ['messages' => [['role' => 'user', 'content' => 'Hello']]],
             ['venice_parameters' => new VeniceParameters(
-                enableWebSearch: VeniceParameters::WEB_SEARCH_AUTO,
-                enableWebCitations: true,
-                stripThinkingResponse: true,
+                null,
+                VeniceParameters::WEB_SEARCH_AUTO,
+                null,
+                null,
+                true,
+                null,
+                null,
+                null,
+                null,
+                true,
             )],
         );
 

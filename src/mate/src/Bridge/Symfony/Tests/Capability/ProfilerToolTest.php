@@ -51,7 +51,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesWithLimit()
     {
-        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 2));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(2));
 
         $this->assertArrayHasKey('profiles', $result);
         $this->assertCount(2, $result['profiles']);
@@ -59,7 +59,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesSaysWhenItReturnedOnlyAPage()
     {
-        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 2));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(2));
 
         $this->assertSame(3, $result['total']);
         $this->assertTrue($result['truncated']);
@@ -77,7 +77,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesWithLimitEqualToTotalIsNotTruncated()
     {
-        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 3));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(3));
 
         $this->assertFalse($result['truncated']);
         $this->assertCount(3, $result['profiles']);
@@ -85,14 +85,14 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesPutsTheCountsBeforeTheProfiles()
     {
-        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 1));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(1));
 
         $this->assertSame(['total', 'truncated', 'profiles'], array_keys($result));
     }
 
     public function testListProfilesWithLimitZeroReturnsEveryProfile()
     {
-        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 0));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(0));
 
         $this->assertSame(3, $result['total']);
         $this->assertFalse($result['truncated']);
@@ -104,12 +104,12 @@ final class ProfilerToolTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('limit must be 0 or greater.');
 
-        $this->tool->listProfiles(limit: -1);
+        $this->tool->listProfiles(-1);
     }
 
     public function testListProfilesCountsTheFilteredTotal()
     {
-        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 1, method: 'POST'));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(1, 'POST'));
 
         $this->assertSame(1, $result['total']);
         $this->assertFalse($result['truncated']);
@@ -118,7 +118,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesCountsTheFilteredTotalWhenTruncated()
     {
-        $result = $this->decodeUntrusted($this->tool->listProfiles(limit: 1, method: 'GET'));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(1, 'GET'));
 
         $this->assertSame(2, $result['total']);
         $this->assertTrue($result['truncated']);
@@ -127,7 +127,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesWithNoMatchIsNotTruncated()
     {
-        $result = $this->decodeUntrusted($this->tool->listProfiles(statusCode: 418));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(20, null, null, null, 418));
 
         $this->assertSame(0, $result['total']);
         $this->assertFalse($result['truncated']);
@@ -136,7 +136,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByMethod()
     {
-        $result = $this->decodeUntrusted($this->tool->listProfiles(method: 'POST'));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(20, 'POST'));
 
         $this->assertArrayHasKey('profiles', $result);
         $profiles = $result['profiles'];
@@ -146,7 +146,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByStatusCode()
     {
-        $result = $this->decodeUntrusted($this->tool->listProfiles(statusCode: 404));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(20, null, null, null, 404));
 
         $this->assertArrayHasKey('profiles', $result);
         $profiles = $result['profiles'];
@@ -156,7 +156,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByUrl()
     {
-        $result = $this->decodeUntrusted($this->tool->listProfiles(url: 'users'));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(20, null, 'users'));
 
         $this->assertArrayHasKey('profiles', $result);
         $this->assertCount(2, $result['profiles']);
@@ -164,7 +164,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByIp()
     {
-        $result = $this->decodeUntrusted($this->tool->listProfiles(ip: '127.0.0.1'));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(20, null, null, '127.0.0.1'));
 
         $this->assertArrayHasKey('profiles', $result);
         $this->assertCount(2, $result['profiles']);
@@ -172,7 +172,7 @@ final class ProfilerToolTest extends TestCase
 
     public function testListProfilesFilterByRoute()
     {
-        $result = $this->decodeUntrusted($this->tool->listProfiles(url: '/api/users'));
+        $result = $this->decodeUntrusted($this->tool->listProfiles(20, null, '/api/users'));
 
         $this->assertArrayHasKey('profiles', $result);
         $this->assertCount(2, $result['profiles']);

@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Bridge\MongoDb\Tests;
 
 use MongoDB\Client;
 use PHPUnit\Framework\Attributes\Group;
+use Psr\Log\NullLogger;
 use Symfony\AI\Store\Bridge\MongoDb\Store;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
@@ -30,7 +31,10 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
             'test_database',
             'test_collection',
             'test_index',
-            dimensions: 3,
+            'vector',
+            false,
+            new NullLogger(),
+            3,
         );
     }
 

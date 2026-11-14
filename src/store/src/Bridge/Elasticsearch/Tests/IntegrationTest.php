@@ -25,7 +25,7 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
 {
     protected static function createStore(): StoreInterface
     {
-        return StoreFactory::create('test_index', 'http://127.0.0.1:9200', HttpClient::create(), dimensions: 3);
+        return StoreFactory::create('test_index', 'http://127.0.0.1:9200', HttpClient::create(), '_vectors', 3);
     }
 
     protected function waitForIndexing(): void

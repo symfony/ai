@@ -28,7 +28,7 @@ final class StoreFactoryTest extends TestCase
 
     public function testStoreCanBeCreatedWithScopingHttpClient()
     {
-        $store = StoreFactory::create('foo', httpClient: ScopingHttpClient::forBaseUri(HttpClient::create(), 'http://127.0.0.1:6333', [
+        $store = StoreFactory::create('foo', null, null, ScopingHttpClient::forBaseUri(HttpClient::create(), 'http://127.0.0.1:6333', [
             'auth_bearer' => 'bar',
         ]));
 

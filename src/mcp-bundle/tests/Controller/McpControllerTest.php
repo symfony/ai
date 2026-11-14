@@ -171,8 +171,9 @@ final class McpControllerTest extends TestCase
             $psr17Factory,
             $psr17Factory,
             new MiddlewareFactory(),
-            maxBodyBytes: $maxBodyBytes,
-            tokenStorage: false === $tokenStorage ? $this->tokenStorage : $tokenStorage,
+            null,
+            $maxBodyBytes,
+            false === $tokenStorage ? $this->tokenStorage : $tokenStorage,
         );
     }
 

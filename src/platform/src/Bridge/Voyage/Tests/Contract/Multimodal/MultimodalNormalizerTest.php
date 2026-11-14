@@ -63,7 +63,7 @@ class MultimodalNormalizerTest extends TestCase
         $normalizer = new MultimodalNormalizer();
         $this->assertEquals(
             $expected,
-            $normalizer->supportsNormalization($input, context: [Contract::CONTEXT_MODEL => $model])
+            $normalizer->supportsNormalization($input, null, [Contract::CONTEXT_MODEL => $model])
         );
     }
 

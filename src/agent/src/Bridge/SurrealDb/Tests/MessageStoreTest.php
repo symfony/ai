@@ -16,6 +16,7 @@ use Symfony\AI\Agent\Bridge\SurrealDb\MessageStore;
 use Symfony\AI\Agent\Exception\ConflictException;
 use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Toolbox\Source\SourceCollectionNormalizer;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Serializer\MessageBagNormalizer;
@@ -174,7 +175,7 @@ final class MessageStoreTest extends TestCase
 
     private function store(MockHttpClient $httpClient): MessageStore
     {
-        return new MessageStore($httpClient, 'http://127.0.0.1:8000', 'user', 'pass', 'ns', 'db', table: 'chat');
+        return new MessageStore($httpClient, 'http://127.0.0.1:8000', 'user', 'pass', 'ns', 'db', new Serializer([new MessageBagNormalizer(), new SourceCollectionNormalizer()], [new JsonEncoder()]), 'chat');
     }
 
     private function signin(): JsonMockResponse

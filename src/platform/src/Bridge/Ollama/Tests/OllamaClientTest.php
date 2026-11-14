@@ -121,7 +121,7 @@ final class OllamaClientTest extends TestCase
             ),
         ], 'http://127.0.0.1:1234');
 
-        $platform = Factory::createPlatform('http://127.0.0.1:1234', httpClient: $httpClient);
+        $platform = Factory::createPlatform('http://127.0.0.1:1234', null, $httpClient);
         $response = $platform->invoke('llama3.2', [
             'messages' => [
                 [

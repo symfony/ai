@@ -64,7 +64,7 @@ final class EvaluationTest extends TestCase
 
     public function testItSerializesImagesInOrderAsRawBase64()
     {
-        $evaluation = new Evaluation('A yearbook page.', ['photo' => new NoulQuestion('Is this a photograph?')], images: [
+        $evaluation = new Evaluation('A yearbook page.', ['photo' => new NoulQuestion('Is this a photograph?')], [
             new Image('first image', 'image/png'),
             new Image('second image', 'image/jpeg'),
         ]);
@@ -74,7 +74,7 @@ final class EvaluationTest extends TestCase
 
     public function testItOmitsEmptyImages()
     {
-        $evaluation = new Evaluation('text', ['q' => new NoulQuestion('Relevant?')], images: []);
+        $evaluation = new Evaluation('text', ['q' => new NoulQuestion('Relevant?')], []);
 
         $this->assertArrayNotHasKey('images', $evaluation->jsonSerialize());
     }
@@ -85,6 +85,6 @@ final class EvaluationTest extends TestCase
         $this->expectExceptionMessage('Evaluation images must be instances of');
 
         /* @phpstan-ignore argument.type */
-        new Evaluation('text', ['q' => new NoulQuestion('Relevant?')], images: ['https://example.com/image.png']);
+        new Evaluation('text', ['q' => new NoulQuestion('Relevant?')], ['https://example.com/image.png']);
     }
 }

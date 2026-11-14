@@ -463,10 +463,14 @@ final class StoreTest extends TestCase
             $client,
             'test-bucket',
             'test-index',
-            dimensions: 384,
-            metric: DistanceMetric::EUCLIDEAN,
-            kmsKeyId: 'test-key',
-            tags: ['env' => 'test'],
+            [],
+            3,
+            384,
+            DistanceMetric::EUCLIDEAN,
+            DataType::FLOAT_32,
+            [],
+            'test-key',
+            ['env' => 'test'],
         );
         $store->setup();
     }

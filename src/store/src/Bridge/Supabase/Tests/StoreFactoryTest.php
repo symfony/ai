@@ -57,7 +57,7 @@ final class StoreFactoryTest extends TestCase
             return new MockResponse('', ['http_code' => 200]);
         });
 
-        $store = StoreFactory::create('https://test.supabase.co', httpClient: $httpClient);
+        $store = StoreFactory::create('https://test.supabase.co', null, $httpClient);
         $store->clear();
 
         $this->assertArrayNotHasKey('apikey', $requestedHeaders);
@@ -73,7 +73,7 @@ final class StoreFactoryTest extends TestCase
             return new MockResponse('', ['http_code' => 200]);
         });
 
-        $store = StoreFactory::create('https://test.supabase.co/', 'test-api-key', $httpClient, table: 'movies');
+        $store = StoreFactory::create('https://test.supabase.co/', 'test-api-key', $httpClient, 'movies');
         $store->clear();
 
         $this->assertSame('https://test.supabase.co/rest/v1/movies?id=not.is.null', $requestedUrl);
@@ -105,7 +105,7 @@ final class StoreFactoryTest extends TestCase
             return new MockResponse('', ['http_code' => 200]);
         });
 
-        $store = StoreFactory::create(httpClient: ScopingHttpClient::forBaseUri($httpClient, 'https://test.supabase.co/', [
+        $store = StoreFactory::create(null, null, ScopingHttpClient::forBaseUri($httpClient, 'https://test.supabase.co/', [
             'auth_bearer' => 'test-api-key',
             'headers' => ['apikey' => 'test-api-key'],
         ]));
@@ -121,6 +121,6 @@ final class StoreFactoryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The Supabase "apiKey" requires an "endpoint"');
 
-        StoreFactory::create(apiKey: 'test-api-key', httpClient: new MockHttpClient());
+        StoreFactory::create(null, 'test-api-key', new MockHttpClient());
     }
 }

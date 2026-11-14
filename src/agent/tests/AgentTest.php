@@ -348,7 +348,7 @@ final class AgentTest extends TestCase
             return new ToolCallResult([$toolCall]);
         });
 
-        $agent = new Agent($platform, 'gpt-4', toolbox: $toolbox, maxToolCalls: 3);
+        $agent = new Agent($platform, 'gpt-4', [], [], 'agent', $toolbox, null, 3);
 
         $this->expectException(MaxIterationsExceededException::class);
         $this->expectExceptionMessage('Maximum number of tool calling iterations (3) exceeded.');
@@ -373,7 +373,7 @@ final class AgentTest extends TestCase
             return [] === $toolMessages ? new ToolCallResult([$toolCall]) : 'Final answer';
         });
 
-        $agent = new Agent($platform, 'gpt-4', toolbox: $toolbox, toolResultConverter: new ToolResultConverter($serializer));
+        $agent = new Agent($platform, 'gpt-4', [], [], 'agent', $toolbox, null, 50, false, null, new ToolResultConverter($serializer));
         $agent->call(new MessageBag(), [])->getResult();
 
         $this->assertCount(1, $toolMessages);
@@ -389,16 +389,16 @@ final class AgentTest extends TestCase
 
         $toolCallResult = new ToolCallResult([$toolCall]);
         $toolCallResult->getMetadata()->add('finish_reason', 'tool_calls');
-        $toolCallResult->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 10));
+        $toolCallResult->getMetadata()->add('token_usage', new TokenUsage(10));
         $textResult = new TextResult('It is sunny.');
         $textResult->getMetadata()->add('finish_reason', 'stop');
-        $textResult->getMetadata()->add('token_usage', new TokenUsage(promptTokens: 20));
+        $textResult->getMetadata()->add('token_usage', new TokenUsage(20));
         $results = [$toolCallResult, $textResult];
         $platform = MockPlatformFactory::createPlatform(static function () use (&$results): ResultInterface {
             return array_shift($results);
         });
 
-        $agent = new Agent($platform, 'gpt-4', [new SystemPromptInputProcessor('You are a weather bot.')], toolbox: $toolbox);
+        $agent = new Agent($platform, 'gpt-4', [new SystemPromptInputProcessor('You are a weather bot.')], [], 'agent', $toolbox);
         $input = new MessageBag(Message::ofUser('How is the weather?'));
 
         $execution = $agent->call($input);

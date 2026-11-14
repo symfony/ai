@@ -40,7 +40,7 @@ final class StoreTest extends TestCase
         $filesystem->expects($this->once())->method('exists')->willReturn(false);
         $filesystem->expects($this->never())->method('remove');
 
-        $store = new Store(sys_get_temp_dir(), filesystem: $filesystem);
+        $store = new Store(sys_get_temp_dir(), 1536, $filesystem);
 
         $store->drop();
     }
@@ -51,7 +51,7 @@ final class StoreTest extends TestCase
         $filesystem->expects($this->once())->method('exists')->willReturn(true);
         $filesystem->expects($this->once())->method('remove');
 
-        $store = new Store(sys_get_temp_dir(), filesystem: $filesystem);
+        $store = new Store(sys_get_temp_dir(), 1536, $filesystem);
 
         $store->drop();
     }

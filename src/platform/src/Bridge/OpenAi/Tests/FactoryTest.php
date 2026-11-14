@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\OpenAi\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Batch\JobClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
+use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog;
 use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -57,7 +58,7 @@ final class FactoryTest extends TestCase
             new JsonMockResponse(['id' => 'batch_123', 'endpoint' => '/v1/responses', 'completion_window' => '24h', 'status' => 'validating']),
         ]);
 
-        $handle = Factory::createProvider('sk-test-api-key', $httpClient, name: 'openai-eu')
+        $handle = Factory::createProvider('sk-test-api-key', $httpClient, new ModelCatalog(), null, null, null, 'openai-eu')
             ->invoke('gpt-4o-mini', ['first' => new MessageBag(Message::ofUser('What is the capital of France?'))], ['batch' => true])
             ->asJob();
 

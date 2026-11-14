@@ -64,7 +64,7 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
 
     protected function createPlatform(HttpClientInterface $httpClient): PlatformInterface
     {
-        return Factory::createPlatform('test-api-key', httpClient: $httpClient);
+        return Factory::createPlatform('test-api-key', $httpClient);
     }
 
     protected function cassetteDirectory(): string

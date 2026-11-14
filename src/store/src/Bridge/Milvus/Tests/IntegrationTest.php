@@ -28,7 +28,10 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
             'test_database',
             'test_collection',
             'http://127.0.0.1:19530',
-            dimensions: 3,
+            null,
+            null,
+            '_vectors',
+            3,
         );
     }
 

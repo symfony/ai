@@ -19,8 +19,8 @@ class TokenUsageAggregationTest extends TestCase
 {
     public function testGetTokenUsagesReturnsTheAggregatedUsagesInOrder()
     {
-        $first = new TokenUsage(promptTokens: 10);
-        $second = new TokenUsage(promptTokens: 7);
+        $first = new TokenUsage(10);
+        $second = new TokenUsage(7);
 
         $aggregation = new TokenUsageAggregation([$first, $second]);
 
@@ -29,8 +29,8 @@ class TokenUsageAggregationTest extends TestCase
 
     public function testGetTokenUsagesReflectsUsagesAddedAfterConstruction()
     {
-        $first = new TokenUsage(promptTokens: 10);
-        $second = new TokenUsage(promptTokens: 7);
+        $first = new TokenUsage(10);
+        $second = new TokenUsage(7);
 
         $aggregation = new TokenUsageAggregation([$first]);
         $aggregation->add($second);
@@ -41,26 +41,30 @@ class TokenUsageAggregationTest extends TestCase
     public function testAggregatesTokenUsageCorrectly()
     {
         $usage1 = new TokenUsage(
-            promptTokens: 10,
-            completionTokens: 20,
-            thinkingTokens: 5,
-            toolTokens: 2,
-            cachedTokens: 1,
-            remainingTokens: 100,
-            remainingTokensMinute: 60,
-            remainingTokensMonth: 1000,
-            totalTokens: 38
+            10,
+            20,
+            5,
+            2,
+            1,
+            null,
+            null,
+            100,
+            60,
+            1000,
+            38
         );
         $usage2 = new TokenUsage(
-            promptTokens: 5,
-            completionTokens: 10,
-            thinkingTokens: 3,
-            toolTokens: 1,
-            cachedTokens: 2,
-            remainingTokens: 80,
-            remainingTokensMinute: 50,
-            remainingTokensMonth: 900,
-            totalTokens: 21
+            5,
+            10,
+            3,
+            1,
+            2,
+            null,
+            null,
+            80,
+            50,
+            900,
+            21
         );
         $aggregation = new TokenUsageAggregation([$usage1, $usage2]);
 
@@ -77,8 +81,8 @@ class TokenUsageAggregationTest extends TestCase
 
     public function testHandlesNullValues()
     {
-        $usage1 = new TokenUsage(promptTokens: null, completionTokens: null, remainingTokens: null, totalTokens: null);
-        $usage2 = new TokenUsage(promptTokens: 5, completionTokens: 10, remainingTokens: 25, totalTokens: 21);
+        $usage1 = new TokenUsage(null, null, null, null, null, null, null, null, null, null, null);
+        $usage2 = new TokenUsage(5, 10, null, null, null, null, null, 25, null, null, 21);
         $aggregation = new TokenUsageAggregation([$usage1, $usage2]);
 
         $this->assertSame(5, $aggregation->getPromptTokens());
@@ -112,8 +116,8 @@ class TokenUsageAggregationTest extends TestCase
 
     public function testReturnsModelWhenAllUsagesHaveSameModel()
     {
-        $usage1 = new TokenUsage(promptTokens: 10, completionTokens: 20, model: 'gpt-4o');
-        $usage2 = new TokenUsage(promptTokens: 5, completionTokens: 10, model: 'gpt-4o');
+        $usage1 = new TokenUsage(10, 20, null, null, null, null, null, null, null, null, null, 'gpt-4o');
+        $usage2 = new TokenUsage(5, 10, null, null, null, null, null, null, null, null, null, 'gpt-4o');
         $aggregation = new TokenUsageAggregation([$usage1, $usage2]);
 
         $this->assertSame('gpt-4o', $aggregation->getModel());
@@ -121,8 +125,8 @@ class TokenUsageAggregationTest extends TestCase
 
     public function testReturnsNullWhenUsagesHaveDifferentModels()
     {
-        $usage1 = new TokenUsage(promptTokens: 10, completionTokens: 20, model: 'gpt-4o');
-        $usage2 = new TokenUsage(promptTokens: 5, completionTokens: 10, model: 'claude-3-5-sonnet');
+        $usage1 = new TokenUsage(10, 20, null, null, null, null, null, null, null, null, null, 'gpt-4o');
+        $usage2 = new TokenUsage(5, 10, null, null, null, null, null, null, null, null, null, 'claude-3-5-sonnet');
         $aggregation = new TokenUsageAggregation([$usage1, $usage2]);
 
         $this->assertNull($aggregation->getModel());
@@ -130,8 +134,8 @@ class TokenUsageAggregationTest extends TestCase
 
     public function testReturnsNullWhenAllModelsAreNull()
     {
-        $usage1 = new TokenUsage(promptTokens: 10, completionTokens: 20);
-        $usage2 = new TokenUsage(promptTokens: 5, completionTokens: 10);
+        $usage1 = new TokenUsage(10, 20);
+        $usage2 = new TokenUsage(5, 10);
         $aggregation = new TokenUsageAggregation([$usage1, $usage2]);
 
         $this->assertNull($aggregation->getModel());

@@ -76,9 +76,9 @@ final class StoreTest extends TestCase
         $metadata->setText('Some text content');
 
         $store->add(new VectorDocument(
-            id: 'doc-1',
-            vector: new Vector([0.1, 0.2, 0.3]),
-            metadata: $metadata,
+            'doc-1',
+            new Vector([0.1, 0.2, 0.3]),
+            $metadata,
         ));
 
         $result = $pdo->query('SELECT COUNT(*) FROM test_vectors');

@@ -24,10 +24,10 @@ final class AudioNormalizerTest extends TestCase
     {
         $normalizer = new AudioNormalizer();
 
-        $this->assertTrue($normalizer->supportsNormalization(new Audio('bytes', 'audio/mpeg'), context: [
+        $this->assertTrue($normalizer->supportsNormalization(new Audio('bytes', 'audio/mpeg'), null, [
             Contract::CONTEXT_MODEL => new Deepgram('nova-3-general'),
         ]));
-        $this->assertFalse($normalizer->supportsNormalization(new Audio('bytes', 'audio/mpeg'), context: [
+        $this->assertFalse($normalizer->supportsNormalization(new Audio('bytes', 'audio/mpeg'), null, [
             Contract::CONTEXT_MODEL => new Model('any-other-model'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization(new Audio('bytes', 'audio/mpeg')));

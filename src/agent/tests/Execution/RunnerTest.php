@@ -733,10 +733,10 @@ final class RunnerTest extends TestCase
             yield new TextDelta('partial-2');
             yield new ToolCallComplete([$toolCall]);
         })());
-        $stream->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+        $stream->getMetadata()->add('token_usage', new TokenUsage(null, null, null, null, null, null, null, null, null, null, 10));
 
         $final = new TextResult('Final content after tool');
-        $final->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+        $final->getMetadata()->add('token_usage', new TokenUsage(null, null, null, null, null, null, null, null, null, null, 10));
 
         $result = $this->drive($this->createRunner($this->platform($stream, $final), $toolbox), new MessageBag());
 
@@ -756,11 +756,11 @@ final class RunnerTest extends TestCase
 
         $round = new ToolCallResult([$toolCall]);
         $round->getMetadata()->add('finish_reason', new FinishReason(FinishReasonCase::TOOL_CALL, 'tool_calls'));
-        $round->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 10));
+        $round->getMetadata()->add('token_usage', new TokenUsage(null, null, null, null, null, null, null, null, null, null, 10));
 
         $final = new TextResult('Final content after tool');
         $final->getMetadata()->add('finish_reason', new FinishReason(FinishReasonCase::STOP, 'stop'));
-        $final->getMetadata()->add('token_usage', new TokenUsage(totalTokens: 5));
+        $final->getMetadata()->add('token_usage', new TokenUsage(null, null, null, null, null, null, null, null, null, null, 5));
 
         $result = $this->drive($this->createRunner($this->platform($round, $final), $toolbox), new MessageBag());
 

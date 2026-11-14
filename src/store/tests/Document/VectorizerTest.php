@@ -14,6 +14,7 @@ namespace Symfony\AI\Store\Tests\Document;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
@@ -513,7 +514,7 @@ final class VectorizerTest extends TestCase
         $vector = new Vector([0.1, 0.2, 0.3]);
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult([$vector]));
-        $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', includeText: true);
+        $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', new NullLogger(), true);
         $result = $vectorizer->vectorize($document);
 
         $this->assertInstanceOf(VectorDocument::class, $result);
@@ -534,7 +535,7 @@ final class VectorizerTest extends TestCase
         ];
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult($vectors));
-        $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', includeText: true);
+        $vectorizer = new Vectorizer($platform, 'text-embedding-3-small', new NullLogger(), true);
         $result = $vectorizer->vectorize($documents);
 
         $this->assertCount(2, $result);
