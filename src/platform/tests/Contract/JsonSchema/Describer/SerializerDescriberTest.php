@@ -67,4 +67,20 @@ final class SerializerDescriberTest extends TestCase
 
         $this->assertSame($expectedSchema, $schema);
     }
+
+    public function testNullClassMetadataFactoryFallsBackToAttributeMapping()
+    {
+        $describer = new SerializerDescriber(null);
+        $describer->setObjectDescriber(new class implements ObjectDescriberInterface {
+            public function describeObject(ObjectSubject $subject, ?array &$schema): iterable
+            {
+                return [];
+            }
+        });
+        $schema = null;
+
+        $describer->describeObject(new ObjectSubject(ListItemDiscriminator::class, new \ReflectionClass(ListItemDiscriminator::class)), $schema);
+
+        $this->assertCount(2, $schema['anyOf'] ?? []);
+    }
 }
