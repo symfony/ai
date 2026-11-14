@@ -299,6 +299,46 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('claude-sonnet-4-5-20250929', $tokenUsage->getModel());
     }
 
+    public function testStreamingUsageReportsTheFinalCountsOfAServerToolTurn()
+    {
+        // The usage of the web search stream in Anthropic's streaming docs: the search results
+        // join the prompt mid-turn, so message_delta's cumulative counts outgrow message_start's.
+        $tokenUsage = $this->aggregateStreamingUsage(
+            ['input_tokens' => 2679, 'cache_creation_input_tokens' => 0, 'cache_read_input_tokens' => 0, 'output_tokens' => 3],
+            ['input_tokens' => 10682, 'cache_creation_input_tokens' => 0, 'cache_read_input_tokens' => 0, 'output_tokens' => 510, 'server_tool_use' => ['web_search_requests' => 1]],
+        );
+
+        $this->assertSame(10682, $tokenUsage->getPromptTokens());
+        $this->assertSame(510, $tokenUsage->getCompletionTokens());
+        $this->assertSame(1, $tokenUsage->getToolTokens());
+    }
+
+    public function testStreamingUsageGrowsCacheCountsToTheirFinalValue()
+    {
+        $tokenUsage = $this->aggregateStreamingUsage(
+            ['input_tokens' => 10, 'cache_creation_input_tokens' => 200, 'cache_read_input_tokens' => 300, 'output_tokens' => 1],
+            ['input_tokens' => 10, 'cache_creation_input_tokens' => 250, 'cache_read_input_tokens' => 900, 'output_tokens' => 40],
+        );
+
+        $this->assertSame(10, $tokenUsage->getPromptTokens());
+        $this->assertSame(250, $tokenUsage->getCacheCreationTokens());
+        $this->assertSame(900, $tokenUsage->getCacheReadTokens());
+        $this->assertSame(40, $tokenUsage->getCompletionTokens());
+    }
+
+    public function testStreamingUsageKeepsMessageStartCountsWhenMessageDeltaOmitsThem()
+    {
+        $tokenUsage = $this->aggregateStreamingUsage(
+            ['input_tokens' => 25, 'cache_creation_input_tokens' => 40, 'cache_read_input_tokens' => 120, 'output_tokens' => 1],
+            ['output_tokens' => 15],
+        );
+
+        $this->assertSame(25, $tokenUsage->getPromptTokens());
+        $this->assertSame(40, $tokenUsage->getCacheCreationTokens());
+        $this->assertSame(120, $tokenUsage->getCacheReadTokens());
+        $this->assertSame(15, $tokenUsage->getCompletionTokens());
+    }
+
     public function testStreamingThrowsWhenMessageStopIsMissing()
     {
         $converter = new ResultConverter();
@@ -1294,6 +1334,35 @@ final class ResultConverterTest extends TestCase
         }
 
         return $searches;
+    }
+
+    /**
+     * @param array<string, mixed> $messageStartUsage
+     * @param array<string, mixed> $messageDeltaUsage
+     */
+    private function aggregateStreamingUsage(array $messageStartUsage, array $messageDeltaUsage): TokenUsageInterface
+    {
+        $streamResult = (new ResultConverter())->convert($this->createRawResult([
+            ['type' => 'message_start', 'message' => ['id' => 'msg_123', 'type' => 'message', 'role' => 'assistant', 'model' => 'claude-opus-5-5', 'content' => [], 'usage' => $messageStartUsage]],
+            ['type' => 'content_block_start', 'index' => 0, 'content_block' => ['type' => 'text', 'text' => '']],
+            ['type' => 'content_block_delta', 'index' => 0, 'delta' => ['type' => 'text_delta', 'text' => 'Hello']],
+            ['type' => 'content_block_stop', 'index' => 0],
+            ['type' => 'message_delta', 'delta' => ['stop_reason' => 'end_turn'], 'usage' => $messageDeltaUsage],
+            ['type' => 'message_stop'],
+        ]), ['stream' => true]);
+
+        $this->assertInstanceOf(StreamResult::class, $streamResult);
+
+        $streamResult->addListener(new TokenUsageStreamListener());
+
+        foreach ($streamResult->getContent() as $part) {
+            // Drain the stream so the listener aggregates the usage events.
+        }
+
+        $tokenUsage = $streamResult->getMetadata()->get('token_usage');
+        $this->assertInstanceOf(TokenUsageInterface::class, $tokenUsage);
+
+        return $tokenUsage;
     }
 
     /**
