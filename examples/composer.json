@@ -76,6 +76,7 @@
         "symfony/ai-serp-api-tool": "^1.0",
         "symfony/ai-session-message-store": "^1.0",
         "symfony/ai-similarity-search-tool": "^1.0",
+        "symfony/ai-spec-stream-tool": "^1.0",
         "symfony/ai-supabase-store": "^1.0",
         "symfony/ai-surreal-db-message-store": "^1.0",
         "symfony/ai-surreal-db-store": "^1.0",

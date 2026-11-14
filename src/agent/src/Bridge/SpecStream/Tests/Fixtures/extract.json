@@ -1,0 +1,20 @@
+{
+  "data": {
+    "results": [
+      {
+        "url": "https://example.com/article",
+        "status": "ok",
+        "title": "Example Article",
+        "text": "# Example Article\n\nBody text.",
+        "read_from": "live"
+      },
+      {
+        "url": "https://example.com/missing",
+        "status": "not_found"
+      }
+    ],
+    "request_id": "req_test",
+    "took_ms": 800,
+    "price_usd": 0.0008
+  }
+}

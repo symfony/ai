@@ -1,0 +1,31 @@
+{
+  "data": {
+    "kind": "fact",
+    "query": "who founded Symfony",
+    "answer": {
+      "value": "Fabien Potencier",
+      "page": "https://example.com/symfony-history",
+      "seen_at": "2026-11-08T07:00:00Z"
+    },
+    "rows": [],
+    "sources": [
+      {
+        "url": "https://example.com/symfony-history",
+        "title": "History of Symfony",
+        "site": "example.com",
+        "snippet": "Symfony was created by Fabien Potencier in 2005.",
+        "cited": true
+      },
+      {
+        "url": "https://example.com/about-symfony",
+        "title": "About Symfony",
+        "site": "example.com",
+        "snippet": "Symfony is a set of PHP components.",
+        "cited": false
+      }
+    ],
+    "request_id": "req_test",
+    "took_ms": 1200,
+    "price_usd": 0.005
+  }
+}

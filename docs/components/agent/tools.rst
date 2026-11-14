@@ -35,6 +35,15 @@ Searches the web via Google through the `SerpApi`_ service.
 
 `SerpApi Example`_
 
+SpecStream
+~~~~~~~~~~
+
+Searches the live web and reads pages using the `SpecStream`_ Search and Extract APIs.
+
+.. code-block:: terminal
+
+    $ composer require symfony/ai-spec-stream-tool
+
 Tavily
 ~~~~~~
 
@@ -234,6 +243,7 @@ See :doc:`/components/agent` for a full RAG integration example.
 .. _`Brave Search Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/brave.php
 .. _`SerpApi`: https://serpapi.com/
 .. _`SerpApi Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/serpapi.php
+.. _`SpecStream`: https://specstream.ai/
 .. _`Tavily`: https://tavily.com/
 .. _`Tavily Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/tavily.php
 .. _`Firecrawl`: https://www.firecrawl.dev/
