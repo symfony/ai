@@ -19,8 +19,10 @@ use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\Platform\TraceablePlatform;
 use Symfony\AI\Store\TraceableStore;
 use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 
 final class DebugCompilerPassTest extends TestCase
@@ -62,7 +64,7 @@ final class DebugCompilerPassTest extends TestCase
         $traceableAgent = $container->getDefinition('ai.traceable_agent.my_agent');
         $this->assertSame(TraceableAgent::class, $traceableAgent->getClass());
         $this->assertSame(['ai.agent.my_agent', null, -1024], $traceableAgent->getDecoratedService());
-        $this->assertEquals([new Reference('.inner'), '$stopwatch' => new Reference('debug.stopwatch', ContainerInterface::NULL_ON_INVALID_REFERENCE)], $traceableAgent->getArguments());
+        $this->assertEquals([new Reference('.inner'), new Definition(MonotonicClock::class), new Reference('debug.stopwatch', ContainerInterface::NULL_ON_INVALID_REFERENCE)], $traceableAgent->getArguments());
         $this->assertTrue($traceableAgent->hasTag('ai.traceable_agent'));
         $this->assertSame([['method' => 'reset']], $traceableAgent->getTag('kernel.reset'));
 

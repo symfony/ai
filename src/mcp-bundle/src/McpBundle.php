@@ -575,12 +575,14 @@ final class McpBundle extends AbstractBundle
 
             $container->register($id, Psr16NotificationBus::class)
                 ->setArguments([
-                    '$cache' => new Reference($subscriptions['cache_pool']),
+                    new Reference($subscriptions['cache_pool']),
                     // Namespaced per server: two servers left on the default pool would otherwise
                     // share one cursor, so each would read the other's notifications and their
                     // publishes would overwrite each other under the same sequence number.
-                    '$prefix' => \sprintf('mcp-%s-notifications.', $name),
-                    '$logger' => new Reference('logger'),
+                    \sprintf('mcp-%s-notifications.', $name),
+                    120,
+                    256,
+                    new Reference('logger'),
                 ])
                 ->addTag('monolog.logger', ['channel' => 'mcp']);
         }

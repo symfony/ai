@@ -434,7 +434,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $messageStore = $container->getDefinition('ai.agent.my_agent')->getArgument('$messageStore');
+        $messageStore = $container->getDefinition('ai.agent.my_agent')->getArgument(11);
         $this->assertInstanceOf(Reference::class, $messageStore);
         $this->assertSame('ai.message_store.memory.main', (string) $messageStore);
         $this->assertSame(InMemoryMessageStore::class, $container->getDefinition('ai.message_store.memory.main')->getClass());
@@ -473,8 +473,7 @@ class AiBundleTest extends TestCase
         $arguments = $agentDefinition->getArguments();
 
         // The name argument should be the config key as agent name
-        $this->assertArrayHasKey('$name', $arguments, 'Agent definition should have the name argument');
-        $this->assertSame('my_custom_agent', $arguments['$name']);
+        $this->assertSame('my_custom_agent', $arguments[4]);
 
         // Check that the tag uses the config key as name
         $tags = $agentDefinition->getTag('ai.agent');
@@ -1902,7 +1901,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('vector_idx', $definition->getArgument(2));
         $this->assertSame('vector', $definition->getArgument(3));
         $this->assertSame(MariaDbMetric::Euclidean, $definition->getArgument(4));
-        $this->assertSame(1024, $definition->getArgument('$dimensions'));
+        $this->assertSame(1024, $definition->getArgument(5));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -1947,7 +1946,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('vector_idx', $definition->getArgument(2));
         $this->assertSame('vector', $definition->getArgument(3));
         $this->assertSame(MariaDbMetric::Cosine, $definition->getArgument(4));
-        $this->assertSame(1024, $definition->getArgument('$dimensions'));
+        $this->assertSame(1024, $definition->getArgument(5));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -2385,7 +2384,7 @@ class AiBundleTest extends TestCase
         $this->assertSame(MongoDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(10, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame(MongoDbClient::class, (string) $definition->getArgument(0));
         $this->assertSame('my_db', $definition->getArgument(1));
@@ -2428,7 +2427,7 @@ class AiBundleTest extends TestCase
         $this->assertSame(MongoDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(10, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame(MongoDbClient::class, (string) $definition->getArgument(0));
         $this->assertSame('my_db', $definition->getArgument(1));
@@ -2471,7 +2470,7 @@ class AiBundleTest extends TestCase
         $this->assertSame(MongoDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(10, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame(MongoDbClient::class, (string) $definition->getArgument(0));
         $this->assertSame('my_db', $definition->getArgument(1));
@@ -2514,7 +2513,7 @@ class AiBundleTest extends TestCase
         $this->assertSame(MongoDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(10, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('foo', (string) $definition->getArgument(0));
         $this->assertSame('my_db', $definition->getArgument(1));
@@ -2558,7 +2557,7 @@ class AiBundleTest extends TestCase
         $this->assertSame(MongoDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(10, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame(MongoDbClient::class, (string) $definition->getArgument(0));
         $this->assertSame('my_db', $definition->getArgument(1));
@@ -2598,8 +2597,8 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.mongodb.my_mongo_store');
 
-        $this->assertSame(768, $definition->getArgument('$dimensions'));
-        $this->assertSame(MongoDbMetric::Cosine, $definition->getArgument('$metric'));
+        $this->assertSame(768, $definition->getArgument(7));
+        $this->assertSame(MongoDbMetric::Cosine, $definition->getArgument(8));
     }
 
     public function testNeo4jStoreCanBeConfigured()
@@ -3090,7 +3089,7 @@ class AiBundleTest extends TestCase
         $this->assertSame(PineconeStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(10, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('http_client', (string) $definition->getArgument(0));
         $this->assertSame('pckey', $definition->getArgument(1));
@@ -3131,12 +3130,12 @@ class AiBundleTest extends TestCase
         ]);
 
         $definition = $container->getDefinition('ai.store.pinecone.my_pinecone_store');
-        $this->assertSame(1536, $definition->getArgument('$dimensions'));
-        $this->assertSame('cosine', $definition->getArgument('$metric'));
-        $this->assertSame('aws', $definition->getArgument('$cloud'));
-        $this->assertSame('us-east-1', $definition->getArgument('$region'));
+        $this->assertSame(1536, $definition->getArgument(6));
+        $this->assertSame('cosine', $definition->getArgument(7));
+        $this->assertSame('aws', $definition->getArgument(8));
+        $this->assertSame('us-east-1', $definition->getArgument(9));
 
-        $this->assertCount(5, $container->getDefinition('ai.store.pinecone.my_pinecone_store_without_index_configuration')->getArguments());
+        $this->assertCount(10, $container->getDefinition('ai.store.pinecone.my_pinecone_store_without_index_configuration')->getArguments());
     }
 
     public function testPineconeStoreRejectsUnknownDistance()
@@ -3181,7 +3180,7 @@ class AiBundleTest extends TestCase
         $this->assertSame(PineconeStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(10, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('http_client', (string) $definition->getArgument(0));
         $this->assertSame('pckey', $definition->getArgument(1));
@@ -3751,8 +3750,8 @@ class AiBundleTest extends TestCase
         ]);
 
         $definition = $container->getDefinition('ai.store.s3vectors.my_s3vectors_store');
-        $this->assertSame(1536, $definition->getArgument('$dimensions'));
-        $this->assertSame('euclidean', $definition->getArgument('$metric'));
+        $this->assertSame(1536, $definition->getArgument(5));
+        $this->assertSame('euclidean', $definition->getArgument(6));
     }
 
     public function testS3VectorsStoreRejectsUnknownDistance()
@@ -3991,7 +3990,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertSame(768, $container->getDefinition('ai.store.redis.my_redis_store')->getArgument('$dimensions'));
+        $this->assertSame(768, $container->getDefinition('ai.store.redis.my_redis_store')->getArgument(4));
     }
 
     public function testSqliteStoreCanBeConfigured()
@@ -5355,8 +5354,8 @@ class AiBundleTest extends TestCase
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
-        $this->assertSame([OllamaFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
+        $this->assertCount(8, $definition->getArguments());
+        $this->assertSame([OllamaFactory::class, 'createModelCatalog'], $definition->getArgument(7)->getFactory());
         $this->assertSame('http://127.0.0.1:11434', $definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -5387,7 +5386,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(8, $definition->getArguments());
         $this->assertSame('https://ollama.com', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -5417,7 +5416,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(8, $definition->getArguments());
         $this->assertNull($definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -5447,18 +5446,9 @@ class AiBundleTest extends TestCase
 
         $arguments = $container->getDefinition('ai.agent.test_agent')->getArguments();
 
-        // The agent is wired with named arguments, so every argument key must map to a real
-        // constructor parameter - this catches stale, renamed or misspelled arguments.
-        $parameters = [];
-        foreach ((new \ReflectionMethod(Agent::class, '__construct'))->getParameters() as $parameter) {
-            $parameters['$'.$parameter->getName()] = true;
-        }
-
-        foreach (array_keys($arguments) as $key) {
-            $this->assertArrayHasKey($key, $parameters, \sprintf('Argument "%s" does not match any Agent constructor parameter.', $key));
-        }
-
-        $this->assertSame('test_agent', $arguments['$name']);
+        $this->assertTrue(array_is_list($arguments));
+        $this->assertCount((new \ReflectionMethod(Agent::class, '__construct'))->getNumberOfParameters(), $arguments);
+        $this->assertSame('test_agent', $arguments[4]);
     }
 
     /**
@@ -5486,7 +5476,7 @@ class AiBundleTest extends TestCase
 
         // The toolbox is passed to the agent itself instead of being registered as a processor
         $agentDefinition = $container->getDefinition($agentId);
-        $this->assertSame('ai.toolbox.test_agent', (string) $agentDefinition->getArgument('$toolbox'));
+        $this->assertSame('ai.toolbox.test_agent', (string) $agentDefinition->getArgument(5));
 
         // Test system prompt processor tags
         $systemPromptDefinition = $container->getDefinition('ai.agent.test_agent.system_prompt_processor');
@@ -5524,8 +5514,8 @@ class AiBundleTest extends TestCase
         $secondAgentId = 'ai.agent.second_agent';
 
         // Each agent receives its own toolbox
-        $this->assertSame('ai.toolbox.first_agent', (string) $container->getDefinition($firstAgentId)->getArgument('$toolbox'));
-        $this->assertSame('ai.toolbox.second_agent', (string) $container->getDefinition($secondAgentId)->getArgument('$toolbox'));
+        $this->assertSame('ai.toolbox.first_agent', (string) $container->getDefinition($firstAgentId)->getArgument(5));
+        $this->assertSame('ai.toolbox.second_agent', (string) $container->getDefinition($secondAgentId)->getArgument(5));
 
         // First agent system prompt processor
         $firstSystemPrompt = $container->getDefinition('ai.agent.first_agent.system_prompt_processor');
@@ -5555,7 +5545,7 @@ class AiBundleTest extends TestCase
 
         $agentDefinition = $container->getDefinition('ai.agent.test_agent');
 
-        $this->assertEquals(new Reference('ai.tool_result_converter'), $agentDefinition->getArgument('$toolResultConverter'));
+        $this->assertEquals(new Reference('ai.tool_result_converter'), $agentDefinition->getArgument(10));
     }
 
     public function testMaxToolCallsDefaultsToFifty()
@@ -5573,7 +5563,7 @@ class AiBundleTest extends TestCase
 
         $agentDefinition = $container->getDefinition('ai.agent.test_agent');
 
-        $this->assertSame(50, $agentDefinition->getArgument('$maxToolCalls'));
+        $this->assertSame(50, $agentDefinition->getArgument(7));
     }
 
     /**
@@ -5602,7 +5592,7 @@ class AiBundleTest extends TestCase
 
         $agentDefinition = $container->getDefinition('ai.agent.test_agent');
 
-        $this->assertSame($maxToolCalls, $agentDefinition->getArgument('$maxToolCalls'));
+        $this->assertSame($maxToolCalls, $agentDefinition->getArgument(7));
     }
 
     #[TestDox('Processors work correctly when using the default toolbox')]
@@ -5623,7 +5613,7 @@ class AiBundleTest extends TestCase
 
         // When using the default toolbox, it is passed to the agent as the toolbox argument
         $this->assertTrue($container->hasDefinition('ai.toolbox.agent_with_tools'));
-        $this->assertSame('ai.toolbox.agent_with_tools', (string) $container->getDefinition($agentId)->getArgument('$toolbox'));
+        $this->assertSame('ai.toolbox.agent_with_tools', (string) $container->getDefinition($agentId)->getArgument(5));
     }
 
     #[TestDox('Tool execution strategy defaults to the sequential executor provided by the agent itself')]
@@ -5690,7 +5680,7 @@ class AiBundleTest extends TestCase
         $this->assertInstanceOf(Reference::class, $toolboxArg = $executorDefinition->getArgument(0));
         $this->assertSame('ai.toolbox.my_agent', (string) $toolboxArg);
 
-        $strategyArg = $container->getDefinition('ai.agent.my_agent')->getArgument('$toolExecutor');
+        $strategyArg = $container->getDefinition('ai.agent.my_agent')->getArgument(6);
         $this->assertInstanceOf(Reference::class, $strategyArg);
         $this->assertSame('ai.tool_executor.my_agent', (string) $strategyArg);
     }
@@ -5713,7 +5703,7 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertFalse($container->hasDefinition('ai.tool_executor.my_agent'));
-        $strategyArg = $container->getDefinition('ai.agent.my_agent')->getArgument('$toolExecutor');
+        $strategyArg = $container->getDefinition('ai.agent.my_agent')->getArgument(6);
         $this->assertInstanceOf(Reference::class, $strategyArg);
         $this->assertSame('app.my_custom_executor', (string) $strategyArg);
     }
@@ -5736,7 +5726,7 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasDefinition('ai.toolbox.my_agent'));
         $this->assertTrue($container->hasDefinition('ai.tool_executor.my_agent'));
-        $this->assertSame('ai.tool_executor.my_agent', (string) $container->getDefinition('ai.agent.my_agent')->getArgument('$toolExecutor'));
+        $this->assertSame('ai.tool_executor.my_agent', (string) $container->getDefinition('ai.agent.my_agent')->getArgument(6));
     }
 
     #[TestDox('Tool execution strategy does not override an explicitly disabled toolbox')]
@@ -5851,7 +5841,7 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasDefinition('ai.toolbox.my_agent'));
-        $this->assertSame('ai.toolbox.my_agent', (string) $container->getDefinition('ai.agent.my_agent')->getArgument('$toolbox'));
+        $this->assertSame('ai.toolbox.my_agent', (string) $container->getDefinition('ai.agent.my_agent')->getArgument(5));
 
         $toolboxDefinition = $container->getDefinition('ai.toolbox.my_agent');
         $this->assertInstanceOf(ChildDefinition::class, $toolboxDefinition);
@@ -5935,8 +5925,8 @@ class AiBundleTest extends TestCase
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
-        $this->assertSame([ElevenLabsFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
+        $this->assertCount(8, $definition->getArguments());
+        $this->assertSame([ElevenLabsFactory::class, 'createModelCatalog'], $definition->getArgument(7)->getFactory());
         $this->assertSame('https://api.elevenlabs.io/v1/', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -5972,7 +5962,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(8, $definition->getArguments());
         $this->assertSame('https://api.elevenlabs.io/v2/', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6008,7 +5998,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(8, $definition->getArguments());
         $this->assertSame('https://api.elevenlabs.io/v1/', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6043,7 +6033,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(8, $definition->getArguments());
         $this->assertSame('https://api.elevenlabs.io/v1/', $definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6080,8 +6070,8 @@ class AiBundleTest extends TestCase
         $this->assertSame([DeepgramFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
-        $this->assertSame([DeepgramFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
+        $this->assertCount(8, $definition->getArguments());
+        $this->assertSame([DeepgramFactory::class, 'createModelCatalog'], $definition->getArgument(7)->getFactory());
         $this->assertSame('https://api.deepgram.com/v1/', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6131,7 +6121,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([DeepgramFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(8, $definition->getArguments());
         $this->assertSame('https://api.deepgram.com/v1/', $definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6433,8 +6423,8 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.platform.fireworks');
         $arguments = $definition->getArguments();
 
-        $this->assertCount(5, $arguments);
-        $this->assertSame([FireworksFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
+        $this->assertCount(7, $arguments);
+        $this->assertSame([FireworksFactory::class, 'createModelCatalog'], $definition->getArgument(6)->getFactory());
         $this->assertSame('fw-test-key', $arguments[0]);
         $this->assertInstanceOf(Reference::class, $arguments[1]);
         $this->assertSame('http_client', (string) $arguments[1]);
@@ -6607,8 +6597,8 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.platform.together');
         $arguments = $definition->getArguments();
 
-        $this->assertCount(6, $arguments);
-        $this->assertSame([TogetherFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
+        $this->assertCount(8, $arguments);
+        $this->assertSame([TogetherFactory::class, 'createModelCatalog'], $definition->getArgument(7)->getFactory());
         $this->assertNull($arguments[0]);
         $this->assertSame('together-test-key', $arguments[1]);
         $this->assertInstanceOf(Reference::class, $arguments[2]);
@@ -7024,7 +7014,7 @@ class AiBundleTest extends TestCase
         // Check that all processors are created
         $this->assertTrue($container->hasDefinition('ai.agent.test_agent.memory_input_processor'));
         $this->assertTrue($container->hasDefinition('ai.agent.test_agent.system_prompt_processor'));
-        $this->assertSame('ai.toolbox.test_agent', (string) $container->getDefinition('ai.agent.test_agent')->getArgument('$toolbox'));
+        $this->assertSame('ai.toolbox.test_agent', (string) $container->getDefinition('ai.agent.test_agent')->getArgument(5));
 
         // Verify memory processor configuration (static memory since service doesn't exist)
         $this->assertTrue($container->hasDefinition('ai.agent.test_agent.static_memory_provider'));
@@ -7492,7 +7482,7 @@ class AiBundleTest extends TestCase
         ]);
 
         $agentDefinition = $container->getDefinition('ai.agent.test');
-        $this->assertSame('gpt-4o-mini?temperature=0.5&max_tokens=2000', $agentDefinition->getArgument('$model'));
+        $this->assertSame('gpt-4o-mini?temperature=0.5&max_tokens=2000', $agentDefinition->getArgument(1));
     }
 
     #[TestDox('Model configuration with separate options array works correctly')]
@@ -7515,7 +7505,7 @@ class AiBundleTest extends TestCase
         ]);
 
         $agentDefinition = $container->getDefinition('ai.agent.test');
-        $this->assertSame('gpt-4o-mini?temperature=0.7&max_tokens=1500', $agentDefinition->getArgument('$model'));
+        $this->assertSame('gpt-4o-mini?temperature=0.7&max_tokens=1500', $agentDefinition->getArgument(1));
     }
 
     #[TestDox('Model configuration keeps periods in option names given in the model name')]
@@ -7532,7 +7522,7 @@ class AiBundleTest extends TestCase
         ]);
 
         $agentDefinition = $container->getDefinition('ai.agent.test');
-        $this->assertSame('gpt-5?reasoning.effort=medium', $agentDefinition->getArgument('$model'));
+        $this->assertSame('gpt-5?reasoning.effort=medium', $agentDefinition->getArgument(1));
     }
 
     #[TestDox('Model configuration keeps periods in option names given in the options array')]
@@ -7554,7 +7544,7 @@ class AiBundleTest extends TestCase
         ]);
 
         $agentDefinition = $container->getDefinition('ai.agent.test');
-        $this->assertSame('gpt-5?reasoning.effort=medium', $agentDefinition->getArgument('$model'));
+        $this->assertSame('gpt-5?reasoning.effort=medium', $agentDefinition->getArgument(1));
     }
 
     #[TestDox('Model configuration throws exception when using both query parameters and options array')]
@@ -7596,7 +7586,7 @@ class AiBundleTest extends TestCase
 
         $agentDefinition = $container->getDefinition('ai.agent.test');
         // Query parameters are maintained as strings when parsed from URL
-        $this->assertSame('gpt-4o-mini?temperature=0.5&max_tokens=2000&stream=true&presence_penalty=0', $agentDefinition->getArgument('$model'));
+        $this->assertSame('gpt-4o-mini?temperature=0.5&max_tokens=2000&stream=true&presence_penalty=0', $agentDefinition->getArgument(1));
     }
 
     #[TestDox('Vectorizer model configuration with query parameters works correctly')]
@@ -7858,7 +7848,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([['event' => 'onFlush'], ['event' => 'postFlush']], $listener->getTag('doctrine.event_listener'));
 
         $entityIndexer = $container->getDefinition('ai.store.doctrine.products.entity_indexer');
-        $this->assertSame('ai.store.doctrine.products.mirror_listener', (string) $entityIndexer->getArgument('$mirror'));
+        $this->assertSame('ai.store.doctrine.products.mirror_listener', (string) $entityIndexer->getArgument(3));
         $this->assertTrue($container->hasDefinition('ai.indexer.products'));
 
         $retriever = $container->getDefinition('ai.retriever.products');
@@ -9322,7 +9312,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.agent.code_expert.static_memory_provider'));
 
         // Code expert should have tool processor
-        $this->assertSame('ai.toolbox.code_expert', (string) $container->getDefinition('ai.agent.code_expert')->getArgument('$toolbox'));
+        $this->assertSame('ai.toolbox.code_expert', (string) $container->getDefinition('ai.agent.code_expert')->getArgument(5));
 
         // Code expert should have system prompt processor
         $this->assertTrue($container->hasDefinition('ai.agent.code_expert.system_prompt_processor'));
@@ -9335,7 +9325,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.agent.general_support.memory_input_processor'));
 
         // Orchestrator should have tools processor
-        $this->assertSame('ai.toolbox.orchestrator', (string) $container->getDefinition('ai.agent.orchestrator')->getArgument('$toolbox'));
+        $this->assertSame('ai.toolbox.orchestrator', (string) $container->getDefinition('ai.agent.orchestrator')->getArgument(5));
     }
 
     #[TestDox('Agent model configuration preserves colon notation in model names (e.g., qwen3:0.6b)')]
@@ -9359,7 +9349,7 @@ class AiBundleTest extends TestCase
 
         $agentDefinition = $container->getDefinition('ai.agent.test');
 
-        $this->assertSame($model, $agentDefinition->getArgument('$model'));
+        $this->assertSame($model, $agentDefinition->getArgument(1));
     }
 
     #[TestDox('Vectorizer model configuration preserves colon notation in model names (e.g., bge-m3:1024)')]
@@ -9408,7 +9398,7 @@ class AiBundleTest extends TestCase
 
         $agentDefinition = $container->getDefinition('ai.agent.test');
 
-        $this->assertSame('qwen3?stream=false&think=true&nested%%5Bbool%%5D=false', $agentDefinition->getArgument('$model'));
+        $this->assertSame('qwen3?stream=false&think=true&nested%%5Bbool%%5D=false', $agentDefinition->getArgument(1));
     }
 
     public function testVectorizerModelBooleanOptionsArePreserved()
@@ -10296,7 +10286,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        [, $ollamaCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.ollama')->getArgument('$modelCatalog'));
+        [, $ollamaCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.ollama')->getArgument(7));
         [, $edenAiCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.edenai')->getArgument(2));
 
         $this->assertSame([OllamaFactory::class, 'createModelCatalog'], $ollamaCatalog->getFactory());
@@ -10320,7 +10310,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        [$configuredCatalog, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.ollama')->getArgument('$modelCatalog'));
+        [$configuredCatalog, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.ollama')->getArgument(7));
 
         $this->assertSame(InMemoryModelCatalog::class, $configuredCatalog->getClass());
         $this->assertSame(CachedModelCatalog::class, $modelCatalog->getClass());
@@ -10396,7 +10386,7 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $modelCatalog = $container->getDefinition('ai.platform.ollama')->getArgument('$modelCatalog');
+        $modelCatalog = $container->getDefinition('ai.platform.ollama')->getArgument(7);
 
         $this->assertSame(CachedModelCatalog::class, $modelCatalog->getClass());
         $this->assertSame([OllamaFactory::class, 'createModelCatalog'], $modelCatalog->getArgument(0)->getFactory());
@@ -10507,8 +10497,8 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
-        $this->assertSame([VeniceFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
+        $this->assertCount(8, $definition->getArguments());
+        $this->assertSame([VeniceFactory::class, 'createModelCatalog'], $definition->getArgument(7)->getFactory());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -10544,7 +10534,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(8, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v2/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -10580,7 +10570,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(8, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -10616,7 +10606,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(6, $definition->getArguments());
+        $this->assertCount(8, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -11005,8 +10995,8 @@ class AiBundleTest extends TestCase
         $this->assertSame(['ai.agent.my_agent', null, -1024], $agentDefinition->getDecoratedService());
 
         $speechConfigDefinition = $container->getDefinition('ai.agent.my_agent.speech_configuration');
-        $this->assertSame('eleven_multilingual_v2', $speechConfigDefinition->getArgument('$ttsModel'));
-        $this->assertNull($speechConfigDefinition->getArgument('$sttModel'));
+        $this->assertSame('eleven_multilingual_v2', $speechConfigDefinition->getArgument(0));
+        $this->assertNull($speechConfigDefinition->getArgument(2));
 
         // Enabled with STT
         $container = $this->buildContainer([
@@ -11045,8 +11035,8 @@ class AiBundleTest extends TestCase
         $this->assertSame(['ai.agent.my_agent', null, -1024], $agentDefinition->getDecoratedService());
 
         $speechConfigDefinition = $container->getDefinition('ai.agent.my_agent.speech_configuration');
-        $this->assertNull($speechConfigDefinition->getArgument('$ttsModel'));
-        $this->assertSame('scribe_v1', $speechConfigDefinition->getArgument('$sttModel'));
+        $this->assertNull($speechConfigDefinition->getArgument(0));
+        $this->assertSame('scribe_v1', $speechConfigDefinition->getArgument(2));
 
         // Enabled with TTS along with the model for STT but without the STT platform
         $container = $this->buildContainer([
@@ -11087,8 +11077,8 @@ class AiBundleTest extends TestCase
 
         $speechConfigDefinition = $container->getDefinition('ai.agent.my_agent.speech_configuration');
         $this->assertSame(SpeechConfiguration::class, $speechConfigDefinition->getClass());
-        $this->assertSame('eleven_multilingual_v2', $speechConfigDefinition->getArgument('$ttsModel'));
-        $this->assertSame('scribe_v1', $speechConfigDefinition->getArgument('$sttModel'));
+        $this->assertSame('eleven_multilingual_v2', $speechConfigDefinition->getArgument(0));
+        $this->assertSame('scribe_v1', $speechConfigDefinition->getArgument(2));
 
         // Enabled with STT along with the model for TTS but without the TSS platform
         $container = $this->buildContainer([
@@ -11129,8 +11119,8 @@ class AiBundleTest extends TestCase
 
         $speechConfigDefinition = $container->getDefinition('ai.agent.my_agent.speech_configuration');
         $this->assertSame(SpeechConfiguration::class, $speechConfigDefinition->getClass());
-        $this->assertSame('eleven_multilingual_v2', $speechConfigDefinition->getArgument('$sttModel'));
-        $this->assertSame('scribe_v1', $speechConfigDefinition->getArgument('$ttsModel'));
+        $this->assertSame('eleven_multilingual_v2', $speechConfigDefinition->getArgument(2));
+        $this->assertSame('scribe_v1', $speechConfigDefinition->getArgument(0));
 
         // Enabled with options for both TTS and STT
         $container = $this->buildContainer([
@@ -11176,10 +11166,10 @@ class AiBundleTest extends TestCase
 
         $speechConfigDefinition = $container->getDefinition('ai.agent.my_agent.speech_configuration');
         $this->assertSame(SpeechConfiguration::class, $speechConfigDefinition->getClass());
-        $this->assertSame('sonic', $speechConfigDefinition->getArgument('$ttsModel'));
-        $this->assertSame(['voice_id' => 'abc123'], $speechConfigDefinition->getArgument('$ttsOptions'));
-        $this->assertSame('whisper', $speechConfigDefinition->getArgument('$sttModel'));
-        $this->assertSame(['language' => 'fr'], $speechConfigDefinition->getArgument('$sttOptions'));
+        $this->assertSame('sonic', $speechConfigDefinition->getArgument(0));
+        $this->assertSame(['voice_id' => 'abc123'], $speechConfigDefinition->getArgument(1));
+        $this->assertSame('whisper', $speechConfigDefinition->getArgument(2));
+        $this->assertSame(['language' => 'fr'], $speechConfigDefinition->getArgument(3));
     }
 
     /**
