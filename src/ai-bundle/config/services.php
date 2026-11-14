@@ -284,12 +284,12 @@ return static function (ContainerConfigurator $container): void {
             ])
         ->set('ai.tool.validate_tool_call_arguments_listener', ValidateToolCallArgumentsListener::class)
             ->args([
-                service('validator'),
+                service('validator')->nullOnInvalid(),
             ])
             ->tag('kernel.event_listener', ['event' => ToolCallArgumentsResolved::class])
         ->set('ai.security.is_granted_attribute_listener', IsGrantedToolAttributeListener::class)
             ->args([
-                service('security.authorization_checker'),
+                service('security.authorization_checker')->nullOnInvalid(),
                 service('expression_language')->nullOnInvalid(),
             ])
             ->tag('kernel.event_listener', ['event' => ToolCallArgumentsResolved::class])

@@ -1143,7 +1143,7 @@ agent without any tools.
 
 To restrict the access to a tool, you can use the :class:`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool` attribute, which
 works similar to :class:`Symfony\\Component\\Security\\Http\\Attribute\\IsGranted` attribute in `symfony/security-http`. For this to work,
-make sure you have `symfony/security-core` installed in your project.
+make sure you have the SecurityBundle (``symfony/security-bundle``) installed in your project.
 
 ::
 

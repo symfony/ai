@@ -12,6 +12,7 @@
 namespace Symfony\AI\AiBundle\Security\EventListener;
 
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
+use Symfony\AI\AiBundle\Exception\RuntimeException as BundleRuntimeException;
 use Symfony\AI\AiBundle\Security\Attribute\IsGrantedTool;
 use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
@@ -28,7 +29,7 @@ use Symfony\Component\Security\Core\Exception\RuntimeException;
 class IsGrantedToolAttributeListener
 {
     public function __construct(
-        private readonly AuthorizationCheckerInterface $authChecker,
+        private readonly ?AuthorizationCheckerInterface $authChecker,
         private ?ExpressionLanguage $expressionLanguage = null,
     ) {
     }
@@ -43,6 +44,10 @@ class IsGrantedToolAttributeListener
 
         if (!$classAttributes && !$methodAttributes) {
             return;
+        }
+
+        if (null === $this->authChecker) {
+            throw new BundleRuntimeException('Using #[IsGrantedTool] attribute requires the SecurityBundle. Try running "composer require symfony/security-bundle".');
         }
 
         $arguments = $event->getArguments();
