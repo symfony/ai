@@ -16,6 +16,7 @@ use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\InputProcessor\ModelOverrideInputProcessor;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Model;
 
 final class ModelOverrideInputProcessorTest extends TestCase
 {
@@ -28,6 +29,18 @@ final class ModelOverrideInputProcessorTest extends TestCase
 
         $this->assertSame('gpt-4o', $input->getModel());
         $this->assertSame(['temperature' => 0.5], $input->getOptions());
+    }
+
+    public function testProcessInputWithModelInstanceOption()
+    {
+        $model = new class('gpt-4o') extends Model {};
+        $input = new Input('gpt-4o-mini', new MessageBag(), ['model' => $model]);
+
+        $processor = new ModelOverrideInputProcessor();
+        $processor->processInput($input);
+
+        $this->assertSame($model, $input->getModel());
+        $this->assertSame([], $input->getOptions());
     }
 
     public function testProcessInputWithoutModelOption()
@@ -43,9 +56,20 @@ final class ModelOverrideInputProcessorTest extends TestCase
     public function testProcessInputWithInvalidModelOption()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Option "model" must be a string.');
+        $this->expectExceptionMessage('Option "model" must be a non-empty string or an instance of "Symfony\AI\Platform\Model".');
 
         $input = new Input('gpt-4o-mini', new MessageBag(), ['model' => new MessageBag()]);
+
+        $processor = new ModelOverrideInputProcessor();
+        $processor->processInput($input);
+    }
+
+    public function testProcessInputWithEmptyModelOption()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Option "model" must be a non-empty string or an instance of "Symfony\AI\Platform\Model".');
+
+        $input = new Input('gpt-4o-mini', new MessageBag(), ['model' => '']);
 
         $processor = new ModelOverrideInputProcessor();
         $processor->processInput($input);
