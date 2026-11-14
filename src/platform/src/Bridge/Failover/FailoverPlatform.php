@@ -61,30 +61,57 @@ final class FailoverPlatform implements PlatformInterface
 
     private function do(\Closure $func): DeferredResult|ModelCatalogInterface
     {
-        foreach ($this->platforms as $platform) {
-            $limiter = $this->rateLimiterFactory->create($platform::class);
+        $position = 0;
+        $skippedPlatforms = [];
 
-            try {
-                if ($limiter->consume()->isAccepted() && $this->failedPlatforms->offsetExists($platform)) {
-                    $this->failedPlatforms->offsetUnset($platform);
+        foreach ($this->platforms as $platform) {
+            $limiter = $this->rateLimiterFactory->create((string) $position++);
+
+            if ($this->failedPlatforms->offsetExists($platform)) {
+                if (!$limiter->consume()->isAccepted()) {
+                    $skippedPlatforms[] = $platform;
+
+                    continue;
                 }
 
+                $this->failedPlatforms->offsetUnset($platform);
+            }
+
+            try {
                 return $func($platform);
             } catch (\Throwable $throwable) {
                 $limiter->consume();
 
-                $this->failedPlatforms->offsetSet($platform, $this->clock->now()->getTimestamp());
-
-                $this->logger->error('The {platform} platform failed due to an error/exception: {message}', [
-                    'platform' => $platform::class,
-                    'message' => $throwable->getMessage(),
-                    'exception' => $throwable,
-                ]);
-
-                continue;
+                $this->markAsFailed($platform, $throwable);
             }
         }
 
+        // No other platform answered, so the skipped ones get a last try instead of no try at all.
+        foreach ($skippedPlatforms as $platform) {
+            try {
+                $result = $func($platform);
+            } catch (\Throwable $throwable) {
+                $this->markAsFailed($platform, $throwable);
+
+                continue;
+            }
+
+            $this->failedPlatforms->offsetUnset($platform);
+
+            return $result;
+        }
+
         throw new RuntimeException('All platforms failed.');
+    }
+
+    private function markAsFailed(PlatformInterface $platform, \Throwable $throwable): void
+    {
+        $this->failedPlatforms->offsetSet($platform, $this->clock->now()->getTimestamp());
+
+        $this->logger->error('The {platform} platform failed due to an error/exception: {message}', [
+            'platform' => $platform::class,
+            'message' => $throwable->getMessage(),
+            'exception' => $throwable,
+        ]);
     }
 }
