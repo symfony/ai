@@ -19,6 +19,7 @@ use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Input;
+use Symfony\AI\Agent\InputProcessor\ModelOverrideInputProcessor;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
 use Symfony\AI\Agent\InputProcessorInterface;
 use Symfony\AI\Agent\Output;
@@ -104,6 +105,33 @@ final class AgentTest extends TestCase
 
         $this->assertSame($model, $agent->getModel());
         $this->assertSame($result, $agent->call($messages)->getResult());
+    }
+
+    public function testCallWithModelInstanceOptionReachesPlatformAndOutput()
+    {
+        $model = new Model('gpt-4o');
+        $messages = new MessageBag(Message::ofUser('Hello'));
+        $response = new DeferredResult(new PlainConverter(new TextResult('Hi')), $this->createStub(RawResultInterface::class), []);
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())
+            ->method('invoke')
+            ->with($model, $messages, [])
+            ->willReturn($response);
+
+        $outputProcessor = new class implements OutputProcessorInterface {
+            public ?Output $output = null;
+
+            public function processOutput(Output $output): void
+            {
+                $this->output = $output;
+            }
+        };
+
+        $agent = new Agent($platform, 'gpt-4o-mini', [new ModelOverrideInputProcessor()], [$outputProcessor]);
+        $agent->call($messages, ['model' => $model])->getResult();
+
+        $this->assertSame($model, $outputProcessor->output?->getModel());
     }
 
     public function testCallNormalizesStringInputIntoUserMessage()

@@ -64,8 +64,8 @@ Agent
    ```
 
  * `Agent::getModel()`, `Input::getModel()` and `Output::getModel()` return `string|Model` instead of `string`, since
-   an agent and the `model` option accept a `Symfony\AI\Platform\Model` instance. Processors that need the name
-   must handle both:
+   an agent and the `model` option accept a `Symfony\AI\Platform\Model` instance. The payload of the
+   `Progress::STAGE_MODEL_REQUEST` update changes the same way. Code that needs the name must handle both:
 
    ```diff
    -$name = $input->getModel();
