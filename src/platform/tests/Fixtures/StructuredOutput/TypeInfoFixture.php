@@ -21,4 +21,8 @@ final class TypeInfoFixture
     public ExampleEnum $enum;
     public ?ExampleEnum $nullableEnum = null;
     public object $payload;
+    /** @var array{name: string, email: ?string, age?: int} */
+    public array $person;
+    /** @var list<array{id: int}> */
+    public array $rows;
 }
