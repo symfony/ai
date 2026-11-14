@@ -1,0 +1,17 @@
+---------------------------------------------------------------------------
+
+by mdalikadar at 2026-11-01T03:31:16Z
+
+Thanks for the review, Fixed all three:
+
+- Added \`KEY_TEXT\` on every chunk, same as \`TextSplitTransformer\`/\`RstLoader\` do (turns out \`Vectorizer\` already backfills it when missing, but better to be explicit here too).
+- Added pattern validation — bad regex or anything other than exactly one capturing group now throws \`InvalidArgumentException\`, checked both in the constructor and when the pattern comes through \`\$options\`.
+- Title/depth are now only set when the delimiter is actually a Markdown heading, and the title no longer keeps the \`#\` markers.
+
+Pushed, with tests for all three. Suite's green.
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-11-14T00:43:55Z
+
+Pushed a commit on top with fixes from my review: the pattern no longer needs exactly one capturing group, splitting uses plain `preg_*` without `symfony/string`, documents with only headings are passed through instead of being dropped, and titles lose closing hashes. Also added a section to the store docs, so `Docs?` is a yes now.
