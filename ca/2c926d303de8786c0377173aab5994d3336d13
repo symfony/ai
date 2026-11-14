@@ -1,0 +1,23 @@
+---------------------------------------------------------------------------
+
+by malekkadri at 2026-10-29T14:42:02Z
+
+The CI failures appear to be caused by two independent issues:
+
+- **Changelog validation:** This PR updates `UPGRADE.md` because the `ExecutionInterface::cancel()` signature changes. Could a maintainer please add the `BC Break` label?
+- **Dependency installation:** The PHPStan, unit-test and integration jobs fail during Composer resolution because `probots-io/pinecone-php` requires `saloonphp/saloon:^3.6`, which is blocked by security advisories. This is already tracked in #2820.
+
+The Agent package itself passed **478 tests and 1,159 assertions** in the lowest-dependencies job before the AI Bundle dependency installation failed.
+
+I'd prefer to keep the Pinecone dependency migration separate from this cancellation-reason feature.
+
+Thanks!
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-11-14T00:12:56Z
+
+Thanks for working on this - I took over and pushed a slightly different design on top:
+* the reason now lives in `Cancellation` and gets forwarded to delegated executions (`MultiAgent`, `SpeechAgent`, `TraceableAgent`)
+* `getResult()` throws a new `CancellationException` with `hasReason()`/`getReason()` - the message stays the same, so the reason isn't baked into the exception text
+* dropped the `UPGRADE.md` entry, since `ExecutionInterface` isn't released yet => no BC break
