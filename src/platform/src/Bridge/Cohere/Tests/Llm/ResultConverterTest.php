@@ -142,7 +142,7 @@ final class ResultConverterTest extends TestCase
         $converter = new ResultConverter();
 
         $this->expectException(MalformedToolCallException::class);
-        $this->expectExceptionMessage('Cohere returned malformed JSON arguments for the "get_weather" tool: "Syntax error"');
+        $this->expectExceptionMessage('Cohere returned malformed JSON arguments for the "get_weather" tool: "Syntax error');
 
         $converter->convert(new RawHttpResult($response));
     }

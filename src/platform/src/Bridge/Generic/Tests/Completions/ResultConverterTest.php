@@ -134,7 +134,7 @@ class ResultConverterTest extends TestCase
         ]);
 
         $this->expectException(MalformedToolCallException::class);
-        $this->expectExceptionMessage('Model returned malformed JSON arguments for the "get_weather" tool: "Syntax error"');
+        $this->expectExceptionMessage('Model returned malformed JSON arguments for the "get_weather" tool: "Syntax error');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }

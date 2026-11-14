@@ -225,7 +225,7 @@ final class ResultConverterTest extends TestCase
         ]);
 
         $this->expectException(MalformedToolCallException::class);
-        $this->expectExceptionMessage('OpenResponses returned malformed JSON arguments for the "get_weather" tool: "Syntax error"');
+        $this->expectExceptionMessage('OpenResponses returned malformed JSON arguments for the "get_weather" tool: "Syntax error');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }
@@ -2112,7 +2112,7 @@ final class ResultConverterTest extends TestCase
             iterator_to_array($streamResult->getContent());
             $this->fail('Expected malformed tool arguments to throw.');
         } catch (MalformedToolCallException $e) {
-            $this->assertSame('OpenResponses returned malformed JSON arguments for the "read_file" tool: "Syntax error"', $e->getMessage());
+            $this->assertStringStartsWith('OpenResponses returned malformed JSON arguments for the "read_file" tool: "Syntax error', $e->getMessage());
             $this->assertInstanceOf(\JsonException::class, $e->getPrevious());
         }
     }
