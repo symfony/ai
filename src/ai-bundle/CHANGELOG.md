@@ -24,6 +24,7 @@ CHANGELOG
  * [BC BREAK] Remove the `identifier` option of the `memory` message store
  * [BC BREAK] Remove the `exclude_tool_messages` agent option, tool messages never reach the caller's `MessageBag`
  * Add the `mirror_to` option to the `doctrine` store, mirroring the entity into another store and registering an entity retriever
+ * Show the configured platforms, toolboxes, agents, message stores and stores, their service ids and collected calls in the profiler panel
 
 0.15
 ----
