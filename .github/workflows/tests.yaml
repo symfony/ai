@@ -31,19 +31,16 @@ jobs:
         name: Unit / PHP ${{ matrix.php-version }}${{ matrix.symfony-version && format(' / Symfony {0}', matrix.symfony-version) || '' }}
         if: inputs.affected-packages != '[]'
         runs-on: ubuntu-latest
-        # PHP 8.6 is a release candidate until 2026-11-19
-        continue-on-error: ${{ matrix.php-version == '8.6' }}
         strategy:
             fail-fast: false
             matrix:
                 include:
                     -   php-version: '8.2'
-                    -   php-version: '8.5'
                     -   php-version: '8.6'
                     # LTS version of Symfony
                     -   php-version: '8.2'
                         symfony-version: '7.4.*'
-                    -   php-version: '8.5'
+                    -   php-version: '8.6'
                         symfony-version: '8.2.*'
 
         steps:
@@ -352,12 +349,10 @@ jobs:
         # The demo is skipped when it is not affected, which must not skip the examples
         if: ${{ !cancelled() && needs.demo.result != 'failure' && contains(fromJson(inputs.affected-packages), 'examples') }}
         runs-on: ubuntu-latest
-        # PHP 8.6 is a release candidate until 2026-11-19
-        continue-on-error: ${{ matrix.php-version == '8.6' }}
         strategy:
             fail-fast: false
             matrix:
-                php-version: ['8.2', '8.5', '8.6']
+                php-version: ['8.2', '8.6']
                 dependency-version: ['']
                 symfony-version: ['']
                 include:
