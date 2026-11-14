@@ -23,7 +23,7 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class ModelClientTest extends TestCase
 {
-    public function testCustomEndpointIsUsedByClientAndFactory(): void
+    public function testCustomEndpointIsUsedByClientAndFactory()
     {
         $http = new MockHttpClient(static function (string $method, string $url): MockResponse {
             self::assertSame('POST', $method);
