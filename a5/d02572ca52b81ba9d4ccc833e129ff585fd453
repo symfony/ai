@@ -1,0 +1,60 @@
+---------------------------------------------------------------------------
+
+by sanya-misharin at 2026-08-07T08:45:46Z
+
+Thanks for testing, @chr-hertel! Fixed in f269f63.
+
+Every slice is now gated on the component actually having a configured instance, in all the spots you pointed at, plus the "Configured Components" table that had the same zero rows:
+
+* **toolbar**: a `Configured X` / `X Calls` pair is only rendered when that component has a configured instance;
+* **metrics**: the component list is built once and filtered, so the metric groups and the dividers between them only cover configured components;
+* **panel sections**: `Platform Calls`, `Tools` + `Tool Calls`, `Agent Calls`, `Chat Calls`, `Message Store Calls` and `Store Calls` are skipped entirely for unconfigured components. The inner "No ... calls were made." empty states stay, so a configured but unused component still tells you it did nothing during this request;
+* if nothing at all is configured, the panel shows a single "No AI components are configured." note instead of an empty metrics bar.
+
+The docs paragraph about the panel mentions this as well now.
+
+All screenshots below come from one and the same profiler token, rendered once with the previous template and once with the new one. The demo app configures no chat and no message store, so it reproduces your setup.
+
+**Toolbar** (before / after):
+
+<img width="1400" height="1000" alt="before-toolbar" src="https://github.com/user-attachments/assets/377786ca-ec7e-45cb-be64-48f03402b084" />
+
+<img width="1400" height="1000" alt="after-toolbar" src="https://github.com/user-attachments/assets/af3fe228-6e94-4f82-a68c-b487f64328db" />
+
+**Panel metrics** (before / after):
+
+<img width="1400" height="1000" alt="before-panel-top" src="https://github.com/user-attachments/assets/a895b86b-b381-4c8f-b060-675d8c7449c3" />
+
+<img width="1400" height="1000" alt="after-panel-top" src="https://github.com/user-attachments/assets/9e280992-fe58-431f-b13c-a8159543af0d" />
+
+**Empty sections** (before / after):
+
+<img width="1400" height="1000" alt="before-configured" src="https://github.com/user-attachments/assets/3996b547-551c-45c9-8c02-a7e53233e98e" />
+
+<img width="1400" height="1000" alt="after-configured" src="https://github.com/user-attachments/assets/f28704e9-edb6-47e3-9c26-d8e05d80518c" />
+
+**Configured Components table** (before / after):
+
+<img width="1400" height="1000" alt="before-configured-table" src="https://github.com/user-attachments/assets/06382e54-d8c1-4c33-b020-b30bceed888c" />
+
+<img width="1400" height="1000" alt="after-configured-table" src="https://github.com/user-attachments/assets/688c0f27-1a72-4953-afdc-c80f12906a18" />
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-11-03T20:29:41Z
+
+@sanya-misharin could you rebase this on `main`? The Chat component is gone there, so the Chat parts of the profiler panel need to be removed. Please also move the changelog entry to the current `1.0` section as a single line.
+
+---------------------------------------------------------------------------
+
+by sanya-misharin at 2026-11-07T05:21:59Z
+
+> [@sanya-misharin](https://github.com/sanya-misharin) could you rebase this on `main`? The Chat component is gone there, so the Chat parts of the profiler panel need to be removed. Please also move the changelog entry to the current `1.0` section as a single line.
+
+@wachterjohannes done - rebased on main, removed the Chat parts and moved the changelog entry to 1.0 as a single line
+
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-11-14T02:00:53Z
+
+Pushed a few follow-ups: the toolbar headline counts platform calls again, configured instances are a plain list of service ids, message store saves are labelled as such, and the component order is aligned.
