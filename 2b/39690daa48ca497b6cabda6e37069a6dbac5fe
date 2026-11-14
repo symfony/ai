@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by chr-hertel at 2026-11-14T00:17:47Z
+
+Took over to get this finished - pushed three commits on top:
+* the Postgres index defaults now live in the bundle config, so the `dsn` and `dbal_connection` branches both pass the store arguments positionally
+* `connectionOptions` together with a `\PDO` instance throws instead of being silently ignored, and the two Sqlite stores share the connection handling in an internal trait
+* documented that a `VecStore` built from a DSN can't load the sqlite-vec extension
+
+Tested the lazy connection in the demo against pgvector, with the `blog` store configured via `dsn` and checking `pg_stat_activity` after each step:
+
+| | this PR | main |
+|---|---|---|
+| store initialized (`supports()`) | 0 connections | 1 connection |
+| first query (`setup()`) | 1 connection | 1 connection |
+| further queries | same connection | same connection |
+| `supports()` with the database down | works | `PDOException` |
+
+Indexing & retrieving the Symfony blog feed works as before :+1:
