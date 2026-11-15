@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Scaleway\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -24,8 +25,10 @@ $messages = new MessageBag(
 
 // gpt-oss-120b uses the Open Responses bridge to talk to Scaleway's Responses API.
 $result = $platform->invoke('gpt-oss-120b', $messages, [
-    'reasoning' => ['effort' => 'medium'],
     'max_output_tokens' => 2000,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'reasoning' => ['effort' => 'medium'],
+    ],
 ]);
 
 echo $result->asText().\PHP_EOL;

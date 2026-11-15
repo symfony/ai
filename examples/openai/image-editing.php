@@ -11,6 +11,7 @@
 
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\BinaryResult;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -23,7 +24,9 @@ $result = $platform->invoke(
     model: 'gpt-image-2',
     input: 'Colorize the elephant in bright red and add a party hat.',
     options: [
-        'image' => Image::fromFile(dirname(__DIR__, 2).'/fixtures/image.jpg'),
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'image' => Image::fromFile(dirname(__DIR__, 2).'/fixtures/image.jpg'),
+        ],
     ],
 )->getResult();
 

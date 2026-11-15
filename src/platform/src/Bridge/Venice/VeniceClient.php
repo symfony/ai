@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -38,14 +39,16 @@ final class VeniceClient implements ModelClientInterface
     {
         $payload = new VenicePayload($payload);
 
+        $providerOptions = PlatformOptions::toProviderOptions($options);
+
         return match (true) {
-            $model->supports(Capability::IMAGE_TO_VIDEO) || $model->supports(Capability::TEXT_TO_VIDEO) || $model->supports(Capability::VIDEO_TO_VIDEO) => $this->doVideoGeneration($model, $payload, $options),
+            $model->supports(Capability::IMAGE_TO_VIDEO) || $model->supports(Capability::TEXT_TO_VIDEO) || $model->supports(Capability::VIDEO_TO_VIDEO) => $this->doVideoGeneration($model, $payload, $providerOptions),
             $model->supports(Capability::INPUT_MESSAGES) => $this->doGenerateCompletion($model, $payload, $options),
-            $model->supports(Capability::IMAGE_TO_IMAGE) => $this->doImageEdit($model, $payload, $options),
-            $model->supports(Capability::TEXT_TO_IMAGE) => $this->doImageGeneration($model, $payload, $options),
-            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $payload, $options),
-            $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToText($model, $payload, $options),
-            $model->supports(Capability::EMBEDDINGS) => $this->doGenerateEmbeddings($model, $payload, $options),
+            $model->supports(Capability::IMAGE_TO_IMAGE) => $this->doImageEdit($model, $payload, $providerOptions),
+            $model->supports(Capability::TEXT_TO_IMAGE) => $this->doImageGeneration($model, $payload, $providerOptions),
+            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $payload, PlatformOptions::toProviderOptions($options, [PlatformOptions::RESPONSE_FORMAT => 'response_format'])),
+            $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToText($model, $payload, PlatformOptions::toProviderOptions($options, [PlatformOptions::RESPONSE_FORMAT => 'response_format'])),
+            $model->supports(Capability::EMBEDDINGS) => $this->doGenerateEmbeddings($model, $payload, $providerOptions),
             default => throw new InvalidArgumentException('Unsupported model capability for Venice client.'),
         };
     }
@@ -55,6 +58,13 @@ final class VeniceClient implements ModelClientInterface
      */
     private function doGenerateCompletion(Model $model, VenicePayload $payload, array $options): RawResultInterface
     {
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::STREAM => 'stream',
+            PlatformOptions::TOOLS => 'tools',
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            PlatformOptions::TEMPERATURE => 'temperature',
+        ]);
+
         if ($options['stream'] ?? false) {
             $streamOptions = (\array_key_exists('stream_options', $options) && \is_array($options['stream_options'])) ? $options['stream_options'] : [];
 

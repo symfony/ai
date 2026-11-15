@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Generic\Completions\ModelClient as GenericModelCl
 use Symfony\AI\Platform\Bridge\HuggingFace\Completions;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -45,8 +46,8 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        $provider = $options['provider'] ?? $this->provider;
-        unset($options['provider']);
+        $provider = $options[PlatformOptions::PROVIDER_OPTIONS]['provider'] ?? $this->provider;
+        unset($options[PlatformOptions::PROVIDER_OPTIONS]['provider']);
 
         // The router maps the Hugging Face model ID to the provider's own ID via the "<model>:<provider>" suffix
         if (\is_array($payload) && null !== $provider && !str_contains($model->getName(), ':')) {

@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Voyage\Reranker;
 use Symfony\AI\Platform\Bridge\Voyage\Reranker\ModelClient;
 use Symfony\AI\Platform\Bridge\Voyage\Voyage;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -80,7 +81,7 @@ final class ModelClientTest extends TestCase
         $client->request(new Reranker('rerank-2.5'), [
             'query' => 'What is AI?',
             'texts' => ['Doc 1', 'Doc 2', 'Doc 3', 'Doc 4'],
-        ], ['top_k' => 3]);
+        ], [PlatformOptions::PROVIDER_OPTIONS => ['top_k' => 3]]);
     }
 
     public function testItThrowsExceptionForStringPayload()

@@ -20,7 +20,7 @@ use Symfony\AI\Platform\Model;
 class Embeddings extends Model
 {
     /**
-     * @param array{dimensions?: int, task_type?: TaskType|string} $options
+     * @param array{provider_options?: array{dimensions?: int, task_type?: TaskType|string}} $options
      */
     public function __construct(string $name, array $capabilities = [], array $options = [])
     {

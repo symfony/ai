@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Cohere\Cohere;
 use Symfony\AI\Platform\Bridge\Cohere\Reranker;
 use Symfony\AI\Platform\Bridge\Cohere\Reranker\ModelClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -80,7 +81,7 @@ final class ModelClientTest extends TestCase
         $client->request(new Reranker('rerank-v3.5'), [
             'query' => 'What is AI?',
             'texts' => ['Doc 1', 'Doc 2', 'Doc 3', 'Doc 4'],
-        ], ['top_n' => 3]);
+        ], [PlatformOptions::PROVIDER_OPTIONS => ['top_n' => 3]]);
     }
 
     public function testItThrowsExceptionForStringPayload()

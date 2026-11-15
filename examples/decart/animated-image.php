@@ -11,6 +11,7 @@
 
 use Symfony\AI\Platform\Bridge\Decart\Factory;
 use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -20,7 +21,9 @@ $platform = Factory::createPlatform(
 );
 
 $result = $platform->invoke('lucy-pro-i2v', Image::fromFile(dirname(__DIR__, 2).'/fixtures/accordion.jpg'), [
-    'prompt' => 'Make the man move from right to left while playing accordion',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'prompt' => 'Make the man move from right to left while playing accordion',
+    ],
 ]);
 
 $result->asFile(__DIR__.'/animated-image.mp4');

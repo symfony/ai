@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Bridge\HuggingFace\Reranker;
 use Symfony\AI\Platform\Bridge\HuggingFace\ZeroShotClassification;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -55,7 +56,7 @@ final class ModelClientTest extends TestCase
         $response = new MockResponse('[]');
         $modelClient = new ModelClient(new MockHttpClient($response), 'test-api-key');
 
-        $modelClient->request(new ZeroShotClassification('facebook/bart-large-mnli'), 'Hi there!', ['candidate_labels' => ['greeting', 'farewell']]);
+        $modelClient->request(new ZeroShotClassification('facebook/bart-large-mnli'), 'Hi there!', [PlatformOptions::PROVIDER_OPTIONS => ['candidate_labels' => ['greeting', 'farewell']]]);
 
         $this->assertSame([
             'inputs' => 'Hi there!',

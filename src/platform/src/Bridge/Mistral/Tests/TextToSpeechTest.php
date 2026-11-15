@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Mistral\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Mistral\Factory;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -29,7 +30,7 @@ final class TextToSpeechTest extends TestCase
         });
 
         $result = Factory::createPlatform('test-key', $httpClient)
-            ->invoke('voxtral-mini-tts-3-0', new Text('Hello world'), ['voice' => 'gb_jane_neutral']);
+            ->invoke('voxtral-mini-tts-3-0', new Text('Hello world'), [PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'gb_jane_neutral']]);
 
         $this->assertSame('mp3-bytes', $result->asBinary());
         $this->assertSame(['https://api.mistral.ai/v1/audio/speech'], $urls);

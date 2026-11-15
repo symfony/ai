@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
 use Symfony\AI\Platform\Bridge\Perplexity\ModelClient;
 use Symfony\AI\Platform\Bridge\Perplexity\Perplexity;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -138,7 +139,7 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'pplx-api-key');
-        $modelClient->request(new Perplexity('fast'), ['input' => 'Hello'], ['max_tokens' => 500]);
+        $modelClient->request(new Perplexity('fast'), ['input' => 'Hello'], [PlatformOptions::PROVIDER_OPTIONS => ['max_tokens' => 500]]);
     }
 
     public function testItKeepsTheResponseFormatAtTheTopLevel()

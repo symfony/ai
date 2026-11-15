@@ -34,7 +34,9 @@ The URL Context tool allows the model to fetch and analyze content from specifie
     );
 
     $result = $platform->invoke('gemini-2.5-pro', $messages, [
-        'server_tools' => ['url_context' => true],
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'server_tools' => ['url_context' => true],
+        ],
     ]);
 
 Grounding with Google Search
@@ -52,8 +54,10 @@ Ground a model's responses using Google Search, which uses publicly-available we
     );
 
     $result = $platform->invoke('gemini-2.5-pro', $messages, [
-        'server_tools' => [
-            'google_search' => true,
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'server_tools' => [
+                'google_search' => true,
+            ],
         ],
     ]);
 
@@ -67,12 +71,14 @@ The Google Maps tool enables the model to find places based on location::
     );
 
     $result = $platform->invoke('gemini-2.5-pro', $messages, [
-        'server_tools' => [
-            'google_maps' => true,
-        ],
-        'tool_config' => [
-            'retrieval_config' => [
-                'lat_lng' => ['latitude' => 60.16653, 'longitude' => 24.93061],
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'server_tools' => [
+                'google_maps' => true,
+            ],
+            'tool_config' => [
+                'retrieval_config' => [
+                    'lat_lng' => ['latitude' => 60.16653, 'longitude' => 24.93061],
+                ],
             ],
         ],
     ]);
@@ -90,8 +96,10 @@ More info can be found at https://cloud.google.com/vertex-ai/generative-ai/docs/
     );
 
     $result = $platform->invoke('gemini-2.5-pro', $messages, [
-        'server_tools' => [
-            'code_execution' => true,
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'server_tools' => [
+                'code_execution' => true,
+            ],
         ],
     ]);
 
@@ -112,9 +120,11 @@ You can enable multiple tools in a single request::
     );
 
     $result = $platform->invoke('gemini-2.5-pro', $messages, [
-        'server_tools' => [
-            'google_search' => true,
-            'code_execution' => true,
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'server_tools' => [
+                'google_search' => true,
+                'code_execution' => true,
+            ],
         ],
     ]);
 

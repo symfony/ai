@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\TransformersPhp;
 
 use Codewithkyrian\Transformers\Pipelines\Task;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -31,7 +32,7 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
         $data = $result->getData();
-        $task = $options['task'] ?? null;
+        $task = $options[PlatformOptions::PROVIDER_OPTIONS]['task'] ?? null;
 
         if (Task::Text2TextGeneration === $task) {
             $result = reset($data);

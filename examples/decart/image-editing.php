@@ -11,6 +11,7 @@
 
 use Symfony\AI\Platform\Bridge\Decart\Factory;
 use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -20,7 +21,9 @@ $platform = Factory::createPlatform(
 );
 
 $result = $platform->invoke('lucy-pro-i2i', Image::fromFile(dirname(__DIR__, 2).'/fixtures/accordion.jpg'), [
-    'prompt' => 'Colorize the walls',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'prompt' => 'Colorize the walls',
+    ],
 ]);
 
 $result->asFile(__DIR__.'/image-editing.png');

@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Realtime;
 use Symfony\AI\Platform\Bridge\OpenAi\Realtime\ModelClient;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
@@ -84,7 +85,7 @@ final class ModelClientTest extends TestCase
         $modelClient->request(
             new Realtime('gpt-4o-realtime-preview'),
             'You are a helpful customer service voice assistant.',
-            ['voice' => 'alloy']
+            [PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'alloy']]
         );
     }
 
@@ -106,7 +107,7 @@ final class ModelClientTest extends TestCase
         $modelClient->request(
             new Realtime('gpt-4o-realtime-preview'),
             'Instructions',
-            ['modalities' => ['text']]
+            [PlatformOptions::PROVIDER_OPTIONS => ['modalities' => ['text']]]
         );
     }
 }

@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Venice\Factory;
 use Symfony\AI\Platform\Job\JobRunner;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -23,9 +24,11 @@ $platform = Factory::createPlatform(env('VENICE_API_KEY'), httpClient: http_clie
 //
 // Venice queues the request, so the invocation returns a handle instead of a video.
 $handle = $platform->invoke('pixverse-c1-text-to-video', new Text('A serene ocean with dolphins jumping at sunset'), [
-    'duration' => '3s',
-    'aspect_ratio' => '16:9',
-    'resolution' => '360p',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'duration' => '3s',
+        'aspect_ratio' => '16:9',
+        'resolution' => '360p',
+    ],
 ])->asJob();
 
 echo 'Started job '.$handle->getId().', waiting for it to finish...'.\PHP_EOL;

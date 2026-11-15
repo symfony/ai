@@ -4,8 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://your-deployment.swedencentral.models.ai.azure.com/chat/completions",
-                "signature": "2ca3d183083326e35ce35676997eba35",
-                "signature_v2": "efd97423c9f5511712290d5d5ddc799a",
+                "signature": "afe78f2738d2dda4ddff2c30785a422b",
+                "signature_v2": "fbb46fdf31600fb1b89555f893e3abc9",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -14,7 +14,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"max_tokens\":2048,\"temperature\":0.8,\"top_p\":0.1,\"presence_penalty\":0,\"frequency_penalty\":0,\"messages\":[{\"role\":\"user\",\"content\":\"I am going to Paris, what should I see?\"}],\"model\":\"llama-3.3-70B-Instruct\"}"
+                "body": "{\"temperature\":0.8,\"max_tokens\":2048,\"top_p\":0.1,\"presence_penalty\":0,\"frequency_penalty\":0,\"messages\":[{\"role\":\"user\",\"content\":\"I am going to Paris, what should I see?\"}],\"model\":\"llama-3.3-70B-Instruct\"}"
             },
             "response": {
                 "status": 200,

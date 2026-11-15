@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -58,7 +59,7 @@ final class FactoryTest extends TestCase
         ]);
 
         $handle = Factory::createProvider('sk-test-api-key', $httpClient, name: 'openai-eu')
-            ->invoke('gpt-4o-mini', ['first' => new MessageBag(Message::ofUser('What is the capital of France?'))], ['batch' => true])
+            ->invoke('gpt-4o-mini', ['first' => new MessageBag(Message::ofUser('What is the capital of France?'))], [PlatformOptions::PROVIDER_OPTIONS => ['batch' => true]])
             ->asJob();
 
         $this->assertSame('batch_123', $handle->getId());

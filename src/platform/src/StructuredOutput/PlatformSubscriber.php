@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\MissingModelSupportException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
@@ -26,7 +27,7 @@ use Symfony\Component\Serializer\SerializerInterface;
  */
 final class PlatformSubscriber implements EventSubscriberInterface
 {
-    public const RESPONSE_FORMAT = 'response_format';
+    public const RESPONSE_FORMAT = PlatformOptions::RESPONSE_FORMAT;
 
     private ?string $outputType = null;
 

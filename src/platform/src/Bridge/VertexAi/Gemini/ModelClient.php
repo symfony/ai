@@ -52,6 +52,14 @@ final class ModelClient implements ModelClientInterface
      */
     public function request(BaseModel $model, array|string $payload, array $options = []): RawHttpResult
     {
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::STREAM => 'stream',
+            PlatformOptions::TOOLS => 'tools',
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            PlatformOptions::MAX_OUTPUT_TOKENS => 'generationConfig.maxOutputTokens',
+            PlatformOptions::TEMPERATURE => 'generationConfig.temperature',
+        ]);
+
         $isStream = $options['stream'] ?? false;
         $method = $isStream ? 'streamGenerateContent' : 'generateContent';
 
@@ -71,12 +79,6 @@ final class ModelClient implements ModelClientInterface
             $options['generationConfig']['responseSchema'] = SchemaNormalizer::normalize($responseSchema);
 
             unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
-        }
-
-        // Vertex AI only reads generation parameters nested under "generationConfig"
-        if (isset($options[PlatformOptions::MAX_OUTPUT_TOKENS])) {
-            $options['generationConfig']['maxOutputTokens'] ??= $options[PlatformOptions::MAX_OUTPUT_TOKENS];
-            unset($options[PlatformOptions::MAX_OUTPUT_TOKENS]);
         }
 
         if (isset($options['generationConfig'])) {

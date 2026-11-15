@@ -11,6 +11,7 @@
 
 use Symfony\AI\Platform\Bridge\Cohere\Factory;
 use Symfony\AI\Platform\Bridge\Cohere\InputType;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -21,7 +22,9 @@ $result = $platform->invoke('embed-english-v3.0', <<<TEXT
     The people of Japan were very kind and hardworking. They loved their country very much and took care of it. The
     country was very peaceful and prosperous. The people lived happily ever after.
     TEXT, [
-    'input_type' => InputType::SearchDocument,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'input_type' => InputType::SearchDocument,
+    ],
 ]);
 
 print_vectors($result);

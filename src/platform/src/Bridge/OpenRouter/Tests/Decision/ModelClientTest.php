@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Bridge\OpenRouter\Decision\ModelClient;
 use Symfony\AI\Platform\Bridge\OpenRouter\DecisionModel;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -72,11 +73,13 @@ final class ModelClientTest extends TestCase
 
         $client = new ModelClient($httpClient, 'test-key');
         $client->request(new DecisionModel('typesafe/jev-1.13'), $this->createPayload(), [
-            'provider' => ['order' => ['typesafe'], 'allow_fallbacks' => false],
-            'session_id' => 'session-1',
-            'trace' => ['trace_id' => 'trace-1'],
-            'user' => 'user-1',
-            'temperature' => 0.5,
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'provider' => ['order' => ['typesafe'], 'allow_fallbacks' => false],
+                'session_id' => 'session-1',
+                'trace' => ['trace_id' => 'trace-1'],
+                'user' => 'user-1',
+            ],
+            PlatformOptions::TEMPERATURE => 0.5,
         ]);
     }
 

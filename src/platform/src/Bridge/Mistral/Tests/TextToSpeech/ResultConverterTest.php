@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\Mistral\TextToSpeech\Format;
 use Symfony\AI\Platform\Bridge\Mistral\TextToSpeech\ResultConverter;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -44,6 +45,16 @@ final class ResultConverterTest extends TestCase
     {
         $result = (new ResultConverter())->convert(
             $this->rawResult(new JsonMockResponse(['audio_data' => base64_encode('wav-bytes')])),
+            [PlatformOptions::PROVIDER_OPTIONS => ['response_format' => Format::WAV]],
+        );
+
+        $this->assertSame('audio/wav', $result->getMimeType());
+    }
+
+    public function testItDerivesTheMimeTypeFromATopLevelResponseFormat()
+    {
+        $result = (new ResultConverter())->convert(
+            $this->rawResult(new JsonMockResponse(['audio_data' => base64_encode('wav-bytes')])),
             ['response_format' => Format::WAV],
         );
 
@@ -54,7 +65,7 @@ final class ResultConverterTest extends TestCase
     {
         $result = (new ResultConverter())->convert(
             $this->rawResult(new JsonMockResponse(['audio_data' => base64_encode('pcm-bytes')])),
-            ['response_format' => Format::PCM],
+            [PlatformOptions::PROVIDER_OPTIONS => ['response_format' => Format::PCM]],
         );
 
         $this->assertNull($result->getMimeType());

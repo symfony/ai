@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Test\Replay\AbstractBridgeReplayTestCase;
@@ -42,8 +43,10 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
             new MessageBag(Message::forSystem('You are a helpful assistant.'), Message::ofUser('What time is it right now?')),
             [
                 'stream' => true,
-                'max_tokens' => 4000,
-                'thinking' => ['type' => 'enabled', 'budget_tokens' => 1024],
+                PlatformOptions::PROVIDER_OPTIONS => [
+                    'max_tokens' => 4000,
+                    'thinking' => ['type' => 'enabled', 'budget_tokens' => 1024],
+                ],
                 'tools' => [new Tool(new ExecutionReference(self::class), 'clock', 'Provides the current date and time.')],
             ],
         )->getResult();

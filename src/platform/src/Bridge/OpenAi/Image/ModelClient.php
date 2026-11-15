@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Image as ImageContent;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -42,13 +43,17 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
     }
 
     /**
-     * @param array{image?: ImageContent, ...} $options
+     * @param array{provider_options?: array{image?: ImageContent, ...}, ...} $options
      */
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
         if (!\is_string($payload)) {
             throw new InvalidArgumentException(\sprintf('The image prompt must be a string, but "%s" was given to "%s".', get_debug_type($payload), self::class));
         }
+
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+        ]);
 
         // A source image turns the request into an edit (different endpoint and encoding).
         if (isset($options['image'])) {

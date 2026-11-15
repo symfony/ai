@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -40,9 +41,11 @@ final class DeepgramClient implements ModelClientInterface
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
         $deepgramPayload = new DeepgramPayload($payload);
+        $stream = true === ($options[PlatformOptions::STREAM] ?? false);
+        $options = PlatformOptions::toProviderOptions($options);
 
         return match (true) {
-            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $deepgramPayload, $options),
+            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $deepgramPayload, $options, $stream),
             $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToText($model, $deepgramPayload, $options),
             default => throw new InvalidArgumentException(\sprintf('The model "%s" is not supported, please check the Deepgram API.', $model->getName())),
         };
@@ -51,12 +54,8 @@ final class DeepgramClient implements ModelClientInterface
     /**
      * @param array<string, mixed> $options
      */
-    private function doTextToSpeech(Model $model, DeepgramPayload $payload, array $options): RawResultInterface
+    private function doTextToSpeech(Model $model, DeepgramPayload $payload, array $options, bool $stream): RawResultInterface
     {
-        // "stream" is an SDK-internal flag consumed by the result converter, not a Deepgram query param
-        $stream = true === ($options['stream'] ?? false);
-        unset($options['stream']);
-
         return new RawHttpResult($this->httpClient->request('POST', 'speak', [
             'buffer' => !$stream,
             'query' => [
@@ -77,8 +76,6 @@ final class DeepgramClient implements ModelClientInterface
      */
     private function doSpeechToText(Model $model, DeepgramPayload $payload, array $options): RawResultInterface
     {
-        unset($options['stream']);
-
         $query = [
             'model' => $model->getName(),
             ...$options,

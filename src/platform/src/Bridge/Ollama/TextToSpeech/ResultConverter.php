@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Ollama\TextToSpeech;
 use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -48,7 +49,7 @@ final class ResultConverter implements ResultConverterInterface
 
         $mimeType = $response->getHeaders(false)['content-type'][0] ?? null;
 
-        return new BinaryResult($response->getContent(), null !== $mimeType ? explode(';', $mimeType, 2)[0] : match ($options['response_format'] ?? Format::WAV) {
+        return new BinaryResult($response->getContent(), null !== $mimeType ? explode(';', $mimeType, 2)[0] : match ($options[PlatformOptions::PROVIDER_OPTIONS]['response_format'] ?? $options[PlatformOptions::RESPONSE_FORMAT] ?? Format::WAV) {
             Format::PCM => 'audio/pcm',
             Format::WAV => 'audio/wav',
             default => null,

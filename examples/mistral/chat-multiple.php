@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Mistral\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -23,7 +24,9 @@ $messages = new MessageBag(
 );
 $result = $platform->invoke('mistral-small-latest', $messages, [
     'temperature' => 1.5,
-    'n' => 5,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'n' => 5,
+    ],
 ]);
 
 foreach ($result->getResult()->getContent() as $key => $choice) {

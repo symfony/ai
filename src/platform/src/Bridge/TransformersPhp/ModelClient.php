@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\TransformersPhp;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 
 use function Codewithkyrian\Transformers\Pipelines\pipeline;
 
@@ -26,20 +27,22 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawPipelineResult
     {
-        if (null === $task = $options['task'] ?? null) {
+        $providerOptions = $options[PlatformOptions::PROVIDER_OPTIONS] ?? [];
+
+        if (null === $task = $providerOptions['task'] ?? null) {
             throw new InvalidArgumentException('The task option is required.');
         }
 
-        $inputOptions = $options['input_options'] ?? [];
+        $inputOptions = $providerOptions['input_options'] ?? [];
 
         $pipeline = pipeline(
             $task,
             $model->getName(),
-            $options['quantized'] ?? true,
-            $options['config'] ?? null,
-            $options['cacheDir'] ?? null,
-            $options['revision'] ?? 'main',
-            $options['modelFilename'] ?? null,
+            $providerOptions['quantized'] ?? true,
+            $providerOptions['config'] ?? null,
+            $providerOptions['cacheDir'] ?? null,
+            $providerOptions['revision'] ?? 'main',
+            $providerOptions['modelFilename'] ?? null,
         );
 
         return new RawPipelineResult(new PipelineExecution($pipeline, $payload, $inputOptions));

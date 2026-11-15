@@ -11,14 +11,17 @@
 
 use Symfony\AI\Platform\Bridge\OpenRouter\Factory;
 use Symfony\AI\Platform\Bridge\OpenRouter\Speech\SpeechModelCatalog;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('OPENROUTER_KEY'), http_client(), modelCatalog: new SpeechModelCatalog());
 
 $result = $platform->invoke('google/gemini-3.1-flash-tts-preview', 'Hello world from Symfony AI!', [
-    'voice' => 'Zephyr',
-    'response_format' => 'pcm',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'voice' => 'Zephyr',
+        'response_format' => 'pcm',
+    ],
 ]);
 
 echo $result->asBinary();

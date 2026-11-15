@@ -43,24 +43,16 @@ class NovaModelClient implements ModelClientInterface
 
         unset($payload['model']);
 
-        $modelOptions = [];
-        if (isset($options['tools'])) {
-            $modelOptions['toolConfig']['tools'] = $options['tools'];
-        }
-
-        if (isset($options['temperature'])) {
-            $modelOptions['inferenceConfig']['temperature'] = $options['temperature'];
-        }
-
-        $maxTokens = $options['max_tokens'] ?? $options[PlatformOptions::MAX_OUTPUT_TOKENS] ?? null;
-        if (null !== $maxTokens) {
-            $modelOptions['inferenceConfig']['maxTokens'] = $maxTokens;
-        }
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::TOOLS => 'toolConfig.tools',
+            PlatformOptions::MAX_OUTPUT_TOKENS => 'inferenceConfig.maxTokens',
+            PlatformOptions::TEMPERATURE => 'inferenceConfig.temperature',
+        ]);
 
         $request = [
             'modelId' => $this->getModelId($model),
             'contentType' => 'application/json',
-            'body' => json_encode(array_merge($payload, $modelOptions), \JSON_THROW_ON_ERROR),
+            'body' => json_encode(array_merge($payload, $options), \JSON_THROW_ON_ERROR),
         ];
 
         return new RawBedrockResult($this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest($request)));

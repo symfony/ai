@@ -13,6 +13,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Gemini\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -29,8 +30,10 @@ $messages = new MessageBag(
 );
 
 $result = $agent->call($messages, [
-    'server_tools' => ['url_context' => true],
     'temperature' => 1.0,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'server_tools' => ['url_context' => true],
+    ],
 ]);
 
 echo $result->asText().\PHP_EOL;

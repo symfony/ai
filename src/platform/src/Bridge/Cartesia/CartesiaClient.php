@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -45,6 +46,8 @@ final class CartesiaClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
+        $options = PlatformOptions::toProviderOptions($options);
+
         return match (true) {
             $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $payload, $options),
             $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToText($model, $payload, $options),

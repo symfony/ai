@@ -4,8 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.scaleway.ai/v1/responses",
-                "signature": "b6d0acfb63dd4e7ac065c939a0776c7a",
-                "signature_v2": "ddec5df6a901ac141e29ead8b1a47ab3",
+                "signature": "66b75a2e6c20b22e5eedade204905655",
+                "signature_v2": "dba54752403de135fa352e34e7e17735",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -14,7 +14,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"reasoning\":{\"effort\":\"medium\"},\"max_output_tokens\":2000,\"model\":\"gpt-oss-120b\",\"input\":[{\"role\":\"user\",\"content\":\"What is new in Symfony AI?\"}],\"instructions\":\"You are concise and respond with two short sentences.\"}"
+                "body": "{\"max_output_tokens\":2000,\"reasoning\":{\"effort\":\"medium\"},\"model\":\"gpt-oss-120b\",\"input\":[{\"role\":\"user\",\"content\":\"What is new in Symfony AI?\"}],\"instructions\":\"You are concise and respond with two short sentences.\"}"
             },
             "response": {
                 "status": 200,

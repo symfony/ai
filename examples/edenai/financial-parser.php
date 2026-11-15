@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\EdenAi\DocumentParser\Result\DocumentParsingResult;
 use Symfony\AI\Platform\Bridge\EdenAi\Factory;
 use Symfony\AI\Platform\Message\Content\Document;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -19,8 +20,10 @@ $platform = Factory::createPlatform(env('EDENAI_API_KEY'), http_client());
 
 // The local PDF is transparently uploaded through Eden AI's /v3/upload endpoint
 $result = $platform->invoke('ocr/financial_parser/affinda', Document::fromFile(dirname(__DIR__, 2).'/fixtures/invoice.pdf'), [
-    'language' => 'en',
-    'document_type' => 'invoice',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'language' => 'en',
+        'document_type' => 'invoice',
+    ],
 ]);
 
 $parsing = $result->asObject();

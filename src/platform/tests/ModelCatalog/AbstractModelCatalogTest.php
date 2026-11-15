@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
+use Symfony\AI\Platform\PlatformOptions;
 
 final class AbstractModelCatalogTest extends TestCase
 {
@@ -34,7 +35,7 @@ final class AbstractModelCatalogTest extends TestCase
         $model = $catalog->getModel('test-model?param=value');
 
         $this->assertSame('test-model', $model->getName());
-        $this->assertSame(['param' => 'value'], $model->getOptions());
+        $this->assertSame([PlatformOptions::PROVIDER_OPTIONS => ['param' => 'value']], $model->getOptions());
     }
 
     public function testGetModelWithIntegerQueryParameter()
@@ -43,7 +44,7 @@ final class AbstractModelCatalogTest extends TestCase
         $model = $catalog->getModel('test-model?max_tokens=500');
 
         $this->assertSame('test-model', $model->getName());
-        $options = $model->getOptions();
+        $options = $model->getOptions()[PlatformOptions::PROVIDER_OPTIONS];
         $this->assertArrayHasKey('max_tokens', $options);
         $this->assertIsInt($options['max_tokens']);
         $this->assertSame(500, $options['max_tokens']);
@@ -55,13 +56,7 @@ final class AbstractModelCatalogTest extends TestCase
         $model = $catalog->getModel('test-model?think=true&stream=false');
 
         $this->assertSame('test-model', $model->getName());
-        $options = $model->getOptions();
-        $this->assertArrayHasKey('think', $options);
-        $this->assertIsBool($options['think']);
-        $this->assertTrue($options['think']);
-        $this->assertArrayHasKey('stream', $options);
-        $this->assertIsBool($options['stream']);
-        $this->assertFalse($options['stream']);
+        $this->assertSame([PlatformOptions::STREAM => false, PlatformOptions::PROVIDER_OPTIONS => ['think' => true]], $model->getOptions());
     }
 
     public function testGetModelWithMultipleQueryParameters()
@@ -70,19 +65,11 @@ final class AbstractModelCatalogTest extends TestCase
         $model = $catalog->getModel('test-model?max_tokens=500&temperature=0.7&stream=true');
 
         $this->assertSame('test-model', $model->getName());
-        $options = $model->getOptions();
-
-        $this->assertArrayHasKey('max_tokens', $options);
-        $this->assertIsInt($options['max_tokens']);
-        $this->assertSame(500, $options['max_tokens']);
-
-        $this->assertArrayHasKey('temperature', $options);
-        $this->assertIsFloat($options['temperature']);
-        $this->assertSame(0.7, $options['temperature']);
-
-        $this->assertArrayHasKey('stream', $options);
-        $this->assertIsBool($options['stream']);
-        $this->assertTrue($options['stream']);
+        $this->assertSame([
+            PlatformOptions::TEMPERATURE => 0.7,
+            PlatformOptions::STREAM => true,
+            PlatformOptions::PROVIDER_OPTIONS => ['max_tokens' => 500],
+        ], $model->getOptions());
     }
 
     public function testGetModelWithNestedArrayQueryParameters()
@@ -91,7 +78,7 @@ final class AbstractModelCatalogTest extends TestCase
         $model = $catalog->getModel('test-model?options[max_tokens]=500&options[temperature]=0.7&options[metadata][version]=1');
 
         $this->assertSame('test-model', $model->getName());
-        $options = $model->getOptions();
+        $options = $model->getOptions()[PlatformOptions::PROVIDER_OPTIONS];
 
         $this->assertIsArray($options['options']);
         $this->assertSame(500, $options['options']['max_tokens']);
@@ -129,7 +116,7 @@ final class AbstractModelCatalogTest extends TestCase
         $catalog = $this->createTestCatalog();
         $model = $catalog->getModel('test-model?a[b][c]=123&a[b][d]=text&a[e]=456');
 
-        $options = $model->getOptions();
+        $options = $model->getOptions()[PlatformOptions::PROVIDER_OPTIONS];
 
         $this->assertIsArray($options['a']);
         $this->assertIsArray($options['a']['b']);
@@ -146,7 +133,7 @@ final class AbstractModelCatalogTest extends TestCase
         $catalog = $this->createTestCatalog();
         $model = $catalog->getModel('test-model?a[b][c]=true&a[b][d]=text&a[e]=false');
 
-        $options = $model->getOptions();
+        $options = $model->getOptions()[PlatformOptions::PROVIDER_OPTIONS];
 
         $this->assertIsArray($options['a']);
         $this->assertIsArray($options['a']['b']);
@@ -163,7 +150,7 @@ final class AbstractModelCatalogTest extends TestCase
         $catalog = $this->createTestCatalog();
         $model = $catalog->getModel('test-model?frequency_penalty=1e-5&presence_penalty=2.5E3');
 
-        $options = $model->getOptions();
+        $options = $model->getOptions()[PlatformOptions::PROVIDER_OPTIONS];
 
         $this->assertIsFloat($options['frequency_penalty']);
         $this->assertSame(1e-5, $options['frequency_penalty']);
@@ -177,7 +164,15 @@ final class AbstractModelCatalogTest extends TestCase
         $model = $catalog->getModel('test-model?reasoning.effort=medium');
 
         $this->assertSame('test-model', $model->getName());
-        $this->assertSame(['reasoning.effort' => 'medium'], $model->getOptions());
+        $this->assertSame([PlatformOptions::PROVIDER_OPTIONS => ['reasoning.effort' => 'medium']], $model->getOptions());
+    }
+
+    public function testGetModelMergesExplicitProviderOptionsOverFlatOnes()
+    {
+        $catalog = $this->createTestCatalog();
+        $model = $catalog->getModel('test-model?max_tokens=500&provider_options[max_tokens]=100&provider_options[top_k]=5');
+
+        $this->assertSame([PlatformOptions::PROVIDER_OPTIONS => ['max_tokens' => 100, 'top_k' => 5]], $model->getOptions());
     }
 
     private function createTestCatalog(): AbstractModelCatalog

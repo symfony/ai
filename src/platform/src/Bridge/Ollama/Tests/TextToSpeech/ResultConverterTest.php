@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech\ResultConverter;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -47,7 +48,7 @@ final class ResultConverterTest extends TestCase
     public function testItReturnsPcmAudioAsBinary()
     {
         $result = (new ResultConverter())->convert($this->createRawResult('fake-pcm-bytes'), [
-            'response_format' => Format::PCM,
+            PlatformOptions::PROVIDER_OPTIONS => ['response_format' => Format::PCM],
         ]);
 
         $this->assertInstanceOf(BinaryResult::class, $result);
@@ -55,10 +56,31 @@ final class ResultConverterTest extends TestCase
         $this->assertSame('audio/pcm', $result->getMimeType());
     }
 
+    public function testItReadsATopLevelResponseFormat()
+    {
+        $result = (new ResultConverter())->convert($this->createRawResult('fake-pcm-bytes'), [
+            PlatformOptions::RESPONSE_FORMAT => Format::PCM,
+        ]);
+
+        $this->assertInstanceOf(BinaryResult::class, $result);
+        $this->assertSame('audio/pcm', $result->getMimeType());
+    }
+
+    public function testItPrefersTheProviderResponseFormat()
+    {
+        $result = (new ResultConverter())->convert($this->createRawResult('fake-pcm-bytes'), [
+            PlatformOptions::RESPONSE_FORMAT => Format::WAV,
+            PlatformOptions::PROVIDER_OPTIONS => ['response_format' => Format::PCM],
+        ]);
+
+        $this->assertInstanceOf(BinaryResult::class, $result);
+        $this->assertSame('audio/pcm', $result->getMimeType());
+    }
+
     public function testItDoesNotGuessTheMimeTypeOfAnUnknownFormat()
     {
         $result = (new ResultConverter())->convert($this->createRawResult('fake-audio-bytes'), [
-            'response_format' => 'mp3',
+            PlatformOptions::PROVIDER_OPTIONS => ['response_format' => 'mp3'],
         ]);
 
         $this->assertInstanceOf(BinaryResult::class, $result);
@@ -73,7 +95,7 @@ final class ResultConverterTest extends TestCase
         );
 
         $result = (new ResultConverter())->convert(new RawHttpResult($httpClient->request('POST', '/v1/audio/speech')), [
-            'response_format' => Format::WAV,
+            PlatformOptions::PROVIDER_OPTIONS => ['response_format' => Format::WAV],
         ]);
 
         $this->assertInstanceOf(BinaryResult::class, $result);

@@ -4,8 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.anthropic.com/v1/messages",
-                "signature": "3cc1a5700e4af2c6da2e6ab56a3d4460",
-                "signature_v2": "8565d8db43cf612fb29a7e11524f61cc",
+                "signature": "0c88820abc32b172cddf91e70f176bdc",
+                "signature_v2": "bde593706536bafe63fddcabe15b7fd4",
                 "headers": {
                     "x-api-key": [
                         "[redacted]"
@@ -17,7 +17,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"max_tokens\":1000,\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What is the capital of France?\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+                "body": "{\"max_tokens\":1000,\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What is the capital of France?\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
             },
             "response": {
                 "status": 200,
@@ -97,8 +97,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.anthropic.com/v1/messages",
-                "signature": "afe121e86327d6b41bd7ac07edb47835",
-                "signature_v2": "eac28632f9953ad2249aeddec212d774",
+                "signature": "fb9ce937b1898705faa31db90478de0f",
+                "signature_v2": "5374439de24b0631306b6a78cbaa325a",
                 "headers": {
                     "x-api-key": [
                         "[redacted]"
@@ -110,7 +110,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"max_tokens\":1000,\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What is the capital of France?\",\"cache_control\":{\"type\":\"ephemeral\"}}]},{\"role\":\"assistant\",\"content\":\"The capital of France is **Paris**. Paris is not only the capital but also the largest city in France, known for its iconic landmarks like the Eiffel Tower, the Louvre Museum, Notre-Dame Cathedral, and its rich history, art, fashion, and culture.\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What time is it right now?\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+                "body": "{\"max_tokens\":1000,\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What is the capital of France?\",\"cache_control\":{\"type\":\"ephemeral\"}}]},{\"role\":\"assistant\",\"content\":\"The capital of France is **Paris**. Paris is not only the capital but also the largest city in France, known for its iconic landmarks like the Eiffel Tower, the Louvre Museum, Notre-Dame Cathedral, and its rich history, art, fashion, and culture.\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What time is it right now?\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
             },
             "response": {
                 "status": 200,
@@ -190,8 +190,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.anthropic.com/v1/messages",
-                "signature": "b8fc9b30d87cad72b472359c0bce8a50",
-                "signature_v2": "a9e901f42ee13ed6eb0ab1be6f0f400a",
+                "signature": "35797463ee98c0eb1f2d34c6d99698ce",
+                "signature_v2": "be271abc02b2396c06f70e5f84a1c404",
                 "headers": {
                     "x-api-key": [
                         "[redacted]"
@@ -203,7 +203,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"max_tokens\":1000,\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":\"What is the capital of France?\"},{\"role\":\"assistant\",\"content\":\"The capital of France is **Paris**. Paris is not only the capital but also the largest city in France, known for its iconic landmarks like the Eiffel Tower, the Louvre Museum, Notre-Dame Cathedral, and its rich history, art, fashion, and culture.\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What time is it right now?\",\"cache_control\":{\"type\":\"ephemeral\"}}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_017uaQyXBkSPt1m8EubHNuTE\",\"name\":\"clock\",\"input\":{}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_017uaQyXBkSPt1m8EubHNuTE\",\"content\":\"Current date is 2026-11-03 (YYYY-MM-DD) and the time is 21:08:20 (HH:MM:SS).\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+                "body": "{\"max_tokens\":1000,\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":\"What is the capital of France?\"},{\"role\":\"assistant\",\"content\":\"The capital of France is **Paris**. Paris is not only the capital but also the largest city in France, known for its iconic landmarks like the Eiffel Tower, the Louvre Museum, Notre-Dame Cathedral, and its rich history, art, fashion, and culture.\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What time is it right now?\",\"cache_control\":{\"type\":\"ephemeral\"}}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_017uaQyXBkSPt1m8EubHNuTE\",\"name\":\"clock\",\"input\":{}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_017uaQyXBkSPt1m8EubHNuTE\",\"content\":\"Current date is 2026-11-03 (YYYY-MM-DD) and the time is 21:08:20 (HH:MM:SS).\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
             },
             "response": {
                 "status": 200,
@@ -283,8 +283,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.anthropic.com/v1/messages",
-                "signature": "a7ae4870c495a9232975db2b276cfe04",
-                "signature_v2": "2459a09598503a632f11e7df638146f1",
+                "signature": "be8a6f1502ee55c35a1ff4a5897828a7",
+                "signature_v2": "c52d5b78765e2913d8c6862ddc082f8a",
                 "headers": {
                     "x-api-key": [
                         "[redacted]"
@@ -296,7 +296,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"max_tokens\":1000,\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":\"What is the capital of France?\"},{\"role\":\"assistant\",\"content\":\"The capital of France is **Paris**. Paris is not only the capital but also the largest city in France, known for its iconic landmarks like the Eiffel Tower, the Louvre Museum, Notre-Dame Cathedral, and its rich history, art, fashion, and culture.\"},{\"role\":\"user\",\"content\":\"What time is it right now?\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_017uaQyXBkSPt1m8EubHNuTE\",\"name\":\"clock\",\"input\":{}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_017uaQyXBkSPt1m8EubHNuTE\",\"content\":\"Current date is 2026-11-03 (YYYY-MM-DD) and the time is 21:08:20 (HH:MM:SS).\",\"cache_control\":{\"type\":\"ephemeral\"}}]},{\"role\":\"assistant\",\"content\":\"The current time is **21:08:20** (9:08:20 PM) on **November 3, 2026**.\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What was the first question I asked you?\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+                "body": "{\"max_tokens\":1000,\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":\"What is the capital of France?\"},{\"role\":\"assistant\",\"content\":\"The capital of France is **Paris**. Paris is not only the capital but also the largest city in France, known for its iconic landmarks like the Eiffel Tower, the Louvre Museum, Notre-Dame Cathedral, and its rich history, art, fashion, and culture.\"},{\"role\":\"user\",\"content\":\"What time is it right now?\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_017uaQyXBkSPt1m8EubHNuTE\",\"name\":\"clock\",\"input\":{}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_017uaQyXBkSPt1m8EubHNuTE\",\"content\":\"Current date is 2026-11-03 (YYYY-MM-DD) and the time is 21:08:20 (HH:MM:SS).\",\"cache_control\":{\"type\":\"ephemeral\"}}]},{\"role\":\"assistant\",\"content\":\"The current time is **21:08:20** (9:08:20 PM) on **November 3, 2026**.\"},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What was the first question I asked you?\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
             },
             "response": {
                 "status": 200,

@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
+use Symfony\AI\Platform\PlatformOptions;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
@@ -47,8 +48,7 @@ final class FallbackModelCatalogTest extends TestCase
         $options = $model->getOptions();
         $this->assertSame(0.7, $options['temperature']);
         $this->assertIsFloat($options['temperature']);
-        $this->assertSame(1000, $options['max_tokens']);
-        $this->assertIsInt($options['max_tokens']);
+        $this->assertSame(1000, $options[PlatformOptions::PROVIDER_OPTIONS]['max_tokens']);
     }
 
     #[TestWith(['gpt-4'])]

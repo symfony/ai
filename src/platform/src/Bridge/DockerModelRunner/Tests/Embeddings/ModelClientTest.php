@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\DockerModelRunner\Tests\Embeddings;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\Embeddings;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\Embeddings\ModelClient;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -59,7 +60,7 @@ class ModelClientTest extends TestCase
 
         $model = new Embeddings('test-model');
 
-        $client->request($model, 'Hello, world!', ['custom_option' => 'value']);
+        $client->request($model, 'Hello, world!', [PlatformOptions::PROVIDER_OPTIONS => ['custom_option' => 'value']]);
     }
 
     public function testItHandlesArrayInput()

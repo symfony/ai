@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Cohere\Embeddings;
 use Symfony\AI\Platform\Bridge\Cohere\InputType;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 
 final class EmbeddingsTest extends TestCase
 {
@@ -28,8 +29,8 @@ final class EmbeddingsTest extends TestCase
 
     public function testItAcceptsInputTypeOption()
     {
-        $model = new Embeddings('embed-english-v3.0', [], ['input_type' => InputType::SearchQuery]);
+        $model = new Embeddings('embed-english-v3.0', [], [PlatformOptions::PROVIDER_OPTIONS => ['input_type' => InputType::SearchQuery]]);
 
-        $this->assertSame(['input_type' => InputType::SearchQuery], $model->getOptions());
+        $this->assertSame([PlatformOptions::PROVIDER_OPTIONS => ['input_type' => InputType::SearchQuery]], $model->getOptions());
     }
 }

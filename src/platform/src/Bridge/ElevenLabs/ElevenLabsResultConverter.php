@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\Result\AdditionalFormat;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Result\Transcript;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -56,7 +57,7 @@ final class ElevenLabsResultConverter implements ResultConverterInterface
         }
 
         return match (true) {
-            str_contains($response->getInfo('url'), 'text-to-speech') && \array_key_exists('stream', $options) && $options['stream'] => new StreamResult($this->convertToGenerator($response)),
+            str_contains($response->getInfo('url'), 'text-to-speech') && ($options[PlatformOptions::STREAM] ?? false) => new StreamResult($this->convertToGenerator($response)),
             str_contains($response->getInfo('url'), 'text-to-speech') => new BinaryResult($response->getContent(), 'audio/mpeg'),
             str_contains($response->getInfo('url'), 'speech-to-text') => $this->convertSpeechToTextResult($result, $options),
             default => throw new RuntimeException('Unsupported ElevenLabs response.'),
@@ -86,7 +87,7 @@ final class ElevenLabsResultConverter implements ResultConverterInterface
         $data = $result->getData();
         $text = $data['text'] ?? '';
 
-        if ([] === ($options['additional_formats'] ?? [])) {
+        if ([] === ($options[PlatformOptions::PROVIDER_OPTIONS]['additional_formats'] ?? [])) {
             return new TextResult($text);
         }
 

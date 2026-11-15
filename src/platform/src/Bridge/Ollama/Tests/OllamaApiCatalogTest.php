@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -59,7 +60,7 @@ final class OllamaApiCatalogTest extends TestCase
         $model = (new ModelCatalog($httpClient))->getModel('qwen3:8b?think=false&temperature=0.2');
 
         $this->assertSame('qwen3:8b', $model->getName());
-        $this->assertSame(['think' => false, 'temperature' => 0.2], $model->getOptions());
+        $this->assertSame(['temperature' => 0.2, PlatformOptions::PROVIDER_OPTIONS => ['think' => false]], $model->getOptions());
     }
 
     public function testModelCatalogReturnsDecisionModelWithoutCapabilities()

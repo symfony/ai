@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\MiniMax\MiniMax;
 use Symfony\AI\Platform\Bridge\MiniMax\MiniMaxClient;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -83,7 +84,7 @@ final class MiniMaxClientTest extends TestCase
         $client->request(new MiniMax('MiniMax-M2', [Capability::INPUT_MESSAGES]), [
             'messages' => [['role' => 'user', 'content' => 'foo']],
         ], [
-            'stream' => true,
+            PlatformOptions::STREAM => true,
         ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -152,7 +153,7 @@ final class MiniMaxClientTest extends TestCase
 
         $client = new MiniMaxClient($httpClient, 'key');
         $client->request(new MiniMax('speech-2.6-hd', [Capability::TEXT_TO_SPEECH, Capability::TEXT_TO_SPEECH_ASYNC]), 'Hello world', [
-            'async' => true,
+            PlatformOptions::PROVIDER_OPTIONS => ['async' => true],
         ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -173,6 +174,41 @@ final class MiniMaxClientTest extends TestCase
 
         $client = new MiniMaxClient($httpClient, 'key');
         $client->request(new MiniMax('image-01', [Capability::TEXT_TO_IMAGE]), 'A cat');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testItSendsTopLevelResponseFormatForImages()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): JsonMockResponse {
+            $body = json_decode($options['body'], true);
+            $this->assertSame('url', $body['response_format']);
+
+            return new JsonMockResponse([]);
+        });
+
+        $client = new MiniMaxClient($httpClient, 'key');
+        $client->request(new MiniMax('image-01', [Capability::TEXT_TO_IMAGE]), 'A cat', [
+            PlatformOptions::RESPONSE_FORMAT => 'url',
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testProviderResponseFormatWinsForImages()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): JsonMockResponse {
+            $body = json_decode($options['body'], true);
+            $this->assertSame('base64', $body['response_format']);
+
+            return new JsonMockResponse([]);
+        });
+
+        $client = new MiniMaxClient($httpClient, 'key');
+        $client->request(new MiniMax('image-01', [Capability::TEXT_TO_IMAGE]), 'A cat', [
+            PlatformOptions::RESPONSE_FORMAT => 'url',
+            PlatformOptions::PROVIDER_OPTIONS => ['response_format' => 'base64'],
+        ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -201,7 +237,7 @@ final class MiniMaxClientTest extends TestCase
 
         $client = new MiniMaxClient($httpClient, 'key');
         $client->request(new MiniMax('music-1.5', [Capability::MUSIC]), 'An upbeat pop song', [
-            'lyrics' => 'la la la',
+            PlatformOptions::PROVIDER_OPTIONS => ['lyrics' => 'la la la'],
         ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());

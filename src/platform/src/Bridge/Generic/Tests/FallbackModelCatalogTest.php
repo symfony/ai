@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\EventListener\StringToMessageBagListener;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -97,7 +98,7 @@ final class FallbackModelCatalogTest extends TestCase
         $this->assertInstanceOf(CompletionsModel::class, $model);
         $this->assertSame('gpt-4o', $model->getName());
         $this->assertSame(0.7, $model->getOptions()['temperature']);
-        $this->assertSame(1000, $model->getOptions()['max_tokens']);
+        $this->assertSame(1000, $model->getOptions()[PlatformOptions::PROVIDER_OPTIONS]['max_tokens']);
     }
 
     public function testEmbeddingsModelWithOptions()
@@ -107,7 +108,7 @@ final class FallbackModelCatalogTest extends TestCase
 
         $this->assertInstanceOf(EmbeddingsModel::class, $model);
         $this->assertSame('text-embedding-3-small', $model->getName());
-        $this->assertSame(256, $model->getOptions()['dimensions']);
+        $this->assertSame(256, $model->getOptions()[PlatformOptions::PROVIDER_OPTIONS]['dimensions']);
     }
 
     public function testGetModelsReturnsEmptyArray()

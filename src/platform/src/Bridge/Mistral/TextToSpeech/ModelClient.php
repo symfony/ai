@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Mistral\TextToSpeech;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -46,13 +47,15 @@ final class ModelClient implements ModelClientInterface
      */
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        if (isset($options['stream'])) {
+        if (isset($options[PlatformOptions::STREAM])) {
             throw new InvalidArgumentException('Streaming text to speech results is not supported yet.');
         }
 
         $input = \is_string($payload) ? $payload : ($payload['text'] ?? throw new InvalidArgumentException('The payload must contain a "text" key.'));
 
-        $options = array_merge($model->getOptions(), $options);
+        $options = array_merge($model->getOptions()[PlatformOptions::PROVIDER_OPTIONS] ?? [], PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+        ]));
 
         // "voice" is the option name shared by the other text-to-speech bridges, Mistral expects "voice_id"
         if (isset($options['voice'])) {

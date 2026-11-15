@@ -10,6 +10,7 @@
  */
 
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -17,7 +18,9 @@ $platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_cli
 
 $text = 'Hi, I recently bought a device from your company but it is not working as advertised and I would like to get reimbursed!';
 $result = $platform->invoke('facebook/bart-large-mnli', $text, [
-    'candidate_labels' => ['refund', 'legal', 'faq'],
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'candidate_labels' => ['refund', 'legal', 'faq'],
+    ],
 ]);
 
 dump($result->asObject());

@@ -11,13 +11,16 @@
 
 use Symfony\AI\Platform\Bridge\MiniMax\Factory;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('MINI_MAX_API_KEY'), http_client());
 
 $result = $platform->invoke('image-01', new Text('A cat on a kitchen table'), [
-    'aspect_ratio' => '16:9',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'aspect_ratio' => '16:9',
+    ],
 ]);
 
 $result->asFile(__DIR__.'/text-to-image.jpg');

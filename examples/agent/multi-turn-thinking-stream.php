@@ -15,6 +15,7 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\Anthropic\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -28,8 +29,10 @@ $agent = new Agent($platform, 'claude-sonnet-4-5-20250929', toolbox: $toolbox);
 
 $options = [
     'stream' => true,
-    'max_tokens' => 4000,
-    'thinking' => ['type' => 'enabled', 'budget_tokens' => 1024],
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'max_tokens' => 4000,
+        'thinking' => ['type' => 'enabled', 'budget_tokens' => 1024],
+    ],
 ];
 
 $messages = new MessageBag(

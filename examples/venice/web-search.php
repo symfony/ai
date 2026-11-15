@@ -13,6 +13,7 @@ use Symfony\AI\Platform\Bridge\Venice\Factory;
 use Symfony\AI\Platform\Bridge\Venice\VeniceParameters;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -23,10 +24,12 @@ $messages = new MessageBag(
 );
 
 $result = $platform->invoke('venice-uncensored-1-2', $messages, [
-    'venice_parameters' => new VeniceParameters(
-        enableWebSearch: VeniceParameters::WEB_SEARCH_AUTO,
-        enableWebCitations: true,
-    ),
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'venice_parameters' => new VeniceParameters(
+            enableWebSearch: VeniceParameters::WEB_SEARCH_AUTO,
+            enableWebCitations: true,
+        ),
+    ],
 ]);
 
 echo $result->asText().\PHP_EOL;

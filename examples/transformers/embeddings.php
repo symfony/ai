@@ -11,6 +11,7 @@
 
 use Codewithkyrian\Transformers\Pipelines\Task;
 use Symfony\AI\Platform\Bridge\TransformersPhp\Factory;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -33,8 +34,10 @@ $text = <<<TEXT
     TEXT;
 
 $result = $platform->invoke('Xenova/all-MiniLM-L6-v2', $text, [
-    'task' => Task::Embeddings,
-    'input_options' => ['pooling' => 'mean', 'normalize' => true],
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'task' => Task::Embeddings,
+        'input_options' => ['pooling' => 'mean', 'normalize' => true],
+    ],
 ]);
 
 print_vectors($result);

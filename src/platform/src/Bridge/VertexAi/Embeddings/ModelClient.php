@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\VertexAi\Embeddings;
 use Symfony\AI\Platform\Bridge\VertexAi\RegionAwareTrait;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -50,13 +51,13 @@ final class ModelClient implements ModelClientInterface
             $query['key'] = $this->apiKey;
         }
 
-        $modelOptions = $model->getOptions();
+        $modelOptions = $model->getOptions()[PlatformOptions::PROVIDER_OPTIONS] ?? [];
 
         $payload = [
             'instances' => array_map(
                 static fn (string $text) => [
                     'content' => $text,
-                    'title' => $options['title'] ?? null,
+                    'title' => $options[PlatformOptions::PROVIDER_OPTIONS]['title'] ?? null,
                     'task_type' => $modelOptions['task_type'] ?? TaskType::RETRIEVAL_QUERY,
                 ],
                 \is_array($payload) ? $payload : [$payload],

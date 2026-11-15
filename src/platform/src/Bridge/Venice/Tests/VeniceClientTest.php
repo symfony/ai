@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Bridge\Venice\VeniceParameters;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Audio;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -255,7 +256,7 @@ final class VeniceClientTest extends TestCase
         $client->request(
             new Venice('venice-uncensored', [Capability::INPUT_MESSAGES]),
             ['messages' => [['role' => 'user', 'content' => 'Hello']]],
-            ['venice_parameters' => ['enable_web_search' => 'on', 'character_slug' => 'alan-watts']],
+            [PlatformOptions::PROVIDER_OPTIONS => ['venice_parameters' => ['enable_web_search' => 'on', 'character_slug' => 'alan-watts']]],
         );
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -282,11 +283,11 @@ final class VeniceClientTest extends TestCase
         $client->request(
             new Venice('venice-uncensored', [Capability::INPUT_MESSAGES]),
             ['messages' => [['role' => 'user', 'content' => 'Hello']]],
-            ['venice_parameters' => new VeniceParameters(
+            [PlatformOptions::PROVIDER_OPTIONS => ['venice_parameters' => new VeniceParameters(
                 enableWebSearch: VeniceParameters::WEB_SEARCH_AUTO,
                 enableWebCitations: true,
                 stripThinkingResponse: true,
-            )],
+            )]],
         );
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -308,7 +309,26 @@ final class VeniceClientTest extends TestCase
         $client->request(
             new Venice('tts-kokoro', [Capability::TEXT_TO_SPEECH, Capability::INPUT_TEXT]),
             'Hello',
-            ['response_format' => 'opus', 'language' => 'en-US'],
+            [PlatformOptions::PROVIDER_OPTIONS => ['response_format' => 'opus', 'language' => 'en-US']],
+        );
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testClientSendsTopLevelTtsResponseFormat()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame('wav', $this->decodeJsonBody($options)['response_format'] ?? null);
+
+            return new JsonMockResponse([]);
+        }, 'https://api.venice.ai/api/v1/');
+
+        $client = new VeniceClient($httpClient);
+
+        $client->request(
+            new Venice('tts-kokoro', [Capability::TEXT_TO_SPEECH, Capability::INPUT_TEXT]),
+            'Hello',
+            [PlatformOptions::RESPONSE_FORMAT => 'wav'],
         );
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -332,7 +352,7 @@ final class VeniceClientTest extends TestCase
         $client->request(
             new Venice('text-embedding-bge-m3', [Capability::EMBEDDINGS, Capability::INPUT_TEXT]),
             'foo',
-            ['encoding_format' => 'base64', 'dimensions' => 512],
+            [PlatformOptions::PROVIDER_OPTIONS => ['encoding_format' => 'base64', 'dimensions' => 512]],
         );
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -375,7 +395,7 @@ final class VeniceClientTest extends TestCase
         $client->request(
             new Venice('seedance-1-5-pro-image-to-video', [Capability::IMAGE_TO_VIDEO]),
             ['prompt' => 'Slow zoom', 'image_url' => 'https://example.com/img.png'],
-            ['aspect_ratio' => '1:1'],
+            [PlatformOptions::PROVIDER_OPTIONS => ['aspect_ratio' => '1:1']],
         );
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -445,7 +465,7 @@ final class VeniceClientTest extends TestCase
         $client->request(
             new Venice('upscaler', [Capability::IMAGE_TO_IMAGE, Capability::INPUT_IMAGE, Capability::OUTPUT_IMAGE]),
             ['image' => 'https://example.com/in.png'],
-            ['mode' => 'upscale', 'scale' => 2],
+            [PlatformOptions::PROVIDER_OPTIONS => ['mode' => 'upscale', 'scale' => 2]],
         );
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -464,7 +484,7 @@ final class VeniceClientTest extends TestCase
         $client->request(
             new Venice('bria-bg-remover', [Capability::IMAGE_TO_IMAGE, Capability::INPUT_IMAGE, Capability::OUTPUT_IMAGE]),
             ['image' => 'data:image/png;base64,xyz'],
-            ['mode' => 'background-remove'],
+            [PlatformOptions::PROVIDER_OPTIONS => ['mode' => 'background-remove']],
         );
 
         $this->assertSame(1, $httpClient->getRequestsCount());

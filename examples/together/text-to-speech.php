@@ -11,14 +11,17 @@
 
 use Symfony\AI\Platform\Bridge\Together\Factory;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(apiKey: env('TOGETHER_API_KEY'), httpClient: http_client());
 
 $result = $platform->invoke('cartesia/sonic-3', new Text('Hello world, this is Symfony AI speaking.'), [
-    'voice' => 'friendly sidekick',
-    'response_format' => 'mp3',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'voice' => 'friendly sidekick',
+        'response_format' => 'mp3',
+    ],
 ]);
 
 echo $result->asBinary();

@@ -22,7 +22,7 @@ class Voyage extends Model
     public const INPUT_TYPE_QUERY = 'query';
 
     /**
-     * @param array{dimensions?: int, input_type?: self::INPUT_TYPE_*, truncation?: bool} $options
+     * @param array{provider_options?: array{dimensions?: int, input_type?: self::INPUT_TYPE_*, truncation?: bool}} $options
      */
     public function __construct(string $name, array $capabilities = [], array $options = [])
     {

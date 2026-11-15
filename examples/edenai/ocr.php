@@ -12,13 +12,16 @@
 use Symfony\AI\Platform\Bridge\EdenAi\Factory;
 use Symfony\AI\Platform\Bridge\EdenAi\Ocr\Result\OcrResult;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('EDENAI_API_KEY'), http_client());
 
 $result = $platform->invoke('ocr/ocr/google', new ImageUrl('https://raw.githubusercontent.com/symfony/ai/main/fixtures/image.jpg'), [
-    'language' => 'en',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'language' => 'en',
+    ],
 ]);
 
 $ocr = $result->asObject();

@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\OpenRouter\SpeechModel;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -43,6 +44,10 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+        ]);
+
         if (!isset($options['voice'])) {
             throw new InvalidArgumentException('The "voice" option is required for Speech requests.');
         }

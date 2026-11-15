@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\OpenResponses\ModelClient as OpenResponsesModelCl
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\HttpStreamInterface;
 use Symfony\AI\Platform\Result\Stream\SseStream;
@@ -64,10 +65,10 @@ final class ModelClient extends OpenResponsesModelClient
         // OpenAI performs automatic prompt caching; no explicit cache_control
         // annotation is needed and cacheRetention is not an OpenAI concept.
         // Strip it so it is never forwarded to the Responses API.
-        unset($options['cacheRetention']);
+        unset($options[PlatformOptions::PROVIDER_OPTIONS]['cacheRetention']);
 
-        if ($options[self::BATCH] ?? false) {
-            unset($options[self::BATCH]);
+        if ($options[PlatformOptions::PROVIDER_OPTIONS][self::BATCH] ?? false) {
+            unset($options[PlatformOptions::PROVIDER_OPTIONS][self::BATCH]);
 
             return $this->submitBatch($model, $payload, $options);
         }

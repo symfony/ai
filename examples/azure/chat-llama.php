@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Azure\Meta\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -19,11 +20,13 @@ $platform = Factory::createPlatform(env('AZURE_LLAMA_BASEURL'), env('AZURE_LLAMA
 
 $messages = new MessageBag(Message::ofUser('I am going to Paris, what should I see?'));
 $result = $platform->invoke('llama-3.3-70B-Instruct', $messages, [
-    'max_tokens' => 2048,
     'temperature' => 0.8,
-    'top_p' => 0.1,
-    'presence_penalty' => 0,
-    'frequency_penalty' => 0,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'max_tokens' => 2048,
+        'top_p' => 0.1,
+        'presence_penalty' => 0,
+        'frequency_penalty' => 0,
+    ],
 ]);
 
 echo $result->asText().\PHP_EOL;

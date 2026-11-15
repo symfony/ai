@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -76,11 +77,13 @@ final class CartesiaClientTest extends TestCase
         $client->request(new Cartesia('sonic-3', [Capability::TEXT_TO_SPEECH]), [
             'text' => 'bar',
         ], [
-            'voice' => '6ccbfb76-1fc6-48f7-b71d-91ac6298247b', // Tessa (https://play.cartesia.ai/voices/6ccbfb76-1fc6-48f7-b71d-91ac6298247b)
-            'output_format' => [
-                'container' => 'mp3',
-                'sample_rate' => 48000,
-                'bit_rate' => 192000,
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => '6ccbfb76-1fc6-48f7-b71d-91ac6298247b', // Tessa (https://play.cartesia.ai/voices/6ccbfb76-1fc6-48f7-b71d-91ac6298247b)
+                'output_format' => [
+                    'container' => 'mp3',
+                    'sample_rate' => 48000,
+                    'bit_rate' => 192000,
+                ],
             ],
         ]);
     }
@@ -102,11 +105,13 @@ final class CartesiaClientTest extends TestCase
         $client->request(new Cartesia('sonic-3', [Capability::TEXT_TO_SPEECH]), [
             'text' => 'bar',
         ], [
-            'voice' => '6ccbfb76-1fc6-48f7-b71d-91ac6298247b', // Tessa (https://play.cartesia.ai/voices/6ccbfb76-1fc6-48f7-b71d-91ac6298247b)
-            'output_format' => [
-                'container' => 'mp3',
-                'sample_rate' => 48000,
-                'bit_rate' => 192000,
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => '6ccbfb76-1fc6-48f7-b71d-91ac6298247b', // Tessa (https://play.cartesia.ai/voices/6ccbfb76-1fc6-48f7-b71d-91ac6298247b)
+                'output_format' => [
+                    'container' => 'mp3',
+                    'sample_rate' => 48000,
+                    'bit_rate' => 192000,
+                ],
             ],
         ]);
 
@@ -132,11 +137,13 @@ final class CartesiaClientTest extends TestCase
         );
 
         $client->request(new Cartesia('sonic-3', [Capability::TEXT_TO_SPEECH]), 'bar', [
-            'voice' => '6ccbfb76-1fc6-48f7-b71d-91ac6298247b',
-            'output_format' => [
-                'container' => 'mp3',
-                'sample_rate' => 48000,
-                'bit_rate' => 192000,
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => '6ccbfb76-1fc6-48f7-b71d-91ac6298247b',
+                'output_format' => [
+                    'container' => 'mp3',
+                    'sample_rate' => 48000,
+                    'bit_rate' => 192000,
+                ],
             ],
         ]);
 
@@ -161,11 +168,13 @@ final class CartesiaClientTest extends TestCase
         );
 
         $client->request(new Cartesia('sonic-3', [Capability::TEXT_TO_SPEECH]), 'bar', [
-            'voice' => '6ccbfb76-1fc6-48f7-b71d-91ac6298247b',
-            'output_format' => [
-                'container' => 'mp3',
-                'sample_rate' => 48000,
-                'bit_rate' => 192000,
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => '6ccbfb76-1fc6-48f7-b71d-91ac6298247b',
+                'output_format' => [
+                    'container' => 'mp3',
+                    'sample_rate' => 48000,
+                    'bit_rate' => 192000,
+                ],
             ],
         ]);
 

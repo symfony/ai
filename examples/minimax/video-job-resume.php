@@ -14,6 +14,7 @@ use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Job\JobRunner;
 use Symfony\AI\Platform\Job\JobStateCase;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -31,8 +32,10 @@ $storage = __DIR__.'/minimax-video-job.json';
 if (!is_file($storage)) {
     $platform = Factory::createPlatform(env('MINI_MAX_API_KEY'), http_client());
     $handle = $platform->invoke('MiniMax-Hailuo-02', new Text('A cat playing the piano on a stage, cinematic lighting'), [
-        'duration' => 6,
-        'resolution' => '768P',
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'duration' => 6,
+            'resolution' => '768P',
+        ],
     ])->asJob();
 
     file_put_contents($storage, $handle->toString());

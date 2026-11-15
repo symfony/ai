@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\HttpStreamInterface;
 use Symfony\AI\Platform\Result\Stream\RawSseStream;
@@ -80,6 +81,14 @@ class ModelClient implements ModelClientInterface
      */
     protected function createBody(Model $model, array $payload, array $options): array
     {
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::STREAM => 'stream',
+            PlatformOptions::TOOLS => 'tools',
+            PlatformOptions::RESPONSE_FORMAT => PlatformSubscriber::RESPONSE_FORMAT,
+            PlatformOptions::MAX_OUTPUT_TOKENS => 'max_output_tokens',
+            PlatformOptions::TEMPERATURE => 'temperature',
+        ]);
+
         if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
             $schema = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema'];
             $options['text']['format'] = $schema;

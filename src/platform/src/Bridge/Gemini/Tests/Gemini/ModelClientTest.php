@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Tests\Gemini;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini\ModelClient;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -61,11 +62,13 @@ final class ModelClientTest extends TestCase
         $payload = ['contents' => []];
         $options = [
             'temperature' => 0.7,
-            'topP' => 0.9,
             'tools' => [['name' => 'get_weather']],
-            'tool_config' => ['function_calling_config' => ['mode' => 'ANY']],
-            'service_tier' => 'priority',
-            'server_tools' => ['google_search' => true],
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'topP' => 0.9,
+                'tool_config' => ['function_calling_config' => ['mode' => 'ANY']],
+                'service_tier' => 'priority',
+                'server_tools' => ['google_search' => true],
+            ],
         ];
 
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
@@ -83,36 +86,6 @@ final class ModelClientTest extends TestCase
 
         $client = new ModelClient($httpClient, 'test-api-key');
         $client->request(new Gemini('gemini-1.5-flash'), $payload, $options);
-    }
-
-    public function testCanonicalMaxOutputTokensIsRenamedToMaxOutputTokensCamelCase()
-    {
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
-            $body = json_decode($options['body'], true);
-
-            $this->assertSame(500, $body['generationConfig']['maxOutputTokens']);
-            $this->assertArrayNotHasKey('max_output_tokens', $body['generationConfig']);
-
-            return new JsonMockResponse(['candidates' => []]);
-        });
-
-        $client = new ModelClient($httpClient, 'test-api-key');
-        $client->request(new Gemini('gemini-1.5-flash'), ['contents' => []], ['max_output_tokens' => 500]);
-    }
-
-    public function testExplicitMaxOutputTokensWinsOverCanonicalOption()
-    {
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
-            $body = json_decode($options['body'], true);
-
-            $this->assertSame(2000, $body['generationConfig']['maxOutputTokens']);
-            $this->assertArrayNotHasKey('max_output_tokens', $body['generationConfig']);
-
-            return new JsonMockResponse(['candidates' => []]);
-        });
-
-        $client = new ModelClient($httpClient, 'test-api-key');
-        $client->request(new Gemini('gemini-1.5-flash'), ['contents' => []], ['maxOutputTokens' => 2000, 'max_output_tokens' => 500]);
     }
 
     public function testRequestWithStreamUsesDifferentEndpoint()

@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Mistral\TextToSpeech;
 use Symfony\AI\Platform\Bridge\Mistral\TextToSpeech;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -57,7 +58,7 @@ final class ResultConverter implements ResultConverterInterface
             throw new RuntimeException('Response does not contain audio data.');
         }
 
-        $format = $options['response_format'] ?? Format::MP3;
+        $format = $options[PlatformOptions::PROVIDER_OPTIONS]['response_format'] ?? $options[PlatformOptions::RESPONSE_FORMAT] ?? Format::MP3;
 
         return BinaryResult::fromBase64($data['audio_data'], \is_string($format) ? self::MIME_TYPES[$format] ?? null : null);
     }

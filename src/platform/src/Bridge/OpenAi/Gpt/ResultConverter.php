@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\OpenResponses\ResultConverter as OpenResponsesRes
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -48,7 +49,7 @@ final class ResultConverter extends OpenResponsesResultConverter
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ResultInterface
     {
         // A batched invocation is answered with the batch OpenAI created, not with what it will produce.
-        if ($options[ModelClient::BATCH] ?? false) {
+        if ($options[PlatformOptions::PROVIDER_OPTIONS][ModelClient::BATCH] ?? false) {
             return $this->startBatch($result);
         }
 

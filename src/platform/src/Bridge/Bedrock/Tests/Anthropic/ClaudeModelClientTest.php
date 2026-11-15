@@ -15,12 +15,12 @@ use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
 use AsyncAws\BedrockRuntime\Result\InvokeModelResponse;
 use AsyncAws\Core\Configuration;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Bedrock\Anthropic\ClaudeModelClient;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
+use Symfony\AI\Platform\PlatformOptions;
 
 final class ClaudeModelClientTest extends TestCase
 {
@@ -224,7 +224,7 @@ final class ClaudeModelClientTest extends TestCase
 
         $options = [
             'tools' => ['Tool'],
-            'tool_choice' => ['type' => 'tool', 'name' => 'noop'],
+            PlatformOptions::PROVIDER_OPTIONS => ['tool_choice' => ['type' => 'tool', 'name' => 'noop']],
         ];
 
         $response = $this->modelClient->request($this->model, ['message' => 'test'], $options);
@@ -268,36 +268,5 @@ final class ClaudeModelClientTest extends TestCase
 
         $response = $this->modelClient->request($this->model, ['message' => 'test'], $options);
         $this->assertInstanceOf(RawBedrockResult::class, $response);
-    }
-
-    /**
-     * @param array<string, mixed> $options
-     */
-    #[DataProvider('provideMaxTokensOptions')]
-    public function testTranslatesCanonicalMaxOutputTokens(array $options, int $expectedMaxTokens)
-    {
-        $this->bedrockClient->expects($this->once())
-            ->method('invokeModel')
-            ->with($this->callback(function ($arg) use ($expectedMaxTokens) {
-                $body = json_decode($arg->getBody(), true);
-                $this->assertSame($expectedMaxTokens, $body['max_tokens']);
-                $this->assertArrayNotHasKey('max_output_tokens', $body);
-
-                return true;
-            }))
-            ->willReturn($this->createMock(InvokeModelResponse::class));
-
-        $this->modelClient = new ClaudeModelClient($this->bedrockClient, self::VERSION);
-
-        $this->modelClient->request($this->model, ['message' => 'test'], $options);
-    }
-
-    /**
-     * @return iterable<string, array{array<string, mixed>, int}>
-     */
-    public static function provideMaxTokensOptions(): iterable
-    {
-        yield 'canonical only' => [['max_output_tokens' => 500], 500];
-        yield 'explicit max_tokens wins' => [['max_tokens' => 2000, 'max_output_tokens' => 500], 2000];
     }
 }

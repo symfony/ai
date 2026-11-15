@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\ClaudeCode\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -25,8 +26,10 @@ $messages = new MessageBag(
     Message::ofUser('What testing framework does this project use? Answer in one sentence.'),
 );
 $result = $platform->invoke('haiku', $messages, [
-    'permission_mode' => 'plan',
-    'max_turns' => 1,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'permission_mode' => 'plan',
+        'max_turns' => 1,
+    ],
 ]);
 
 echo $result->asText().\PHP_EOL;

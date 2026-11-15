@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech;
 use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech\ModelClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
@@ -50,9 +51,11 @@ final class ModelClientTest extends TestCase
         }, 'http://127.0.0.1:11434');
 
         (new ModelClient($httpClient))->request(new TextToSpeech('phonon'), 'Hello from Ollama.', [
-            'voice' => 'Zoey',
-            'response_format' => 'wav',
-            'speed' => 1,
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => 'Zoey',
+                'response_format' => 'wav',
+                'speed' => 1,
+            ],
         ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -103,7 +106,38 @@ final class ModelClientTest extends TestCase
 
         (new ModelClient($httpClient))->request(new TextToSpeech('phonon'), 'Hello from Ollama.', [
             'stream' => false,
-            'stream_format' => null,
+            PlatformOptions::PROVIDER_OPTIONS => ['stream_format' => null],
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testItSendsATopLevelResponseFormat()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): HttpResponse {
+            $this->assertSame('pcm', json_decode($options['body'], true)['response_format']);
+
+            return new MockResponse('fake-audio-bytes');
+        }, 'http://127.0.0.1:11434');
+
+        (new ModelClient($httpClient))->request(new TextToSpeech('phonon'), 'Hello from Ollama.', [
+            PlatformOptions::RESPONSE_FORMAT => 'pcm',
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testItPrefersTheProviderResponseFormat()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): HttpResponse {
+            $this->assertSame('wav', json_decode($options['body'], true)['response_format']);
+
+            return new MockResponse('fake-audio-bytes');
+        }, 'http://127.0.0.1:11434');
+
+        (new ModelClient($httpClient))->request(new TextToSpeech('phonon'), 'Hello from Ollama.', [
+            PlatformOptions::RESPONSE_FORMAT => 'pcm',
+            PlatformOptions::PROVIDER_OPTIONS => ['response_format' => 'wav'],
         ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -133,7 +167,7 @@ final class ModelClientTest extends TestCase
         $this->expectExceptionMessage('Streaming text to speech results is not supported yet.');
 
         (new ModelClient(new MockHttpClient()))->request(new TextToSpeech('phonon'), 'Hello from Ollama.', [
-            'stream_format' => 'audio',
+            PlatformOptions::PROVIDER_OPTIONS => ['stream_format' => 'audio'],
         ]);
     }
 }

@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -26,7 +27,7 @@ $platform = Factory::createPlatform(env('GEMINI_API_KEY'), http_client());
 $toolbox = new Toolbox([], logger: logger());
 $agent = new Agent($platform, 'gemini-3.1-pro-preview', toolbox: $toolbox);
 
-$options = ['server_tools' => ['code_execution' => true]];
+$options = [PlatformOptions::PROVIDER_OPTIONS => ['server_tools' => ['code_execution' => true]]];
 
 $messages = new MessageBag(
     Message::ofUser('Compute the 10th Fibonacci number using a short Python snippet.'),

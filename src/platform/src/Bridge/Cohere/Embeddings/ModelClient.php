@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Cohere\Embeddings;
 use Symfony\AI\Platform\Bridge\Cohere\InputType;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -48,11 +49,11 @@ final class ModelClient implements ModelClientInterface
         $body = [
             'model' => $model->getName(),
             'texts' => $texts,
-            'input_type' => ($options['input_type'] ?? $model->getOptions()['input_type'] ?? InputType::SearchDocument)->value,
+            'input_type' => ($options[PlatformOptions::PROVIDER_OPTIONS]['input_type'] ?? $model->getOptions()[PlatformOptions::PROVIDER_OPTIONS]['input_type'] ?? InputType::SearchDocument)->value,
         ];
 
-        if (isset($options['embedding_types'])) {
-            $body['embedding_types'] = $options['embedding_types'];
+        if (isset($options[PlatformOptions::PROVIDER_OPTIONS]['embedding_types'])) {
+            $body['embedding_types'] = $options[PlatformOptions::PROVIDER_OPTIONS]['embedding_types'];
         }
 
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.'/v2/embed', [

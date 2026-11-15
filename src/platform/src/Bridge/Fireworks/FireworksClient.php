@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -62,6 +63,13 @@ final class FireworksClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::STREAM => 'stream',
+            PlatformOptions::TOOLS => 'tools',
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            PlatformOptions::TEMPERATURE => 'temperature',
+        ]);
+
         return new RawHttpResult($this->httpClient->request('POST', $this->inferenceEndpoint.'/v1/chat/completions', [
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'application/json'],
@@ -78,7 +86,7 @@ final class FireworksClient implements ModelClientInterface
         return new RawHttpResult($this->httpClient->request('POST', $this->inferenceEndpoint.'/v1/embeddings', [
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'application/json'],
-            'body' => $this->encodeJsonBody(array_merge($options, [
+            'body' => $this->encodeJsonBody(array_merge(PlatformOptions::toProviderOptions($options), [
                 'model' => $model->getName(),
                 'input' => $payload,
             ])),
@@ -98,7 +106,7 @@ final class FireworksClient implements ModelClientInterface
         return new RawHttpResult($this->httpClient->request('POST', $this->inferenceEndpoint.'/v1/rerank', [
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'application/json'],
-            'body' => $this->encodeJsonBody(array_merge($options, [
+            'body' => $this->encodeJsonBody(array_merge(PlatformOptions::toProviderOptions($options), [
                 'model' => $model->getName(),
                 'query' => $payload['query'],
                 'documents' => $payload['documents'],

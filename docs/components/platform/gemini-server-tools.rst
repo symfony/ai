@@ -31,9 +31,11 @@ The URL Context tool allows Gemini to fetch and analyze content from web pages. 
     );
 
     $result = $platform->invoke('gemini-2.5-pro', $messages, [
-        'server_tools' => [
-            'url_context' => true,
-        ]
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'server_tools' => [
+                'url_context' => true,
+            ],
+        ],
     ]);
 
 Google Search
@@ -46,9 +48,11 @@ The Google Search tool enables the model to search the web and incorporate searc
     );
 
     $result = $platform->invoke('gemini-2.5-pro', $messages, [
-        'server_tools' => [
-            'google_search' => true,
-        ]
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'server_tools' => [
+                'google_search' => true,
+            ],
+        ],
     ]);
 
 Google Maps
@@ -61,12 +65,14 @@ The Google Maps tool enables the model to find places based on location::
     );
 
     $result = $platform->invoke('gemini-2.5-pro', $messages, [
-        'server_tools' => [
-            'google_maps' => true,
-        ],
-        'tool_config' => [
-            'retrieval_config' => [
-                'lat_lng' => ['latitude' => 60.16653, 'longitude' => 24.93061],
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'server_tools' => [
+                'google_maps' => true,
+            ],
+            'tool_config' => [
+                'retrieval_config' => [
+                    'lat_lng' => ['latitude' => 60.16653, 'longitude' => 24.93061],
+                ],
             ],
         ],
     ]);
@@ -81,9 +87,11 @@ The Code Execution tool provides a sandboxed environment for running code::
     );
 
     $result = $platform->invoke('gemini-2.5-pro', $messages, [
-        'server_tools' => [
-            'code_execution' => true,
-        ]
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'server_tools' => [
+                'code_execution' => true,
+            ],
+        ],
     ]);
 
 Using Multiple Server Tools
@@ -96,11 +104,13 @@ You can enable multiple server tools simultaneously::
     );
 
     $result = $platform->invoke('gemini-2.5-pro', $messages, [
-        'server_tools' => [
-            'url_context' => true,
-            'google_search' => true,
-            'code_execution' => true,
-        ]
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'server_tools' => [
+                'url_context' => true,
+                'google_search' => true,
+                'code_execution' => true,
+            ],
+        ],
     ]);
 
 Example

@@ -14,6 +14,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
 use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -23,8 +24,8 @@ $messages = new MessageBag(
 );
 
 $platforms = [
-    'openai' => [OpenAiFactory::createPlatform(env('OPENAI_API_KEY'), http_client()), 'gpt-4o-mini', ['max_output_tokens' => 16]],
-    'anthropic' => [AnthropicFactory::createPlatform(env('ANTHROPIC_API_KEY'), http_client()), 'claude-sonnet-4-5-20250929', ['max_tokens' => 16]],
+    'openai' => [OpenAiFactory::createPlatform(env('OPENAI_API_KEY'), http_client()), 'gpt-4o-mini', [PlatformOptions::MAX_OUTPUT_TOKENS => 16]],
+    'anthropic' => [AnthropicFactory::createPlatform(env('ANTHROPIC_API_KEY'), http_client()), 'claude-sonnet-4-5-20250929', [PlatformOptions::MAX_OUTPUT_TOKENS => 16]],
 ];
 
 foreach ($platforms as $name => [$platform, $model, $options]) {
@@ -45,7 +46,7 @@ foreach ($platforms as $name => [$platform, $model, $options]) {
 output()->writeln('<info>anthropic (streamed)</info>');
 
 [$platform, $model] = $platforms['anthropic'];
-$result = $platform->invoke($model, new MessageBag(Message::ofUser('Reply with a single short sentence.')), ['stream' => true, 'max_tokens' => 100]);
+$result = $platform->invoke($model, new MessageBag(Message::ofUser('Reply with a single short sentence.')), [PlatformOptions::STREAM => true, PlatformOptions::MAX_OUTPUT_TOKENS => 100]);
 
 foreach ($result->asTextStream() as $delta) {
     echo $delta;

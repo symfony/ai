@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Codex\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -31,7 +32,9 @@ $messages = new MessageBag(
     Message::ofUser('Create a file called hello.php that prints "Hello, World!" to the console.'),
 );
 $result = $platform->invoke('gpt-5.4', $messages, [
-    'sandbox' => 'workspace-write',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'sandbox' => 'workspace-write',
+    ],
 ]);
 
 echo $result->asText().\PHP_EOL;

@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\ModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\Task;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -87,7 +88,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'sk-test-key');
-        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], ['task' => Task::TRANSCRIPTION]);
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], [PlatformOptions::PROVIDER_OPTIONS => ['task' => Task::TRANSCRIPTION]]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -104,7 +105,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'sk-test-key');
-        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], ['task' => Task::TRANSLATION]);
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], [PlatformOptions::PROVIDER_OPTIONS => ['task' => Task::TRANSLATION]]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -144,7 +145,7 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'sk-test-key', $region);
-        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], ['task' => Task::TRANSLATION]);
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], [PlatformOptions::PROVIDER_OPTIONS => ['task' => Task::TRANSLATION]]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
@@ -186,7 +187,25 @@ final class ModelClientTest extends TestCase
         ]);
 
         $client = new ModelClient($httpClient, 'sk-test-key');
-        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], ['verbose' => true]);
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], [PlatformOptions::PROVIDER_OPTIONS => ['verbose' => true]]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testItSendsATopLevelResponseFormat()
+    {
+        $httpClient = new MockHttpClient([
+            function (string $method, string $url, array $options): MockResponse {
+                $body = $options['body']();
+                $this->assertStringContainsString('name="response_format"', $body);
+                $this->assertStringContainsString('srt', $body);
+
+                return new JsonMockResponse(['text' => 'Hello World']);
+            },
+        ]);
+
+        $client = new ModelClient($httpClient, 'sk-test-key');
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], [PlatformOptions::RESPONSE_FORMAT => 'srt']);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }

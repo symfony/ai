@@ -15,6 +15,7 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\Mistral\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -25,7 +26,7 @@ $platform = Factory::createPlatform(env('MISTRAL_API_KEY'), http_client());
 $toolbox = new Toolbox([new Clock(clock())], logger: logger());
 $agent = new Agent($platform, 'mistral-medium-2604', toolbox: $toolbox);
 
-$options = ['reasoning_effort' => 'high'];
+$options = [PlatformOptions::PROVIDER_OPTIONS => ['reasoning_effort' => 'high']];
 
 $messages = new MessageBag(
     Message::forSystem('You are a helpful assistant.'),

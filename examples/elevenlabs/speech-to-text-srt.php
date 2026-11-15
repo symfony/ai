@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\ElevenLabs\Factory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Result\Transcript;
 use Symfony\AI\Platform\Message\Content\Audio;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -21,13 +22,15 @@ $result = $platform->invoke(
     model: 'scribe_v2',
     input: Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'),
     options: [
-        'language_code' => 'en',
-        'tag_audio_events' => false,
-        'num_speakers' => 1,
-        'diarize' => true,
-        'timestamps_granularity' => 'word',
-        'additional_formats' => [
-            ['format' => 'srt', 'include_timestamps' => true],
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'language_code' => 'en',
+            'tag_audio_events' => false,
+            'num_speakers' => 1,
+            'diarize' => true,
+            'timestamps_granularity' => 'word',
+            'additional_formats' => [
+                ['format' => 'srt', 'include_timestamps' => true],
+            ],
         ],
     ],
 );

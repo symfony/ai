@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
@@ -61,6 +62,14 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::STREAM => 'stream',
+            PlatformOptions::TOOLS => 'tools',
+            PlatformOptions::RESPONSE_FORMAT => PlatformSubscriber::RESPONSE_FORMAT,
+            PlatformOptions::MAX_OUTPUT_TOKENS => 'max_output_tokens',
+            PlatformOptions::TEMPERATURE => 'temperature',
+        ]);
+
         if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
             $schema = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema'];
             $options['text']['format'] = $schema;

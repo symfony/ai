@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Tests\Embeddings;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Gemini\Embeddings;
 use Symfony\AI\Platform\Bridge\Gemini\Embeddings\ModelClient;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -54,7 +55,7 @@ final class ModelClientTest extends TestCase
             )
             ->willReturn($result);
 
-        $model = new Embeddings('gemini-embedding-exp-03-07', options: ['dimensions' => 1536, 'task_type' => 'CLASSIFICATION']);
+        $model = new Embeddings('gemini-embedding-exp-03-07', options: [PlatformOptions::PROVIDER_OPTIONS => ['dimensions' => 1536, 'task_type' => 'CLASSIFICATION']]);
 
         $result = (new ModelClient($httpClient, 'test'))->request($model, ['payload1', 'payload2']);
         $this->assertSame(json_decode($this->getEmbeddingStub(), true), $result->getData());

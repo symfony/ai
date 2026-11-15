@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\StreamResult;
@@ -91,7 +92,7 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
 
         $result = $platform->invoke('deepseek-v4.1-flash', new MessageBag(Message::ofUser('Reply with the word hello.')), [
             'stream' => true,
-            'max_tokens' => 32,
+            PlatformOptions::PROVIDER_OPTIONS => ['max_tokens' => 32],
         ]);
 
         iterator_to_array($result->asStream(), false);

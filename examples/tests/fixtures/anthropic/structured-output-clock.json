@@ -4,8 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.anthropic.com/v1/messages",
-                "signature": "94f2e78c97a467dc3c05f044d8237278",
-                "signature_v2": "2ddffc7cadb4e527b817761dbc13e3c2",
+                "signature": "202f7f439202e4c2ad2347f2205cfd43",
+                "signature_v2": "3d9dc498f489502ab9c03e6bed557b6a",
                 "headers": {
                     "x-api-key": [
                         "[redacted]"
@@ -17,7 +17,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"max_tokens\":1000,\"tool_choice\":{\"type\":\"auto\"},\"output_config\":{\"format\":{\"type\":\"json_schema\",\"schema\":{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"The current date in the format YYYY-MM-DD.\"},\"time\":{\"type\":\"string\",\"description\":\"The current time in the format HH:MM:SS.\"}},\"required\":[\"date\",\"time\"],\"additionalProperties\":false}}},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What date and time is it?\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+                "body": "{\"max_tokens\":1000,\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"output_config\":{\"format\":{\"type\":\"json_schema\",\"schema\":{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"The current date in the format YYYY-MM-DD.\"},\"time\":{\"type\":\"string\",\"description\":\"The current time in the format HH:MM:SS.\"}},\"required\":[\"date\",\"time\"],\"additionalProperties\":false}}},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What date and time is it?\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"model\":\"claude-sonnet-4-5-20250929\"}"
             },
             "response": {
                 "status": 200,
@@ -97,8 +97,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.anthropic.com/v1/messages",
-                "signature": "de12a2efe3f8c5db430bef563a3541d3",
-                "signature_v2": "0140ea8bd028c292d1fb8f7511844c7a",
+                "signature": "e5c9c9a1e6b9377db0600823c5f3c6b0",
+                "signature_v2": "69d144dea031a3e805187c6b1590772c",
                 "headers": {
                     "x-api-key": [
                         "[redacted]"
@@ -110,7 +110,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"max_tokens\":1000,\"tool_choice\":{\"type\":\"auto\"},\"output_config\":{\"format\":{\"type\":\"json_schema\",\"schema\":{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"The current date in the format YYYY-MM-DD.\"},\"time\":{\"type\":\"string\",\"description\":\"The current time in the format HH:MM:SS.\"}},\"required\":[\"date\",\"time\"],\"additionalProperties\":false}}},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What date and time is it?\",\"cache_control\":{\"type\":\"ephemeral\"}}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_01YGp2QM8dNskNPbJXeBfrku\",\"name\":\"clock\",\"input\":{}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_01YGp2QM8dNskNPbJXeBfrku\",\"content\":\"Current date is 2026-11-03 (YYYY-MM-DD) and the time is 21:08:46 (HH:MM:SS).\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+                "body": "{\"max_tokens\":1000,\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"output_config\":{\"format\":{\"type\":\"json_schema\",\"schema\":{\"type\":\"object\",\"properties\":{\"date\":{\"type\":\"string\",\"description\":\"The current date in the format YYYY-MM-DD.\"},\"time\":{\"type\":\"string\",\"description\":\"The current time in the format HH:MM:SS.\"}},\"required\":[\"date\",\"time\"],\"additionalProperties\":false}}},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What date and time is it?\",\"cache_control\":{\"type\":\"ephemeral\"}}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_01YGp2QM8dNskNPbJXeBfrku\",\"name\":\"clock\",\"input\":{}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_01YGp2QM8dNskNPbJXeBfrku\",\"content\":\"Current date is 2026-11-03 (YYYY-MM-DD) and the time is 21:08:46 (HH:MM:SS).\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"model\":\"claude-sonnet-4-5-20250929\"}"
             },
             "response": {
                 "status": 200,

@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -41,15 +42,27 @@ final class MiniMaxClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
+        if ($model->supports(Capability::INPUT_MESSAGES)) {
+            return $this->doTextGeneration($model, $payload, PlatformOptions::toProviderOptions($options, [
+                PlatformOptions::STREAM => 'stream',
+                PlatformOptions::TOOLS => 'tools',
+                PlatformOptions::RESPONSE_FORMAT => 'response_format',
+                PlatformOptions::TEMPERATURE => 'temperature',
+            ]));
+        }
+
+        $providerOptions = PlatformOptions::toProviderOptions($options);
+
         return match (true) {
-            $model->supports(Capability::INPUT_MESSAGES) => $this->doTextGeneration($model, $payload, $options),
-            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doSpeechGeneration($model, $payload, $options),
+            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doSpeechGeneration($model, $payload, $providerOptions),
             $model->supports(Capability::TEXT_TO_IMAGE),
-            $model->supports(Capability::IMAGE_TO_IMAGE) => $this->doImageGeneration($model, $payload, $options),
-            $model->supports(Capability::MUSIC) => $this->doMusicGeneration($model, $payload, $options),
+            $model->supports(Capability::IMAGE_TO_IMAGE) => $this->doImageGeneration($model, $payload, PlatformOptions::toProviderOptions($options, [
+                PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            ])),
+            $model->supports(Capability::MUSIC) => $this->doMusicGeneration($model, $payload, $providerOptions),
             $model->supports(Capability::TEXT_TO_VIDEO),
             $model->supports(Capability::IMAGE_TO_VIDEO),
-            $model->supports(Capability::VIDEO_WITH_SUBJECT) => $this->doVideoGeneration($model, $payload, $options),
+            $model->supports(Capability::VIDEO_WITH_SUBJECT) => $this->doVideoGeneration($model, $payload, $providerOptions),
             default => throw new InvalidArgumentException(\sprintf('The "%s" model is not supported.', $model->getName())),
         };
     }

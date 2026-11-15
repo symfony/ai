@@ -16,6 +16,7 @@ use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\VectorResult;
@@ -401,7 +402,7 @@ final class VectorizerTest extends TestCase
         ];
 
         $vector = new Vector([0.1, 0.2, 0.3]);
-        $options = ['max_tokens' => 1000, 'temperature' => 0.5];
+        $options = [PlatformOptions::PROVIDER_OPTIONS => ['max_tokens' => 1000], PlatformOptions::TEMPERATURE => 0.5];
 
         $platform = PlatformTestHandler::createPlatform(new VectorResult([$vector]));
         $vectorizer = new Vectorizer($platform, 'text-embedding-3-small');

@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\Together\TogetherClient;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
@@ -154,7 +155,24 @@ final class TogetherClientTest extends TestCase
         $client->request(
             new Together('cartesia/sonic', [Capability::TEXT_TO_SPEECH, Capability::OUTPUT_AUDIO]),
             'Hello world',
-            ['voice' => 'friendly'],
+            [PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'friendly']],
+        );
+    }
+
+    public function testItSendsATopLevelResponseFormatForTextToSpeech()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame('{"response_format":"mp3","voice":"friendly","model":"cartesia\/sonic","input":"Hello world"}', $options['body']);
+
+            return new MockResponse();
+        };
+
+        $httpClient = new MockHttpClient($resultCallback, 'https://api.together.xyz');
+        $client = new TogetherClient($httpClient);
+        $client->request(
+            new Together('cartesia/sonic', [Capability::TEXT_TO_SPEECH, Capability::OUTPUT_AUDIO]),
+            'Hello world',
+            [PlatformOptions::RESPONSE_FORMAT => 'mp3', PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'friendly']],
         );
     }
 
@@ -199,7 +217,7 @@ final class TogetherClientTest extends TestCase
         $client->request(
             new Together('openai/whisper-large-v3', [Capability::SPEECH_TO_TEXT, Capability::INPUT_AUDIO, Capability::OUTPUT_TEXT]),
             ['file' => fopen(\dirname(__DIR__, 6).'/fixtures/audio.mp3', 'r')],
-            ['task' => 'translation'],
+            [PlatformOptions::PROVIDER_OPTIONS => ['task' => 'translation']],
         );
     }
 

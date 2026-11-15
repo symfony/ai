@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Anthropic\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
+use Symfony\AI\Platform\PlatformOptions;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
@@ -29,10 +30,10 @@ final class ClaudeTest extends TestCase
 
     public function testItCreatesClaudeWithCustomSettingsIncludingMaxTokens()
     {
-        $claude = new Claude('claude-3-5-sonnet-latest', [], ['temperature' => 0.5, 'max_tokens' => 2000]);
+        $claude = new Claude('claude-3-5-sonnet-latest', [], ['temperature' => 0.5, PlatformOptions::PROVIDER_OPTIONS => ['max_tokens' => 2000]]);
 
         $this->assertSame('claude-3-5-sonnet-latest', $claude->getName());
-        $this->assertSame(['temperature' => 0.5, 'max_tokens' => 2000], $claude->getOptions());
+        $this->assertSame(['temperature' => 0.5, PlatformOptions::PROVIDER_OPTIONS => ['max_tokens' => 2000]], $claude->getOptions());
     }
 
     public function testItCreatesClaudeWithCustomSettingsWithoutMaxTokens()

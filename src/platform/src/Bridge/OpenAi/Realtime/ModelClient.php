@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\AbstractModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Realtime;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -38,7 +39,11 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
 
     public function request(Model $model, array|string|object $payload, array $options = []): RawHttpResult
     {
-        $session = array_merge($model->getOptions(), $options);
+        $wireFields = [
+            PlatformOptions::TOOLS => 'tools',
+            PlatformOptions::MAX_OUTPUT_TOKENS => 'max_output_tokens',
+        ];
+        $session = array_merge(PlatformOptions::toProviderOptions($model->getOptions(), $wireFields), PlatformOptions::toProviderOptions($options, $wireFields));
         $session['model'] = $model->getName();
 
         if (\is_array($payload)) {

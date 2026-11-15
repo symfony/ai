@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Mistral\Factory;
 use Symfony\AI\Platform\Bridge\Mistral\SpeechToText;
 use Symfony\AI\Platform\Message\Content\Audio;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -20,7 +21,9 @@ $platform = Factory::createPlatform(env('MISTRAL_API_KEY'), http_client());
 // "voxtral-mini-latest" is a chat model by default; wrap it in the SpeechToText model to
 // opt into the dedicated /v1/audio/transcriptions endpoint (transcription only, no chat).
 $result = $platform->invoke(new SpeechToText('voxtral-mini-latest'), Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'), [
-    'language' => 'en',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'language' => 'en',
+    ],
 ]);
 
 echo $result->asText().\PHP_EOL;

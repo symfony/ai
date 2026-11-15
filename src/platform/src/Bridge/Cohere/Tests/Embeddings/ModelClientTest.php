@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Cohere\Cohere;
 use Symfony\AI\Platform\Bridge\Cohere\Embeddings;
 use Symfony\AI\Platform\Bridge\Cohere\Embeddings\ModelClient;
 use Symfony\AI\Platform\Bridge\Cohere\InputType;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -74,7 +75,7 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient($httpClient, 'test-key');
 
         $client->request(new Embeddings('embed-english-v3.0'), 'Hello, world!', [
-            'input_type' => InputType::SearchQuery,
+            PlatformOptions::PROVIDER_OPTIONS => ['input_type' => InputType::SearchQuery],
         ]);
     }
 
@@ -93,7 +94,7 @@ final class ModelClientTest extends TestCase
 
         $client = new ModelClient($httpClient, 'test-key');
 
-        $model = new Embeddings('embed-english-v3.0', [], ['input_type' => InputType::Classification]);
+        $model = new Embeddings('embed-english-v3.0', [], [PlatformOptions::PROVIDER_OPTIONS => ['input_type' => InputType::Classification]]);
         $client->request($model, 'Hello, world!');
     }
 }

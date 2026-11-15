@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Higgsfield\Factory;
 use Symfony\AI\Platform\Job\JobRunner;
 use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -23,8 +24,10 @@ $platform = Factory::createPlatform(
 
 // Higgsfield generates asynchronously, so the invocation returns a handle instead of a video.
 $handle = $platform->invoke('kling-2.5-i2v', Image::fromFile(dirname(__DIR__, 2).'/fixtures/image.jpg'), [
-    'prompt' => 'Slowly zoom into the scene',
-    'duration' => 5,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'prompt' => 'Slowly zoom into the scene',
+        'duration' => 5,
+    ],
 ])->asJob();
 
 echo 'Started job '.$handle->getId().', waiting for it to finish...'.\PHP_EOL;

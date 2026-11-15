@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\Higgsfield\Higgsfield;
 use Symfony\AI\Platform\Bridge\Higgsfield\ModelCatalog;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -62,7 +63,7 @@ final class CuratedModelCatalogTest extends TestCase
         $model = $this->createCatalog()->getModel('soul-2?aspect_ratio=16:9');
 
         $this->assertSame('higgsfield-ai/soul/v2/standard', $model->getName());
-        $this->assertSame(['aspect_ratio' => '16:9'], $model->getOptions());
+        $this->assertSame([PlatformOptions::PROVIDER_OPTIONS => ['aspect_ratio' => '16:9']], $model->getOptions());
     }
 
     public function testItKeepsOptionsOfACanonicalModelName()
@@ -70,7 +71,7 @@ final class CuratedModelCatalogTest extends TestCase
         $model = $this->createCatalog()->getModel('higgsfield-ai/soul/standard?aspect_ratio=1:1');
 
         $this->assertSame('higgsfield-ai/soul/standard', $model->getName());
-        $this->assertSame(['aspect_ratio' => '1:1'], $model->getOptions());
+        $this->assertSame([PlatformOptions::PROVIDER_OPTIONS => ['aspect_ratio' => '1:1']], $model->getOptions());
     }
 
     public function testItExposesAliasesNextToTheCanonicalNames()

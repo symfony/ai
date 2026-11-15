@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -48,7 +49,7 @@ final class ModelClient implements ModelClientInterface
     }
 
     /**
-     * @param array{provider?: array<string, mixed>, session_id?: string, trace?: array<string, mixed>, user?: string} $options
+     * @param array{provider_options?: array{provider?: array<string, mixed>, session_id?: string, trace?: array<string, mixed>, user?: string}} $options
      */
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
@@ -69,8 +70,8 @@ final class ModelClient implements ModelClientInterface
         }
 
         foreach (self::FORWARDED_OPTIONS as $option) {
-            if (isset($options[$option])) {
-                $body[$option] = $options[$option];
+            if (isset($options[PlatformOptions::PROVIDER_OPTIONS][$option])) {
+                $body[$option] = $options[PlatformOptions::PROVIDER_OPTIONS][$option];
             }
         }
 

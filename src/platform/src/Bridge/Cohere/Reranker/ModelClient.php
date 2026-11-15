@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Cohere\Reranker;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -53,8 +54,8 @@ final class ModelClient implements ModelClientInterface
             'documents' => $payload['texts'],
         ];
 
-        if (isset($options['top_n'])) {
-            $body['top_n'] = $options['top_n'];
+        if (isset($options[PlatformOptions::PROVIDER_OPTIONS]['top_n'])) {
+            $body['top_n'] = $options[PlatformOptions::PROVIDER_OPTIONS]['top_n'];
         }
 
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.'/v2/rerank', [

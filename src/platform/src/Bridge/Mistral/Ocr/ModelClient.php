@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Mistral\Ocr;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -49,7 +50,7 @@ final class ModelClient implements ModelClientInterface
             'headers' => [
                 'Content-Type' => 'application/json',
             ],
-            'json' => array_merge($options, [
+            'json' => array_merge(PlatformOptions::toProviderOptions($options), [
                 'model' => $model->getName(),
                 'document' => $payload,
             ]),

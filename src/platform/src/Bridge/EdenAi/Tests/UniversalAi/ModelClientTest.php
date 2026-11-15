@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Bridge\EdenAi\Tts;
 use Symfony\AI\Platform\Bridge\EdenAi\UniversalAi\ModelClient;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -128,8 +129,10 @@ final class ModelClientTest extends TestCase
         $client->request(new DocumentParser('ocr/financial_parser/affinda'), [
             'file' => 'https://example.com/invoice.pdf',
         ], [
-            'language' => 'fr',
-            'document_type' => 'invoice',
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'language' => 'fr',
+                'document_type' => 'invoice',
+            ],
         ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -153,9 +156,11 @@ final class ModelClientTest extends TestCase
         $client->request(new Ocr('ocr/ocr/google'), [
             'file' => 'https://example.com/document.pdf',
         ], [
-            'fallbacks' => ['ocr/ocr/microsoft'],
-            'show_original_response' => true,
-            'provider_params' => ['google' => ['timeout' => 10]],
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'fallbacks' => ['ocr/ocr/microsoft'],
+                'show_original_response' => true,
+                'provider_params' => ['google' => ['timeout' => 10]],
+            ],
         ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());

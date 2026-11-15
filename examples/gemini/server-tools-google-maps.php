@@ -13,6 +13,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Gemini\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -25,10 +26,12 @@ $messages = new MessageBag(
 );
 
 $result = $agent->call($messages, [
-    'server_tools' => ['google_maps' => true],
-    'tool_config' => [
-        'retrieval_config' => [
-            'lat_lng' => ['latitude' => 60.16653, 'longitude' => 24.93061],
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'server_tools' => ['google_maps' => true],
+        'tool_config' => [
+            'retrieval_config' => [
+                'lat_lng' => ['latitude' => 60.16653, 'longitude' => 24.93061],
+            ],
         ],
     ],
 ]);

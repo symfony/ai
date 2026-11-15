@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\Video;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -107,7 +108,7 @@ final class DecartClientTest extends TestCase
         );
 
         $client->request(new Decart('lucy-dev-i2v', [Capability::IMAGE_TO_IMAGE]), $payload, [
-            'prompt' => 'foo',
+            PlatformOptions::PROVIDER_OPTIONS => ['prompt' => 'foo'],
         ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -130,7 +131,7 @@ final class DecartClientTest extends TestCase
         );
 
         $client->request(new Decart('lucy-dev-i2i', [Capability::IMAGE_TO_VIDEO]), $payload, [
-            'prompt' => 'foo',
+            PlatformOptions::PROVIDER_OPTIONS => ['prompt' => 'foo'],
         ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -153,7 +154,7 @@ final class DecartClientTest extends TestCase
         );
 
         $client->request(new Decart('lucy-pro-v2v', [Capability::VIDEO_TO_VIDEO]), $payload, [
-            'prompt' => 'foo',
+            PlatformOptions::PROVIDER_OPTIONS => ['prompt' => 'foo'],
         ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());

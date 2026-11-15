@@ -82,11 +82,13 @@ final class ModelClient implements ModelClientInterface
             'content-type' => 'application/json',
         ];
 
-        // Anthropic expects "max_tokens"; an explicit one wins over the canonical option
-        if (isset($options[PlatformOptions::MAX_OUTPUT_TOKENS])) {
-            $options['max_tokens'] ??= $options[PlatformOptions::MAX_OUTPUT_TOKENS];
-            unset($options[PlatformOptions::MAX_OUTPUT_TOKENS]);
-        }
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::STREAM => 'stream',
+            PlatformOptions::TOOLS => 'tools',
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            PlatformOptions::MAX_OUTPUT_TOKENS => 'max_tokens',
+            PlatformOptions::TEMPERATURE => 'temperature',
+        ]);
 
         $cacheControl = $this->getCacheControl($this->cacheRetention);
         $payload = $this->injectMessagesCacheControl($payload, $cacheControl);

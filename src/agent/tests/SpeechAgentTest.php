@@ -31,6 +31,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
@@ -184,6 +185,48 @@ final class SpeechAgentTest extends TestCase
 
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('hello', $result->getMetadata()->get('text'));
+    }
+
+    public function testCallNestsTheProviderOptionsOfTextToSpeech()
+    {
+        $ttsResult = new DeferredResult(new PlainConverter(new BinaryResult('audio-binary')), new InMemoryRawResult());
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())
+            ->method('invoke')
+            ->with('tts-1', 'hello', [
+                PlatformOptions::TEMPERATURE => 0.2,
+                PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'alloy'],
+            ])
+            ->willReturn($ttsResult);
+
+        $configuration = new SpeechConfiguration(ttsModel: 'tts-1', ttsOptions: ['voice' => 'alloy', 'temperature' => 0.2]);
+        $agent = new SpeechAgent(new MockAgent(['Say hello' => 'hello']), $configuration, $platform, $platform);
+
+        $this->assertInstanceOf(BinaryResult::class, $agent->call(new MessageBag(Message::ofUser('Say hello')))->getResult());
+    }
+
+    public function testCallNestsTheProviderOptionsOfSpeechToText()
+    {
+        $sttResult = new DeferredResult(new PlainConverter(new TextResult('transcribed text')), new InMemoryRawResult());
+
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())
+            ->method('invoke')
+            ->with('whisper-1', $this->isInstanceOf(Audio::class), [
+                PlatformOptions::TEMPERATURE => 0.2,
+                PlatformOptions::PROVIDER_OPTIONS => ['prompt' => 'Symfony', 'task' => 'transcription'],
+            ])
+            ->willReturn($sttResult);
+
+        $innerAgent = $this->createMock(AgentInterface::class);
+        $innerAgent->expects($this->once())->method('call')->willReturn($this->execution(new TextResult('response')));
+
+        $configuration = new SpeechConfiguration(sttModel: 'whisper-1', sttOptions: ['prompt' => 'Symfony', 'temperature' => 0.2, 'task' => 'transcription']);
+        $agent = new SpeechAgent($innerAgent, $configuration, $platform, $platform);
+        $result = $agent->call(new MessageBag(Message::ofUser(Audio::fromFile(\dirname(__DIR__).'/../../fixtures/audio.mp3'))), [PlatformOptions::TEMPERATURE => 0.5])->getResult();
+
+        $this->assertInstanceOf(TextResult::class, $result);
     }
 
     public function testCallReturnsPlainResultWhenTtsNotConfigured()

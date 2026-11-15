@@ -15,6 +15,7 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\Anthropic\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -26,8 +27,10 @@ $toolbox = new Toolbox([new Clock(clock())], logger: logger());
 $agent = new Agent($platform, 'claude-sonnet-4-5-20250929', toolbox: $toolbox);
 
 $options = [
-    'max_tokens' => 4000,
-    'thinking' => ['type' => 'enabled', 'budget_tokens' => 1024],
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'max_tokens' => 4000,
+        'thinking' => ['type' => 'enabled', 'budget_tokens' => 1024],
+    ],
 ];
 
 $messages = new MessageBag(

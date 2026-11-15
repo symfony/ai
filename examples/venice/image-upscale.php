@@ -11,14 +11,17 @@
 
 use Symfony\AI\Platform\Bridge\Venice\Factory;
 use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('VENICE_API_KEY'), httpClient: http_client());
 
 $result = $platform->invoke('upscaler', Image::fromFile(dirname(__DIR__, 2).'/fixtures/accordion.jpg'), [
-    'mode' => 'upscale',
-    'scale' => 2,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'mode' => 'upscale',
+        'scale' => 2,
+    ],
 ]);
 
 $result->asFile(__DIR__.'/image-upscale.png');

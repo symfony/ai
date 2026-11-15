@@ -11,13 +11,16 @@
 
 use Symfony\AI\Platform\Bridge\Venice\Factory;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('VENICE_API_KEY'), httpClient: http_client());
 
 $result = $platform->invoke('tts-kokoro', new Text('Hello world from Venice'), [
-    'voice' => 'af_sky',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'voice' => 'af_sky',
+    ],
 ]);
 
 echo $result->asBinary().\PHP_EOL;

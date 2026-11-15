@@ -23,6 +23,7 @@ use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -164,8 +165,10 @@ final class FactoryTest extends TestCase
         ], 'http://127.0.0.1:11434');
 
         $result = Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('phonon', 'Hello from Ollama.', [
-            'voice' => 'Zoey',
-            'response_format' => 'wav',
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => 'Zoey',
+                'response_format' => 'wav',
+            ],
         ]);
 
         $binary = $result->getResult();

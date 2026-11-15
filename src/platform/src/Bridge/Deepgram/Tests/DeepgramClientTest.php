@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -77,7 +78,7 @@ final class DeepgramClientTest extends TestCase
         $client->request(
             new Deepgram('aura-2-thalia-en', [Capability::TEXT_TO_SPEECH]),
             ['text' => 'Hi'],
-            ['encoding' => 'linear16', 'sample_rate' => 24000]
+            [PlatformOptions::PROVIDER_OPTIONS => ['encoding' => 'linear16', 'sample_rate' => 24000]]
         );
 
         $this->assertStringContainsString('encoding=linear16', $capturedUrl);
@@ -99,7 +100,7 @@ final class DeepgramClientTest extends TestCase
         $client->request(
             new Deepgram('aura-2-thalia-en', [Capability::TEXT_TO_SPEECH]),
             ['text' => 'Hi'],
-            ['stream' => true, 'encoding' => 'linear16'],
+            [PlatformOptions::STREAM => true, PlatformOptions::PROVIDER_OPTIONS => ['encoding' => 'linear16']],
         );
 
         $this->assertStringContainsString('encoding=linear16', $capturedUrl);
@@ -239,7 +240,7 @@ final class DeepgramClientTest extends TestCase
         $client->request(
             new Deepgram('nova-3', [Capability::SPEECH_TO_TEXT]),
             $payload,
-            ['smart_format' => 'true', 'language' => 'en'],
+            [PlatformOptions::PROVIDER_OPTIONS => ['smart_format' => 'true', 'language' => 'en']],
         );
 
         $this->assertStringContainsString('smart_format=true', $capturedUrl);

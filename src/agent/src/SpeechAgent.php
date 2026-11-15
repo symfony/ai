@@ -25,6 +25,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ResultInterface;
 
@@ -49,7 +50,7 @@ final class SpeechAgent implements AgentInterface
             $messages = InputNormalizer::toMessageBag($input);
 
             if ($this->configuration->supportsSpeechToText() && $this->speechToTextPlatform instanceof PlatformInterface) {
-                $messages = $this->transcribe($messages, $options, $cancellation);
+                $messages = $this->transcribe($messages, $cancellation);
             }
 
             $result = null;
@@ -87,7 +88,7 @@ final class SpeechAgent implements AgentInterface
             $speechResult = $this->textToSpeechPlatform->invoke(
                 $this->configuration->getTextToSpeechModel(),
                 $text,
-                $this->configuration->getTextToSpeechOptions(),
+                PlatformOptions::nest($this->configuration->getTextToSpeechOptions()),
             );
             $cancellation->activate($speechResult->getRawResult());
 
@@ -103,10 +104,7 @@ final class SpeechAgent implements AgentInterface
         return $this->agent->getName();
     }
 
-    /**
-     * @param array<string, mixed> $options
-     */
-    private function transcribe(MessageBag $messages, array $options, Cancellation $cancellation): MessageBag
+    private function transcribe(MessageBag $messages, Cancellation $cancellation): MessageBag
     {
         try {
             $latestUserMessage = $messages->latestAs(Role::User);
@@ -123,10 +121,7 @@ final class SpeechAgent implements AgentInterface
         $result = $this->speechToTextPlatform->invoke(
             $this->configuration->getSpeechToTextModel(),
             $audio,
-            [
-                ...$this->configuration->getSpeechToTextOptions(),
-                ...$options,
-            ],
+            PlatformOptions::nest($this->configuration->getSpeechToTextOptions()),
         );
         $cancellation->activate($result->getRawResult());
 

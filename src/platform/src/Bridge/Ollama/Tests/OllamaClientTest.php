@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter;
 use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\NdjsonStream;
 use Symfony\AI\Platform\Result\StreamResult;
@@ -220,9 +221,11 @@ final class OllamaClientTest extends TestCase
             ],
             [
                 'stream' => true,
-                'think' => false,
                 'temperature' => 0.2,
-                'num_predict' => 64,
+                PlatformOptions::PROVIDER_OPTIONS => [
+                    'think' => false,
+                    'num_predict' => 64,
+                ],
             ]
         );
 
@@ -258,9 +261,11 @@ final class OllamaClientTest extends TestCase
             ],
             [
                 'temperature' => 0.2,
-                'options' => [
-                    'num_predict' => 64,
-                    'num_ctx' => 1024,
+                PlatformOptions::PROVIDER_OPTIONS => [
+                    'options' => [
+                        'num_predict' => 64,
+                        'num_ctx' => 1024,
+                    ],
                 ],
             ]
         );
@@ -339,9 +344,11 @@ final class OllamaClientTest extends TestCase
             new Ollama('embeddinggemma', [Capability::EMBEDDINGS]),
             'hello',
             [
-                'truncate' => false,
-                'dimensions' => 512,
-                'temperature' => 0.1,
+                PlatformOptions::PROVIDER_OPTIONS => [
+                    'truncate' => false,
+                    'dimensions' => 512,
+                    'temperature' => 0.1,
+                ],
             ]
         );
 
