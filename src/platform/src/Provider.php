@@ -102,13 +102,17 @@ final class Provider implements ProviderInterface
 
         $model = $invocationEvent->getModel();
         $input = $invocationEvent->getInput();
-        $options = $invocationEvent->getOptions();
+        $options = array_merge($model->getOptions(), $invocationEvent->getOptions());
 
+        $questions = isset($options['questions']) ? $this->contract->createQuestionsOption($options['questions'], $model) : null;
         $payload = $this->contract->createRequestPayload($model, $input, $options);
-        $options = array_merge($model->getOptions(), $options);
 
         if (isset($options['tools'])) {
             $options['tools'] = $this->contract->createToolOption($options['tools'], $model);
+        }
+
+        if (null !== $questions) {
+            $options['questions'] = $questions;
         }
 
         $result = $this->convertResult($model, $this->doInvoke($model, $payload, $options), $options);

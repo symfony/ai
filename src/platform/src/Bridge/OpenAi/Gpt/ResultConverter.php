@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 
 use Symfony\AI\Platform\Bridge\OpenAi\Batch\JobClient;
+use Symfony\AI\Platform\Bridge\OpenAi\Decision\ResultConverter as DecisionResultConverter;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenResponses\ResultConverter as OpenResponsesResultConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -50,6 +51,10 @@ final class ResultConverter extends OpenResponsesResultConverter
         // A batched invocation is answered with the batch OpenAI created, not with what it will produce.
         if ($options[ModelClient::BATCH] ?? false) {
             return $this->startBatch($result);
+        }
+
+        if (isset($options['questions'])) {
+            return (new DecisionResultConverter())->convert($result);
         }
 
         return parent::convert($result, $options);

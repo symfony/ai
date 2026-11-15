@@ -1,0 +1,122 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.openai.com/v1/decisions",
+                "signature": "f9189cbe7d2c76bb10d685aa1ae89920",
+                "signature_v2": "6dc7a766bbfd88a695c86a2c1edfe1ab",
+                "headers": {
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "gpt-6-luna",
+                    "input": "Hi, I've been trying to connect my Stripe account for 3 days and it keeps failing. I'm losing sales. Please help ASAP.",
+                    "questions": [
+                        {
+                            "name": "department",
+                            "type": "choice",
+                            "instructions": "Which team should handle this?",
+                            "choices": [
+                                {
+                                    "value": "billing",
+                                    "description": "Payment or subscription issues"
+                                },
+                                {
+                                    "value": "technical",
+                                    "description": "Bugs or integration problems"
+                                },
+                                {
+                                    "value": "sales",
+                                    "description": "Pricing or account questions"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "frustration",
+                            "type": "score",
+                            "instructions": "How frustrated does the customer appear?",
+                            "levels": [
+                                {
+                                    "label": "Calm, just stating facts"
+                                },
+                                {
+                                    "label": "Frustrated but civil"
+                                },
+                                {
+                                    "label": "Very angry, strong language"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "is_urgent",
+                            "type": "predicate",
+                            "instructions": "Does the message convey urgency or time-sensitivity?\nTrue means: Urgent or time-sensitive\nFalse means: No time pressure"
+                        }
+                    ]
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "x-ratelimit-limit-requests": [
+                        "10000"
+                    ],
+                    "x-ratelimit-limit-tokens": [
+                        "10000000"
+                    ],
+                    "x-ratelimit-remaining-requests": [
+                        "9999"
+                    ],
+                    "x-ratelimit-remaining-tokens": [
+                        "9999556"
+                    ],
+                    "x-ratelimit-reset-requests": [
+                        "6ms"
+                    ],
+                    "x-ratelimit-reset-tokens": [
+                        "2ms"
+                    ],
+                    "vary": [
+                        "origin, access-control-request-method, access-control-request-headers"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "access-control-expose-headers": [
+                        "x-request-id,retry-after,server-timing-total",
+                        "CF-Ray"
+                    ],
+                    "server-timing-total": [
+                        "382.251"
+                    ],
+                    "x-openai-proxy-wasm": [
+                        "v0.1"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"model\":\"gpt-6-luna\",\"answers\":[{\"type\":\"choice\",\"name\":\"department\",\"choice\":\"technical\",\"probabilities\":[{\"value\":\"billing\",\"probability\":0.02},{\"value\":\"technical\",\"probability\":0.97},{\"value\":\"sales\",\"probability\":0.01}],\"confidence\":0.96},{\"type\":\"score\",\"name\":\"frustration\",\"score\":1.0,\"probabilities\":[{\"value\":0,\"label\":\"Calm, just stating facts\",\"probability\":0.01},{\"value\":1,\"label\":\"Frustrated but civil\",\"probability\":0.98},{\"value\":2,\"label\":\"Very angry, strong language\",\"probability\":0.01}],\"confidence\":0.97},{\"type\":\"predicate\",\"name\":\"is_urgent\",\"probability\":1.0}],\"usage\":{\"input_tokens\":443,\"input_tokens_details\":{\"cached_tokens\":0,\"cache_write_tokens\":0},\"output_tokens\":0,\"output_tokens_details\":{\"reasoning_tokens\":0},\"total_tokens\":443}}"
+            }
+        }
+    ]
+}

@@ -448,6 +448,14 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_AUDIO,
                 ],
             ],
+            'gemini-decision-1' => [
+                'class' => Decision::class,
+                'capabilities' => [
+                    Capability::DECISION,
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_IMAGE,
+                ],
+            ],
             'gemini-embedding-001' => [
                 'class' => Embeddings::class,
                 'capabilities' => [

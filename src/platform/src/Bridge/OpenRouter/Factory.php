@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenRouter;
 
+use Symfony\AI\Platform\Bridge\Decision\Contract\InputNormalizer;
+use Symfony\AI\Platform\Bridge\Decision\Contract\QuestionNormalizer;
 use Symfony\AI\Platform\Bridge\Generic;
 use Symfony\AI\Platform\Bridge\OpenRouter\Decision\ModelClient as DecisionModelClient;
 use Symfony\AI\Platform\Bridge\OpenRouter\Decision\ResultConverter as DecisionResultConverter;
@@ -63,6 +65,8 @@ final class Factory
             new SpeechResultConverter(),
             new DecisionResultConverter(),
         ];
+
+        $contract ??= Contract::create([new InputNormalizer(), new QuestionNormalizer()]);
 
         return new Provider($name, $modelClients, $resultConverters, $modelCatalog, $contract, $eventDispatcher);
     }

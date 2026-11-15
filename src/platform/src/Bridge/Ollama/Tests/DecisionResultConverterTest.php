@@ -12,11 +12,11 @@
 namespace Symfony\AI\Platform\Bridge\Ollama\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Decision\Answer\Answers;
 use Symfony\AI\Platform\Bridge\Decision\TokenUsageExtractor;
 use Symfony\AI\Platform\Bridge\Ollama\Decision;
 use Symfony\AI\Platform\Bridge\Ollama\DecisionResultConverter;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
+use Symfony\AI\Platform\Decision\Answer\Answers;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;

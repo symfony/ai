@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 
 use Symfony\AI\Platform\Bridge\OpenAi\Batch\BatchClient;
+use Symfony\AI\Platform\Bridge\OpenAi\Decision\DecisionClient;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\RegionAwareTrait;
 use Symfony\AI\Platform\Bridge\OpenResponses\ModelClient as OpenResponsesModelClient;
@@ -40,6 +41,8 @@ final class ModelClient extends OpenResponsesModelClient
 
     private readonly BatchClient $batchClient;
 
+    private readonly DecisionClient $decisionClient;
+
     public function __construct(
         HttpClientInterface $httpClient,
         #[\SensitiveParameter] string $apiKey,
@@ -52,6 +55,7 @@ final class ModelClient extends OpenResponsesModelClient
         parent::__construct($httpClient, self::getBaseUrl($region), $apiKey, self::PATH);
 
         $this->batchClient = new BatchClient($httpClient, $apiKey, self::getBaseUrl($region), self::PATH);
+        $this->decisionClient = new DecisionClient($httpClient, $apiKey, $region);
     }
 
     public function supports(Model $model): bool
@@ -65,6 +69,14 @@ final class ModelClient extends OpenResponsesModelClient
         // annotation is needed and cacheRetention is not an OpenAI concept.
         // Strip it so it is never forwarded to the Responses API.
         unset($options['cacheRetention']);
+
+        if (isset($options['questions'])) {
+            if ($options[self::BATCH] ?? false) {
+                throw new InvalidArgumentException('The questions of a decision cannot be batched.');
+            }
+
+            return $this->decisionClient->request($model, $payload, $options);
+        }
 
         if ($options[self::BATCH] ?? false) {
             unset($options[self::BATCH]);

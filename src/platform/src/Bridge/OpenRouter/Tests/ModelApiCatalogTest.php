@@ -358,6 +358,6 @@ final class ModelApiCatalogTest extends TestCase
 
         $this->assertInstanceOf(DecisionModel::class, $model);
         $this->assertSame('typesafe/jev-1.13', $model->getName());
-        $this->assertSame([Capability::INPUT_TEXT], $model->getCapabilities());
+        $this->assertSame([Capability::DECISION, Capability::INPUT_TEXT], $model->getCapabilities());
     }
 }

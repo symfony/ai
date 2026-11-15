@@ -13,12 +13,18 @@ namespace Symfony\AI\Platform\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Decision\Question\NoulQuestion;
+use Symfony\AI\Platform\Decision\Question\QuestionInterface;
 use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultConvertedEvent;
 use Symfony\AI\Platform\Event\ResultErrorEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
+use Symfony\AI\Platform\Exception\MissingModelSupportException;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Message\Content\Collection;
+use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -156,6 +162,62 @@ final class ProviderTest extends TestCase
 
         $this->assertTrue($provider->supports('qwen3:8b?think=false'));
         $provider->invoke('qwen3:8b?think=false', 'Hello');
+    }
+
+    public function testInvokeNormalizesTheQuestionsThroughTheContract()
+    {
+        $model = new Model('jev-latest', [Capability::DECISION]);
+
+        $catalog = $this->createStub(ModelCatalogInterface::class);
+        $catalog->method('getModel')->willReturn($model);
+
+        $modelClient = $this->createMock(ModelClientInterface::class);
+        $modelClient->method('supports')->willReturn(true);
+        $modelClient->expects($this->once())->method('request')
+            ->with($model, 'My invoice is wrong.', ['questions' => ['is_bug' => ['type' => 'noul']]])
+            ->willReturn($this->createStub(RawResultInterface::class));
+
+        $resultConverter = $this->createStub(ResultConverterInterface::class);
+        $resultConverter->method('supports')->willReturn(true);
+        $resultConverter->method('convert')->willReturn(new TextResult('Hello'));
+
+        // the bare Contract has no question normalizer, so JsonSerializableNormalizer serializes it
+        $question = new class implements QuestionInterface, \JsonSerializable {
+            public function getInstructions(): string
+            {
+                return 'Is this a software defect?';
+            }
+
+            /**
+             * @return array{type: string}
+             */
+            public function jsonSerialize(): array
+            {
+                return ['type' => 'noul'];
+            }
+        };
+
+        $provider = new Provider('typesafe', [$modelClient], [$resultConverter], $catalog);
+        $provider->invoke('jev-latest', 'My invoice is wrong.', ['questions' => ['is_bug' => $question]]);
+    }
+
+    public function testInvokeThrowsForQuestionsToAModelWithoutDecisions()
+    {
+        $catalog = $this->createStub(ModelCatalogInterface::class);
+        $catalog->method('getModel')->willReturn(new Model('gpt-4o', [Capability::INPUT_MESSAGES]));
+
+        $modelClient = $this->createMock(ModelClientInterface::class);
+        $modelClient->method('supports')->willReturn(true);
+        $modelClient->expects($this->never())->method('request');
+
+        $provider = new Provider('openai', [$modelClient], [], $catalog);
+
+        $this->expectException(MissingModelSupportException::class);
+        $this->expectExceptionMessage('Model "gpt-4o" (Symfony\AI\Platform\Model) does not support "decision".');
+
+        $provider->invoke('gpt-4o', new Collection(new Text('Hello'), new Image('image', 'image/png')), ['questions' => [
+            'is_urgent' => new NoulQuestion('Is this urgent?'),
+        ]]);
     }
 
     public function testInvokeThrowsWhenNoModelClientSupportsModel()

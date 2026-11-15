@@ -12,11 +12,11 @@
 namespace Symfony\AI\Platform\Bridge\OpenRouter\Tests\Decision;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Decision\Answer\Answers;
 use Symfony\AI\Platform\Bridge\Decision\TokenUsageExtractor;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\OpenRouter\Decision\ResultConverter;
 use Symfony\AI\Platform\Bridge\OpenRouter\DecisionModel;
+use Symfony\AI\Platform\Decision\Answer\Answers;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;

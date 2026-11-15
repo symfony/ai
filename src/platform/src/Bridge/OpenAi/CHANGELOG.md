@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add decisions through `POST /v1/decisions`: `gpt-6-luna` answers the questions of the `questions` option
+
 0.14
 ----
 

@@ -564,6 +564,7 @@ final class ModelCatalog extends AbstractModelCatalog
             'gpt-6-luna' => [
                 'class' => Gpt::class,
                 'capabilities' => [
+                    Capability::DECISION,
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,

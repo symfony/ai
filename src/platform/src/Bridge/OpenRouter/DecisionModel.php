@@ -16,8 +16,8 @@ use Symfony\AI\Platform\Model;
 /**
  * A decision model, served through the Decisions API of OpenRouter instead of the chat API.
  *
- * It accepts an {@see \Symfony\AI\Platform\Bridge\Decision\Evaluation} and answers with
- * {@see \Symfony\AI\Platform\Bridge\Decision\Answer\Answers}.
+ * It answers the questions of the "questions" option with
+ * {@see \Symfony\AI\Platform\Decision\Answer\Answers}.
  *
  * @author Tim Lochmüller <tim@fruit-lab.de>
  */

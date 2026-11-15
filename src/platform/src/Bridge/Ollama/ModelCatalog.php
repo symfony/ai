@@ -67,7 +67,7 @@ final class ModelCatalog extends AbstractModelCatalog
 
         // Decision models use /v1/systemone: retain vision, but not chat capabilities (e.g. "completion").
         if (\in_array('decision', $payload['capabilities'], true)) {
-            return new Decision($modelName, \in_array('vision', $payload['capabilities'], true) ? [Capability::INPUT_IMAGE] : [], $options);
+            return new Decision($modelName, \in_array('vision', $payload['capabilities'], true) ? [Capability::DECISION, Capability::INPUT_IMAGE] : [Capability::DECISION], $options);
         }
 
         // Speech models only generate speech: chat, completion and embedding requests are rejected by Ollama.

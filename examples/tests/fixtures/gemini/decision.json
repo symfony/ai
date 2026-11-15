@@ -1,0 +1,82 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://generativelanguage.googleapis.com/v1beta/decisions",
+                "signature": "ae22e041ceacf3de6d949338bbd0a1ac",
+                "signature_v2": "e89e0b8740d904ad84f7f698915ba7a2",
+                "headers": {
+                    "x-goog-api-key": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "gemini-decision-1",
+                    "input": "Hi, I've been trying to connect my Stripe account for 3 days and it keeps failing. I'm losing sales. Please help ASAP.",
+                    "questions": {
+                        "department": {
+                            "type": "choice",
+                            "instructions": "Which team should handle this?",
+                            "criteria": {
+                                "billing": "Payment or subscription issues",
+                                "technical": "Bugs or integration problems",
+                                "sales": "Pricing or account questions"
+                            }
+                        },
+                        "frustration": {
+                            "type": "score",
+                            "instructions": "How frustrated does the customer appear?",
+                            "criteria": [
+                                "Calm, just stating facts",
+                                "Frustrated but civil",
+                                "Very angry, strong language"
+                            ]
+                        },
+                        "is_urgent": {
+                            "type": "noul",
+                            "instructions": "Does the message convey urgency or time-sensitivity?",
+                            "criteria": {
+                                "true_description": "Urgent or time-sensitive",
+                                "false_description": "No time pressure"
+                            }
+                        }
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "vary": [
+                        "Origin",
+                        "X-Origin",
+                        "Referer"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ],
+                    "server": [
+                        "scaffolding on HTTPServer2"
+                    ],
+                    "content-length": [
+                        "395"
+                    ],
+                    "x-xss-protection": [
+                        "0"
+                    ],
+                    "x-frame-options": [
+                        "SAMEORIGIN"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"answers\":{\"frustration\":{\"confidence\":0.6837466853239356,\"score\":1.2017471910593607,\"probabilities\":{\"1\":0.6837466853239356,\"2\":0.25900025286771255,\"0\":0.05725306180835176},\"legend\":{\"2\":\"Very angry, strong language\",\"0\":\"Calm, just stating facts\",\"1\":\"Frustrated but civil\"},\"type\":\"score\"},\"is_urgent\":{\"confidence\":0.9708184827159024,\"noul\":0.9708184827159024,\"type\":\"noul\"},\"department\":{\"confidence\":0.9481510006884094,\"choice\":\"technical\",\"probabilities\":{\"billing\":0.03549899720893369,\"sales\":0.016350002102656806,\"technical\":0.9481510006884094},\"type\":\"choice\"}},\"usage\":{\"total_tokens\":277,\"total_input_tokens\":277,\"input_tokens_by_modality\":[{\"modality\":\"text\",\"tokens\":277}],\"total_output_tokens\":0}}"
+            }
+        }
+    ]
+}

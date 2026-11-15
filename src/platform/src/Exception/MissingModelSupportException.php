@@ -42,4 +42,9 @@ final class MissingModelSupportException extends RuntimeException
     {
         return new self($model, 'structured output');
     }
+
+    public static function forDecision(Model $model): self
+    {
+        return new self($model, 'decision');
+    }
 }

@@ -35,6 +35,11 @@ final class StringToMessageBagListener
             return;
         }
 
+        // Decisions take the string as it is
+        if (isset($event->getOptions()['questions']) || isset($event->getModel()->getOptions()['questions'])) {
+            return;
+        }
+
         // Convert string to MessageBag with a user message
         $event->setInput(new MessageBag(Message::ofUser($event->getInput())));
     }

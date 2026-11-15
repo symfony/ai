@@ -9,13 +9,12 @@
  * file that was distributed with this source code.
  */
 
-use Symfony\AI\Platform\Bridge\Decision\Answer\Answers;
-use Symfony\AI\Platform\Bridge\Decision\Evaluation;
-use Symfony\AI\Platform\Bridge\Decision\Question\ChoiceQuestion;
-use Symfony\AI\Platform\Bridge\Decision\Question\NoulQuestion;
-use Symfony\AI\Platform\Bridge\Decision\Question\ScoreQuestion;
 use Symfony\AI\Platform\Bridge\OpenRouter\Decision\DecisionModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenRouter\Factory;
+use Symfony\AI\Platform\Decision\Answer\Answers;
+use Symfony\AI\Platform\Decision\Question\ChoiceQuestion;
+use Symfony\AI\Platform\Decision\Question\NoulQuestion;
+use Symfony\AI\Platform\Decision\Question\ScoreQuestion;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -23,7 +22,8 @@ $platform = Factory::createPlatform(env('OPENROUTER_KEY'), http_client(), modelC
 
 $ticket = "Hi, I've been trying to connect my Stripe account for 3 days and it keeps failing. I'm losing sales. Please help ASAP.";
 
-$result = $platform->invoke('typesafe/jev-1.13', new Evaluation($ticket, [
+// The model reads the ticket once and answers every question against it, so triaging it takes a single call
+$result = $platform->invoke('typesafe/jev-1.13', $ticket, ['questions' => [
     'department' => new ChoiceQuestion('Which team should handle this?', [
         'billing' => 'Payment or subscription issues',
         'technical' => 'Bugs or integration problems',
@@ -35,17 +35,25 @@ $result = $platform->invoke('typesafe/jev-1.13', new Evaluation($ticket, [
         'Very angry, strong language',
     ]),
     'is_urgent' => new NoulQuestion('Does the message convey urgency or time-sensitivity?', 'Urgent or time-sensitive', 'No time pressure'),
-]));
+]]);
 
 $answers = $result->asObject(Answers::class);
 
 $department = $answers->getChoice('department');
 echo sprintf('Department: %s (confidence: %.2f)', $department->getChoice(), $department->getConfidence()).\PHP_EOL;
+foreach ($department->getProbabilities() as $option => $probability) {
+    echo sprintf('  %s: %.2f', $option, $probability).\PHP_EOL;
+}
 
 $frustration = $answers->getScore('frustration');
 echo sprintf('Frustration: %.2f out of %d (confidence: %.2f)', $frustration->getScore(), count($frustration->getLegend()) - 1, $frustration->getConfidence()).\PHP_EOL;
 
 $urgent = $answers->getNoul('is_urgent');
 echo sprintf('Urgent: %s (probability: %.2f)', $urgent->isTrue() ? 'yes' : 'no', $urgent->getProbability()).\PHP_EOL;
+
+// Confidence is what lets the code decide whether to act on an answer or to hand the ticket over to a human
+if ($department->getConfidence() < 0.7) {
+    echo 'The department is uncertain, routing the ticket to a human for review.'.\PHP_EOL;
+}
 
 print_token_usage($result->getMetadata()->get('token_usage'));

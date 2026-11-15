@@ -53,6 +53,7 @@ A demo application (`composer create-project symfony/ai-demo`) with 8 scenarios:
 - [Models.dev Platform](https://symfony.com/doc/current/ai/components/platform/models-dev.html): Using Models.dev as an AI platform
 - [Model Catalogs](https://symfony.com/doc/current/ai/components/platform/model-catalogs.html): How platforms resolve model names into Model objects with capabilities, and how to extend catalogs for new or local models
 - [Voyage AI](https://symfony.com/doc/current/ai/components/platform/voyage.html): Voyage AI embedding platform
+- [Decision Models](https://symfony.com/doc/current/ai/components/platform/decision.html): Typed decisions (noul, choice and score questions) with Gemini, OpenAI, TypeSafe, Ollama and OpenRouter
 - [TypeSafe](https://symfony.com/doc/current/ai/components/platform/typesafe.html): TypeSafe Jev platform for typed decisions (noul, choice and score questions)
 - [Eden AI](https://symfony.com/doc/current/ai/components/platform/edenai.html): Eden AI gateway for chat, embeddings, OCR, document parsing, speech and image models across many providers
 - [Albert](https://symfony.com/doc/current/ai/components/platform/albert.html): Albert, the sovereign AI gateway of the French public administration (OpenAI-compatible)

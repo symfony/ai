@@ -4,6 +4,9 @@ CHANGELOG
 1.0
 ---
 
+ * Accept strings and `Stringable` objects in the constructor of `Message\Content\Collection`, wrapped into `Text`
+ * Add the `Decision\Question\*` and `Decision\Answer\*` classes, moved from the Decision bridge
+ * Add the `questions` option and `Capability::DECISION` for decision models: the contract normalizes the questions with `Contract::createQuestionsOption()`, and a model without the capability throws `MissingModelSupportException::forDecision()`
  * Add the serving provider to `InvocationEvent` and `ResultEvent`, as `ResultConvertedEvent` and `ResultErrorEvent` already have it, so a listener can attribute these events to the provider serving the call
  * Stream the string answers of `Test\MockPlatformFactory` word by word when the invocation has the `stream` option
  * Add a `$phase` argument and `getPhase()` to `Message\Content\Text`, `Result\TextResult` and `Result\Stream\Delta\TextDelta`, so the phase a provider tagged a text with survives into the next turn
