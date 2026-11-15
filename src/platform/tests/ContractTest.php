@@ -17,7 +17,11 @@ use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\AudioNormalizer;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Decision\Question\NoulQuestion;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Exception\MissingModelSupportException;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
@@ -224,5 +228,34 @@ final class ContractTest extends TestCase
         $this->assertSame('whisper-1', $actual['model']);
         $this->assertArrayHasKey('file', $actual);
         $this->assertTrue(\is_resource($actual['file']));
+    }
+
+    public function testCreateQuestionsOptionThrowsForAModelWithoutDecisions()
+    {
+        $this->expectException(MissingModelSupportException::class);
+        $this->expectExceptionMessage('Model "gpt-4o" (Symfony\AI\Platform\Model) does not support "decision".');
+
+        Contract::create()->createQuestionsOption(['is_urgent' => new NoulQuestion('Is this urgent?')], new Model('gpt-4o', [Capability::INPUT_MESSAGES]));
+    }
+
+    /**
+     * @param array<mixed> $questions
+     */
+    #[DataProvider('provideInvalidQuestions')]
+    public function testCreateQuestionsOptionThrowsForInvalidQuestions(array $questions, string $message)
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($message);
+
+        Contract::create()->createQuestionsOption($questions, new Model('jev-latest', [Capability::DECISION]));
+    }
+
+    /**
+     * @return iterable<string, array{array<mixed>, string}>
+     */
+    public static function provideInvalidQuestions(): iterable
+    {
+        yield 'no question' => [[], 'A decision requires at least one question.'];
+        yield 'raw array' => [['is_urgent' => ['type' => 'noul', 'instructions' => 'Is this urgent?']], 'Question "is_urgent" must be an instance of "Symfony\\AI\\Platform\\Decision\\Question\\QuestionInterface", "array" given.'];
     }
 }

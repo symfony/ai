@@ -25,7 +25,7 @@ use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
- * Converts the "POST /v1/systemone" response of Ollama into {@see \Symfony\AI\Platform\Bridge\Decision\Answer\Answers}.
+ * Converts the "POST /v1/systemone" response of Ollama into {@see \Symfony\AI\Platform\Decision\Answer\Answers}.
  *
  * Ollama reports errors as {"error": "message"}; the success payload is shared with other decision providers.
  *

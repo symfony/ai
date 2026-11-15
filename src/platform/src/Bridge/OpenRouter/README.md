@@ -7,21 +7,20 @@ Decision models
 ---------------
 
 Decision models are served through the experimental `POST /api/alpha/decisions` endpoint.
-This requires `symfony/ai-decision-platform`. They are queried with the `Evaluation` of the
-`Decision` bridge and answer with its `Answers`. Use the `DecisionModelCatalog` or the
+They answer the questions of the `questions` option
+with the `Answers` of the Platform component. Use the `DecisionModelCatalog` or the
 `ModelApiCatalog`, which lists them via `GET /v1/models?output_modalities=decisions`.
 
 ```php
-use Symfony\AI\Platform\Bridge\Decision\Evaluation;
-use Symfony\AI\Platform\Bridge\Decision\Question\NoulQuestion;
+use Symfony\AI\Platform\Decision\Question\NoulQuestion;
 use Symfony\AI\Platform\Bridge\OpenRouter\Decision\DecisionModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenRouter\Factory;
 
 $platform = Factory::createPlatform($apiKey, modelCatalog: new DecisionModelCatalog());
 
-$answers = $platform->invoke('typesafe/jev-1.13', new Evaluation($ticket, [
+$answers = $platform->invoke('typesafe/jev-1.13', $ticket, ['questions' => [
     'is_bug' => new NoulQuestion('Is this a software defect?', 'Broken behavior', 'A question or feature request'),
-]))->asObject();
+]])->asObject();
 ```
 
 When a `NoulQuestion` has criteria, OpenRouter requires both the true and the false one. The

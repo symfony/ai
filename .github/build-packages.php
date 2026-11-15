@@ -28,6 +28,7 @@ foreach ($finder as $composerFile) {
 
         $aiPackages[$packageName] = [
             'path' => realpath($composerFile->getPath()),
+            'require' => array_keys($packageData['require'] ?? []),
         ];
     }
 }
@@ -46,24 +47,25 @@ foreach ($finder as $composerFile) {
         if (isset($packageData['require'][$packageName])
             || isset($packageData['require-dev'][$packageName])
         ) {
-            $repositories[] = [
-                'type' => 'path',
-                'url' => $packageInfo['path'],
-            ];
             $key = isset($packageData['require'][$packageName]) ? 'require' : 'require-dev';
             $packageData[$key][$packageName] = '@dev';
         }
     }
 
-    // Add the composer-plugin path repo for packages that depend on symfony/ai-mate,
-    // since it transitively requires symfony/ai-mate-composer-plugin.
-    if (isset($aiPackages['symfony/ai-mate-composer-plugin'])
-        && (isset($packageData['require']['symfony/ai-mate']) || isset($packageData['require-dev']['symfony/ai-mate']))
-    ) {
+    // The local packages also need path repos for the AI packages they require themselves
+    $linked = [];
+    $queue = array_keys(array_intersect_key($aiPackages, ($packageData['require'] ?? []) + ($packageData['require-dev'] ?? [])));
+    while (null !== $packageName = array_shift($queue)) {
+        if (isset($linked[$packageName])) {
+            continue;
+        }
+
+        $linked[$packageName] = true;
         $repositories[] = [
             'type' => 'path',
-            'url' => $aiPackages['symfony/ai-mate-composer-plugin']['path'],
+            'url' => $aiPackages[$packageName]['path'],
         ];
+        $queue = [...$queue, ...array_intersect($aiPackages[$packageName]['require'], array_keys($aiPackages))];
     }
 
     if ($repositories) {

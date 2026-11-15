@@ -18,9 +18,12 @@ final class Collection implements ContentInterface
      */
     private readonly array $content;
 
-    public function __construct(ContentInterface ...$content)
+    public function __construct(\Stringable|string|ContentInterface ...$content)
     {
-        $this->content = $content;
+        $this->content = array_map(
+            static fn (\Stringable|string|ContentInterface $entry): ContentInterface => $entry instanceof ContentInterface ? $entry : new Text((string) $entry),
+            $content,
+        );
     }
 
     /**

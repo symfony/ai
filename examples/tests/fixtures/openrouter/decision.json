@@ -52,10 +52,37 @@
                     ],
                     "access-control-allow-origin": [
                         "*"
+                    ],
+                    "access-control-expose-headers": [
+                        "WWW-Authenticate,PAYMENT-REQUIRED,Payment-Receipt,PAYMENT-RESPONSE,Location,X-Generation-Id,x-openrouter-error-origin,x-openrouter-error-tool,X-Provider-Name,request-id,cf-ray"
+                    ],
+                    "x-generation-id": [
+                        "gen-dec-1794767361-uhbSh6kdauGP3AFvq8mh"
+                    ],
+                    "x-provider-name": [
+                        "TypeSafe"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "permissions-policy": [
+                        "payment=(self \"https://checkout.stripe.com\" \"https://connect-js.stripe.com\" \"https://js.stripe.com\" \"https://*.js.stripe.com\" \"https://hooks.stripe.com\")"
+                    ],
+                    "referrer-policy": [
+                        "no-referrer, strict-origin-when-cross-origin"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ],
+                    "server": [
+                        "cloudflare"
                     ]
                 },
                 "body_format": "json",
-                "body": "{\"id\":\"gen-dec-1762425610-Qm3vXk8LpR2tYw9Zc4Nb\",\"model\":\"typesafe\\/jev-1.13-20260917\",\"provider\":\"TypeSafe\",\"answers\":{\"department\":{\"type\":\"choice\",\"choice\":\"technical\",\"confidence\":0.62,\"probabilities\":{\"billing\":0.31,\"technical\":0.69,\"sales\":0.0}},\"frustration\":{\"type\":\"score\",\"score\":1.0,\"confidence\":1.0,\"legend\":{\"0\":\"Calm, just stating facts\",\"1\":\"Frustrated but civil\",\"2\":\"Very angry, strong language\"},\"probabilities\":{\"0\":0.0,\"1\":1.0,\"2\":0.0}},\"is_urgent\":{\"type\":\"noul\",\"noul\":0.99}},\"usage\":{\"input_tokens\":431,\"output_tokens\":73,\"cost\":5.04e-5}}"
+                "body": "{\"model\":\"typesafe/jev-1.13-20260917\",\"answers\":{\"department\":{\"type\":\"choice\",\"choice\":\"billing\",\"probabilities\":{\"billing\":0.68,\"technical\":0.32,\"sales\":0},\"confidence\":0.52},\"frustration\":{\"type\":\"score\",\"score\":1,\"legend\":{\"0\":\"Calm, just stating facts\",\"1\":\"Frustrated but civil\",\"2\":\"Very angry, strong language\"},\"probabilities\":{\"0\":0,\"1\":1,\"2\":0},\"confidence\":1},\"is_urgent\":{\"type\":\"noul\",\"noul\":0.98}},\"usage\":{\"input_tokens\":452,\"output_tokens\":73,\"cost\":0.000018984,\"is_byok\":false,\"cost_details\":{\"upstream_inference_cost\":0.000018984,\"upstream_inference_prompt_cost\":0.000018984,\"upstream_inference_completions_cost\":0}},\"id\":\"gen-dec-1794767361-uhbSh6kdauGP3AFvq8mh\",\"provider\":\"TypeSafe\"}"
             }
         }
     ]

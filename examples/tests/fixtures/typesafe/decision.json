@@ -1,0 +1,71 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.typesafe.ai/v1/systemone",
+                "signature": "483781393a64635f0576bbd2dfb1ea84",
+                "signature_v2": "24e7ad454f16b7367ae482457275f3d3",
+                "headers": {
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "jev-latest",
+                    "state": "Hi, I've been trying to connect my Stripe account for 3 days and it keeps failing. I'm losing sales. Please help ASAP.",
+                    "questions": {
+                        "department": {
+                            "type": "choice",
+                            "instructions": "Which team should handle this?",
+                            "criteria": {
+                                "billing": "Payment or subscription issues",
+                                "technical": "Bugs or integration problems",
+                                "sales": "Pricing or account questions"
+                            }
+                        },
+                        "frustration": {
+                            "type": "score",
+                            "instructions": "How frustrated does the customer appear?",
+                            "criteria": [
+                                "Calm, just stating facts",
+                                "Frustrated but civil",
+                                "Very angry, strong language"
+                            ]
+                        },
+                        "is_urgent": {
+                            "type": "noul",
+                            "instructions": "Does the message convey urgency or time-sensitivity?",
+                            "criteria": {
+                                "true": "Urgent or time-sensitive",
+                                "false": "No time pressure"
+                            }
+                        }
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "x-typesafe-request-id": [
+                        "req_01a1e078974e78b3a744f8e3b6efb48f"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"model\":\"jev-1.14.0\",\"answers\":{\"department\":{\"type\":\"choice\",\"choice\":\"billing\",\"confidence\":0.61,\"probabilities\":{\"billing\":0.74,\"technical\":0.26,\"sales\":0.0}},\"frustration\":{\"type\":\"score\",\"score\":1.0,\"confidence\":1.0,\"legend\":{\"0\":\"Calm, just stating facts\",\"1\":\"Frustrated but civil\",\"2\":\"Very angry, strong language\"},\"probabilities\":{\"0\":0.0,\"1\":1.0,\"2\":0.0}},\"is_urgent\":{\"type\":\"noul\",\"noul\":0.98}},\"usage\":{\"input_tokens\":452,\"output_tokens\":73}}"
+            }
+        }
+    ]
+}

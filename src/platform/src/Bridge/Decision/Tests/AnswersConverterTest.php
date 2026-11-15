@@ -32,6 +32,23 @@ final class AnswersConverterTest extends TestCase
         $this->assertSame(1.6, $answers->getScore('frustration')->getScore());
     }
 
+    public function testItConvertsIntegerNumbersToFloats()
+    {
+        $answers = (new AnswersConverter())->convert([
+            'answers' => [
+                'is_urgent' => ['type' => 'noul', 'noul' => 1],
+                'department' => ['type' => 'choice', 'choice' => 'billing', 'probabilities' => ['billing' => 1, 'sales' => 0], 'confidence' => 1],
+                'frustration' => ['type' => 'score', 'score' => 1, 'legend' => ['Calm', 'Angry'], 'probabilities' => [0, 1], 'confidence' => 1],
+            ],
+        ]);
+
+        $this->assertSame(1.0, $answers->getNoul('is_urgent')->getProbability());
+        $this->assertSame(['billing' => 1.0, 'sales' => 0.0], $answers->getChoice('department')->getProbabilities());
+        $this->assertSame(1.0, $answers->getChoice('department')->getConfidence());
+        $this->assertSame(1.0, $answers->getScore('frustration')->getScore());
+        $this->assertSame([0.0, 1.0], $answers->getScore('frustration')->getProbabilities());
+    }
+
     public function testItRequiresAnswers()
     {
         $this->expectException(RuntimeException::class);

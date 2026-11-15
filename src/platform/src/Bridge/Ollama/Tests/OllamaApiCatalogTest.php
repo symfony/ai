@@ -62,7 +62,7 @@ final class OllamaApiCatalogTest extends TestCase
         $this->assertSame(['think' => false, 'temperature' => 0.2], $model->getOptions());
     }
 
-    public function testModelCatalogReturnsDecisionModelWithoutCapabilities()
+    public function testModelCatalogReturnsDecisionModelWithTheDecisionCapabilityOnly()
     {
         $httpClient = new MockHttpClient([
             new JsonMockResponse([
@@ -74,7 +74,7 @@ final class OllamaApiCatalogTest extends TestCase
 
         $this->assertInstanceOf(Decision::class, $model);
         $this->assertSame('nimble', $model->getName());
-        $this->assertSame([], $model->getCapabilities());
+        $this->assertSame([Capability::DECISION], $model->getCapabilities());
     }
 
     public function testModelCatalogPreservesVisionForDecisionModels()
@@ -86,7 +86,7 @@ final class OllamaApiCatalogTest extends TestCase
         $model = (new ModelCatalog($httpClient))->getModel('clef-flash');
 
         $this->assertInstanceOf(Decision::class, $model);
-        $this->assertSame([Capability::INPUT_IMAGE], $model->getCapabilities());
+        $this->assertSame([Capability::DECISION, Capability::INPUT_IMAGE], $model->getCapabilities());
     }
 
     public function testModelCatalogCanReturnDecisionModelsFromApi()
@@ -108,7 +108,7 @@ final class OllamaApiCatalogTest extends TestCase
 
         $models = (new ModelCatalog($httpClient))->getModels();
 
-        $this->assertSame(['class' => Decision::class, 'capabilities' => []], $models['nimble']);
+        $this->assertSame(['class' => Decision::class, 'capabilities' => [Capability::DECISION]], $models['nimble']);
         $this->assertSame(Ollama::class, $models['llama3']['class']);
     }
 

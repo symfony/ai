@@ -527,6 +527,7 @@ deptrac:
       - PlatformComponent
       - GenericPlatform
     GeminiPlatform:
+      - DecisionPlatform
       - PlatformComponent
     GenericPlatform:
       - PlatformComponent

@@ -1,0 +1,18 @@
+Department: technical (confidence: 0.96)
+  billing: 0.02
+  technical: 0.97
+  sales: 0.01
+Frustration: 1.00 out of 2 (confidence: 0.97)
+Urgent: yes (probability: 1.00)
++------------ Token Usage +------------+
+| Model                   | gpt-6-luna |
+| Prompt tokens           | 443        |
+| Completion tokens       | 0          |
+| Thinking tokens         | 0          |
+| Tool tokens             | n/a        |
+| Cached tokens           | 0          |
+| Remaining tokens minute | n/a        |
+| Remaining tokens month  | n/a        |
+| Remaining tokens        | 9999556    |
+| Total tokens            | 443        |
++-------------------------+------------+

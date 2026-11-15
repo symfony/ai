@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Platform\Bridge\Ollama\Contract;
 
+use Symfony\AI\Platform\Bridge\Decision\Contract\InputNormalizer;
+use Symfony\AI\Platform\Bridge\Decision\Contract\QuestionNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
@@ -27,6 +29,8 @@ final class OllamaContract extends Contract
         return parent::create([
             new ToolCallNormalizer(),
             new UserMessageNormalizer(),
+            new InputNormalizer(),
+            new QuestionNormalizer(),
             ...$normalizers,
         ]);
     }

@@ -1,0 +1,18 @@
+Department: technical (confidence: 0.95)
+  billing: 0.04
+  sales: 0.02
+  technical: 0.95
+Frustration: 1.20 out of 2 (confidence: 0.68)
+Urgent: yes (probability: 0.97)
++--------- Token Usage ---+-----+
+| Model                   | n/a |
+| Prompt tokens           | 277 |
+| Completion tokens       | 0   |
+| Thinking tokens         | n/a |
+| Tool tokens             | n/a |
+| Cached tokens           | n/a |
+| Remaining tokens minute | n/a |
+| Remaining tokens month  | n/a |
+| Remaining tokens        | n/a |
+| Total tokens            | 277 |
++-------------------------+-----+

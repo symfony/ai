@@ -12,6 +12,8 @@
 namespace Symfony\AI\Platform\Bridge\Gemini;
 
 use Symfony\AI\Platform\Bridge\Gemini\Contract\GeminiContract;
+use Symfony\AI\Platform\Bridge\Gemini\Decision\ModelClient as DecisionModelClient;
+use Symfony\AI\Platform\Bridge\Gemini\Decision\ResultConverter as DecisionResultConverter;
 use Symfony\AI\Platform\Bridge\Gemini\Embeddings\ModelClient as EmbeddingsModelClient;
 use Symfony\AI\Platform\Bridge\Gemini\Embeddings\ResultConverter as EmbeddingsResultConverter;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini\ModelClient as GeminiModelClient;
@@ -48,8 +50,8 @@ final class Factory
 
         return new Provider(
             $name,
-            [new EmbeddingsModelClient($httpClient, $apiKey, $baseUrl), new GeminiModelClient($httpClient, $apiKey, $baseUrl)],
-            [new EmbeddingsResultConverter(), new GeminiResultConverter()],
+            [new DecisionModelClient($httpClient, $apiKey, $baseUrl), new EmbeddingsModelClient($httpClient, $apiKey, $baseUrl), new GeminiModelClient($httpClient, $apiKey, $baseUrl)],
+            [new DecisionResultConverter(), new EmbeddingsResultConverter(), new GeminiResultConverter()],
             $modelCatalog,
             $contract ?? GeminiContract::create(),
             $eventDispatcher,

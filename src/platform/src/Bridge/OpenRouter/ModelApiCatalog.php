@@ -154,7 +154,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
         foreach ($responseDecisions->toArray()['data'] as $decision) {
             yield $decision['id'] => [
                 'class' => DecisionModel::class,
-                'capabilities' => [Capability::INPUT_TEXT],
+                'capabilities' => [Capability::DECISION, Capability::INPUT_TEXT],
             ];
         }
     }

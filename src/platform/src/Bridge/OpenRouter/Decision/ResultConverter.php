@@ -24,7 +24,7 @@ use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
 /**
- * Converts the "POST /alpha/decisions" response of OpenRouter into {@see \Symfony\AI\Platform\Bridge\Decision\Answer\Answers}.
+ * Converts the "POST /alpha/decisions" response of OpenRouter into {@see \Symfony\AI\Platform\Decision\Answer\Answers}.
  *
  * @author Tim Lochmüller <tim@fruit-lab.de>
  */

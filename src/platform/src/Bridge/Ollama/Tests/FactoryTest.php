@@ -12,14 +12,15 @@
 namespace Symfony\AI\Platform\Bridge\Ollama\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Decision\Answer\Answers;
-use Symfony\AI\Platform\Bridge\Decision\Evaluation;
-use Symfony\AI\Platform\Bridge\Decision\Question\ChoiceQuestion;
-use Symfony\AI\Platform\Bridge\Decision\Question\NoulQuestion;
 use Symfony\AI\Platform\Bridge\Ollama\Factory;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
+use Symfony\AI\Platform\Decision\Answer\Answers;
+use Symfony\AI\Platform\Decision\Question\ChoiceQuestion;
+use Symfony\AI\Platform\Decision\Question\NoulQuestion;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Message\Content\Collection;
 use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
@@ -62,10 +63,10 @@ final class FactoryTest extends TestCase
             },
         ]);
 
-        $result = Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('nimble', new Evaluation('Our checkout has returned 500 errors since 9am.', [
+        $result = Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('nimble', 'Our checkout has returned 500 errors since 9am.', ['questions' => [
             'is_urgent' => new NoulQuestion('Is this urgent?'),
             'label' => new ChoiceQuestion('Which label fits this ticket?', ['billing' => 'Payments and refunds', 'bug' => 'Software errors']),
-        ]));
+        ]]);
 
         $answers = $result->asObject();
         $this->assertInstanceOf(Answers::class, $answers);
@@ -87,18 +88,20 @@ final class FactoryTest extends TestCase
                 $this->assertSame('http://127.0.0.1:11434/v1/systemone', $url);
                 $body = json_decode($options['body'], true);
                 $this->assertSame('clef-flash', $body['model']);
-                $this->assertSame(['caption' => 'Graduating class'], $body['state']);
+                $this->assertSame('Graduating class', $body['state']);
                 $this->assertSame([base64_encode('page image'), base64_encode('crop image')], $body['images']);
                 $this->assertSame('noul', $body['questions']['portrait']['type']);
 
                 return new JsonMockResponse(['model' => 'clef-flash', 'answers' => ['portrait' => ['type' => 'noul', 'noul' => 0.98]]]);
             },
         ]);
-        $result = Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('clef-flash', new Evaluation(
-            ['caption' => 'Graduating class'],
-            ['portrait' => new NoulQuestion('Does the crop show a portrait?')],
-            images: [new Image('page image', 'image/png'), new Image('crop image', 'image/jpeg')],
-        ));
+        $result = Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('clef-flash', new Collection(
+            new Text('Graduating class'),
+            new Image('page image', 'image/png'),
+            new Image('crop image', 'image/jpeg'),
+        ), ['questions' => [
+            'portrait' => new NoulQuestion('Does the crop show a portrait?'),
+        ]]);
 
         $this->assertSame(0.98, $result->asObject(Answers::class)->getNoul('portrait')->getProbability());
         $this->assertSame(2, $httpClient->getRequestsCount());
@@ -111,11 +114,9 @@ final class FactoryTest extends TestCase
         ]);
 
         try {
-            Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('nimble', new Evaluation(
-                'A photo',
-                ['portrait' => new NoulQuestion('Is this a portrait?')],
-                images: [new Image('image bytes', 'image/png')],
-            ));
+            Factory::createPlatform('http://127.0.0.1:11434', httpClient: $httpClient)->invoke('nimble', new Collection(new Text('A photo'), new Image('image bytes', 'image/png')), ['questions' => [
+                'portrait' => new NoulQuestion('Is this a portrait?'),
+            ]]);
             $this->fail('Text-only decision models must reject images.');
         } catch (InvalidArgumentException $e) {
             $this->assertSame('The decision model "nimble" does not support image inputs.', $e->getMessage());

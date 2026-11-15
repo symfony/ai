@@ -22,6 +22,9 @@ use Symfony\AI\Platform\Contract\Normalizer\Message\ToolCallMessageNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Message\UserMessageNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Contract\Normalizer\ToolNormalizer;
+use Symfony\AI\Platform\Decision\Question\QuestionInterface;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Exception\MissingModelSupportException;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Serializer\Normalizer\JsonSerializableNormalizer;
@@ -84,6 +87,35 @@ class Contract
         return $this->normalizer->normalize($input, context: [
             self::CONTEXT_MODEL => $model,
             self::CONTEXT_OPTIONS => $options,
+        ]);
+    }
+
+    /**
+     * @param array<array-key, QuestionInterface> $questions
+     *
+     * @return array<array-key, mixed>
+     *
+     * @throws MissingModelSupportException When the model doesn't support decisions
+     * @throws InvalidArgumentException     When there is no question or one isn't a QuestionInterface
+     */
+    final public function createQuestionsOption(array $questions, Model $model): array
+    {
+        if (!$model->supports(Capability::DECISION)) {
+            throw MissingModelSupportException::forDecision($model);
+        }
+
+        if ([] === $questions) {
+            throw new InvalidArgumentException('A decision requires at least one question.');
+        }
+
+        foreach ($questions as $id => $question) {
+            if (!$question instanceof QuestionInterface) {
+                throw new InvalidArgumentException(\sprintf('Question "%s" must be an instance of "%s", "%s" given.', $id, QuestionInterface::class, get_debug_type($question)));
+            }
+        }
+
+        return $this->normalizer->normalize($questions, context: [
+            self::CONTEXT_MODEL => $model,
         ]);
     }
 

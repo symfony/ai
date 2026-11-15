@@ -25,6 +25,7 @@ final class OpenResponsesContract extends Contract
     public static function create(array $normalizers = []): Contract
     {
         return parent::create([
+            ...$normalizers,
             new Message\MessageBagNormalizer(),
             new Message\AssistantMessageNormalizer(),
             new Message\Content\ImageNormalizer(),
@@ -34,7 +35,6 @@ final class OpenResponsesContract extends Contract
             new ToolCallNormalizer(),
             new Message\ToolCallMessageNormalizer(),
             new Message\Content\DocumentNormalizer(),
-            ...$normalizers,
         ]);
     }
 }

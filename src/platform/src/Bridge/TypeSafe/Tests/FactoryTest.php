@@ -12,11 +12,14 @@
 namespace Symfony\AI\Platform\Bridge\TypeSafe\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Decision\Answer\Answers;
-use Symfony\AI\Platform\Bridge\Decision\Evaluation;
-use Symfony\AI\Platform\Bridge\Decision\Question\ChoiceQuestion;
-use Symfony\AI\Platform\Bridge\Decision\Question\NoulQuestion;
 use Symfony\AI\Platform\Bridge\TypeSafe\Factory;
+use Symfony\AI\Platform\Decision\Answer\Answers;
+use Symfony\AI\Platform\Decision\Question\ChoiceQuestion;
+use Symfony\AI\Platform\Decision\Question\NoulQuestion;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Message\Content\Collection;
+use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -51,10 +54,10 @@ final class FactoryTest extends TestCase
             ]);
         }]);
 
-        $result = Factory::createPlatform('test-key', $httpClient)->invoke('jev-latest', new Evaluation('My payouts have been failing for 3 days.', [
+        $result = Factory::createPlatform('test-key', $httpClient)->invoke('jev-latest', 'My payouts have been failing for 3 days.', ['questions' => [
             'is_urgent' => new NoulQuestion('Does this convey urgency?'),
             'department' => new ChoiceQuestion('Which team should handle this?', ['billing' => 'Payments', 'technical' => 'Bugs']),
-        ]));
+        ]]);
 
         $answers = $result->asObject();
         $this->assertInstanceOf(Answers::class, $answers);
@@ -66,20 +69,47 @@ final class FactoryTest extends TestCase
         $this->assertSame(312, $tokenUsage->getPromptTokens());
     }
 
-    public function testItEvaluatesPlainArrayInput()
+    public function testItSendsAnArrayInputAsStructuredState()
     {
-        $httpClient = new MockHttpClient(new JsonMockResponse([
-            'model' => 'jev-1.13.0',
-            'answers' => ['is_urgent' => ['type' => 'noul', 'noul' => 0.08]],
-        ]));
+        $httpClient = new MockHttpClient([function (string $method, string $url, array $options): JsonMockResponse {
+            $this->assertSame('{"model":"jev-latest","state":{"ticket":"T-42","status":"resolved"},"questions":{"is_urgent":{"type":"noul","instructions":"Does this convey urgency?"}}}', $options['body']);
 
-        $result = Factory::createPlatform('test-key', $httpClient)->invoke('jev-latest', [
-            'state' => 'Thanks, everything works now.',
-            'questions' => ['is_urgent' => ['type' => 'noul', 'instructions' => 'Does this convey urgency?']],
-        ]);
+            return new JsonMockResponse([
+                'model' => 'jev-1.13.0',
+                'answers' => ['is_urgent' => ['type' => 'noul', 'noul' => 0.08]],
+            ]);
+        }]);
+
+        $result = Factory::createPlatform('test-key', $httpClient)->invoke('jev-latest', ['ticket' => 'T-42', 'status' => 'resolved'], ['questions' => [
+            'is_urgent' => new NoulQuestion('Does this convey urgency?'),
+        ]]);
 
         $answers = $result->asObject();
         $this->assertInstanceOf(Answers::class, $answers);
         $this->assertFalse($answers->getNoul('is_urgent')->isTrue());
+    }
+
+    public function testItRejectsImagesBeforeSendingARequest()
+    {
+        $httpClient = new MockHttpClient();
+
+        try {
+            Factory::createPlatform('test-key', $httpClient)->invoke('jev-latest', new Collection(new Text('A photo'), new Image('image', 'image/png')), ['questions' => [
+                'is_portrait' => new NoulQuestion('Is this a portrait?'),
+            ]]);
+            $this->fail('TypeSafe must reject image inputs.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertSame('The decision model "jev-latest" does not support image inputs.', $e->getMessage());
+        }
+
+        $this->assertSame(0, $httpClient->getRequestsCount());
+    }
+
+    public function testItRejectsInvocationsWithoutQuestions()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The decision model "jev-latest" requires the "questions" option.');
+
+        Factory::createPlatform('test-key', new MockHttpClient())->invoke('jev-latest', 'My payouts have been failing for 3 days.')->getResult();
     }
 }

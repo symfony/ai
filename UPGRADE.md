@@ -371,6 +371,44 @@ MCP Bundle
 Platform
 --------
 
+ * The `Question\*` and `Answer\*` classes of the Decision bridge moved to the Platform component:
+
+   ```diff
+   -use Symfony\AI\Platform\Bridge\Decision\Question\NoulQuestion;
+   +use Symfony\AI\Platform\Decision\Question\NoulQuestion;
+   ```
+
+ * The `Evaluation` of the Decision bridge has been removed. Pass the state as the input and the questions as the
+   `questions` option:
+
+   ```diff
+   -$result = $platform->invoke('jev-latest', new Evaluation($ticket, $questions, [$image]));
+   +$result = $platform->invoke('jev-latest', new Collection($ticket, $image), ['questions' => $questions]);
+   ```
+
+ * The questions of the Decision bridge are no longer serialized with `jsonSerialize()`, the contract of each platform
+   normalizes them. A custom `Contract` of the TypeSafe, Ollama or OpenRouter platform needs the `InputNormalizer` and
+   the `QuestionNormalizer` of the Decision bridge. A custom model client receives the normalized input as payload and
+   the normalized questions as the `questions` option, without `RequestBodyBuilder`:
+
+   ```diff
+   -$contract = Contract::create();
+   +$contract = Contract::create([new InputNormalizer(), new QuestionNormalizer()]);
+
+   -'json' => RequestBodyBuilder::build($model, $payload),
+   +'json' => ['model' => $model->getName()] + $payload + ['questions' => (object) $options['questions']],
+   ```
+
+ * The `fromArray()` methods of `NoulAnswer`, `ChoiceAnswer` and `ScoreAnswer` have been removed, use their
+   constructors instead.
+
+ * The normalizers passed to `OpenResponsesContract::create()`, and so to `OpenAiContract::create()` and
+   `PerplexityContract::create()`, come before the default normalizers. A custom normalizer for a type that a default
+   one handles, like `MessageBag` or `Text`, now replaces the default one.
+
+ * The instructions of `NoulQuestion`, `ChoiceQuestion` and `ScoreQuestion` must be strings, and a `ChoiceQuestion`
+   requires at least two options.
+
  * `MessageBag` is immutable. `add()`, `prepend()` and `removeSystemMessage()` have been removed, use the methods
    returning a copy instead, and `replace()` returns a copy as well:
 

@@ -50,44 +50,17 @@ final class DecisionModelClientTest extends TestCase
             return new MockResponse();
         }], 'http://127.0.0.1:11434');
 
-        (new DecisionModelClient($httpClient))->request(new Decision('nimble'), [
-            'state' => 'Our checkout has returned 500 errors since 9am.',
-            'questions' => [
-                'label' => ['type' => 'choice', 'instructions' => 'Which label fits this ticket?', 'criteria' => ['billing' => 'Payments and refunds', 'bug' => 'Software errors']],
-                'urgency' => ['type' => 'score', 'instructions' => 'How urgent is it?', 'criteria' => ['Routine', 'Immediate']],
-            ],
-        ]);
+        (new DecisionModelClient($httpClient))->request(new Decision('nimble'), ['state' => 'Our checkout has returned 500 errors since 9am.'], ['questions' => [
+            'label' => ['type' => 'choice', 'instructions' => 'Which label fits this ticket?', 'criteria' => ['billing' => 'Payments and refunds', 'bug' => 'Software errors']],
+            'urgency' => ['type' => 'score', 'instructions' => 'How urgent is it?', 'criteria' => ['Routine', 'Immediate']],
+        ]]);
     }
 
-    public function testItKeepsNumericKeysAsJsonObjects()
-    {
-        $httpClient = new MockHttpClient([function (string $method, string $url, array $options): MockResponse {
-            $this->assertStringContainsString('"questions":{"0":{"type":"choice","instructions":"Which?","criteria":{"0":"First","1":null}}}', $options['body']);
-
-            return new MockResponse();
-        }], 'http://127.0.0.1:11434');
-
-        (new DecisionModelClient($httpClient))->request(new Decision('nimble'), [
-            'state' => 'text',
-            'questions' => [
-                ['type' => 'choice', 'instructions' => 'Which?', 'criteria' => ['First', null]],
-            ],
-        ]);
-    }
-
-    public function testItRejectsAPayloadWithoutQuestions()
+    public function testItRejectsAnInvocationWithoutQuestions()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Decision payload must be an array with a "state" key and a "questions" map.');
+        $this->expectExceptionMessage('The decision model "nimble" requires the "questions" option.');
 
         (new DecisionModelClient(new MockHttpClient()))->request(new Decision('nimble'), ['state' => 'text']);
-    }
-
-    public function testItRejectsANonArrayQuestion()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Question "label" must be an array, "string" given.');
-
-        (new DecisionModelClient(new MockHttpClient()))->request(new Decision('nimble'), ['state' => 'text', 'questions' => ['label' => 'nope']]);
     }
 }
