@@ -1,0 +1,5 @@
+version: 1
+
+labels: [dependencies, Website]
+branch_prefix: importmap-updates/website
+commit_message_prefix: '[Website]'

@@ -1,0 +1,52 @@
+name: Update Importmaps
+
+on:
+    schedule:
+        # Mondays at 06:30 UTC
+        - cron: '30 6 * * 1'
+    workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+    group: ${{ github.workflow }}
+    cancel-in-progress: false
+
+env:
+    PHP_VERSION: '8.5'
+
+jobs:
+    update:
+        name: ${{ matrix.app.name }}
+        runs-on: ubuntu-latest
+        if: github.repository == 'symfony/ai'
+        permissions:
+            contents: write
+            pull-requests: write
+        strategy:
+            fail-fast: false
+            matrix:
+                app:
+                    - { name: Demo, directory: demo, config: .github/importmap-updates/demo.yaml }
+                    - { name: Website, directory: ai.symfony.com, config: .github/importmap-updates/website.yaml }
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ env.PHP_VERSION }}
+
+            - name: Install dependencies
+              uses: ramsey/composer-install@v4
+              with:
+                  working-directory: ${{ matrix.app.directory }}
+                  composer-options: '--no-scripts'
+
+            - name: Update importmap
+              uses: chr-hertel/symfony-asset-mapper-update@61e0023f4f04a1b9ce184377149ed1171009656a # 1.0.1
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  working-directory: ${{ matrix.app.directory }}
+                  config-file: ${{ matrix.app.config }}
