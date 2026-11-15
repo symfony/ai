@@ -80,6 +80,7 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
 use Symfony\AI\Platform\Bridge\Fireworks\Factory as FireworksFactory;
+use Symfony\AI\Platform\Bridge\Gemini\Batch\JobClient as GeminiJobClient;
 use Symfony\AI\Platform\Bridge\Gemini\Factory as GeminiFactory;
 use Symfony\AI\Platform\Bridge\Generic\Factory as GenericFactory;
 use Symfony\AI\Platform\Bridge\Higgsfield\Factory as HiggsfieldFactory;
@@ -781,6 +782,16 @@ final class AiBundle extends AbstractBundle
                 ->addTag('ai.platform', ['name' => 'gemini']);
 
             $container->setDefinition($platformId, $definition);
+
+            $jobClientId = 'ai.platform.job_client.gemini';
+            $container->setDefinition($jobClientId, (new Definition(GeminiJobClient::class))
+                ->setFactory(GeminiFactory::class.'::createJobClient')
+                ->setArguments([
+                    $platform['api_key'],
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                ])
+                ->addTag('ai.platform.job_client', ['key' => 'gemini']));
+            $container->registerAliasForArgument($jobClientId, JobClientInterface::class, 'gemini');
 
             return;
         }

@@ -54,6 +54,7 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
 use Symfony\AI\Platform\Bridge\Fireworks\Factory as FireworksFactory;
+use Symfony\AI\Platform\Bridge\Gemini\Factory as GeminiFactory;
 use Symfony\AI\Platform\Bridge\Higgsfield\Factory as HiggsfieldFactory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory as HuggingFaceFactory;
 use Symfony\AI\Platform\Bridge\MiniMax\Factory as MiniMaxFactory;
@@ -5182,6 +5183,28 @@ class AiBundleTest extends TestCase
         $this->assertSame([['key' => 'openai']], $definition->getTag('ai.platform.job_client'));
 
         $this->assertTrue($container->hasAlias(JobClientInterface::class.' $openai'));
+    }
+
+    public function testGeminiRegistersItsJobClient()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'gemini' => [
+                        'api_key' => 'gemini_key_full',
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.platform.job_client.gemini');
+
+        $this->assertSame([GeminiFactory::class, 'createJobClient'], $definition->getFactory());
+        $this->assertSame('gemini_key_full', $definition->getArgument(0));
+        $this->assertCount(2, $definition->getArguments());
+        $this->assertSame([['key' => 'gemini']], $definition->getTag('ai.platform.job_client'));
+
+        $this->assertTrue($container->hasAlias(JobClientInterface::class.' $gemini'));
     }
 
     public function testBedrockMantlePlatformUsesCompletionsRouteByDefault()

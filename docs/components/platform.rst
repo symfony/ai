@@ -1239,7 +1239,7 @@ jobs needs neither a provider nor a platform::
     * Higgsfield, for every image and video generation
     * Venice, for video generation
     * Replicate, for every prediction
-    * OpenAI, for batch requests
+    * OpenAI and Gemini, for batch requests
 
 .. _platform-job-runner:
 
@@ -1407,14 +1407,14 @@ nothing and can be submitted again, where one that errored has to be fixed first
 The result is fetched from the client rather than from a ``JobRunner`` here, because a canceled or
 expired batch is terminal without having succeeded: the runner reports it as a
 :class:`Symfony\\AI\\Platform\\Exception\\JobFailedException`, where the client still hands out
-the requests it did get through. On top of the interface, the OpenAI client reports a batch's
+the requests it did get through. On top of the interface, the OpenAI and Gemini clients report a batch's
 progress in one request and cancels one that is no longer worth finishing.
 
 .. warning::
 
-    An OpenAI batch handle states the 24 hour window of the batch and one poll per minute. Without
-    a ``maxDuration``, ``JobRunner::wait()`` blocks for up to 24 hours, so never call it for a batch
-    in a web request.
+    An OpenAI batch handle states the 24 hour window of the batch and one poll per minute, a Gemini
+    one 48 hours. Without a ``maxDuration``, ``JobRunner::wait()`` blocks for that long, so never call
+    it for a batch in a web request.
 
 A successful item holds the ordinary result a synchronous invocation would have produced, except for
 structured output: the schema is sent with every request, but deserializing an answer happens when an
@@ -1426,6 +1426,10 @@ the JSON as text, for the caller to deserialize and validate.
     OpenAI decides per endpoint, not per model, which requests may be batched. A model its Responses
     endpoint does not accept in a batch is rejected when the batch is created.
 
+Gemini takes batches the same way, through ``Symfony\AI\Platform\Bridge\Gemini\Factory::createJobClient()``.
+The inputs are sent inline, so a batch is limited to about 20MB of requests, and one not finished
+within 48 hours expires.
+
 Code Examples
 ~~~~~~~~~~~~~
 
@@ -1435,6 +1439,7 @@ Code Examples
 * `Asynchronous Video Generation with Venice`_
 * `Asynchronous Text Generation with Replicate`_
 * `Batch Requests with GPT`_
+* `Batch Requests with Gemini`_
 
 Audio Processing
 ----------------
@@ -2457,6 +2462,7 @@ Code Examples
 .. _`Asynchronous Video Generation with Venice`: https://github.com/symfony/ai/blob/main/examples/venice/text-to-video.php
 .. _`Asynchronous Text Generation with Replicate`: https://github.com/symfony/ai/blob/main/examples/replicate/chat-llama.php
 .. _`Batch Requests with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/batch.php
+.. _`Batch Requests with Gemini`: https://github.com/symfony/ai/blob/main/examples/gemini/batch.php
 .. _`Audio Output with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-output.php
 .. _`Ollama Text-to-Speech`: https://github.com/symfony/ai/blob/main/examples/ollama/text-to-speech.php
 .. _`Text-to-Speech with Mistral`: https://github.com/symfony/ai/blob/main/examples/mistral/text-to-speech.php

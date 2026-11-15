@@ -11,16 +11,20 @@
 
 namespace Symfony\AI\Platform\Bridge\Gemini\Gemini;
 
+use Symfony\AI\Platform\Bridge\Gemini\Batch\JobClient;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
+use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
+use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
 use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
+use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -65,6 +69,14 @@ final class ResultConverter implements ResultConverterInterface
     public const OUTCOME_FAILED = 'OUTCOME_FAILED';
     public const OUTCOME_DEADLINE_EXCEEDED = 'OUTCOME_DEADLINE_EXCEEDED';
 
+    /**
+     * @param string $provider the name stamped onto the handles of the batches this converter starts
+     */
+    public function __construct(
+        private readonly string $provider = 'gemini',
+    ) {
+    }
+
     public function supports(Model $model): bool
     {
         return $model instanceof Gemini;
@@ -84,6 +96,10 @@ final class ResultConverter implements ResultConverterInterface
 
         $this->throwOnHttpError($response);
 
+        if ($options[ModelClient::BATCH] ?? false) {
+            return $this->startBatch($result);
+        }
+
         if ($options['stream'] ?? false) {
             if (($code = $response->getStatusCode()) >= 400) {
                 throw new RuntimeException(\sprintf('Unexpected response code %d: "%s"', $code, $response->getContent(false)));
@@ -92,8 +108,16 @@ final class ResultConverter implements ResultConverterInterface
             return new StreamResult($this->convertStream($result));
         }
 
-        $data = $result->getData();
+        return $this->convertData($result->getData());
+    }
 
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @throws ExceptionInterface
+     */
+    public function convertData(array $data): ResultInterface
+    {
         if (!isset($data['candidates'][0]['content']['parts'][0])) {
             if (isset($data['error'])) {
                 throw new RuntimeException(\sprintf('Error "%s" - "%s": "%s".', $data['error']['code'], $data['error']['status'], $data['error']['message']));
@@ -123,6 +147,20 @@ final class ResultConverter implements ResultConverterInterface
     public function getTokenUsageExtractor(): TokenUsageExtractor
     {
         return new TokenUsageExtractor();
+    }
+
+    /**
+     * Resolving the batch is the job of {@see JobClient}.
+     */
+    private function startBatch(RawResultInterface|RawHttpResult $result): JobResult
+    {
+        $id = $result->getData()['name'] ?? null;
+
+        if (!\is_string($id) || '' === $id) {
+            throw new RuntimeException('The Gemini response does not contain a batch name.');
+        }
+
+        return new JobResult(new JobHandle($id, ['kind' => JobClient::KIND], $this->provider, JobClient::DEFAULT_MAX_DURATION, JobClient::DEFAULT_POLL_INTERVAL));
     }
 
     private function convertStream(RawResultInterface $result): \Generator
