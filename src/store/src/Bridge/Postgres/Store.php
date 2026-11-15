@@ -349,6 +349,19 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $params['maxScore'] = $options['maxScore'];
         }
 
+        if (0.0 !== $query->getSemanticRatio()) {
+            // The score is a sum, so neither index can order by it. A document without keyword match scores
+            // below every top-"limit" neighbour, so those neighbours plus all keyword matches hold the result.
+            $whereClauses[] = \sprintf('id IN ((SELECT id FROM "%1$s" ORDER BY "%2$s" %3$s :embedding LIMIT %4$d) UNION (SELECT id FROM "%1$s" WHERE %5$s @@ %6$s))',
+                $this->tableName,
+                $this->vectorFieldName,
+                $this->metric->getComparisonSign(),
+                $options['limit'] ?? 5,
+                $tsvectorExpression,
+                $tsqueryExpression,
+            );
+        }
+
         $where = [] !== $whereClauses ? 'WHERE '.implode(' AND ', $whereClauses) : '';
 
         $sql = \sprintf(<<<SQL

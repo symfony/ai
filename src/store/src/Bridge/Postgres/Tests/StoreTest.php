@@ -910,6 +910,7 @@ final class StoreTest extends TestCase
                    ((:semantic_ratio * (1 - (\"embedding\" <-> :embedding))) +
                     (:keyword_ratio * ts_rank(to_tsvector('english', COALESCE(metadata->>'_text', '')), (plainto_tsquery('english', :search_text_0))))) AS score
             FROM \"embeddings_table\"
+            WHERE id IN ((SELECT id FROM \"embeddings_table\" ORDER BY \"embedding\" <-> :embedding LIMIT 5) UNION (SELECT id FROM \"embeddings_table\" WHERE to_tsvector('english', COALESCE(metadata->>'_text', '')) @@ (plainto_tsquery('english', :search_text_0))))
             ORDER BY score DESC
             LIMIT 5";
 
