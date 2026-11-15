@@ -209,4 +209,37 @@ final class ModelClientTest extends TestCase
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testItDoesNotSendTheLanguageForTranslations()
+    {
+        $httpClient = new MockHttpClient([
+            function (string $method, string $url, array $options): MockResponse {
+                $this->assertSame('https://api.openai.com/v1/audio/translations', $url);
+                $this->assertStringNotContainsString('name="language"', self::readBody($options));
+
+                return new JsonMockResponse(['text' => 'Hello World']);
+            },
+        ]);
+
+        $client = new ModelClient($httpClient, 'sk-test-key');
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], [
+            PlatformOptions::LANGUAGE => 'de',
+            PlatformOptions::PROVIDER_OPTIONS => ['task' => Task::TRANSLATION],
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function readBody(array $options): string
+    {
+        $body = '';
+        while ('' !== $chunk = $options['body'](8192)) {
+            $body .= $chunk;
+        }
+
+        return $body;
+    }
 }

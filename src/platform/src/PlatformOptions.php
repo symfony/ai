@@ -20,6 +20,7 @@ final class PlatformOptions
 {
     public const MAX_OUTPUT_TOKENS = 'max_output_tokens';
     public const TEMPERATURE = 'temperature';
+    public const LANGUAGE = 'language';
 
     public const STREAM = 'stream';
     public const TOOLS = 'tools';
@@ -30,6 +31,7 @@ final class PlatformOptions
     private const NAMES = [
         self::MAX_OUTPUT_TOKENS,
         self::TEMPERATURE,
+        self::LANGUAGE,
         self::STREAM,
         self::TOOLS,
         self::RESPONSE_FORMAT,

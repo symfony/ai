@@ -413,8 +413,11 @@ class lists the options the platform knows. They work the same way on every plat
 
 * ``PlatformOptions::MAX_OUTPUT_TOKENS`` and ``PlatformOptions::TEMPERATURE`` set
   parameters of the model. Each bridge sends them as the field its provider expects, for
-  example ``max_tokens`` for Anthropic or ``maxOutputTokens`` for Gemini. A bridge whose
-  provider has no such field ignores them.
+  example ``max_tokens`` for Anthropic or ``maxOutputTokens`` for Gemini. A bridge that
+  does not translate an option ignores it.
+* ``PlatformOptions::LANGUAGE`` sets the language of the input, as an ISO 639-1 code like
+  ``en``: the audio for speech to text, the speech for text to speech, or the document for
+  the OCR models of Eden AI. ElevenLabs, for example, receives it as ``language_code``.
 * ``PlatformOptions::STREAM``, ``PlatformOptions::TOOLS`` and
   ``PlatformOptions::RESPONSE_FORMAT`` turn on streaming, tool calling and structured
   output.

@@ -67,11 +67,12 @@ final class WhisperModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        $task = $options[PlatformOptions::PROVIDER_OPTIONS]['task'] ?? Task::TRANSCRIPTION;
         $options = PlatformOptions::toProviderOptions($options, [
             PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            ...Task::TRANSCRIPTION === $task ? [PlatformOptions::LANGUAGE => 'language'] : [],
         ]);
 
-        $task = $options['task'] ?? Task::TRANSCRIPTION;
         $endpoint = Task::TRANSCRIPTION === $task ? 'transcriptions' : 'translations';
         $url = \sprintf('%s/openai/deployments/%s/audio/%s', $this->baseUrl, $this->deployment, $endpoint);
 

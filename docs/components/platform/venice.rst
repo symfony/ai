@@ -297,8 +297,8 @@ Transcribe audio files to text. ``language`` (ISO 639-1) and ``timestamps`` are 
     $platform = Factory::createPlatform($_ENV['VENICE_API_KEY'], httpClient: $httpClient);
 
     $result = $platform->invoke('nvidia/parakeet-tdt-0.6b-v3', Audio::fromFile('/path/to/audio.mp3'), [
+        PlatformOptions::LANGUAGE => 'en',
         PlatformOptions::PROVIDER_OPTIONS => [
-            'language' => 'en',
             'timestamps' => true,
         ],
     ]);

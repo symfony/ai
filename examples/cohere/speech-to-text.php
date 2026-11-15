@@ -18,9 +18,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = Factory::createPlatform(env('COHERE_API_KEY'), http_client());
 
 $result = $platform->invoke('cohere-transcribe-03-2026', Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'), [
-    PlatformOptions::PROVIDER_OPTIONS => [
-        'language' => 'en',
-    ],
+    PlatformOptions::LANGUAGE => 'en',
 ]);
 
 echo $result->asText().\PHP_EOL;

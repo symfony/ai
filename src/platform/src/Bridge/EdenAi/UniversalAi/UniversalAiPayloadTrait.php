@@ -54,6 +54,7 @@ trait UniversalAiPayloadTrait
 
         $options = PlatformOptions::toProviderOptions($options, [
             PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            PlatformOptions::LANGUAGE => 'language',
         ]);
         $rootOptions = array_intersect_key($options, array_flip(self::ROOT_OPTIONS));
         $inputOptions = array_diff_key($options, array_flip(self::ROOT_OPTIONS));

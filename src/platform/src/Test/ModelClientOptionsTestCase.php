@@ -22,11 +22,6 @@ use Symfony\AI\Platform\PlatformOptions;
  */
 abstract class ModelClientOptionsTestCase extends TestCase
 {
-    private const CANONICAL_VALUES = [
-        PlatformOptions::MAX_OUTPUT_TOKENS => 123,
-        PlatformOptions::TEMPERATURE => 0.3,
-    ];
-
     /**
      * The wire field per canonical option, with dots for nested fields, or null if the model client does not send it.
      *
@@ -34,9 +29,22 @@ abstract class ModelClientOptionsTestCase extends TestCase
      */
     abstract public static function wireFields(): array;
 
+    /**
+     * A value per canonical option the model client is checked with.
+     *
+     * @return array<string, int|float|string>
+     */
+    public static function canonicalValues(): array
+    {
+        return [
+            PlatformOptions::MAX_OUTPUT_TOKENS => 123,
+            PlatformOptions::TEMPERATURE => 0.3,
+        ];
+    }
+
     public function testEveryCanonicalOptionIsCovered()
     {
-        $this->assertEqualsCanonicalizing(array_keys(self::CANONICAL_VALUES), array_keys(static::wireFields()));
+        $this->assertEqualsCanonicalizing(array_keys(static::canonicalValues()), array_keys(static::wireFields()));
     }
 
     /**
@@ -52,7 +60,7 @@ abstract class ModelClientOptionsTestCase extends TestCase
     #[DataProvider('provideCanonicalOptions')]
     public function testCanonicalOptionIsSentAsItsWireField(string $option, ?string $wireField)
     {
-        $value = self::CANONICAL_VALUES[$option];
+        $value = static::canonicalValues()[$option];
         $sent = $this->sendRequest([$option => $value]);
 
         if (null === $wireField) {
@@ -66,7 +74,11 @@ abstract class ModelClientOptionsTestCase extends TestCase
             $this->assertArrayNotHasKey($option, $sent);
         }
 
-        $providerValue = \is_int($value) ? 42 : 0.9;
+        $providerValue = match (true) {
+            \is_int($value) => 42,
+            \is_float($value) => 0.9,
+            default => 'provider',
+        };
         $sent = $this->sendRequest([$option => $value, PlatformOptions::PROVIDER_OPTIONS => $this->nest($wireField, $providerValue)]);
 
         $this->assertSame($providerValue, $this->read($sent, $wireField), 'The provider option must win over the canonical one.');

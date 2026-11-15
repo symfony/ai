@@ -150,4 +150,35 @@ final class WhisperModelClientTest extends TestCase
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testItDoesNotSendTheLanguageForTranslations()
+    {
+        $httpClient = new MockHttpClient([function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame('https://test.azure.com/openai/deployments/whspr/audio/translations?api-version=2023-12', $url);
+            $this->assertStringNotContainsString('name="language"', self::readBody($options));
+
+            return new MockResponse('{"text": "Hello World"}');
+        }]);
+
+        $client = new WhisperModelClient($httpClient, 'test.azure.com', 'whspr', '2023-12', 'test-key');
+        $client->request(new Whisper('whisper-1'), ['file' => 'audio-data'], [
+            PlatformOptions::LANGUAGE => 'de',
+            PlatformOptions::PROVIDER_OPTIONS => ['task' => Task::TRANSLATION],
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function readBody(array $options): string
+    {
+        $body = '';
+        while ('' !== $chunk = $options['body'](8192)) {
+            $body .= $chunk;
+        }
+
+        return $body;
+    }
 }

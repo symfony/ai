@@ -42,11 +42,10 @@ final class DeepgramClient implements ModelClientInterface
     {
         $deepgramPayload = new DeepgramPayload($payload);
         $stream = true === ($options[PlatformOptions::STREAM] ?? false);
-        $options = PlatformOptions::toProviderOptions($options);
 
         return match (true) {
-            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $deepgramPayload, $options, $stream),
-            $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToText($model, $deepgramPayload, $options),
+            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $deepgramPayload, PlatformOptions::toProviderOptions($options), $stream),
+            $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToText($model, $deepgramPayload, PlatformOptions::toProviderOptions($options, [PlatformOptions::LANGUAGE => 'language'])),
             default => throw new InvalidArgumentException(\sprintf('The model "%s" is not supported, please check the Deepgram API.', $model->getName())),
         };
     }

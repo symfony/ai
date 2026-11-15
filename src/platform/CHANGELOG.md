@@ -5,9 +5,9 @@ CHANGELOG
 ---
 
  * [BC BREAK] Pass provider-specific invocation options under `PlatformOptions::PROVIDER_OPTIONS`, other options than the ones of `PlatformOptions` on the top level throw an `InvalidArgumentException`; options in a model name are nested automatically
- * Add `PlatformOptions::TEMPERATURE`, translated by the bridges of language models, and `PlatformOptions::STREAM`, `TOOLS`, `RESPONSE_FORMAT` and `PROVIDER_OPTIONS`
+ * Add `PlatformOptions::TEMPERATURE`, translated by the bridges of language models, `PlatformOptions::LANGUAGE`, translated by the speech-to-text and text-to-speech bridges, and `PlatformOptions::STREAM`, `TOOLS`, `RESPONSE_FORMAT` and `PROVIDER_OPTIONS`
  * Add `PlatformOptions::toProviderOptions()` translating the invocation options into the ones of a provider, and `PlatformOptions::nest()`
- * Add `Test\ModelClientOptionsTestCase` checking how a model client sends the canonical options
+ * Add `Test\ModelClientOptionsTestCase` and `Test\SpeechModelClientOptionsTestCase` checking how a model client sends the canonical options
  * Add the serving provider to `InvocationEvent` and `ResultEvent`, as `ResultConvertedEvent` and `ResultErrorEvent` already have it, so a listener can attribute these events to the provider serving the call
  * Stream the string answers of `Test\MockPlatformFactory` word by word when the invocation has the `stream` option
  * Add a `$phase` argument and `getPhase()` to `Message\Content\Text`, `Result\TextResult` and `Result\Stream\Delta\TextDelta`, so the phase a provider tagged a text with survives into the next turn

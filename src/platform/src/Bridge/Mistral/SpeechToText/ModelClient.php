@@ -48,7 +48,7 @@ final class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
-        $body = array_merge(PlatformOptions::toProviderOptions($options), $payload, ['model' => $model->getName()]);
+        $body = array_merge(PlatformOptions::toProviderOptions($options, [PlatformOptions::LANGUAGE => 'language']), $payload, ['model' => $model->getName()]);
 
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.'/v1/audio/transcriptions', [
             'auth_bearer' => $this->apiKey,

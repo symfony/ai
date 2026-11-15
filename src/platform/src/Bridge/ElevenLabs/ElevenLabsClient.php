@@ -39,14 +39,14 @@ final class ElevenLabsClient implements ModelClientInterface
     {
         return match (true) {
             $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToTextRequest($model, $payload, [
-                ...PlatformOptions::toProviderOptions($model->getOptions()),
-                ...PlatformOptions::toProviderOptions($options),
+                ...PlatformOptions::toProviderOptions($model->getOptions(), [PlatformOptions::LANGUAGE => 'language_code']),
+                ...PlatformOptions::toProviderOptions($options, [PlatformOptions::LANGUAGE => 'language_code']),
             ]),
             $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeechRequest(
                 $model,
                 $payload,
-                PlatformOptions::toProviderOptions($model->getOptions(), [PlatformOptions::STREAM => 'stream']),
-                PlatformOptions::toProviderOptions($options, [PlatformOptions::STREAM => 'stream']),
+                PlatformOptions::toProviderOptions($model->getOptions(), [PlatformOptions::STREAM => 'stream', PlatformOptions::LANGUAGE => 'language_code']),
+                PlatformOptions::toProviderOptions($options, [PlatformOptions::STREAM => 'stream', PlatformOptions::LANGUAGE => 'language_code']),
             ),
             default => throw new InvalidArgumentException(\sprintf('The model "%s" does not support text-to-speech or speech-to-text, please check the model information.', $model->getName())),
         };

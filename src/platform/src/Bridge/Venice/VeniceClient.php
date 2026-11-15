@@ -46,8 +46,8 @@ final class VeniceClient implements ModelClientInterface
             $model->supports(Capability::INPUT_MESSAGES) => $this->doGenerateCompletion($model, $payload, $options),
             $model->supports(Capability::IMAGE_TO_IMAGE) => $this->doImageEdit($model, $payload, $providerOptions),
             $model->supports(Capability::TEXT_TO_IMAGE) => $this->doImageGeneration($model, $payload, $providerOptions),
-            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $payload, PlatformOptions::toProviderOptions($options, [PlatformOptions::RESPONSE_FORMAT => 'response_format'])),
-            $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToText($model, $payload, PlatformOptions::toProviderOptions($options, [PlatformOptions::RESPONSE_FORMAT => 'response_format'])),
+            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeech($model, $payload, PlatformOptions::toProviderOptions($options, [PlatformOptions::RESPONSE_FORMAT => 'response_format', PlatformOptions::LANGUAGE => 'language'])),
+            $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToText($model, $payload, PlatformOptions::toProviderOptions($options, [PlatformOptions::RESPONSE_FORMAT => 'response_format', PlatformOptions::LANGUAGE => 'language'])),
             $model->supports(Capability::EMBEDDINGS) => $this->doGenerateEmbeddings($model, $payload, $providerOptions),
             default => throw new InvalidArgumentException('Unsupported model capability for Venice client.'),
         };

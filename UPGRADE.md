@@ -373,8 +373,8 @@ MCP Bundle
 Platform
 --------
 
- * Invocation options other than the ones of `PlatformOptions` (`max_output_tokens`, `temperature`, `stream`, `tools`
-   and `response_format`) have to be passed under `PlatformOptions::PROVIDER_OPTIONS`, any other option on the top
+ * Invocation options other than the ones of `PlatformOptions` (`max_output_tokens`, `temperature`, `language`, `stream`,
+   `tools` and `response_format`) have to be passed under `PlatformOptions::PROVIDER_OPTIONS`, any other option on the top
    level throws an `InvalidArgumentException`. Options in a model name like `gpt-4o?max_tokens=100` are nested
    automatically:
 

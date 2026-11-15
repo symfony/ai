@@ -21,9 +21,7 @@ $platform = Factory::createPlatform(env('MISTRAL_API_KEY'), http_client());
 // "voxtral-mini-latest" is a chat model by default; wrap it in the SpeechToText model to
 // opt into the dedicated /v1/audio/transcriptions endpoint (transcription only, no chat).
 $result = $platform->invoke(new SpeechToText('voxtral-mini-latest'), Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'), [
-    PlatformOptions::PROVIDER_OPTIONS => [
-        'language' => 'en',
-    ],
+    PlatformOptions::LANGUAGE => 'en',
 ]);
 
 echo $result->asText().\PHP_EOL;

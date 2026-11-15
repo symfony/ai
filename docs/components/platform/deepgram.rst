@@ -100,10 +100,13 @@ forwarded as query parameters::
     $platform->invoke(
         'nova-3',
         Audio::fromFile('/path/to/audio.mp3'),
-        [PlatformOptions::PROVIDER_OPTIONS => ['smart_format' => 'true', 'language' => 'en', 'diarize' => 'true']],
+        [
+            PlatformOptions::LANGUAGE => 'en',
+            PlatformOptions::PROVIDER_OPTIONS => ['smart_format' => 'true', 'diarize' => 'true'],
+        ],
     );
 
-Use ``'language' => 'multi'`` to enable multilingual (code-switching) transcription on ``nova-3``
+Use ``'multi'`` as language to enable multilingual (code-switching) transcription on ``nova-3``
 models.
 
 URL-based transcription

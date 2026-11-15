@@ -285,4 +285,36 @@ final class TogetherClientTest extends TestCase
 
         $client->request(new Together('some/unknown-model'), ['prompt' => 'cat']);
     }
+
+    public function testItDoesNotSendTheLanguageForTranslations()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): HttpResponse {
+            $this->assertSame('https://api.together.xyz/v1/audio/translations', $url);
+            $this->assertStringNotContainsString('name="language"', self::readBody($options));
+
+            return new MockResponse();
+        }, 'https://api.together.xyz');
+
+        $client = new TogetherClient($httpClient);
+        $client->request(
+            new Together('openai/whisper-large-v3', [Capability::SPEECH_TO_TEXT]),
+            ['file' => fopen(\dirname(__DIR__, 6).'/fixtures/audio.mp3', 'r')],
+            [PlatformOptions::LANGUAGE => 'de', PlatformOptions::PROVIDER_OPTIONS => ['task' => 'translation']],
+        );
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private static function readBody(array $options): string
+    {
+        $body = '';
+        while ('' !== $chunk = $options['body'](8192)) {
+            $body .= $chunk;
+        }
+
+        return $body;
+    }
 }
