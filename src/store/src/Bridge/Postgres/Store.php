@@ -185,7 +185,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @param array{limit?: positive-int, maxScore?: float} $options
+     * @param array{limit?: positive-int, maxScore?: float, where?: string, params?: array<string, mixed>} $options
      */
     public function query(QueryInterface $query, array $options = []): iterable
     {
@@ -312,7 +312,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @param array{limit?: positive-int, maxScore?: float} $options
+     * @param array{limit?: positive-int, maxScore?: float, where?: string, params?: array<string, mixed>} $options
      *
      * @return iterable<VectorDocumentInterface>
      */
@@ -347,6 +347,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 $tsqueryExpression
             );
             $params['maxScore'] = $options['maxScore'];
+        }
+
+        if (isset($options['where'])) {
+            $whereClauses[] = '('.$options['where'].')';
+        }
+
+        if (isset($options['params'])) {
+            $params = array_merge($params, $options['params']);
         }
 
         $where = [] !== $whereClauses ? 'WHERE '.implode(' AND ', $whereClauses) : '';

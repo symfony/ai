@@ -169,7 +169,8 @@ accepts ``vector`` (default) and ``halfvec``, which can index up to 2,000 and 4,
 
 This store also supports hybrid vector and full-text search via
 :class:`Symfony\\AI\\Store\\Query\\HybridQuery`, which uses the configured ``lang`` for the
-text search configuration.
+text search configuration. ``HybridQuery`` accepts the same parameterized ``where`` /
+``params`` metadata filters as ``VectorQuery``, applied before ``ORDER BY`` / ``LIMIT``.
 
 MariaDB
 ~~~~~~~
