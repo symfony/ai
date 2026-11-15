@@ -50,7 +50,7 @@ final class RawProcessResult implements RawResultInterface
         $events = [];
         $inTurn = false;
 
-        foreach (explode(\PHP_EOL, $output) as $line) {
+        foreach (preg_split('/\R/', $output) as $line) {
             $line = trim($line);
 
             if ('' === $line) {
@@ -123,7 +123,7 @@ final class RawProcessResult implements RawResultInterface
             }
 
             $buffer .= $incrementalOutput;
-            $lines = explode(\PHP_EOL, $buffer);
+            $lines = preg_split('/\R/', $buffer);
 
             // Keep the last (potentially incomplete) line in the buffer
             $buffer = array_pop($lines);
@@ -146,7 +146,7 @@ final class RawProcessResult implements RawResultInterface
         // Process remaining output after process finishes
         $buffer .= $this->process->getIncrementalOutput();
 
-        foreach (explode(\PHP_EOL, $buffer) as $line) {
+        foreach (preg_split('/\R/', $buffer) as $line) {
             $line = trim($line);
 
             if ('' === $line) {
