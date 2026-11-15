@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Tests\Gemini;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Gemini\Batch\JobClient;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini\ResultConverter;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RuntimeException;
@@ -21,6 +22,7 @@ use Symfony\AI\Platform\FinishReason\FinishReason;
 use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Result\BinaryResult;
+use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -40,6 +42,8 @@ use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\TokenUsage\StreamListener as TokenUsageStreamListener;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
@@ -785,6 +789,29 @@ final class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Server error (HTTP 500');
 
         $converter->convert(new RawHttpResult($httpResponse), ['stream' => true]);
+    }
+
+    public function testABatchInvocationIsAnsweredWithTheHandleOfTheBatch()
+    {
+        $response = (new MockHttpClient(new JsonMockResponse(['name' => 'batches/123', 'metadata' => ['state' => 'BATCH_STATE_PENDING']])))->request('GET', 'https://example.com');
+
+        $result = (new ResultConverter('my-gemini'))->convert(new RawHttpResult($response), ['batch' => true]);
+
+        $this->assertInstanceOf(JobResult::class, $result);
+        $handle = $result->getContent();
+        $this->assertSame('batches/123', $handle->getId());
+        $this->assertSame('my-gemini', $handle->getProvider());
+        $this->assertSame(JobClient::KIND, $handle->get('kind'));
+    }
+
+    public function testABatchInvocationWithoutABatchNameFails()
+    {
+        $response = (new MockHttpClient(new JsonMockResponse([])))->request('GET', 'https://example.com');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('does not contain a batch name');
+
+        (new ResultConverter())->convert(new RawHttpResult($response), ['batch' => true]);
     }
 
     /**

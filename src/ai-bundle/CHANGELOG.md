@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Register the Gemini job client as `ai.platform.job_client.gemini`, tagged and autowired by argument name, so a stored batch handle can be resolved from a worker
  * Register `ModelOverrideInputProcessor` for every agent, so the `model` option of `AgentInterface::call()` selects the model of that call
  * Reuse parameter constraints from MCP SDK `#[Schema]` attributes for agent tools when the SDK is installed, with Symfony schema attributes taking precedence
  * [BC BREAK] Rename the `top_k` option of the `pinecone` and `s3vectors` stores to `limit`
