@@ -19,7 +19,7 @@ namespace App\Movies\Data;
 final class MovieSuggestion
 {
     /**
-     * @var string The exact id of a movie returned by the movie_search tool
+     * @var string The exact id of a movie returned by one of the search tools
      */
     public string $id;
 

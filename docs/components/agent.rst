@@ -436,6 +436,25 @@ You can configure the method to be called by the LLM with the :class:`Symfony\\A
         }
     }
 
+You can also put the attribute on the public methods directly, then the ``method`` argument is not needed::
+
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+
+    final readonly class OpenMeteo
+    {
+        #[AsTool('weather_current', 'get current weather for a location')]
+        public function current(float $latitude, float $longitude): array
+        {
+            // ...
+        }
+
+        #[AsTool('weather_forecast', 'get weather forecast for a location')]
+        public function forecast(float $latitude, float $longitude): array
+        {
+            // ...
+        }
+    }
+
 Tool Effect Hints
 ~~~~~~~~~~~~~~~~~
 

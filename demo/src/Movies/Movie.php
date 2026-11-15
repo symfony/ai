@@ -22,7 +22,7 @@ use Symfony\AI\Store\Bridge\Doctrine\Mapping\Embedding;
  */
 #[ORM\Entity(repositoryClass: MovieRepository::class)]
 #[ORM\Index(name: 'movie_embedding_idx', columns: ['embedding'])]
-class Movie implements IndexableEntityInterface
+class Movie implements IndexableEntityInterface, \JsonSerializable
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -78,5 +78,19 @@ class Movie implements IndexableEntityInterface
         }
 
         return implode(\PHP_EOL, [...$lines, ...$this->plot]);
+    }
+
+    /**
+     * @return array{id: int|null, title: string, year: int|null, director: string|null, cast: list<array{name: string, role: string}>}
+     */
+    public function jsonSerialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'year' => $this->year,
+            'director' => $this->director,
+            'cast' => $this->cast,
+        ];
     }
 }

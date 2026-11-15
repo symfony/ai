@@ -13,9 +13,13 @@ namespace Symfony\AI\Agent\Tests\Toolbox\MetadataFactory;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolMultiple;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolOnClassAndMethod;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolOnMethodConflicting;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolOnMethods;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWrong;
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+use Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolException;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
@@ -127,6 +131,56 @@ final class ReflectionFactoryTest extends TestCase
                 'additionalProperties' => false,
             ],
         );
+    }
+
+    public function testGetDefinitionFromMethodAttributes()
+    {
+        $tools = iterator_to_array($this->factory->getTool(ToolOnMethods::class), false);
+
+        $this->assertCount(2, $tools);
+
+        [$first, $second] = $tools;
+        $this->assertToolConfiguration(
+            metadata: $first,
+            className: ToolOnMethods::class,
+            name: 'tool_hello_world',
+            description: 'Function to say hello',
+            method: 'hello',
+            parameters: [
+                'type' => 'object',
+                'properties' => [
+                    'world' => [
+                        'type' => 'string',
+                        'description' => 'The world to say hello to',
+                    ],
+                ],
+                'required' => ['world'],
+                'additionalProperties' => false,
+            ],
+        );
+        $this->assertSame('tool_no_params', $second->getName());
+        $this->assertSame('bar', $second->getReference()->getMethod());
+    }
+
+    public function testGetDefinitionFromClassAndMethodAttributes()
+    {
+        $tools = iterator_to_array($this->factory->getTool(ToolOnClassAndMethod::class), false);
+
+        $this->assertSame(
+            ['tool_on_class' => 'onClass', 'tool_on_method' => 'onMethod'],
+            array_combine(
+                array_map(static fn (Tool $tool): string => $tool->getName(), $tools),
+                array_map(static fn (Tool $tool): string => $tool->getReference()->getMethod(), $tools),
+            ),
+        );
+    }
+
+    public function testMethodAttributeMustNotConfigureAnotherMethod()
+    {
+        $this->expectException(ToolConfigurationException::class);
+        $this->expectExceptionMessage(\sprintf('The #[AsTool] attribute on "%s::hello()" configures the method "other"', ToolOnMethodConflicting::class));
+
+        iterator_to_array($this->factory->getTool(ToolOnMethodConflicting::class));
     }
 
     /**

@@ -41,26 +41,41 @@ final class ReflectionToolFactory implements ToolFactoryInterface
         }
 
         $reflectionClass = new \ReflectionClass($className);
-        $attributes = $reflectionClass->getAttributes(AsTool::class);
+        $tools = [];
 
-        if ([] === $attributes) {
+        foreach ($reflectionClass->getAttributes(AsTool::class) as $attribute) {
+            $asTool = $attribute->newInstance();
+            $tools[] = [$asTool, $asTool->method];
+        }
+
+        foreach ($reflectionClass->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+            foreach ($method->getAttributes(AsTool::class) as $attribute) {
+                $asTool = $attribute->newInstance();
+
+                if ('__invoke' !== $asTool->method && $method->getName() !== $asTool->method) {
+                    throw ToolConfigurationException::conflictingMethod($className, $method->getName(), $asTool->method);
+                }
+
+                $tools[] = [$asTool, $method->getName()];
+            }
+        }
+
+        if ([] === $tools) {
             throw ToolException::missingAttribute($className);
         }
 
-        foreach ($attributes as $attribute) {
-            $asTool = $attribute->newInstance();
-
+        foreach ($tools as [$asTool, $methodName]) {
             try {
                 yield new Tool(
-                    new ExecutionReference($className, $asTool->method),
+                    new ExecutionReference($className, $methodName),
                     $asTool->name,
                     $asTool->description,
-                    $this->factory->buildParameters($className, $asTool->method),
+                    $this->factory->buildParameters($className, $methodName),
                     $asTool->metadata,
                     $asTool->effectHints,
                 );
             } catch (\ReflectionException $e) {
-                throw ToolConfigurationException::invalidMethod($className, $asTool->method, $e);
+                throw ToolConfigurationException::invalidMethod($className, $methodName, $e);
             }
         }
     }
