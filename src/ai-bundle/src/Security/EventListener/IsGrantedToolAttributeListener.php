@@ -67,23 +67,17 @@ class IsGrantedToolAttributeListener
                 }
             }
 
-            $accessDecision = null;
-            // bc layer
-            if (class_exists(AccessDecision::class)) {
-                $accessDecision = new AccessDecision();
-                $accessDecision->isGranted = false;
-                $decision = &$accessDecision->isGranted;
-            }
+            $accessDecision = new AccessDecision();
+            $accessDecision->isGranted = false;
+            $decision = &$accessDecision->isGranted;
 
             if (!$decision = $this->authChecker->isGranted($attribute->attribute, $subject, $accessDecision)) {
-                $message = $attribute->message ?: (class_exists(AccessDecision::class, false) ? $accessDecision->getMessage() : 'Access Denied.');
+                $message = $attribute->message ?: $accessDecision->getMessage();
 
                 $e = new AccessDeniedException($message, code: $attribute->exceptionCode ?? 403);
                 $e->setAttributes([$attribute->attribute]);
                 $e->setSubject($subject);
-                if ($accessDecision && method_exists($e, 'setAccessDecision')) {
-                    $e->setAccessDecision($accessDecision);
-                }
+                $e->setAccessDecision($accessDecision);
 
                 throw $e;
             }
