@@ -23,6 +23,21 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class ModelClientTest extends TestCase
 {
+    public function testCustomEndpointIsUsedByClientAndFactory()
+    {
+        $http = new MockHttpClient(static function (string $method, string $url): MockResponse {
+            self::assertSame('POST', $method);
+            self::assertSame('https://mistral.example.test/v1/ocr', $url);
+
+            return new JsonMockResponse(['pages' => []]);
+        });
+        $client = new ModelClient($http, 'test-key', 'https://mistral.example.test/');
+        $client->request(new Ocr('mistral-ocr-latest'), ['type' => 'image_url', 'image_url' => 'https://example.com/photo.jpg']);
+        $platform = \Symfony\AI\Platform\Bridge\Mistral\Factory::createPlatform('test-key', $http, baseUrl: 'https://mistral.example.test/');
+        $platform->invoke('mistral-ocr-latest', new \Symfony\AI\Platform\Message\Content\ImageUrl('https://example.com/photo.jpg'))->getResult();
+        $this->assertSame(2, $http->getRequestsCount());
+    }
+
     public function testItSupportsOcrModelOnly()
     {
         $client = new ModelClient(new MockHttpClient(), 'sk-test-key');
