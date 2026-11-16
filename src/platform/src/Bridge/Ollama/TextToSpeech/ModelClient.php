@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -42,6 +43,10 @@ final class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException('Streaming text to speech results is not supported yet.');
         }
 
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         unset($options['stream'], $options['stream_format']);
 
         if (\is_string($payload)) {
@@ -62,6 +67,6 @@ final class ModelClient implements ModelClientInterface
                 'model' => $model->getName(),
                 'input' => $input,
             ])),
-        ]));
+        ] + $httpOptions));
     }
 }

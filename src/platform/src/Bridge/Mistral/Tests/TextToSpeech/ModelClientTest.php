@@ -152,4 +152,26 @@ final class ModelClientTest extends TestCase
 
         $client->request(new TextToSpeech('voxtral-mini-tts-3-0'), 'Hello world', ['voice' => 'gb_jane_neutral', 'stream' => true]);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): JsonMockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame([
+                'voice_id' => 'gb_jane_neutral',
+                'model' => 'voxtral-mini-tts-3-0',
+                'input' => 'Hello world',
+            ], json_decode($options['body'], true));
+
+            return new JsonMockResponse(['audio_data' => base64_encode('audio')]);
+        });
+
+        $client = new ModelClient($httpClient, 'test-key');
+        $client->request(new TextToSpeech('voxtral-mini-tts-3-0'), 'Hello world', [
+            'voice' => 'gb_jane_neutral',
+            'http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]],
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
 }

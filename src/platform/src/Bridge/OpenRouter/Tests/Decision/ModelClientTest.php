@@ -142,6 +142,25 @@ final class ModelClientTest extends TestCase
         $client->request(new DecisionModel('typesafe/jev-1.13'), 'invalid string payload');
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $body = json_decode($options['body'], true);
+            $this->assertArrayNotHasKey('http_options', $body);
+            $this->assertArrayNotHasKey('overridden', $body);
+
+            return new MockResponse();
+        });
+
+        $client = new ModelClient($httpClient, 'test-key');
+        $client->request(new DecisionModel('typesafe/jev-1.13'), $this->createPayload(), [
+            'http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]],
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
     /**
      * @return array<string, mixed>
      */
