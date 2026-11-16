@@ -13,6 +13,7 @@ namespace Symfony\AI\Agent\Bridge\Doctrine;
 
 use Doctrine\DBAL\Connection as DBALConnection;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Doctrine\DBAL\Schema\AbstractAsset;
 use Doctrine\DBAL\Schema\ComparatorConfig;
 use Doctrine\DBAL\Schema\Name\Identifier;
 use Doctrine\DBAL\Schema\Name\UnqualifiedName;
@@ -63,7 +64,7 @@ final class DoctrineDbalMessageStore implements ManagedMessageStoreInterface, Me
 
         $configuration = $this->dbalConnection->getConfiguration();
         $assetFilter = $configuration->getSchemaAssetsFilter();
-        $configuration->setSchemaAssetsFilter(fn (string $assetName): bool => $assetName === $this->tableName);
+        $configuration->setSchemaAssetsFilter(fn (string|AbstractAsset $assetName): bool => $assetName === $this->tableName);
 
         try {
             $schema = $schemaManager->introspectSchema();
