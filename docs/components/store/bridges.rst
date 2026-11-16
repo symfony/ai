@@ -172,6 +172,61 @@ This store also supports hybrid vector and full-text search via
 text search configuration. ``HybridQuery`` accepts the same parameterized ``where`` /
 ``params`` metadata filters as ``VectorQuery``, applied before ``ORDER BY`` / ``LIMIT``.
 
+Full-Text Search
+................
+
+``setup()`` creates a stored generated column named ``search_tsv`` and a GIN index
+on it, alongside the vector index. PostgreSQL computes this column from the
+document's text using the store's configured ``lang``:
+
+.. code-block:: sql
+
+    to_tsvector('<lang>', COALESCE(metadata->>'_text', ''))
+
+``TextQuery`` and ``HybridQuery`` reuse the stored value instead of parsing each
+document's text on every search. The GIN index speeds up keyword matching in
+``TextQuery`` and keyword-only hybrid queries (``semanticRatio = 0.0``). Mixed
+hybrid queries still score all candidates, including those without matching
+keywords; they benefit from the stored value without changing how results are ranked.
+
+PostgreSQL updates ``search_tsv`` automatically when the document changes. Writes
+still provide only the ID, metadata and embedding. The name ``search_tsv`` is
+reserved and cannot be used as the vector field name.
+
+Upgrading an Existing Table
+...........................
+
+Run ``setup()`` or apply an equivalent schema update before running text or hybrid
+queries on an existing table. These queries read ``search_tsv`` and fail if the
+column is missing. For existing tables, ``setup()`` adds it with:
+
+.. code-block:: sql
+
+    ALTER TABLE "<table>"
+    ADD COLUMN IF NOT EXISTS "search_tsv" tsvector
+    GENERATED ALWAYS AS (to_tsvector('<lang>', COALESCE(metadata->>'_text', ''))) STORED;
+
+.. warning::
+
+    Adding the stored column computes its value for every existing row and takes
+    an ``ACCESS EXCLUSIVE`` lock, which blocks other access to the table. Plan this
+    update for a suitable maintenance window. ``setup()`` does not replace live
+    tables in the background.
+
+If ``search_tsv`` already exists, ``setup()`` leaves it unchanged, including its
+language. To change the language later, explicitly rebuild the column and its
+GIN index; changing ``lang`` and calling ``setup()`` is not enough.
+
+The index is named ``<table>_search_tsv_gin``. If that would exceed PostgreSQL's
+63-byte identifier limit, the table name is replaced with a shortened SHA-256
+hash of its full name. This keeps the name distinct from an older expression
+index named ``<table>_text_gin``, so the old index cannot prevent the new one from
+being created.
+
+``setup()`` does not remove older expression indexes. Once the new index is in
+place, you can remove an old ``*_text_gin`` index separately to avoid maintaining
+both indexes on every write.
+
 MariaDB
 ~~~~~~~
 
