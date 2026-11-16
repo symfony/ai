@@ -3,6 +3,11 @@ Symfony Bridge
 
 Provides Symfony container introspection and profiler data access tools for Symfony AI Mate.
 
+Symfony Documentation
+---------------------
+
+ * [Profiler](https://symfony.com/doc/current/profiler.html)
+
 Resources
 ---------
 

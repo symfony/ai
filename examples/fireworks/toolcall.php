@@ -21,7 +21,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = Factory::createPlatform(env('FIREWORKS_API_KEY'), http_client());
 
 $toolbox = new Toolbox([new Clock(clock())]);
-$agent = new Agent($platform, 'kimi-k2p6', toolbox: $toolbox);
+$agent = new Agent($platform, 'kimi-k3', toolbox: $toolbox);
 
 $messages = new MessageBag(Message::ofUser('How many days until next Christmas?'));
 $result = $agent->call($messages);

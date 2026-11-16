@@ -13,6 +13,8 @@ namespace Symfony\Component\Config\Definition\Configurator;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
+$modelCatalog = require __DIR__.'/model_catalog.php';
+
 return (new ArrayNodeDefinition('openai'))
     ->children()
         ->stringNode('api_key')->isRequired()->end()
@@ -28,4 +30,5 @@ return (new ArrayNodeDefinition('openai'))
             ->defaultValue('http_client')
             ->info('Service ID of the HTTP client to use')
         ->end()
+        ->append($modelCatalog('static'))
     ->end();

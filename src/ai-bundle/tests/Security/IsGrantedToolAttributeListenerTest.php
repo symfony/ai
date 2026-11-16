@@ -16,6 +16,7 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
+use Symfony\AI\AiBundle\Exception\RuntimeException;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
 use Symfony\AI\AiBundle\Tests\Fixture\Tool\ToolWithIsGrantedOnClass;
 use Symfony\AI\AiBundle\Tests\Fixture\Tool\ToolWithIsGrantedOnMethod;
@@ -63,6 +64,18 @@ class IsGrantedToolAttributeListenerTest extends TestCase
     {
         $this->authChecker->expects($this->once())->method('isGranted')->with('test:permission', 44)->willReturn(true);
         $this->dispatcher->dispatch(new ToolCallArgumentsResolved($tool, $metadata, ['itemId' => 44]));
+    }
+
+    #[TestWith([new ToolWithIsGrantedOnMethod(), new Tool(new ExecutionReference(ToolWithIsGrantedOnMethod::class, 'simple'), 'simple', '')])]
+    #[TestWith([new ToolWithIsGrantedOnClass(), new Tool(new ExecutionReference(ToolWithIsGrantedOnClass::class, '__invoke'), 'ToolWithIsGrantedOnClass', '')])]
+    public function testItWillThrowWithoutAuthorizationChecker(object $tool, Tool $metadata)
+    {
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(ToolCallArgumentsResolved::class, new IsGrantedToolAttributeListener(null));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Using #[IsGrantedTool] attribute requires the SecurityBundle.');
+        $dispatcher->dispatch(new ToolCallArgumentsResolved($tool, $metadata, []));
     }
 
     #[Before]

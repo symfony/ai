@@ -16,7 +16,4 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 return (new ArrayNodeDefinition('memory'))
     ->useAttributeAsKey('name')
     ->arrayPrototype()
-        ->children()
-            ->stringNode('identifier')->cannotBeEmpty()->end()
-        ->end()
     ->end();

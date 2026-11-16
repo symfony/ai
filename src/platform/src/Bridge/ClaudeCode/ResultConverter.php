@@ -15,17 +15,16 @@ use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\CustomToolCallResult;
+use Symfony\AI\Platform\Result\McpCallResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
-use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
-use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
@@ -63,11 +62,7 @@ final class ResultConverter implements ResultConverterInterface
 
         $results = [];
         foreach ($data['tool_calls'] ?? [] as $toolCall) {
-            $results[] = new ToolCallResult([new ToolCall(
-                $toolCall['id'],
-                $toolCall['name'],
-                $toolCall['arguments'] ?? [],
-            )]);
+            $results[] = $this->convertExecutedToolCall($toolCall);
         }
 
         $results[] = new TextResult($data['result']);
@@ -84,9 +79,40 @@ final class ResultConverter implements ResultConverterInterface
         return new TokenUsageExtractor();
     }
 
+    /**
+     * The CLI already ran the tool, so the call is reported as resolved, not as a tool call for the caller to run.
+     *
+     * @param array{id: string, name: string, arguments?: array<string, mixed>, output?: string|null, is_error?: bool|null, server?: string, tool?: string} $toolCall
+     */
+    private function convertExecutedToolCall(array $toolCall): McpCallResult|CustomToolCallResult
+    {
+        $arguments = json_encode((object) ($toolCall['arguments'] ?? []), \JSON_THROW_ON_ERROR);
+        $failed = $toolCall['is_error'] ?? null;
+        $status = null === $failed ? null : ($failed ? 'failed' : 'completed');
+
+        [$server, $tool] = isset($toolCall['server'], $toolCall['tool']) ? [$toolCall['server'], $toolCall['tool']] : $this->splitMcpToolName($toolCall['name']);
+
+        if (null !== $server && null !== $tool) {
+            $output = $toolCall['output'] ?? null;
+
+            return new McpCallResult($server, $tool, $arguments, true === $failed ? null : $output, true === $failed ? $output : null, $toolCall['id'], $status);
+        }
+
+        return new CustomToolCallResult($toolCall['name'], $arguments, $toolCall['id'], $status);
+    }
+
+    /**
+     * Splits "mcp__<server>__<tool>" at the first "__", for a tool call whose server is not known from the init event.
+     *
+     * @return array{string, string}|array{null, null}
+     */
+    private function splitMcpToolName(string $name): array
+    {
+        return 1 === preg_match('/^mcp__(.+?)__(.+)$/', $name, $match) ? [$match[1], $match[2]] : [null, null];
+    }
+
     private function convertStream(RawResultInterface $result): \Generator
     {
-        $toolCalls = [];
         $currentToolCall = null;
         $currentToolCallJson = '';
         $inMessage = false;
@@ -136,38 +162,28 @@ final class ResultConverter implements ResultConverterInterface
                 }
             }
 
-            // Handle content block stop - finalize current tool call
+            // Handle content block stop - the CLI runs the tool itself, so no ToolCallComplete asks the caller to run it
             if ('stream_event' === $type
                 && 'content_block_stop' === $eventType
                 && null !== $currentToolCall
             ) {
-                $input = [];
+                // the CLI ran the tool, so the arguments are not returned; decoding them still raises
+                // MalformedToolCallException for malformed arguments
                 if ('' !== $currentToolCallJson) {
                     try {
-                        $input = json_decode($currentToolCallJson, true, flags: \JSON_THROW_ON_ERROR);
+                        json_decode($currentToolCallJson, flags: \JSON_THROW_ON_ERROR);
                     } catch (\JsonException $e) {
                         throw new MalformedToolCallException(\sprintf('Claude Code returned malformed JSON arguments for the "%s" tool: "%s"', $currentToolCall['name'], $e->getMessage()), 0, $e);
                     }
                 }
-                $toolCalls[] = new ToolCall(
-                    $currentToolCall['id'],
-                    $currentToolCall['name'],
-                    $input
-                );
                 $currentToolCall = null;
                 $currentToolCallJson = '';
             }
 
-            // Handle message stop - yield tool calls if any were collected
             if ('stream_event' === $type
                 && 'message_stop' === $eventType
             ) {
                 $inMessage = false;
-
-                if ([] !== $toolCalls) {
-                    yield new ToolCallComplete($toolCalls);
-                }
-                $toolCalls = [];
             }
         }
 

@@ -7,37 +7,63 @@ description: Diagnose a Symfony request that failed, errored (5xx), or was slow,
 
 Reads the profiler through Mate's CLI. Two tools, two resources:
 
-- `symfony-profiler-list` filters profiles (`method`, `url`, `ip`, `statusCode`, `context`, `from`, `to`, `limit`). Newest first, so `--limit=1` is the latest. Returns summaries with a `resource_uri` per profile.
-- `symfony-profiler-get --token=<t>` returns one profile's metadata. It does NOT list collectors.
+- `symfony-profiler-list` filters profiles (`method`, `url`, `ip`, `statusCode`, `context`, `from`, `to`, `limit`). Newest first, so `--limit=1` is the latest. Returns `total` and `truncated` first, then summaries with a `resource_uri` per profile. The default `limit` is 20: before aggregating over "all requests" (an average, a count, the slowest route), check `truncated`. When it is true, you saw only a sample (at most 500, also for `--limit=0`), so narrow the filters instead of listing everything.
+- `symfony-profiler-get --token=<t>` returns one profile's metadata and its `collectors`, each with a `uri`.
 - `symfony-profiler://profile/{token}` lists the collectors this profile actually has, each with its URI.
 - `symfony-profiler://profile/{token}/{collector}` returns that collector, as `{name, data, summary}`. `summary` is the triage view, `data` the full detail.
 
 These commands accept `--format`: `json` to parse the result, `toon` (when `helgesverre/toon` is installed) for the smallest context footprint. On a large profile, prefer one of these over the human-readable default.
 
-## Workflow
+## Investigation loop
+
+For errors and wrong output, the reading order below stands. The exception or the request data is the answer.
+
+For a slow request, one collector read is never enough. A single read shows *that* something is expensive, never *everything* that is. A slow page is usually an N+1 *and* a missing index *and* an uncached fragment.
+
+For slow, many-query or memory-heavy requests, investigate in a loop. Do not answer from the first read.
 
 1. Find the profile. Do not scroll all profiles.
    - Error: `vendor/bin/mate tools:call symfony-profiler-list --statusCode=500 --limit=5`
    - Known URL: `--url=/checkout`. Latest request: `--limit=1`.
 2. `vendor/bin/mate resources:read symfony-profiler://profile/<token>` to see which collectors exist. Apps differ; only read what is present.
-3. Read collectors in diagnosis order, not all of them.
+3. Read the collector the symptom points at (reading order below).
+4. Take **every** number in it that is out of proportion and trace it to a named source: which
+   statement, which event, which code path emitted it. One number, one source, named.
+5. Account for the total. Subtract what you just explained: if any of the load is still
+   unattributed, go back to step 3 (next collector, or next number in this one).
+
+**Stop condition (slow path):** done means every source of the load is named, not that one was found.
+"The N+1 in the product listing" is one source. If it accounts for 40 of 54 queries, 14 queries
+are still unexplained and the investigation is not finished. Name those too. Same for time:
+if the slow events you identified sum to 300 ms of an 800 ms request, keep going.
+
+Stop early only when the remainder is genuinely proportionate, and say so explicitly.
+
+## When the profile does not explain it
+
+Continue in the logs instead of stopping at the profile boundary. Trigger cases: `has_exception` is false on a 5xx, `logger` reports errors or warnings the collectors do not otherwise explain, or the work that failed happened in a different request (queue worker, sub-request, earlier write). If the Monolog bridge is installed, carry the identifier over: search with `monolog-search` for the message from the logger collector, or follow a request id from the logger context with `monolog-context-search`.
+
+The profiler sees exactly one request. The logs see every request, including the one that swallowed the exception. Follow the skill for log investigation from there and come back with what it names.
 
 ## Reading order
 
-Branch on the symptom.
+Step 3 picks the collector. On the slow path, step 4 traces its numbers. Branch on the symptom.
 
 **Errored (5xx / exception):** read `exception` first.
-`data.class`, `message` (secrets scrubbed), `file`, `line`, and `trace` (top 10 frames) are the fix. If `has_exception` is false on an error response, the failure is upstream: check `request` for the status and `logger` for what was logged.
+`data.class`, `message` (secrets scrubbed), `file`, `line`, and `trace` (top 10 frames) are the fix. If `has_exception` is false on an error response, the failure is upstream and this profile will not name it: check `request` for the status and `logger` for what was logged, then follow it into the logs (see "When the profile does not explain it"). A swallowed exception leaves a log line even when it leaves no collector entry.
 
-**Slow but succeeded:** skip `exception`, go to `time`, then `db`, then `memory`.
+**Slow but succeeded:** skip `exception`, go to `time`, then `db`, then `http_client`, then `memory`.
 - `time`: `duration_ms` is total. `events` are sorted slowest first with a `category` (e.g. `doctrine`, `template`, `controller`) that tells you which subsystem ate the time. That category picks the next collector.
 - `db`: `query_count` plus `summary.duplicate_query_count`. `queries` are grouped by identical SQL, sorted by `total_time_ms`. An N+1 shows as one grouped entry with a high `count` (same statement fired in a loop), or a high `duplicate_query_count`. One slow statement shows as a high `avg_time_ms`. `sample_params` shows what was bound. Grouped list caps at 50 (`queries_truncated`).
 - `memory`: `usage_percent` against the limit. Only relevant when the request is heavy or OOMs.
+- `http_client`: when `time` points at the app waiting rather than computing, this lists the outbound calls, slowest first: `client`, `method`, `url`, `http_code`, `total_time_ms`, `failed`, `error`, `redirect_count`. `summary` has `request_count`, `total_time_ms`, `failed_count` and the `slowest` call. A `failed` call has `http_code` 0 (timeout, DNS, refused), 400+, or an `error`. Headers and bodies are never shown, URL secrets are masked as `***`. Lists cap at 50 (`calls_truncated`).
 
 **Wrong output / bad input:** read `request`.
 `summary` has `method`, `path`, `route`, `status_code`, `content_type`. `data` has the sanitized bags (`request_query`, `request_request`, `request_headers`, `session_attributes`). Sensitive values, the raw body, and the curl command are redacted or omitted by design, so do not expect to read a password back.
 
 **Tie a log line to the request:** `logger` has `error_count` / `warning_count` / `deprecation_count` and the per-request `logs` (message, level, `channel`, context; capped at 100). Use it to see what the code logged during exactly this request, which the global log files cannot pin to one request.
+
+A non-zero `error_count` or `warning_count` with no matching exception is the handoff signal: this request logged something the collectors do not explain. Take the message or a context key from `logs` into `monolog-search` / `monolog-context-search` (see "When the profile does not explain it") to find out whether it is a one-off or has been happening all week.
 
 Other collectors present in the profile (router, security, twig, ...) are readable at the same URI shape; they return raw dumps rather than a curated shape.
 

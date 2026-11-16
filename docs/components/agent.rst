@@ -61,11 +61,12 @@ behavior, for example available tools to execute, or are forwarded to the underl
 Execution
 ---------
 
-:method:`Symfony\\AI\\Agent\\Agent::call` returns a lazy :class:`Symfony\\AI\\Agent\\Execution\\Execution`. The
-execution *is* the result it produces, so the simplest usage reads the answer straight off it - the example at the
-top of this page does exactly that. Beyond that, the same object reports every step the agent takes - each model
-request, each tool call, and each streamed delta - as an update when you iterate it, which is what you need to show
-progress to a user while the agent is still working::
+:method:`Symfony\\AI\\Agent\\Agent::call` returns a lazy :class:`Symfony\\AI\\Agent\\Execution\\ExecutionInterface`.
+:class:`Symfony\\AI\\Agent\\Execution\\Execution` is its implementation. The execution *is* the result it
+produces, so the simplest usage reads the answer straight off it - the example at the top of this page does exactly
+that. Beyond that, the same object reports every step the agent takes - each model request, each tool call, and
+each streamed delta - as an update when you iterate it, which is what you need to show progress to a user while the
+agent is still working::
 
     use Symfony\AI\Agent\Execution\Update\Progress;
     use Symfony\AI\Agent\Execution\Update\Result;
@@ -127,6 +128,119 @@ before advancing any of them::
     The tool-calling loop is part of a single execution: the agent keeps invoking the model and executing the tools
     it requests until the model answers without asking for further tools.
 
+Continuing a Conversation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The agent doesn't change the message bag you pass to it. To continue the conversation, use
+``getMessages()`` of the execution. It returns your messages followed by the messages of the run: the
+tool calls with their results and the final answer. The returned bag keeps the ID of your bag, so it
+can be stored and passed to the next call::
+
+    $messages = new MessageBag(Message::ofUser('What time is it?'));
+    $messages = $agent->call($messages)->getMessages();
+
+    $messages = $messages->with(Message::ofUser('And in Tokyo?'));
+    $messages = $agent->call($messages)->getMessages();
+
+The system prompt and the memory added by input processors are not part of the returned messages, they
+are added again on every call.
+
+Each assistant message carries the metadata of its own model request, like the token usage or the finish
+reason, while the metadata of the execution aggregates all requests of the run. With ``includeSources``
+enabled, the final answer carries :ref:`tool sources <agent-tool-sources>` as well::
+
+    foreach ($messages as $message) {
+        if ($message instanceof AssistantMessage) {
+            echo $message->getMetadata()->get('token_usage')?->getTotalTokens().\PHP_EOL;
+        }
+    }
+
+.. _agent-storing-conversations:
+
+Storing Conversations
+~~~~~~~~~~~~~~~~~~~~~
+
+Conversations often span several requests or workers. Pass a
+:class:`Symfony\\AI\\Agent\\MessageStore\\MessageStoreInterface` to the agent, and it keeps the conversation
+stored under the ID of the message bag::
+
+    use Symfony\AI\Agent\MessageStore\InMemoryMessageStore;
+    use Symfony\Component\Uid\Uuid;
+
+    $agent = new Agent($platform, $model, messageStore: new InMemoryMessageStore());
+
+    // e.g. the ID of the conversation in your application
+    $id = Uuid::v7();
+
+    // a string is a user message
+    $agent->call(MessageBag::forId($id, 'My name is Wilhelm Tell.'))->getResult();
+    $agent->call(MessageBag::forId($id, 'What is my name?'))->asText(); // "Wilhelm Tell"
+
+The agent uses the ID of the message bag as it is. Your application resolves the conversation ID, e.g. from the
+current user, and checks that the user is allowed to continue that conversation.
+
+The agent loads the stored messages and adds the given messages it doesn't know yet. It matches them by their
+message ID, so passing the whole conversation or only the new message is the same. A message you create again from
+its text gets a new ID, and the agent adds it a second time.
+
+The agent saves the conversation after adding the input, after each round of tool calls and with the answer. A
+failed run therefore keeps its tool results.
+
+If the stored conversation changed while the agent was running, e.g. because a second request answered the same
+conversation in the meantime, saving fails with a :class:`Symfony\\AI\\Agent\\Exception\\ConflictException`.
+
+.. warning::
+
+    When a message is serialized, the objects in its metadata keep their class name. On loading, the serializer
+    creates objects of the stored class names. Only load conversations from a storage that only your application
+    writes to.
+
+.. _agent-message-store-bridges:
+
+Message Store Bridges
+.....................
+
+The :class:`Symfony\\AI\\Agent\\MessageStore\\InMemoryMessageStore` keeps conversations only for the current
+process. To keep them across requests, install one of the message store bridges, for example Redis:
+
+.. code-block:: terminal
+
+    $ composer require symfony/ai-redis-message-store
+
+Then pass the store to the agent::
+
+    use Symfony\AI\Agent\Bridge\Redis\MessageStore;
+
+    // every key of the store starts with "conversations:"
+    $store = new MessageStore(new \Redis(['host' => 'localhost']), 'conversations');
+
+    $agent = new Agent($platform, $model, messageStore: $store);
+
+The following bridges are available:
+
+* `Cache`_ (``symfony/ai-cache-message-store``, `Cache example`_)
+* `Cloudflare KV`_ (``symfony/ai-cloudflare-message-store``, `Cloudflare example`_)
+* `Doctrine DBAL`_ (``symfony/ai-doctrine-message-store``, `Doctrine example`_)
+* `HttpFoundation session`_ (``symfony/ai-session-message-store``, `Session example`_)
+* `Meilisearch`_ (``symfony/ai-meilisearch-message-store``, `Meilisearch example`_)
+* `MongoDB`_ (``symfony/ai-mongo-db-message-store``, `MongoDB example`_)
+* `Pogocache`_ (``symfony/ai-pogocache-message-store``, `Pogocache example`_)
+* `Redis`_ (``symfony/ai-redis-message-store``, `Redis example`_)
+* `SurrealDB`_ (``symfony/ai-surreal-db-message-store``, `SurrealDB example`_)
+
+To remove a single conversation, call ``delete()`` with its ID.
+
+Stores that need a table, an index or a collection implement
+:class:`Symfony\\AI\\Agent\\MessageStore\\ManagedMessageStoreInterface`. Call ``setup()`` once before the
+first conversation, and ``drop()`` to remove the store with all its conversations. In a Symfony application, the
+``ai:message-store:setup`` and ``ai:message-store:drop`` commands do the same (see
+:doc:`the AI Bundle </bundles/ai-bundle>`).
+
+To use another backend, implement :class:`Symfony\\AI\\Agent\\MessageStore\\MessageStoreInterface` with its
+``load()``, ``save()`` and ``delete()`` methods. The ``save()`` method must throw a :class:`Symfony\\AI\\Agent\\Exception\\ConflictException` when the stored
+conversation doesn't continue in the given messages. The
+:class:`Symfony\\AI\\Agent\\MessageStore\\ConflictDetector` checks this for you.
+
 Streaming
 ~~~~~~~~~
 
@@ -155,15 +269,25 @@ the stream without producing a final result::
     $execution = $agent->call('Tell me a story.', ['stream' => true]);
 
     pcntl_async_signals(true);
-    pcntl_signal(\SIGINT, static fn () => $execution->cancel());
+    pcntl_signal(\SIGINT, static fn () => $execution->cancel('Interrupted by the user'));
 
     foreach ($execution->asTextStream() as $delta) {
         echo $delta->getText();
     }
 
 Cancellation is idempotent, propagates to the agents a ``MultiAgent`` or ``SpeechAgent`` delegates to, and makes
-``getResult()`` throw a :class:`Symfony\\AI\\Agent\\Exception\\RuntimeException` instead of returning a partial
-answer. See the
+``getResult()`` throw a :class:`Symfony\\AI\\Agent\\Exception\\CancellationException` instead of returning a
+partial answer. The optional reason given to ``cancel()`` is available on that exception::
+
+    try {
+        $execution->getResult();
+    } catch (CancellationException $exception) {
+        if ($exception->hasReason()) {
+            $logger->info('Agent canceled: '.$exception->getReason());
+        }
+    }
+
+See the
 `execution-cancellation.php <https://github.com/symfony/ai/blob/main/examples/agent/execution-cancellation.php>`_
 example.
 
@@ -185,6 +309,26 @@ The stages this package itself reports are available as ``Progress::STAGE_MODEL_
 
 Streaming and tool calling compose: when the model streams a tool call, the agent executes it and streams the next
 round into the very same execution.
+
+Execution Status
+~~~~~~~~~~~~~~~~
+
+An execution also reports where it stands. ``getStatus()`` returns a
+:class:`Symfony\\AI\\Agent\\Execution\\ExecutionStatus` such as ``Pending``, ``Completed``, ``Failed``,
+``Cancelled`` or ``WaitingForInput``. In the last case ``getPendingToolCalls()`` lists the tool calls of the model
+that have no answer yet. Neither method runs the agent and neither throws. ``getError()`` returns the message of a
+failed execution::
+
+    use Symfony\AI\Agent\Execution\ExecutionStatus;
+
+    $execution = $agent->call($messages);
+    $execution->getResult();
+
+    if (ExecutionStatus::WaitingForInput === $execution->getStatus()) {
+        $toolCalls = $execution->getPendingToolCalls();
+    }
+
+``getId()`` returns a UUID that identifies this run. The conversation is identified by the id of its ``MessageBag``.
 
 Tools
 -----
@@ -214,9 +358,9 @@ Tool calling can be enabled by passing a toolbox to the agent::
 
     $agent = new Agent($platform, $model, toolbox: $toolbox);
 
-When the model calls a tool, the agent runs the tool loop and appends the exchange to the
-message bag: the assistant turn the provider produced - its text, thinking blocks and tool
-calls as one message - followed by the tool results.
+When the model calls a tool, the agent runs the tool loop on its own copy of the message bag:
+the assistant turn the provider produced - its text, thinking blocks and tool calls as one
+message - followed by the tool results. The message bag you pass in stays unchanged.
 
 Carry the final answer into the next turn by passing the result itself to
 :method:`Symfony\\AI\\Platform\\Message\\Message::ofAssistant`, which keeps the thinking
@@ -224,7 +368,7 @@ blocks and signatures providers validate when the conversation is replayed::
 
     $execution = $agent->call($messages);
 
-    $messages->add(Message::ofAssistant($execution->getResult()));
+    $messages = $messages->with(Message::ofAssistant($execution->getResult()));
 
 Streamed results work the same way, see :doc:`the Platform component </components/platform>`.
 
@@ -246,6 +390,21 @@ Tool Return Value
 
 In the end, the tool's result needs to be a string, but Symfony AI converts arrays and objects, that implement the
 JsonSerializable interface, to JSON strings for you. So you can return arrays or objects directly from your tool.
+
+This conversion uses the Symfony Serializer. To control how a result is converted, pass a
+:class:`Symfony\\AI\\Agent\\Toolbox\\ToolResultConverter` with your own serializer to the agent::
+
+    use Symfony\AI\Agent\Agent;
+    use Symfony\AI\Agent\Toolbox\ToolResultConverter;
+    use Symfony\Component\Serializer\Encoder\JsonEncoder;
+    use Symfony\Component\Serializer\Normalizer\JsonSerializableNormalizer;
+    use Symfony\Component\Serializer\Serializer;
+
+    $serializer = new Serializer([new MyResultNormalizer(), new JsonSerializableNormalizer()], [new JsonEncoder()]);
+
+    $agent = new Agent($platform, $model, toolbox: $toolbox, toolResultConverter: new ToolResultConverter($serializer));
+
+In a Symfony application, the agent uses the ``serializer`` service, so registering a normalizer is enough.
 
 Tool Methods
 ~~~~~~~~~~~~
@@ -276,6 +435,47 @@ You can configure the method to be called by the LLM with the :class:`Symfony\\A
             // ...
         }
     }
+
+Tool Effect Hints
+~~~~~~~~~~~~~~~~~
+
+Declare a tool's expected side effects with an optional ``ToolEffectHints`` value object::
+
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+    use Symfony\AI\Platform\Tool\ToolEffectHints;
+
+    #[AsTool(
+        'search_products',
+        'Search the product catalog',
+        effectHints: new ToolEffectHints(readOnlyHint: true, openWorldHint: false),
+    )]
+    final class ProductSearch
+    {
+        // ...
+    }
+
+The hints are available on the resulting tool definition:
+
+* ``readOnlyHint`` / ``Tool::isReadOnly()``: whether the tool leaves its environment
+  unchanged (default: ``false``).
+* ``destructiveHint`` / ``Tool::isDestructive()``: whether updates may be destructive
+  (default: ``true``).
+* ``idempotentHint`` / ``Tool::isIdempotent()``: whether repeating a call with the same
+  arguments has no additional effect (default: ``false``).
+* ``openWorldHint`` / ``Tool::isOpenWorld()``: whether the tool may interact with
+  external entities (default: ``true``).
+
+For read-only tools, ``isDestructive()`` returns ``false`` and ``isIdempotent()`` returns
+``true``, regardless of those two raw hints.
+These are declarations, not guarantees; Symfony AI does not enforce them. A listener
+or custom tool executor can use them to decide whether a call needs confirmation.
+``Tool::getEffectHints()`` exposes the raw nullable fields, preserving the difference
+between an omitted hint and an explicit value. The boolean methods above apply defaults.
+Metadata is the canonical storage: explicit non-null ``effectHints`` override matching
+metadata keys, and ``getEffectHints()`` derives its value object from that metadata.
+The hints stay outside the model's parameter schema.
+``MemoryToolFactory::addTool()`` accepts the same ``effectHints`` argument, and MCP tools
+populate metadata from the server's annotations. Only trust annotations from servers you trust.
 
 Tool Metadata
 ~~~~~~~~~~~~~
@@ -687,23 +887,10 @@ to the LLM::
 
     $agent = new Agent($platform, $model, toolbox: $toolbox);
 
-If you want to expose the underlying error to the LLM, you can throw a custom exception that implements :class:`Symfony\\AI\\Agent\\Toolbox\\Exception\\ToolExecutionExceptionInterface`::
+To tell the LLM why a tool call failed, throw a :class:`Symfony\\AI\\Agent\\Toolbox\\Exception\\ToolErrorException`.
+Its message is the result of the tool call::
 
-    use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
-
-    class EntityNotFoundException extends \RuntimeException implements ToolExecutionExceptionInterface
-    {
-        public function __construct(
-            private string $entityName,
-            private int $id,
-        ){
-        }
-
-        public function getToolCallResult(): string
-        {
-            return \sprintf('No %s found with id %d', $this->entityName, $this->id);
-        }
-    }
+    use Symfony\AI\Agent\Toolbox\Exception\ToolErrorException;
 
     #[AsTool('get_user_age', 'Get age by user id')]
     class GetUserAge
@@ -718,12 +905,19 @@ If you want to expose the underlying error to the LLM, you can throw a custom ex
             $user = $this->userRepository->find($id)
 
             if (null === $user) {
-                throw new EntityNotFoundException('user', $id);
+                throw new ToolErrorException(\sprintf('No user found with id %d', $id));
             }
 
             return $user->getAge();
         }
     }
+
+For another result, like an array with an error code, throw an exception that implements
+:class:`Symfony\\AI\\Agent\\Toolbox\\Exception\\ToolExecutionExceptionInterface`. Its
+``getToolCallResult()`` method returns the result of the tool call. Any other exception gives the LLM a
+generic error message, which doesn't expose the details of the error.
+
+.. _agent-tool-sources:
 
 Tool Sources
 ~~~~~~~~~~~~
@@ -958,34 +1152,6 @@ occupies the process for its full duration.
 
 * `Parallel Tool Calls with Fibers`_
 
-Excluding Tool Messages from MessageBag
----------------------------------------
-
-Sometimes you might wish to exclude the tool messages (:class:`Symfony\\AI\\Platform\\Message\\AssistantMessage` containing :class:`Symfony\\AI\\Platform\\Result\\ToolCall` parts and :class:`Symfony\\AI\\Platform\\Message\\ToolCallMessage`
-containing the result) in the context. Enable the ``excludeToolMessages`` flag of the :class:`Symfony\\AI\\Agent\\Agent`
-to ensure those messages will be removed from your :class:`Symfony\\AI\\Platform\\Message\\MessageBag`::
-
-    use Symfony\AI\Agent\Agent;
-    use Symfony\AI\Agent\Toolbox\Toolbox;
-
-    // Platform instantiation
-
-    $messages = new MessageBag(
-        Message::forSystem(<<<PROMPT
-            Please answer all user questions only using the my-tool tool.
-            Do not add information and if you cannot find an answer, say so.
-            PROMPT),
-        Message::ofUser('...') // The user's question.
-    );
-
-    $tool = new MyTool();
-
-    $toolbox = new Toolbox([$tool]);
-
-    $agent = new Agent($platform, $model, toolbox: $toolbox, excludeToolMessages: true);
-    $result = $agent->call($messages);
-    // $messages will now exclude the tool messages
-
 Built-in Tools
 ~~~~~~~~~~~~~~
 
@@ -1075,8 +1241,8 @@ and are able to mutate both on top of the :class:`Symfony\\AI\\Agent\\Input` ins
             $options['foo'] = 'bar';
             $input->setOptions($options);
 
-            // mutate MessageBag
-            $input->getMessageBag()->add(Message::ofAssistant(sprintf('Please answer using the locale %s', $this->locale)));
+            // replace the MessageBag, it's immutable
+            $input->setMessageBag($input->getMessageBag()->with(Message::ofAssistant(sprintf('Please answer using the locale %s', $this->locale))));
         }
     }
 
@@ -1417,3 +1583,21 @@ Code Examples
 .. _`Human-in-the-Loop Confirmation`: https://github.com/symfony/ai/blob/main/examples/toolbox/confirmation.php
 .. _`Tool Call Argument Validation`: https://github.com/symfony/ai/blob/main/examples/toolbox/validation.php
 .. _`Parallel Tool Calls with Fibers`: https://github.com/symfony/ai/blob/main/examples/agent/toolcall-fibers.php
+.. _`Cache`: https://symfony.com/doc/current/components/cache.html
+.. _`Cache example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-cache.php
+.. _`Cloudflare KV`: https://developers.cloudflare.com/kv/
+.. _`Cloudflare example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-cloudflare.php
+.. _`Doctrine DBAL`: https://www.doctrine-project.org/projects/dbal.html
+.. _`Doctrine example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-doctrine.php
+.. _`HttpFoundation session`: https://symfony.com/doc/current/session.html
+.. _`Session example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-session.php
+.. _`Meilisearch`: https://www.meilisearch.com/
+.. _`Meilisearch example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-meilisearch.php
+.. _`MongoDB`: https://www.mongodb.com/
+.. _`MongoDB example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-mongodb.php
+.. _`Pogocache`: https://pogocache.com/
+.. _`Pogocache example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-pogocache.php
+.. _`Redis`: https://redis.io/
+.. _`Redis example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-redis.php
+.. _`SurrealDB`: https://surrealdb.com/
+.. _`SurrealDB example`: https://github.com/symfony/ai/blob/main/examples/agent/message-store-surrealdb.php

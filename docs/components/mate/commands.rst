@@ -43,8 +43,8 @@ Setup
     * adds new extensions to ``mate/extensions.php``, enabled by default
     * keeps the enabled or disabled state of extensions it already knows
     * installs the skills of every enabled extension (see :doc:`skills`)
-    * rewrites ``mate/AGENT_INSTRUCTIONS.md``, the managed block in ``AGENTS.md`` and the
-      ``@AGENTS.md`` import in ``CLAUDE.md``
+    * rewrites ``mate/AGENT_INSTRUCTIONS.md``, the managed block in ``AGENTS.md`` and, if
+      you have a ``CLAUDE.md``, the ``@AGENTS.md`` import in it
 
     **Options:**
 
@@ -176,6 +176,9 @@ skill.
 
     ``--dry-run``
         Report what would be installed, rebuilt or removed. Nothing is written.
+
+    ``--format=FORMAT``
+        ``table`` (default), ``json`` or ``toon``.
 
 ``mate skills:list``
     List declared and installed skills with their enabled flag, mode, state and status.

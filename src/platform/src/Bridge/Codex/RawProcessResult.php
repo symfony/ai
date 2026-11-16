@@ -48,6 +48,7 @@ final class RawProcessResult implements RawResultInterface
         $lastError = [];
         $usage = [];
         $events = [];
+        $inTurn = false;
 
         foreach (explode(\PHP_EOL, $output) as $line) {
             $line = trim($line);
@@ -66,6 +67,14 @@ final class RawProcessResult implements RawResultInterface
 
             $type = $decoded['type'] ?? '';
 
+            if ('turn.started' === $type) {
+                $inTurn = true;
+            }
+
+            if ('turn.completed' === $type || 'turn.failed' === $type) {
+                $inTurn = false;
+            }
+
             if ('item.completed' === $type
                 && 'agent_message' === ($decoded['item']['type'] ?? '')
             ) {
@@ -79,6 +88,10 @@ final class RawProcessResult implements RawResultInterface
             if ('turn.completed' === $type && isset($decoded['usage'])) {
                 $usage = $decoded['usage'];
             }
+        }
+
+        if ($inTurn) {
+            throw new RuntimeException('Codex CLI turn ended before turn.completed.');
         }
 
         if ([] !== $lastError && [] === $lastAgentMessage) {
@@ -190,7 +203,7 @@ final class RawProcessResult implements RawResultInterface
     /**
      * @param list<array<string, mixed>> $events
      *
-     * @return list<array{id: string, name: string, arguments: array<string, mixed>}>
+     * @return list<array{id: string, name: string, arguments: array<string, mixed>, server?: string|null, output?: string|null, error?: string|null, status?: string|null}>
      */
     private function extractToolCalls(array $events): array
     {
@@ -241,7 +254,7 @@ final class RawProcessResult implements RawResultInterface
     /**
      * @param array<string, mixed> $event
      *
-     * @return array{id: string, name: string, arguments: array<string, mixed>}|null
+     * @return array{id: string, name: string, arguments: array<string, mixed>, server: string|null, output: string|null, error: string|null, status: string|null}|null
      */
     private function extractLegacyToolCall(array $event): ?array
     {
@@ -259,6 +272,10 @@ final class RawProcessResult implements RawResultInterface
             'id' => $this->extractString($item, ['id', 'call_id']) ?? '',
             'name' => $name,
             'arguments' => $this->extractToolCallArguments($item),
+            'server' => $this->extractString($item, ['server']),
+            'output' => \is_array($item['result'] ?? null) ? $this->extractText($item['result']['content'] ?? null) : null,
+            'error' => \is_array($item['error'] ?? null) ? $this->extractString($item['error'], ['message']) : null,
+            'status' => $this->extractString($item, ['status']),
         ];
     }
 
@@ -377,10 +394,10 @@ final class RawProcessResult implements RawResultInterface
     }
 
     /**
-     * @param array{id: string, name: string, arguments: array<string, mixed>} $started
-     * @param array{id: string, name: string, arguments: array<string, mixed>} $completed
+     * @param array{id: string, name: string, arguments: array<string, mixed>, server?: string|null, output?: string|null, error?: string|null, status?: string|null} $started
+     * @param array{id: string, name: string, arguments: array<string, mixed>, server?: string|null, output?: string|null, error?: string|null, status?: string|null} $completed
      *
-     * @return array{id: string, name: string, arguments: array<string, mixed>}
+     * @return array{id: string, name: string, arguments: array<string, mixed>, server?: string|null, output?: string|null, error?: string|null, status?: string|null}
      */
     private function mergeStartedToolCall(array $started, array $completed): array
     {
@@ -389,6 +406,22 @@ final class RawProcessResult implements RawResultInterface
         }
 
         return $completed;
+    }
+
+    private function extractText(mixed $content): ?string
+    {
+        if (!\is_array($content)) {
+            return null;
+        }
+
+        $text = '';
+        foreach ($content as $block) {
+            if (\is_array($block) && 'text' === ($block['type'] ?? null) && \is_string($block['text'] ?? null)) {
+                $text .= $block['text'];
+            }
+        }
+
+        return $text;
     }
 
     /**

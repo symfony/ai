@@ -132,9 +132,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool
-     * } $options If maxItems is provided, only the top N results will be returned.
+     * } $options If limit is provided, only the top N results will be returned.
      *            If filter is provided, only documents matching the filter will be considered.
      */
     public function query(QueryInterface $query, array $options = []): iterable
@@ -161,7 +161,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
@@ -185,12 +185,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $vectorDocuments = array_values(array_filter($vectorDocuments, $options['filter']));
         }
 
-        yield from $this->distanceCalculator->calculate($vectorDocuments, $query->getVector(), $options['maxItems'] ?? null);
+        yield from $this->distanceCalculator->calculate($vectorDocuments, $query->getVector(), $options['limit'] ?? null);
     }
 
     /**
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
@@ -226,11 +226,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
             return false;
         });
 
-        $maxItems = $options['maxItems'] ?? null;
+        $limit = $options['limit'] ?? null;
         $count = 0;
 
         foreach ($filteredDocuments as $document) {
-            if (null !== $maxItems && $count >= $maxItems) {
+            if (null !== $limit && $count >= $limit) {
                 break;
             }
 
@@ -241,7 +241,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
@@ -287,11 +287,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $mergedResults = array_values(array_filter($mergedResults, $options['filter']));
         }
 
-        $maxItems = $options['maxItems'] ?? null;
+        $limit = $options['limit'] ?? null;
         $count = 0;
 
         foreach ($mergedResults as $document) {
-            if (null !== $maxItems && $count >= $maxItems) {
+            if (null !== $limit && $count >= $limit) {
                 break;
             }
 

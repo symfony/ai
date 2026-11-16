@@ -28,7 +28,7 @@ final class StoreFactory
         #[\SensitiveParameter] ?string $apiKey = null,
         ?HttpClientInterface $httpClient = null,
         string $vectorFieldName = '_vectors',
-        int $embeddingsDimension = 1536,
+        int $dimensions = 1536,
     ): StoreInterface&ManagedStoreInterface {
         $httpClient ??= HttpClient::create();
 
@@ -45,6 +45,6 @@ final class StoreFactory
             $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint, $defaultOptions);
         }
 
-        return new Store($httpClient, $collection, $vectorFieldName, $embeddingsDimension);
+        return new Store($httpClient, $collection, $vectorFieldName, $dimensions);
     }
 }

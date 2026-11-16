@@ -26,6 +26,7 @@ final class OllamaContract extends Contract
     {
         return parent::create([
             new ToolCallNormalizer(),
+            new UserMessageNormalizer(),
             ...$normalizers,
         ]);
     }

@@ -25,15 +25,15 @@ TypeSafe requires an API key, which you can set up in the `TypeSafe console`_.
 Usage
 -----
 
-An invocation takes an :class:`Symfony\\AI\\Platform\\Bridge\\TypeSafe\\Evaluation`, made of a state and the questions
+An invocation takes an :class:`Symfony\\AI\\Platform\\Bridge\\Decision\\Evaluation`, made of a state and the questions
 to answer about it, keyed by an identifier of your choice. Jev reads the state once and answers every question
 against it, so asking several questions at once is both faster and cheaper than one invocation per question::
 
-    use Symfony\AI\Platform\Bridge\TypeSafe\Evaluation;
+    use Symfony\AI\Platform\Bridge\Decision\Evaluation;
+    use Symfony\AI\Platform\Bridge\Decision\Question\ChoiceQuestion;
+    use Symfony\AI\Platform\Bridge\Decision\Question\NoulQuestion;
+    use Symfony\AI\Platform\Bridge\Decision\Question\ScoreQuestion;
     use Symfony\AI\Platform\Bridge\TypeSafe\Factory;
-    use Symfony\AI\Platform\Bridge\TypeSafe\Question\ChoiceQuestion;
-    use Symfony\AI\Platform\Bridge\TypeSafe\Question\NoulQuestion;
-    use Symfony\AI\Platform\Bridge\TypeSafe\Question\ScoreQuestion;
 
     $platform = Factory::createPlatform($_ENV['TYPESAFE_API_KEY'], $httpClient);
 
@@ -58,19 +58,22 @@ The state is either plain text or structured data, like a list of chat messages 
 Questions
 ~~~~~~~~~
 
+The evaluation, question and answer classes live in the Decision bridge, in the
+``Symfony\AI\Platform\Bridge\Decision`` namespace. This bridge requires it, and other providers of decision models share it.
+
 There are three types of questions, each one coming with its own type of answer:
 
-* :class:`Symfony\\AI\\Platform\\Bridge\\TypeSafe\\Question\\NoulQuestion` asks a yes/no question. An optional
+* :class:`Symfony\\AI\\Platform\\Bridge\\Decision\\Question\\NoulQuestion` asks a yes/no question. An optional
   description of what a yes and a no mean can be given as second and third argument;
-* :class:`Symfony\\AI\\Platform\\Bridge\\TypeSafe\\Question\\ChoiceQuestion` picks one option out of a set. Every
+* :class:`Symfony\\AI\\Platform\\Bridge\\Decision\\Question\\ChoiceQuestion` picks one option out of a set. Every
   option maps to its description, or to ``null`` when the name of the option speaks for itself;
-* :class:`Symfony\\AI\\Platform\\Bridge\\TypeSafe\\Question\\ScoreQuestion` rates the state along levels, ordered
+* :class:`Symfony\\AI\\Platform\\Bridge\\Decision\\Question\\ScoreQuestion` rates the state along levels, ordered
   from the lowest to the highest.
 
 Answers
 ~~~~~~~
 
-The result holds an :class:`Symfony\\AI\\Platform\\Bridge\\TypeSafe\\Answer\\Answers` object, giving access to every
+The result holds an :class:`Symfony\\AI\\Platform\\Bridge\\Decision\\Answer\\Answers` object, giving access to every
 answer by the identifier of its question. The ``getNoul()``, ``getChoice()`` and ``getScore()`` methods return the
 answer with its type, and throw an exception when the answer is of another type::
 

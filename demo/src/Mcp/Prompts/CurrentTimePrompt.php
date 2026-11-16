@@ -11,7 +11,7 @@
 
 namespace App\Mcp\Prompts;
 
-use Mcp\Capability\Attribute\McpPrompt;
+use Mcp\Server\Capability\Attribute\McpPrompt;
 
 class CurrentTimePrompt
 {

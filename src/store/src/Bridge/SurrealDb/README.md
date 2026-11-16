@@ -7,9 +7,10 @@ SurrealDB Documentation
 -----------------------
 
  * [Vector search reference](https://surrealdb.com/docs/surrealdb/models/vector)
- * [`DEFINE INDEX` (MTREE/HNSW)](https://surrealdb.com/docs/surrealql/statements/define/indexes)
+ * [`DEFINE INDEX` (HNSW)](https://surrealdb.com/docs/surrealql/statements/define/indexes)
  * [Vector functions](https://surrealdb.com/docs/surrealql/functions/database/vector)
- * [KNN operator (`<|K|>`)](https://surrealdb.com/docs/surrealql/operators#knn)
+ * [KNN operator (`<|K,EF|>`)](https://surrealdb.com/docs/surrealql/operators#knn)
+ * [Migrating from 2.x to 3.x](https://surrealdb.com/docs/build/migrating/from-old-surrealdb-versions/2x-to-3x)
 
 Resources
 ---------

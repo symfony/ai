@@ -90,7 +90,7 @@ final class TwigComponent
      */
     public function getMessages(): array
     {
-        return $this->document->loadMessages()->withoutSystemMessage()->getMessages();
+        return $this->document->loadMessages()->withoutSystemMessage()->withoutToolMessages()->getMessages();
     }
 
     #[LiveAction]

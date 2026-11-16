@@ -3,9 +3,9 @@
         {
             "request": {
                 "method": "POST",
-                "url": "https://router.huggingface.co/hf-inference/models/BAAI/bge-large-en-v1.5",
-                "signature": "714225d46501cc569300954e3504fb87",
-                "signature_v2": "410a9da0a66cfb9a6c316e68187c9380",
+                "url": "https://router.huggingface.co/hf-inference/models/BAAI/bge-large-en-v1.5/pipeline/feature-extraction",
+                "signature": "3659154786829f7ec79aa0757d92e418",
+                "signature_v2": "6158769f94d447d97b5d4e9a2f7ebf8f",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -56,28 +56,28 @@
                         "uvicorn"
                     ],
                     "x-inference-id": [
-                        "64502c8d-2f7e-4f0d-bdca-8349ca29ac24"
+                        "ad65e13b-b77d-463a-9e48-f5ae6865e84a"
                     ],
                     "x-proxied-host": [
-                        "http://10.109.131.101"
+                        "http://10.109.6.79"
                     ],
                     "x-proxied-path": [
-                        "/"
+                        "/pipeline/feature-extraction"
                     ],
                     "x-proxied-replica": [
-                        "fwqhb66g-7mrnj"
+                        "fwqhb66g-l9fmm"
                     ],
                     "x-cache": [
                         "Miss from cloudfront"
                     ],
                     "via": [
-                        "1.1 cbcdd7c5f9f32f6aa99d4b5f866132fa.cloudfront.net (CloudFront)"
+                        "1.1 b3f288e164adbaabe632e02a62ed3088.cloudfront.net (CloudFront)"
                     ],
                     "x-amz-cf-pop": [
                         "TXL52-P3"
                     ],
                     "x-amz-cf-id": [
-                        "38IjC2MHKM8rXqueu9na0V7iQ46NO3wkd0xqQ3OcTUMmyLl0JzB2Hg=="
+                        "G2JU0RYvMKRjuJcWm7N-NheePaAPSAPyPEbQ_NybN_MphhyfWEYZsw=="
                     ],
                     "strict-transport-security": [
                         "max-age=31536000"

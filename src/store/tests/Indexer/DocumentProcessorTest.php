@@ -228,7 +228,7 @@ final class DocumentProcessorTest extends TestCase
         $processor = new DocumentProcessor($vectorizer, new TestStore());
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('DocumentProcessor expects documents to be instances of EmbeddableDocumentInterface, got "string".');
+        $this->expectExceptionMessage('DocumentProcessor expects documents to be instances of DocumentInterface, got "string".');
 
         $processor->process(['not-a-document']); /* @phpstan-ignore argument.type */
     }

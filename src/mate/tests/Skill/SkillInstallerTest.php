@@ -165,6 +165,30 @@ final class SkillInstallerTest extends TestCase
         $this->assertSame('../../.agents/skills/mate-system-information', readlink($mirror));
     }
 
+    /**
+     * Projects link .claude/skills to .agents/skills so both agents read one folder. Mirroring there
+     * deleted the copy and left a link pointing at itself, which an earlier install may have left behind.
+     */
+    public function testClaudeSkillsLinkedToAgentsSkillsKeepsTheCopy()
+    {
+        $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'Inspect the runtime environment when diagnosing a version-specific problem.');
+        mkdir($this->rootDir.'/.agents/skills', 0777, true);
+        mkdir($this->rootDir.'/.claude', 0777, true);
+        symlink('../.agents/skills', $this->rootDir.'/.claude/skills');
+        symlink('../../.agents/skills/mate-system-information', $this->rootDir.'/.agents/skills/mate-system-information');
+
+        $installer = $this->installer();
+        $installer->install($this->discover());
+
+        $agentsSkill = $this->rootDir.'/.agents/skills/mate-system-information';
+        $this->assertFalse(is_link($agentsSkill));
+        $this->assertFileExists($agentsSkill.'/SKILL.md');
+        $this->assertStringStartsWith('sha256:', (string) $this->state('vendor/pkg-a', 'system-information')['hash']);
+        $this->assertSame('linked', $installer->mirrorState('mate-system-information'));
+
+        $this->assertSame([], $this->installer()->install($this->discover())->updated);
+    }
+
     public function testVanishedSkillIsAutoPruned()
     {
         $this->createSkill($this->rootDir.'/vendor/vendor/pkg-a/skills', 'system-information', 'Inspect the runtime environment when diagnosing a version-specific problem.');

@@ -34,14 +34,26 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class VecStore implements ManagedStoreInterface, StoreInterface
 {
+    use PdoConnectionTrait;
+
     private const RRF_K = 60;
 
+    /**
+     * @param \PDO|string $connection A PDO instance, or a DSN to connect with on the first query
+     * @param array{
+     *     db_username?: string,
+     *     db_password?: string,
+     *     db_connection_options?: array<int, mixed>,
+     * } $connectionOptions Used only when $connection is a DSN
+     */
     public function __construct(
-        private readonly \PDO $connection,
+        #[\SensitiveParameter] \PDO|string $connection,
         private readonly string $tableName,
-        private readonly Distance $distance = Distance::Cosine,
-        private readonly int $vectorDimension = 1536,
+        private readonly Metric $metric = Metric::Cosine,
+        private readonly int $dimensions = 1536,
+        #[\SensitiveParameter] array $connectionOptions = [],
     ) {
+        $this->initializeConnection($connection, $connectionOptions);
     }
 
     public function setup(array $options = []): void
@@ -50,14 +62,14 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException('No supported options.');
         }
 
-        $this->connection->exec(\sprintf(
+        $this->getConnection()->exec(\sprintf(
             'CREATE VIRTUAL TABLE IF NOT EXISTS %s USING vec0(id TEXT PRIMARY KEY, embedding float[%d] distance_metric=%s, +metadata TEXT)',
             $this->tableName,
-            $this->vectorDimension,
-            $this->distance->value,
+            $this->dimensions,
+            $this->metric->value,
         ));
 
-        $this->connection->exec(\sprintf(
+        $this->getConnection()->exec(\sprintf(
             'CREATE VIRTUAL TABLE IF NOT EXISTS %s_fts USING fts5(id UNINDEXED, content)',
             $this->tableName,
         ));
@@ -66,10 +78,10 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
     public static function fromPdo(
         \PDO $connection,
         string $tableName,
-        Distance $distance = Distance::Cosine,
-        int $vectorDimension = 1536,
+        Metric $metric = Metric::Cosine,
+        int $dimensions = 1536,
     ): self {
-        return new self($connection, $tableName, $distance, $vectorDimension);
+        return new self($connection, $tableName, $metric, $dimensions);
     }
 
     /**
@@ -78,8 +90,8 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
     public static function fromDbal(
         Connection $connection,
         string $tableName,
-        Distance $distance = Distance::Cosine,
-        int $vectorDimension = 1536,
+        Metric $metric = Metric::Cosine,
+        int $dimensions = 1536,
     ): self {
         $pdo = $connection->getNativeConnection();
 
@@ -87,7 +99,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException('Only DBAL connections using PDO driver are supported.');
         }
 
-        return self::fromPdo($pdo, $tableName, $distance, $vectorDimension);
+        return self::fromPdo($pdo, $tableName, $metric, $dimensions);
     }
 
     public static function isExtensionAvailable(\PDO $connection): bool
@@ -103,15 +115,15 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
 
     public function count(): int
     {
-        $statement = $this->connection->query(\sprintf('SELECT COUNT(*) FROM %s', $this->tableName));
+        $statement = $this->getConnection()->query(\sprintf('SELECT COUNT(*) FROM %s', $this->tableName));
 
         return (int) $statement->fetchColumn();
     }
 
     public function drop(array $options = []): void
     {
-        $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s_fts', $this->tableName));
-        $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
+        $this->getConnection()->exec(\sprintf('DROP TABLE IF EXISTS %s_fts', $this->tableName));
+        $this->getConnection()->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
     }
 
     public function add(VectorDocumentInterface|array $documents): void
@@ -120,25 +132,25 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             $documents = [$documents];
         }
 
-        $this->connection->beginTransaction();
+        $this->getConnection()->beginTransaction();
 
         try {
-            $deleteStatement = $this->connection->prepare(\sprintf(
+            $deleteStatement = $this->getConnection()->prepare(\sprintf(
                 'DELETE FROM %s WHERE id = :id',
                 $this->tableName,
             ));
 
-            $insertStatement = $this->connection->prepare(\sprintf(
+            $insertStatement = $this->getConnection()->prepare(\sprintf(
                 'INSERT INTO %s (id, embedding, metadata) VALUES (:id, :embedding, :metadata)',
                 $this->tableName,
             ));
 
-            $ftsDeleteStatement = $this->connection->prepare(\sprintf(
+            $ftsDeleteStatement = $this->getConnection()->prepare(\sprintf(
                 'DELETE FROM %s_fts WHERE id = :id',
                 $this->tableName,
             ));
 
-            $ftsInsertStatement = $this->connection->prepare(\sprintf(
+            $ftsInsertStatement = $this->getConnection()->prepare(\sprintf(
                 'INSERT INTO %s_fts (id, content) VALUES (:id, :content)',
                 $this->tableName,
             ));
@@ -167,9 +179,9 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
                 }
             }
 
-            $this->connection->commit();
+            $this->getConnection()->commit();
         } catch (\Throwable $e) {
-            $this->connection->rollBack();
+            $this->getConnection()->rollBack();
 
             throw $e;
         }
@@ -185,15 +197,15 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             return;
         }
 
-        $this->connection->beginTransaction();
+        $this->getConnection()->beginTransaction();
 
         try {
-            $statement = $this->connection->prepare(\sprintf(
+            $statement = $this->getConnection()->prepare(\sprintf(
                 'DELETE FROM %s WHERE id = :id',
                 $this->tableName,
             ));
 
-            $ftsStatement = $this->connection->prepare(\sprintf(
+            $ftsStatement = $this->getConnection()->prepare(\sprintf(
                 'DELETE FROM %s_fts WHERE id = :id',
                 $this->tableName,
             ));
@@ -206,9 +218,9 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
                 $ftsStatement->execute();
             }
 
-            $this->connection->commit();
+            $this->getConnection()->commit();
         } catch (\Throwable $e) {
-            $this->connection->rollBack();
+            $this->getConnection()->rollBack();
 
             throw $e;
         }
@@ -216,15 +228,15 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
 
     public function clear(array $options = []): void
     {
-        $this->connection->beginTransaction();
+        $this->getConnection()->beginTransaction();
 
         try {
-            $this->connection->exec(\sprintf('DELETE FROM %s_fts', $this->tableName));
-            $this->connection->exec(\sprintf('DELETE FROM %s', $this->tableName));
+            $this->getConnection()->exec(\sprintf('DELETE FROM %s_fts', $this->tableName));
+            $this->getConnection()->exec(\sprintf('DELETE FROM %s', $this->tableName));
 
-            $this->connection->commit();
+            $this->getConnection()->commit();
         } catch (\Throwable $e) {
-            $this->connection->rollBack();
+            $this->getConnection()->rollBack();
 
             throw $e;
         }
@@ -241,7 +253,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     rrfCandidatePoolSize?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
@@ -258,7 +270,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
@@ -266,13 +278,13 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
      */
     private function queryVector(VectorQuery $query, array $options): iterable
     {
-        $maxItems = $options['maxItems'] ?? 5;
+        $limit = $options['limit'] ?? 5;
         $hasFilter = isset($options['filter']);
 
         // Over-fetch when filtering to compensate for post-query filtering
-        $fetchLimit = $hasFilter ? $maxItems * 3 : $maxItems;
+        $fetchLimit = $hasFilter ? $limit * 3 : $limit;
 
-        $statement = $this->connection->prepare(\sprintf(
+        $statement = $this->getConnection()->prepare(\sprintf(
             'SELECT id, distance, metadata FROM %s WHERE embedding MATCH :embedding AND k = :k ORDER BY distance',
             $this->tableName,
         ));
@@ -290,7 +302,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
         $count = 0;
 
         foreach ($results as $row) {
-            if ($count >= $maxItems) {
+            if ($count >= $limit) {
                 break;
             }
 
@@ -312,7 +324,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
      *
@@ -321,7 +333,8 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
     private function queryText(TextQuery $query, array $options): iterable
     {
         $searchTerms = $query->getTexts();
-        $ftsQuery = implode(' OR ', array_map(static fn (string $term): string => '"'.$term.'"', $searchTerms));
+        // FTS5 ends the query text at a NUL byte, which would leave the phrase unterminated
+        $ftsQuery = implode(' OR ', array_map(static fn (string $term): string => '"'.str_replace(['"', "\0"], ['""', ''], $term).'"', $searchTerms));
 
         $sql = \sprintf(
             'SELECT id, rank FROM %s_fts WHERE %s_fts MATCH :query ORDER BY rank',
@@ -329,11 +342,11 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             $this->tableName,
         );
 
-        if (isset($options['maxItems'])) {
-            $sql .= \sprintf(' LIMIT %d', $options['maxItems']);
+        if (isset($options['limit'])) {
+            $sql .= \sprintf(' LIMIT %d', $options['limit']);
         }
 
-        $statement = $this->connection->prepare($sql);
+        $statement = $this->getConnection()->prepare($sql);
         $statement->bindValue(':query', $ftsQuery);
         $statement->execute();
 
@@ -358,11 +371,11 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
             $orderedDocuments = array_values(array_filter($orderedDocuments, $options['filter']));
         }
 
-        $maxItems = $options['maxItems'] ?? null;
+        $limit = $options['limit'] ?? null;
         $count = 0;
 
         foreach ($orderedDocuments as $document) {
-            if (null !== $maxItems && $count >= $maxItems) {
+            if (null !== $limit && $count >= $limit) {
                 break;
             }
 
@@ -380,11 +393,11 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
      * and the no-overlap scenario where vector and text results are entirely disjoint.
      *
      * Each sub-query fetches a candidate pool of `rrfCandidatePoolSize` documents (defaults
-     * to `maxItems * 10`, minimum 100, or 100 when `maxItems` is not set). RRF merges and
-     * re-ranks the pool, then `maxItems` is applied. Override via `$options['rrfCandidatePoolSize']`.
+     * to `limit * 10`, minimum 100, or 100 when `limit` is not set). RRF merges and
+     * re-ranks the pool, then `limit` is applied. Override via `$options['rrfCandidatePoolSize']`.
      *
      * @param array{
-     *     maxItems?: positive-int,
+     *     limit?: positive-int,
      *     rrfCandidatePoolSize?: positive-int,
      *     filter?: callable(VectorDocumentInterface): bool,
      * } $options
@@ -393,17 +406,17 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
      */
     private function queryHybrid(HybridQuery $query, array $options): iterable
     {
-        $maxItems = $options['maxItems'] ?? null;
+        $limit = $options['limit'] ?? null;
 
-        // Each sub-query fetches a candidate pool larger than maxItems so RRF has
-        // enough documents to rank before trimming. Defaults to 100 when maxItems
+        // Each sub-query fetches a candidate pool larger than limit so RRF has
+        // enough documents to rank before trimming. Defaults to 100 when limit
         // is not set, since sqlite-vec always requires a k parameter.
         $candidatePoolSize = $options['rrfCandidatePoolSize']
-            ?? (null !== $maxItems ? max($maxItems * 10, 100) : 100);
+            ?? (null !== $limit ? max($limit * 10, 100) : 100);
 
         $subOptions = $options;
         unset($subOptions['rrfCandidatePoolSize']);
-        $subOptions['maxItems'] = $candidatePoolSize;
+        $subOptions['limit'] = $candidatePoolSize;
 
         $vectorResults = iterator_to_array($this->queryVector(
             new VectorQuery($query->getVector()),
@@ -441,7 +454,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
         $count = 0;
 
         foreach ($scores as ['doc' => $doc, 'score' => $score]) {
-            if (null !== $maxItems && $count >= $maxItems) {
+            if (null !== $limit && $count >= $limit) {
                 break;
             }
 
@@ -468,7 +481,7 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
 
         $placeholders = implode(', ', array_fill(0, \count($ids), '?'));
 
-        $statement = $this->connection->prepare(\sprintf(
+        $statement = $this->getConnection()->prepare(\sprintf(
             'SELECT id, embedding, metadata FROM %s WHERE id IN (%s)',
             $this->tableName,
             $placeholders,

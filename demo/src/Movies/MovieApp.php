@@ -33,7 +33,7 @@ use Symfony\AI\McpBundle\Attribute\AsMcpAppTool;
     uri: 'ui://movies',
     name: 'movie_search',
     title: 'Movies',
-    description: 'Search the movie collection by title, director or cast and browse the results as an interactive grid.',
+    description: 'Search the movie collection by meaning, e.g. "space exploration" or "Keanu Reeves", and browse the results as an interactive grid.',
     template: 'mcp/movies.html.twig',
     toolTemplate: 'mcp/_movies_grid.html.twig',
     prefersBorder: true,
@@ -49,7 +49,7 @@ final class MovieApp
     /**
      * Search movies and return the matching grid as a context for the result template.
      *
-     * @param string $query search term matched against title, director and cast; empty returns all movies
+     * @param string $query what to look for, matched by meaning; empty returns all movies
      *
      * @return array{movies: list<Movie>, query: string}
      */
@@ -64,7 +64,7 @@ final class MovieApp
     /**
      * Return a single movie's detail view as a context for the detail template.
      *
-     * @param string $slug the movie slug identifier
+     * @param string $slug the slug of the movie
      *
      * @return array{movie: Movie|null}
      */
@@ -72,7 +72,7 @@ final class MovieApp
     public function showMovie(string $slug): array
     {
         return [
-            'movie' => $this->movies->findOne($slug),
+            'movie' => $this->movies->findOneBySlug($slug),
         ];
     }
 }

@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\OpenResponses\Contract\Message;
 use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
 use Symfony\AI\Platform\Contract\Normalizer\ModelContractNormalizer;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Content\WebSearch;
@@ -40,11 +41,29 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
         $items = [];
-        $text = '';
+        $text = null;
+        $phase = null;
 
         foreach ($data->getContent() as $part) {
             if ($part instanceof Text) {
+                if ($part->getPhase() !== $phase) {
+                    $this->flushText($items, $text, $data, $phase);
+                    $phase = $part->getPhase();
+                }
+
                 $text .= $part->getText();
+
+                continue;
+            }
+
+            if ($part instanceof Commentary) {
+                if ('' === $part->getContent()) {
+                    continue;
+                }
+
+                // Replayed with its phase, so the model does not read its narration as a past answer
+                $this->flushText($items, $text, $data, $phase);
+                $items[] = [...self::message($data, $part->getContent()), 'phase' => 'commentary'];
 
                 continue;
             }
@@ -56,7 +75,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
                     continue;
                 }
 
-                $this->flushText($items, $text, $data);
+                $this->flushText($items, $text, $data, $phase);
                 $items[] = $item;
 
                 continue;
@@ -69,14 +88,14 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
                     continue;
                 }
 
-                $this->flushText($items, $text, $data);
+                $this->flushText($items, $text, $data, $phase);
                 $items[] = $item;
 
                 continue;
             }
 
             if ($part instanceof ToolCall) {
-                $this->flushText($items, $text, $data);
+                $this->flushText($items, $text, $data, $phase);
 
                 /** @var array<string, mixed> $toolCall */
                 $toolCall = $this->normalizer->normalize($part, $format, $context);
@@ -84,11 +103,7 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
             }
         }
 
-        $this->flushText($items, $text, $data);
-
-        if ([] === $items) {
-            $items[] = self::message($data, null);
-        }
+        $this->flushText($items, $text, $data, $phase);
 
         return $items;
     }
@@ -159,26 +174,33 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer implement
 
     /**
      * @param list<array<string, mixed>> $items
+     *
+     * @param-out null $text
      */
-    private function flushText(array &$items, string &$text, AssistantMessage $data): void
+    private function flushText(array &$items, ?string &$text, AssistantMessage $data, ?string $phase): void
     {
-        if ('' === $text) {
+        if (null === $text) {
             return;
         }
 
-        $items[] = self::message($data, $text);
-        $text = '';
+        $item = self::message($data, $text);
+        if (null !== $phase) {
+            $item['phase'] = $phase;
+        }
+
+        $items[] = $item;
+        $text = null;
     }
 
     /**
      * @return array<string, mixed>
      */
-    private static function message(AssistantMessage $data, ?string $content): array
+    private static function message(AssistantMessage $data, string $content): array
     {
         return [
             'role' => $data->getRole()->value,
             'type' => 'message',
-            'content' => $content,
+            'content' => '' === $content ? [['type' => 'output_text', 'text' => '', 'annotations' => []]] : $content,
         ];
     }
 }

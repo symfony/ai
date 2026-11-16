@@ -13,7 +13,10 @@ namespace Symfony\AI\Platform\Bridge\VertexAi\Tests\Embeddings;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\VertexAi\Embeddings\ResultConverter;
+use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class ResultConverterTest extends TestCase
@@ -38,5 +41,15 @@ final class ResultConverterTest extends TestCase
 
         $this->assertSame([0.3, 0.4, 0.4], $convertedContent[0]->getData());
         $this->assertSame([0.0, 0.0, 0.2], $convertedContent[1]->getData());
+    }
+
+    public function testThrowsServerExceptionOnServerError()
+    {
+        $response = (new MockHttpClient(new MockResponse('<html>Bad Gateway</html>', ['http_code' => 502])))->request('POST', 'https://aiplatform.googleapis.com/v1/embeddings');
+
+        $this->expectException(ServerException::class);
+        $this->expectExceptionMessage('Server error (HTTP 502).');
+
+        (new ResultConverter())->convert(new RawHttpResult($response));
     }
 }

@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\McpBundle\Tests\App;
 
-use Mcp\Capability\Registry\ElementReference;
-use Mcp\Capability\Registry\ReferenceHandlerInterface;
+use Mcp\Server\Capability\Registry\ElementReference;
+use Mcp\Server\Capability\Registry\ReferenceHandlerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\App\McpAppReferenceHandler;
 use Symfony\AI\McpBundle\App\McpAppRenderer;

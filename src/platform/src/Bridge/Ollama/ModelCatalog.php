@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
-use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
@@ -24,15 +24,19 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  * @author Oskar Stark <oskarstark@googlemail.com>
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
-final class ModelCatalog implements ModelCatalogInterface
+final class ModelCatalog extends AbstractModelCatalog
 {
     public function __construct(
         private readonly HttpClientInterface $httpClient,
     ) {
+        $this->models = [];
     }
 
     public function getModel(string $modelName): Ollama
     {
+        // options like "qwen3:8b?think=false" are not part of the name that Ollama knows
+        ['name' => $modelName, 'options' => $options] = $this->parseModelName($modelName);
+
         $response = $this->httpClient->request('POST', 'api/show', [
             'json' => [
                 'model' => $modelName,
@@ -61,6 +65,20 @@ final class ModelCatalog implements ModelCatalogInterface
             throw new InvalidArgumentException('The model information could not be retrieved from the Ollama API. Your Ollama server might be too old. Try upgrade it.');
         }
 
+        // Decision models use /v1/systemone: retain vision, but not chat capabilities (e.g. "completion").
+        if (\in_array('decision', $payload['capabilities'], true)) {
+            return new Decision($modelName, \in_array('vision', $payload['capabilities'], true) ? [Capability::INPUT_IMAGE] : [], $options);
+        }
+
+        // Speech models only generate speech: chat, completion and embedding requests are rejected by Ollama.
+        if (\in_array('speech', $payload['capabilities'], true)) {
+            return new TextToSpeech($modelName, [
+                Capability::INPUT_TEXT,
+                Capability::OUTPUT_AUDIO,
+                Capability::TEXT_TO_SPEECH,
+            ], $options);
+        }
+
         $capabilities = array_map(
             static fn (string $capability): Capability => match ($capability) {
                 'embedding' => Capability::EMBEDDINGS,
@@ -79,7 +97,7 @@ final class ModelCatalog implements ModelCatalogInterface
             $capabilities[] = Capability::OUTPUT_STRUCTURED;
         }
 
-        return new Ollama($modelName, $capabilities);
+        return new Ollama($modelName, $capabilities, $options);
     }
 
     public function getModels(): array
@@ -110,7 +128,7 @@ final class ModelCatalog implements ModelCatalogInterface
 
                 return [
                     $retrievedModel->getName() => [
-                        'class' => Ollama::class,
+                        'class' => $retrievedModel::class,
                         'capabilities' => $retrievedModel->getCapabilities(),
                     ],
                 ];

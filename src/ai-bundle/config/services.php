@@ -11,23 +11,23 @@
 
 namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
+use Symfony\AI\Agent\Command\DropMessageStoreCommand;
+use Symfony\AI\Agent\Command\SetupMessageStoreCommand;
+use Symfony\AI\Agent\InputProcessor\ModelOverrideInputProcessor;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
 use Symfony\AI\Agent\Toolbox\EventListener\ValidateToolCallArgumentsListener;
 use Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber;
+use Symfony\AI\Agent\Toolbox\Source\SourceCollectionNormalizer;
 use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Agent\Toolbox\ToolCallArgumentResolver;
 use Symfony\AI\Agent\Toolbox\ToolFactory\ReflectionToolFactory;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\AiBundle\Command\AgentCallCommand;
 use Symfony\AI\AiBundle\Command\PlatformInvokeCommand;
+use Symfony\AI\AiBundle\Mcp\McpSchemaAttributeDescriber;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
 use Symfony\AI\AiBundle\Security\EventListener\IsGrantedToolAttributeListener;
-use Symfony\AI\Chat\Command\DropStoreCommand as DropMessageStoreCommand;
-use Symfony\AI\Chat\Command\SetupStoreCommand as SetupMessageStoreCommand;
-use Symfony\AI\Chat\MessageNormalizer;
-use Symfony\AI\Platform\Bridge\AiMlApi\ModelCatalog as AiMlApiModelCatalog;
 use Symfony\AI\Platform\Bridge\Albert\ModelCatalog as AlbertModelCatalog;
-use Symfony\AI\Platform\Bridge\AmazeeAi\ModelApiCatalog as AmazeeAiModelCatalog;
 use Symfony\AI\Platform\Bridge\Anthropic\Contract\AnthropicContract;
 use Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog as AnthropicModelCatalog;
 use Symfony\AI\Platform\Bridge\Azure\OpenAi\ModelCatalog as AzureOpenAiModelCatalog;
@@ -46,22 +46,22 @@ use Symfony\AI\Platform\Bridge\EdenAi\ModelCatalog as EdenAiModelCatalog;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Contract\ElevenLabsContract;
 use Symfony\AI\Platform\Bridge\Gemini\Contract\GeminiContract;
 use Symfony\AI\Platform\Bridge\Gemini\ModelCatalog as GeminiModelCatalog;
+use Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog as GenericFallbackModelCatalog;
 use Symfony\AI\Platform\Bridge\Higgsfield\Contract\HiggsfieldContract;
 use Symfony\AI\Platform\Bridge\HuggingFace\Contract\HuggingFaceContract;
 use Symfony\AI\Platform\Bridge\HuggingFace\ModelCatalog as HuggingFaceModelCatalog;
 use Symfony\AI\Platform\Bridge\LmStudio\ModelCatalog as LmStudioModelCatalog;
-use Symfony\AI\Platform\Bridge\Meta\ModelCatalog as MetaModelCatalog;
 use Symfony\AI\Platform\Bridge\MiniMax\Contract\MiniMaxContract;
 use Symfony\AI\Platform\Bridge\MiniMax\ModelCatalog as MiniMaxModelCatalog;
 use Symfony\AI\Platform\Bridge\Mistral\ModelCatalog as MistralModelCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\Contract\OllamaContract;
 use Symfony\AI\Platform\Bridge\OpenAi\Contract\OpenAiContract;
 use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog as OpenAiModelCatalog;
+use Symfony\AI\Platform\Bridge\OpenResponses\FallbackModelCatalog as OpenResponsesFallbackModelCatalog;
 use Symfony\AI\Platform\Bridge\OpenRouter\ModelCatalog as OpenRouterModelCatalog;
 use Symfony\AI\Platform\Bridge\Ovh\ModelCatalog as OvhModelCatalog;
 use Symfony\AI\Platform\Bridge\Perplexity\Contract\PerplexityContract;
 use Symfony\AI\Platform\Bridge\Perplexity\ModelCatalog as PerplexityModelCatalog;
-use Symfony\AI\Platform\Bridge\Replicate\ModelCatalog as ReplicateModelCatalog;
 use Symfony\AI\Platform\Bridge\Scaleway\ModelCatalog as ScalewayModelCatalog;
 use Symfony\AI\Platform\Bridge\Together\Contract\TogetherContract;
 use Symfony\AI\Platform\Bridge\TransformersPhp\ModelCatalog as TransformersPhpModelCatalog;
@@ -86,6 +86,8 @@ use Symfony\AI\Platform\Job\JobRunner;
 use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
+use Symfony\AI\Platform\Serializer\MessageBagNormalizer;
+use Symfony\AI\Platform\Serializer\MessageNormalizer;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
@@ -129,9 +131,7 @@ return static function (ContainerConfigurator $container): void {
             ->factory([HiggsfieldContract::class, 'create'])
 
         // model catalog
-        ->set('ai.platform.model_catalog.aimlapi', AiMlApiModelCatalog::class)
         ->set('ai.platform.model_catalog.albert', AlbertModelCatalog::class)
-        ->set('ai.platform.model_catalog.amazeeai', AmazeeAiModelCatalog::class)
         ->set('ai.platform.model_catalog.anthropic', AnthropicModelCatalog::class)
         ->set('ai.platform.model_catalog.azure.openai', AzureOpenAiModelCatalog::class)
         ->set('ai.platform.model_catalog.bedrock', BedrockModelCatalog::class)
@@ -146,21 +146,21 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.platform.model_catalog.dockermodelrunner', DockerModelRunnerModelCatalog::class)
         ->set('ai.platform.model_catalog.edenai', EdenAiModelCatalog::class)
         ->set('ai.platform.model_catalog.gemini', GeminiModelCatalog::class)
+        ->set('ai.platform.model_catalog.generic', GenericFallbackModelCatalog::class)
         ->set('ai.platform.model_catalog.huggingface', HuggingFaceModelCatalog::class)
         ->set('ai.platform.model_catalog.lmstudio', LmStudioModelCatalog::class)
-        ->set('ai.platform.model_catalog.meta', MetaModelCatalog::class)
         ->set('ai.platform.model_catalog.minimax', MiniMaxModelCatalog::class)
         ->set('ai.platform.model_catalog.mistral', MistralModelCatalog::class)
         ->set('ai.platform.model_catalog.openai', OpenAiModelCatalog::class)
+        ->set('ai.platform.model_catalog.openresponses', OpenResponsesFallbackModelCatalog::class)
         ->set('ai.platform.model_catalog.openrouter', OpenRouterModelCatalog::class)
         ->set('ai.platform.model_catalog.ovh', OvhModelCatalog::class)
         ->set('ai.platform.model_catalog.perplexity', PerplexityModelCatalog::class)
-        ->set('ai.platform.model_catalog.replicate', ReplicateModelCatalog::class)
         ->set('ai.platform.model_catalog.scaleway', ScalewayModelCatalog::class)
-        ->set('ai.platform.model_catalog.vertexai.gemini', VertexAiModelCatalog::class)
-        ->set('ai.platform.model_catalog.voyage', VoyageModelCatalog::class)
         ->set('ai.platform.model_catalog.transformersphp', TransformersPhpModelCatalog::class)
         ->set('ai.platform.model_catalog.typesafe', TypeSafeModelCatalog::class)
+        ->set('ai.platform.model_catalog.vertexai.gemini', VertexAiModelCatalog::class)
+        ->set('ai.platform.model_catalog.voyage', VoyageModelCatalog::class)
 
         // message templates
         ->set('ai.platform.template_renderer.string', StringTemplateRenderer::class)
@@ -231,6 +231,9 @@ return static function (ContainerConfigurator $container): void {
                 tagged_iterator('ai.platform.json_schema.provider', indexAttribute: 'key'),
             ])
             ->tag('ai.platform.json_schema.describer')
+        ->set('ai.platform.json_schema.describer.mcp_schema', McpSchemaAttributeDescriber::class)
+            ->args([service('ai.platform.json_schema.describer.schema_attribute')])
+            ->tag('ai.platform.json_schema.describer')
         ->set('ai.platform.json_schema.describer', Describer::class)
             ->args([
                 tagged_iterator('ai.platform.json_schema.describer'),
@@ -282,12 +285,12 @@ return static function (ContainerConfigurator $container): void {
             ])
         ->set('ai.tool.validate_tool_call_arguments_listener', ValidateToolCallArgumentsListener::class)
             ->args([
-                service('validator'),
+                service('validator')->nullOnInvalid(),
             ])
             ->tag('kernel.event_listener', ['event' => ToolCallArgumentsResolved::class])
         ->set('ai.security.is_granted_attribute_listener', IsGrantedToolAttributeListener::class)
             ->args([
-                service('security.authorization_checker'),
+                service('security.authorization_checker')->nullOnInvalid(),
                 service('expression_language')->nullOnInvalid(),
             ])
             ->tag('kernel.event_listener', ['event' => ToolCallArgumentsResolved::class])
@@ -295,19 +298,25 @@ return static function (ContainerConfigurator $container): void {
         // profiler
         ->set('ai.data_collector', DataCollector::class)
             ->args([
-                tagged_iterator('ai.traceable_platform'),
-                tagged_iterator('ai.traceable_toolbox'),
+                tagged_iterator('ai.traceable_platform', 'name'),
+                tagged_iterator('ai.traceable_toolbox', 'name'),
                 tagged_iterator('ai.profiler_toolbox'),
-                tagged_iterator('ai.traceable_message_store'),
-                tagged_iterator('ai.traceable_chat'),
-                tagged_iterator('ai.traceable_agent'),
-                tagged_iterator('ai.traceable_store'),
+                tagged_iterator('ai.traceable_message_store', 'name'),
+                tagged_iterator('ai.traceable_agent', 'name'),
+                tagged_iterator('ai.traceable_store', 'name'),
             ])
             ->tag('data_collector', ['id' => 'ai'])
 
         // serializer
-        ->set('ai.chat.message_bag.normalizer', MessageNormalizer::class)
+        ->set('ai.platform.message_normalizer', MessageNormalizer::class)
             ->tag('serializer.normalizer')
+        ->set('ai.platform.message_bag_normalizer', MessageBagNormalizer::class)
+            ->args([service('ai.platform.message_normalizer')])
+            ->tag('serializer.normalizer')
+        ->set('ai.agent.source_collection_normalizer', SourceCollectionNormalizer::class)
+            ->tag('serializer.normalizer')
+        ->set('ai.agent.model_override_input_processor', ModelOverrideInputProcessor::class)
+            ->tag('ai.agent.input_processor')
 
         // commands
         ->set('ai.command.chat', AgentCallCommand::class)
@@ -318,7 +327,6 @@ return static function (ContainerConfigurator $container): void {
         ->set('ai.command.setup_store', SetupStoreCommand::class)
             ->args([
                 tagged_locator('ai.store', 'name'),
-                abstract_arg('setup store options'),
             ])
             ->tag('console.command')
         ->set('ai.command.drop_store', DropStoreCommand::class)

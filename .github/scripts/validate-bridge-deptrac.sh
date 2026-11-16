@@ -39,6 +39,12 @@ for bridge_dir in ${BRIDGE_PATH}/; do
     fi
 
     bridge_name=$(basename "$bridge_dir")
+
+    # A component can hold bridges of several types, like the tools and message stores of the agent component
+    bridge_type=$(jq -r '.type // empty' "${bridge_dir%/}/composer.json" 2>/dev/null || true)
+    if [[ "$bridge_type" == symfony-ai-* && "$bridge_type" != "symfony-ai-${BRIDGE_TYPE}" ]]; then
+        continue
+    fi
     pattern="Symfony${SEP}AI${SEP}${NAMESPACE}${SEP}Bridge${SEP}${bridge_name}${SEP}"
 
     if ! grep -qF "$pattern" "$DEPTRAC_FILE"; then

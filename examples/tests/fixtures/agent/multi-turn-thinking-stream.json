@@ -4,7 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.anthropic.com/v1/messages",
-                "signature": "169b7b27619cfa7e3973128abfe88581",
+                "signature": "b163f98430269dfc34f6698b17d6061d",
+                "signature_v2": "3b67058c9ee707a91c4f1c617cdc94a8",
                 "headers": {
                     "x-api-key": [
                         "[redacted]"
@@ -19,7 +20,7 @@
                         "interleaved-thinking-2025-05-14"
                     ]
                 },
-                "body": "{\"max_tokens\":4000,\"stream\":true,\"thinking\":{\"type\":\"enabled\",\"budget_tokens\":1024},\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What time is it right now?\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+                "body": "{\"stream\":true,\"max_tokens\":4000,\"thinking\":{\"type\":\"enabled\",\"budget_tokens\":1024},\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What time is it right now?\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
             },
             "response": {
                 "status": 200,
@@ -37,7 +38,7 @@
                         "5000000"
                     ],
                     "anthropic-ratelimit-input-tokens-reset": [
-                        "2026-08-28T23:00:54Z"
+                        "2026-11-03T21:09:15Z"
                     ],
                     "anthropic-ratelimit-output-tokens-limit": [
                         "1000000"
@@ -46,7 +47,7 @@
                         "1000000"
                     ],
                     "anthropic-ratelimit-output-tokens-reset": [
-                        "2026-08-28T23:00:54Z"
+                        "2026-11-03T21:09:15Z"
                     ],
                     "anthropic-ratelimit-requests-limit": [
                         "5000"
@@ -55,7 +56,7 @@
                         "4999"
                     ],
                     "anthropic-ratelimit-requests-reset": [
-                        "2026-08-28T23:00:54Z"
+                        "2026-11-03T21:09:15Z"
                     ],
                     "anthropic-ratelimit-tokens-limit": [
                         "6000000"
@@ -64,28 +65,28 @@
                         "6000000"
                     ],
                     "anthropic-ratelimit-tokens-reset": [
-                        "2026-08-28T23:00:54Z"
+                        "2026-11-03T21:09:15Z"
                     ],
                     "strict-transport-security": [
                         "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "traceresponse": [
+                        "00-dbb927ebbda9e1b675f2d1aac4b898be-f46abc8eb9e45809-01"
                     ],
                     "anthropic-organization-id": [
                         "152d88d9-0d18-4cae-80c9-c425a5bf4e25"
                     ],
                     "anthropic-workspace-id": [
-                        "wrkspc_01Eo1YZvq8sNWFRAfhfjg7gS"
-                    ],
-                    "traceresponse": [
-                        "00-762e3642e5b91cafab7bd049ec0e1546-dd65e86f4863d542-01"
-                    ],
-                    "server": [
-                        "cloudflare"
+                        "wrkspc_01VtCNo1p2RhA6Wdyk9fA7Er"
                     ],
                     "content-encoding": [
                         "gzip"
                     ],
                     "vary": [
                         "Accept-Encoding"
+                    ],
+                    "server": [
+                        "cloudflare"
                     ],
                     "x-robots-tag": [
                         "none"
@@ -95,14 +96,15 @@
                     ]
                 },
                 "body_format": "sse",
-                "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CeVygbKrZxVBFnrYqLZg1\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":729,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}         }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}            }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user is asking for\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" the current time. I have access to a clock function that can provide the current date and time. Let me use it.\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EoQDCpsBCBEYAipAuZHKs82WEZdSpAtul9f5tA98Wa/oYcqMRTUZ4wyDozjaxoZxP69FsW+DlAsa0AKtyVEyDCZFE1EqSrTGHuKoIDIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJDE1MmQ4OGQ5LTBkMTgtNGNhZS04MGM5LWM0MjVhNWJmNGUyNagBqKbI1AYSDL6c3HsLWSATj1EYhBoMbHQosEE22qsw3ma+IjAmuvAbCkYIC2fxTpgeazBj5bRNpbDcDrZh9IB2fgEjYp8Fjy77mJku1Ozma94R/JkqlQFzhyuWYstSqsRWxC2KKdXBweJbjiUkNmIHbERqgroK3w7bw0H0o17YuzD+rejoAn++1XsJLgC7ZFGJuRFevA6pZG/U51jzKMxNW/Emv4hrL/ruxZh9qhnLUWzlMrhTqu6u2K3LZU9BTExwAC2LofxbYCse05Cu1SzXjrd2E+EKAfP2utm6+QlLeYzPi1Lrq6/cfOtqjRgB\"}      }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0              }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01FX2eH86CmqTjwF1ymuTW8e\",\"name\":\"clock\",\"input\":{},\"caller\":{\"type\":\"direct\"}}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"}           }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1           }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":729,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":72,\"output_tokens_details\":{\"thinking_tokens\":35}}             }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"        }\n\n"
+                "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CgggN4hN945nQ99tuj9M8\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":729,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":8,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"},\"diagnostics\":null}             }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}  }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user is asking for the current time\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\". I\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" have\"}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" a clock\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" function available that can provide this\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" information. Let\"}            }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" me call it\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\".\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EpsDCroBCBMYAipAEkp6M1TnVxnyVGzdwSNaBApCnueT2CqltvjZwKkGAnJwrJGzew1QInVhA7EXUllDSee8AjRBmDfJdnM2+M0fgzIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJGFiNjUxZDk1LWFjNTctNDBjYy04MjE3LThjODA0ZTNmOWYzZJoBHAoaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5MjmoAfyaqdcGEgyKgabz+hsHeYFMbzIaDFJ8cZsZwEgJm4B2BSIwODz+VsWSIvzPr7f5cOTPVim+M1BAZksSJPZMqFwwlfl3FFiARIvzBqp5SJMvaEo4Ko0Ban/Q8jhyIhGKYAxMks5MaULR9778KnynC2JYYstqmLa9FtDaL0TaKnG+OzDyyJfcqqunYE55G87BjNZEIoNSBJxZDXJOavBdTr70UPu5Hwl+YOjE5nGbBAqxNianM+xB3jU2rVkKbT9wRDwIe4sKAjxs1f1/ieLaqoPPx7lr1IZYPYBf9l9qm8N8hYjPGAE=\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0               }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"tool_use\",\"id\":\"toolu_01T1wE1ZQZaCnjdeTNa4zMkG\",\"name\":\"clock\",\"input\":{},\"caller\":{\"type\":\"direct\"}}              }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"input_json_delta\",\"partial_json\":\"\"} }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1    }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"tool_use\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":729,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":68,\"output_tokens_details\":{\"thinking_tokens\":31}}       }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\" }\n\n"
             }
         },
         {
             "request": {
                 "method": "POST",
                 "url": "https://api.anthropic.com/v1/messages",
-                "signature": "4e488054976bbddba0871cab31a1b91a",
+                "signature": "4fcd9849219dc8eea2c69ad792754fd8",
+                "signature_v2": "4b51c7c26c03236e73650c3401a1b551",
                 "headers": {
                     "x-api-key": [
                         "[redacted]"
@@ -117,7 +119,7 @@
                         "interleaved-thinking-2025-05-14"
                     ]
                 },
-                "body": "{\"max_tokens\":4000,\"stream\":true,\"thinking\":{\"type\":\"enabled\",\"budget_tokens\":1024},\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":\"What time is it right now?\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The user is asking for the current time. I have access to a clock function that can provide the current date and time. Let me use it.\",\"signature\":\"EoQDCpsBCBEYAipAuZHKs82WEZdSpAtul9f5tA98Wa\\/oYcqMRTUZ4wyDozjaxoZxP69FsW+DlAsa0AKtyVEyDCZFE1EqSrTGHuKoIDIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJDE1MmQ4OGQ5LTBkMTgtNGNhZS04MGM5LWM0MjVhNWJmNGUyNagBqKbI1AYSDL6c3HsLWSATj1EYhBoMbHQosEE22qsw3ma+IjAmuvAbCkYIC2fxTpgeazBj5bRNpbDcDrZh9IB2fgEjYp8Fjy77mJku1Ozma94R\\/JkqlQFzhyuWYstSqsRWxC2KKdXBweJbjiUkNmIHbERqgroK3w7bw0H0o17YuzD+rejoAn++1XsJLgC7ZFGJuRFevA6pZG\\/U51jzKMxNW\\/Emv4hrL\\/ruxZh9qhnLUWzlMrhTqu6u2K3LZU9BTExwAC2LofxbYCse05Cu1SzXjrd2E+EKAfP2utm6+QlLeYzPi1Lrq6\\/cfOtqjRgB\"},{\"type\":\"tool_use\",\"id\":\"toolu_01FX2eH86CmqTjwF1ymuTW8e\",\"name\":\"clock\",\"input\":{}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_01FX2eH86CmqTjwF1ymuTW8e\",\"content\":\"Current date is 2026-08-28 (YYYY-MM-DD) and the time is 23:00:56 (HH:MM:SS).\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+                "body": "{\"stream\":true,\"max_tokens\":4000,\"thinking\":{\"type\":\"enabled\",\"budget_tokens\":1024},\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What time is it right now?\",\"cache_control\":{\"type\":\"ephemeral\"}}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The user is asking for the current time. I have a clock function available that can provide this information. Let me call it.\",\"signature\":\"EpsDCroBCBMYAipAEkp6M1TnVxnyVGzdwSNaBApCnueT2CqltvjZwKkGAnJwrJGzew1QInVhA7EXUllDSee8AjRBmDfJdnM2+M0fgzIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJGFiNjUxZDk1LWFjNTctNDBjYy04MjE3LThjODA0ZTNmOWYzZJoBHAoaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5MjmoAfyaqdcGEgyKgabz+hsHeYFMbzIaDFJ8cZsZwEgJm4B2BSIwODz+VsWSIvzPr7f5cOTPVim+M1BAZksSJPZMqFwwlfl3FFiARIvzBqp5SJMvaEo4Ko0Ban\\/Q8jhyIhGKYAxMks5MaULR9778KnynC2JYYstqmLa9FtDaL0TaKnG+OzDyyJfcqqunYE55G87BjNZEIoNSBJxZDXJOavBdTr70UPu5Hwl+YOjE5nGbBAqxNianM+xB3jU2rVkKbT9wRDwIe4sKAjxs1f1\\/ieLaqoPPx7lr1IZYPYBf9l9qm8N8hYjPGAE=\"},{\"type\":\"tool_use\",\"id\":\"toolu_01T1wE1ZQZaCnjdeTNa4zMkG\",\"name\":\"clock\",\"input\":{}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_01T1wE1ZQZaCnjdeTNa4zMkG\",\"content\":\"Current date is 2026-11-03 (YYYY-MM-DD) and the time is 21:09:14 (HH:MM:SS).\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
             },
             "response": {
                 "status": 200,
@@ -135,7 +137,7 @@
                         "5000000"
                     ],
                     "anthropic-ratelimit-input-tokens-reset": [
-                        "2026-08-28T23:00:57Z"
+                        "2026-11-03T21:09:16Z"
                     ],
                     "anthropic-ratelimit-output-tokens-limit": [
                         "1000000"
@@ -144,7 +146,7 @@
                         "1000000"
                     ],
                     "anthropic-ratelimit-output-tokens-reset": [
-                        "2026-08-28T23:00:57Z"
+                        "2026-11-03T21:09:16Z"
                     ],
                     "anthropic-ratelimit-requests-limit": [
                         "5000"
@@ -153,7 +155,7 @@
                         "4999"
                     ],
                     "anthropic-ratelimit-requests-reset": [
-                        "2026-08-28T23:00:57Z"
+                        "2026-11-03T21:09:16Z"
                     ],
                     "anthropic-ratelimit-tokens-limit": [
                         "6000000"
@@ -162,28 +164,28 @@
                         "6000000"
                     ],
                     "anthropic-ratelimit-tokens-reset": [
-                        "2026-08-28T23:00:57Z"
+                        "2026-11-03T21:09:16Z"
                     ],
                     "strict-transport-security": [
                         "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "traceresponse": [
+                        "00-36ff44a4af40f863aa7684ffed39a31b-a104571cc9874b0a-01"
                     ],
                     "anthropic-organization-id": [
                         "152d88d9-0d18-4cae-80c9-c425a5bf4e25"
                     ],
                     "anthropic-workspace-id": [
-                        "wrkspc_01Eo1YZvq8sNWFRAfhfjg7gS"
-                    ],
-                    "traceresponse": [
-                        "00-294590a511dfef489fbe6c969de6094a-88527988ba3787a7-01"
-                    ],
-                    "server": [
-                        "cloudflare"
+                        "wrkspc_01VtCNo1p2RhA6Wdyk9fA7Er"
                     ],
                     "content-encoding": [
                         "gzip"
                     ],
                     "vary": [
                         "Accept-Encoding"
+                    ],
+                    "server": [
+                        "cloudflare"
                     ],
                     "x-robots-tag": [
                         "none"
@@ -193,14 +195,15 @@
                     ]
                 },
                 "body_format": "sse",
-                "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CeVygkci1ztm2eXXM19YN\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":858,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":4,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}          }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}     }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The function returned that\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" the current date is August 28, 2026, and the time is 23:00:56 (11:00:56 PM). I should present this information clearly to the user.\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"Ep0DCpsBCBEYAipA8HiWDBGRplvA9HDF0oa3pvSwrjF4SOW96MmUcHiGIUzeU8pMECKNHxVCiohFVbJOA1OqWFTV4UCIXfn04chO7jIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJDE1MmQ4OGQ5LTBkMTgtNGNhZS04MGM5LWM0MjVhNWJmNGUyNagBqqbI1AYSDLjmSt1g2DyT/SOKixoMoCwRs4ilHkA117uiIjDIiOIYw/78Lgy0WJAIHmNqiLjqBF2bHApIb4BNFYWQx+kXBOBVDJiaqeHukz1PyX0qrgGpm4UaonBLLN/z7DdOIMQ4JdQcnwqf2r+C6VeJER/0fFO3BaX9lT1a44Xtq3SlYXEHrw7gqMxqDQCk8u4+j/k5XUQxXL8PAOoUXE6EV2JBnm+L4FygejpPGAUgwd3ofV+2HWiFJ2qqXbl7kIsGCrXMXZsR9B0oyp/XbR6mfwYKNQXT5raOeQzNyrSgMwOeA38MuNvLOczOxRqdt/GyCVMqfjkRNjoiyWw28vCUXBgYAQ==\"}           }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0    }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"The current time is **23\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\":00:56** (11:00:56 PM) on August 28, 2026.\"}             }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1         }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":858,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":86,\"output_tokens_details\":{\"thinking_tokens\":51}}              }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"             }\n\n"
+                "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CgggNC3tUh581ie2Zmzqv\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":854,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"},\"diagnostics\":null}        }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}       }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The clock function returned the\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" current date\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" and time.\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" It\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"'s November\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" 3rd\"}             }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\", 2026 at 21\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\":09:14 (which\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" is 9:09:\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"14 PM in 12\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"-hour format).\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EqEDCroBCBMYAipADrp5/lUp3K4FetgXa7A4NaODB1gArjW9m04amEh5A4h2l0ZkB9bfZwgwg4mZM8XExGlaQfC8R6iTXsmty6P4WTIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJGFiNjUxZDk1LWFjNTctNDBjYy04MjE3LThjODA0ZTNmOWYzZJoBHAoaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5MjmoAf6aqdcGEgyyWy39XJZOgGU0fRoaDMtGlJwSKouyyEwdDSIwYSuIIT9/hT/gDkyc1hGlLgWwp47eQaxOYZ/jPaIR1rjqN8K6/eEafME1JLwAFs3mKpMBcsjsspUxgV9ECQw8VBmhL5TMtCUhuqvXTsYK3BopLUXnfr50g38K44uYVvK+mInWj9QfWTVDQNdp28Qx8t5UYWvF4SOCkbXWOFYxmFR072Xto6XqBm/gJA8dMuwVnugJH503fMUKPsGpEiqqplQFEPXzO4VIVU8c02KfQP6VZ3qe8m5TwwY+FWfki8jpsxagPA6IGAE=\"}        }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0             }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"The\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" current time is **21:09:\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"14** (9:09 \"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"PM),\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" and\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" today\"}          }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"'s\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" date is **November\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" 3rd, 2026**.\"}  }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":854,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":91,\"output_tokens_details\":{\"thinking_tokens\":53}}             }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"          }\n\n"
             }
         },
         {
             "request": {
                 "method": "POST",
                 "url": "https://api.anthropic.com/v1/messages",
-                "signature": "34b3821c74da8f77ec9804638dabceb4",
+                "signature": "757e6a4a98176bf455e1696308c8eeb2",
+                "signature_v2": "dcc5fc2170e37b545c3fdd804b7d94ca",
                 "headers": {
                     "x-api-key": [
                         "[redacted]"
@@ -215,7 +218,7 @@
                         "interleaved-thinking-2025-05-14"
                     ]
                 },
-                "body": "{\"max_tokens\":4000,\"messages\":[{\"content\":\"What time is it right now?\",\"role\":\"user\"},{\"content\":[{\"signature\":\"EoQDCpsBCBEYAipAuZHKs82WEZdSpAtul9f5tA98Wa/oYcqMRTUZ4wyDozjaxoZxP69FsW+DlAsa0AKtyVEyDCZFE1EqSrTGHuKoIDIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJDE1MmQ4OGQ5LTBkMTgtNGNhZS04MGM5LWM0MjVhNWJmNGUyNagBqKbI1AYSDL6c3HsLWSATj1EYhBoMbHQosEE22qsw3ma+IjAmuvAbCkYIC2fxTpgeazBj5bRNpbDcDrZh9IB2fgEjYp8Fjy77mJku1Ozma94R/JkqlQFzhyuWYstSqsRWxC2KKdXBweJbjiUkNmIHbERqgroK3w7bw0H0o17YuzD+rejoAn++1XsJLgC7ZFGJuRFevA6pZG/U51jzKMxNW/Emv4hrL/ruxZh9qhnLUWzlMrhTqu6u2K3LZU9BTExwAC2LofxbYCse05Cu1SzXjrd2E+EKAfP2utm6+QlLeYzPi1Lrq6/cfOtqjRgB\",\"thinking\":\"The user is asking for the current time. I have access to a clock function that can provide the current date and time. Let me use it.\",\"type\":\"thinking\"},{\"id\":\"toolu_01FX2eH86CmqTjwF1ymuTW8e\",\"input\":{},\"name\":\"clock\",\"type\":\"tool_use\"}],\"role\":\"assistant\"},{\"content\":[{\"content\":\"Current date is 2026-08-28 (YYYY-MM-DD) and the time is 23:00:56 (HH:MM:SS).\",\"tool_use_id\":\"toolu_01FX2eH86CmqTjwF1ymuTW8e\",\"type\":\"tool_result\"}],\"role\":\"user\"},{\"content\":[{\"signature\":\"Ep0DCpsBCBEYAipA8HiWDBGRplvA9HDF0oa3pvSwrjF4SOW96MmUcHiGIUzeU8pMECKNHxVCiohFVbJOA1OqWFTV4UCIXfn04chO7jIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJDE1MmQ4OGQ5LTBkMTgtNGNhZS04MGM5LWM0MjVhNWJmNGUyNagBqqbI1AYSDLjmSt1g2DyT/SOKixoMoCwRs4ilHkA117uiIjDIiOIYw/78Lgy0WJAIHmNqiLjqBF2bHApIb4BNFYWQx+kXBOBVDJiaqeHukz1PyX0qrgGpm4UaonBLLN/z7DdOIMQ4JdQcnwqf2r+C6VeJER/0fFO3BaX9lT1a44Xtq3SlYXEHrw7gqMxqDQCk8u4+j/k5XUQxXL8PAOoUXE6EV2JBnm+L4FygejpPGAUgwd3ofV+2HWiFJ2qqXbl7kIsGCrXMXZsR9B0oyp/XbR6mfwYKNQXT5raOeQzNyrSgMwOeA38MuNvLOczOxRqdt/GyCVMqfjkRNjoiyWw28vCUXBgYAQ==\",\"thinking\":\"The function returned that the current date is August 28, 2026, and the time is 23:00:56 (11:00:56 PM). I should present this information clearly to the user.\",\"type\":\"thinking\"},{\"text\":\"The current time is **23:00:56** (11:00:56 PM) on August 28, 2026.\",\"type\":\"text\"}],\"role\":\"assistant\"},{\"content\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"What did I just ask you?\",\"type\":\"text\"}],\"role\":\"user\"}],\"model\":\"claude-sonnet-4-5-20250929\",\"stream\":true,\"system\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"text\":\"You are a helpful assistant.\",\"type\":\"text\"}],\"thinking\":{\"budget_tokens\":1024,\"type\":\"enabled\"},\"tool_choice\":{\"type\":\"auto\"},\"tools\":[{\"cache_control\":{\"type\":\"ephemeral\"},\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"name\":\"clock\"}]}"
+                "body": "{\"stream\":true,\"max_tokens\":4000,\"thinking\":{\"type\":\"enabled\",\"budget_tokens\":1024},\"tools\":[{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"input_schema\":{\"type\":\"object\"},\"cache_control\":{\"type\":\"ephemeral\"}}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":\"What time is it right now?\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The user is asking for the current time. I have a clock function available that can provide this information. Let me call it.\",\"signature\":\"EpsDCroBCBMYAipAEkp6M1TnVxnyVGzdwSNaBApCnueT2CqltvjZwKkGAnJwrJGzew1QInVhA7EXUllDSee8AjRBmDfJdnM2+M0fgzIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJGFiNjUxZDk1LWFjNTctNDBjYy04MjE3LThjODA0ZTNmOWYzZJoBHAoaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5MjmoAfyaqdcGEgyKgabz+hsHeYFMbzIaDFJ8cZsZwEgJm4B2BSIwODz+VsWSIvzPr7f5cOTPVim+M1BAZksSJPZMqFwwlfl3FFiARIvzBqp5SJMvaEo4Ko0Ban\\/Q8jhyIhGKYAxMks5MaULR9778KnynC2JYYstqmLa9FtDaL0TaKnG+OzDyyJfcqqunYE55G87BjNZEIoNSBJxZDXJOavBdTr70UPu5Hwl+YOjE5nGbBAqxNianM+xB3jU2rVkKbT9wRDwIe4sKAjxs1f1\\/ieLaqoPPx7lr1IZYPYBf9l9qm8N8hYjPGAE=\"},{\"type\":\"tool_use\",\"id\":\"toolu_01T1wE1ZQZaCnjdeTNa4zMkG\",\"name\":\"clock\",\"input\":{}}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"toolu_01T1wE1ZQZaCnjdeTNa4zMkG\",\"content\":\"Current date is 2026-11-03 (YYYY-MM-DD) and the time is 21:09:14 (HH:MM:SS).\",\"cache_control\":{\"type\":\"ephemeral\"}}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"thinking\",\"thinking\":\"The clock function returned the current date and time. It\\u0027s November 3rd, 2026 at 21:09:14 (which is 9:09:14 PM in 12-hour format).\",\"signature\":\"EqEDCroBCBMYAipADrp5\\/lUp3K4FetgXa7A4NaODB1gArjW9m04amEh5A4h2l0ZkB9bfZwgwg4mZM8XExGlaQfC8R6iTXsmty6P4WTIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJGFiNjUxZDk1LWFjNTctNDBjYy04MjE3LThjODA0ZTNmOWYzZJoBHAoaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5MjmoAf6aqdcGEgyyWy39XJZOgGU0fRoaDMtGlJwSKouyyEwdDSIwYSuIIT9\\/hT\\/gDkyc1hGlLgWwp47eQaxOYZ\\/jPaIR1rjqN8K6\\/eEafME1JLwAFs3mKpMBcsjsspUxgV9ECQw8VBmhL5TMtCUhuqvXTsYK3BopLUXnfr50g38K44uYVvK+mInWj9QfWTVDQNdp28Qx8t5UYWvF4SOCkbXWOFYxmFR072Xto6XqBm\\/gJA8dMuwVnugJH503fMUKPsGpEiqqplQFEPXzO4VIVU8c02KfQP6VZ3qe8m5TwwY+FWfki8jpsxagPA6IGAE=\"},{\"type\":\"text\",\"text\":\"The current time is **21:09:14** (9:09 PM), and today\\u0027s date is **November 3rd, 2026**.\"}]},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What did I just ask you?\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"system\":[{\"type\":\"text\",\"text\":\"You are a helpful assistant.\",\"cache_control\":{\"type\":\"ephemeral\"}}],\"model\":\"claude-sonnet-4-5-20250929\"}"
             },
             "response": {
                 "status": 200,
@@ -233,7 +236,7 @@
                         "5000000"
                     ],
                     "anthropic-ratelimit-input-tokens-reset": [
-                        "2026-08-28T23:00:59Z"
+                        "2026-11-03T21:09:19Z"
                     ],
                     "anthropic-ratelimit-output-tokens-limit": [
                         "1000000"
@@ -242,7 +245,7 @@
                         "1000000"
                     ],
                     "anthropic-ratelimit-output-tokens-reset": [
-                        "2026-08-28T23:00:59Z"
+                        "2026-11-03T21:09:19Z"
                     ],
                     "anthropic-ratelimit-requests-limit": [
                         "5000"
@@ -251,7 +254,7 @@
                         "4999"
                     ],
                     "anthropic-ratelimit-requests-reset": [
-                        "2026-08-28T23:00:59Z"
+                        "2026-11-03T21:09:19Z"
                     ],
                     "anthropic-ratelimit-tokens-limit": [
                         "6000000"
@@ -260,28 +263,28 @@
                         "6000000"
                     ],
                     "anthropic-ratelimit-tokens-reset": [
-                        "2026-08-28T23:00:59Z"
+                        "2026-11-03T21:09:19Z"
                     ],
                     "strict-transport-security": [
                         "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "traceresponse": [
+                        "00-6fadd6ed3bea6e0984c1dbc3fc1f0046-90d5449bdee89a63-01"
                     ],
                     "anthropic-organization-id": [
                         "152d88d9-0d18-4cae-80c9-c425a5bf4e25"
                     ],
                     "anthropic-workspace-id": [
-                        "wrkspc_01Eo1YZvq8sNWFRAfhfjg7gS"
-                    ],
-                    "traceresponse": [
-                        "00-d3856dc614b2dff9a8ddfae65d501562-d40bb5d731d879f2-01"
-                    ],
-                    "server": [
-                        "cloudflare"
+                        "wrkspc_01VtCNo1p2RhA6Wdyk9fA7Er"
                     ],
                     "content-encoding": [
                         "gzip"
                     ],
                     "vary": [
                         "Accept-Encoding"
+                    ],
+                    "server": [
+                        "cloudflare"
                     ],
                     "x-robots-tag": [
                         "none"
@@ -291,7 +294,7 @@
                     ]
                 },
                 "body_format": "sse",
-                "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CeVygv6DQwyZg4xrYG6tU\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":856,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}             }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}   }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user is asking me\"}         }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" what they just asked me\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\". Looking\"}               }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" back at the conversation, their\"}   }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" previous question was \\\"What time is it right now?\\\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EogDCpsBCBEYAipA2fWExWelS3zVeckP1ixF2/4uj+NXekQgYkAfLI3brv1fOMAKceUzfGEUNySl7xzBAOPRxGjjTR9dqBkFW8/91zIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJDE1MmQ4OGQ5LTBkMTgtNGNhZS04MGM5LWM0MjVhNWJmNGUyNagBrabI1AYSDJi9vZQdMnj7q2mXKBoM1l3n3Ce6RTRsMVIDIjDBxswTP4VD9YG/mqIn/YEqMRswgPZRBYvnliF0BaCf078HNk31LvXBdP5yogThXbwqmQHBS3mRbQoB20dAVrSR3OfU+bEv6RDiTRCH3EhA3/kjLZl+0prv9rmMZR1oA6DaZ5AYzvJXVjJILEx5/dSH3vn0cqHOq2E4ehQsediVU6WsWEUPBqIiNemlJfmjrGzjtXXtdJ8lWm0Uriq8eL/TQS1QuI7OizaW+Ltm8S1UhukcFMxNGyAKxdwfsRpA/2X2ynexiZxjuXn3W28YAQ==\"}            }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0      }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}       }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"You just asked me \\\"What time is it right now?\\\"\"} }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1  }\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null},\"usage\":{\"input_tokens\":856,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":52,\"output_tokens_details\":{\"thinking_tokens\":35}}        }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"    }\n\n"
+                "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CgggNMQCx1h8uW8dAuB5L\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"container\":null,\"stop_reason\":null,\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":860,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"},\"diagnostics\":null}             }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"thinking\",\"thinking\":\"\",\"signature\":\"\"}       }\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"The user is asking me\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" what they just asked me. Looking\"}      }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" at\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" the conversation history, their\"}    }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" previous\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" question was \\\"What time is it right\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\" now?\\\"\"}           }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"signature_delta\",\"signature\":\"EqoDCroBCBMYAipAMFM+EcV3WXZtlhVmfXcm4AZxCPSD7sts6jnGg7uEUFHa7BFe6YUWZPSbQtWnkci/wpYh5QnCnVkdpsbPJv6fCjIaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5Mjk4AEIIdGhpbmtpbmdaJGFiNjUxZDk1LWFjNTctNDBjYy04MjE3LThjODA0ZTNmOWYzZJoBHAoaY2xhdWRlLXNvbm5ldC00LTUtMjAyNTA5MjmoAYCbqdcGEgx1wSJzio9uP9/VQn4aDHTFccPh0jW982oqoCIwMvNq3z/5fdKvAFVkWxYjsR0fPQJldn+llvEx1LbG4Q9kyMSnWFiWZrjQazgBePEMKpwBBSnY9EQSpba6lyracSqHydo7a3oVrHabF5htfMMDZaK2IG12CvDpM4RXmx3xvOD2Gk3stx2XUz6bm3Ojvkh9TcjeCjcNDKzKeywB9hFOLqVfZrPejc7bbwv8CC6HTeXq0/Hz5ckngon3PvJs55N/KAVr0oAkCcAP1I7GJahr03M6e65EbE4GnevHO4YwlonPJUX6aJuDfNgDs0WnGAE=\"}             }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0        }\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":1,\"content_block\":{\"type\":\"text\",\"text\":\"\"}        }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"You\"} }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" just\"}  }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\" asked me \\\"\"}     }\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":1,\"delta\":{\"type\":\"text_delta\",\"text\":\"What time is it right now?\\\"\"}        }\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":1}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"container\":null},\"usage\":{\"input_tokens\":860,\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"output_tokens\":52,\"output_tokens_details\":{\"thinking_tokens\":35}}   }\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"              }\n\n"
             }
         }
     ]

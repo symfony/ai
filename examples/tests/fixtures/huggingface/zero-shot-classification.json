@@ -4,8 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://router.huggingface.co/hf-inference/models/facebook/bart-large-mnli",
-                "signature": "ae6373163de2174e0824070065e8d771",
-                "signature_v2": "edf5421793142f21a1dd693d48dc1aab",
+                "signature": "999edf38bd3b00f47811732364706831",
+                "signature_v2": "ffcf77eddb3bf040e20fc70893c1ab52",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -14,7 +14,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"inputs\":\"Hi, I recently bought a device from your company but it is not working as advertised and I would like to get reimbursed!\",\"parameters\":{\"candidate_labels\":[\"refund\",\"legal\",\"faq\"]},\"candidate_labels\":[\"refund\",\"legal\",\"faq\"]}"
+                "body": "{\"inputs\":\"Hi, I recently bought a device from your company but it is not working as advertised and I would like to get reimbursed!\",\"parameters\":{\"candidate_labels\":[\"refund\",\"legal\",\"faq\"]}}"
             },
             "response": {
                 "status": 200,
@@ -56,28 +56,28 @@
                         "uvicorn"
                     ],
                     "x-inference-id": [
-                        "a8c2f235-bf71-4f65-ba93-7a932d74fb19"
+                        "65f2fe5a-cfac-4168-ac88-8677a277ae25"
                     ],
                     "x-proxied-host": [
-                        "http://10.109.131.100"
+                        "http://10.109.123.243"
                     ],
                     "x-proxied-path": [
                         "/"
                     ],
                     "x-proxied-replica": [
-                        "gskhk5bn-qjpd5"
+                        "gskhk5bn-q7z5p"
                     ],
                     "x-cache": [
                         "Miss from cloudfront"
                     ],
                     "via": [
-                        "1.1 25caf7ddbe5cc1b13bee94fe7993749e.cloudfront.net (CloudFront)"
+                        "1.1 51221dfe71ea280c675f3bd47a16cea4.cloudfront.net (CloudFront)"
                     ],
                     "x-amz-cf-pop": [
                         "TXL52-P3"
                     ],
                     "x-amz-cf-id": [
-                        "ggDCKa16EIJLClagaLVRHNEIEZ_EigbnYX75h4nhN6kBdiQPsFx_4g=="
+                        "7vixLdsUC74B_wGSK653-xVZFC63TFF4X81zfjeP6wQakB9TQW061Q=="
                     ],
                     "strict-transport-security": [
                         "max-age=31536000"

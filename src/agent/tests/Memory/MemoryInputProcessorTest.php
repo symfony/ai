@@ -154,7 +154,7 @@ final class MemoryInputProcessorTest extends TestCase
         $this->assertNull($input->getMessageBag()->getSystemMessage()?->getContent());
     }
 
-    public function testItMutatesTheCallerMessageBagInPlace()
+    public function testItLeavesTheCallerMessageBagUntouched()
     {
         $memoryProvider = $this->createMock(MemoryProviderInterface::class);
         $memoryProvider->expects($this->once())
@@ -166,12 +166,9 @@ final class MemoryInputProcessorTest extends TestCase
         $bag = new MessageBag(Message::forSystem('You are a helpful assistant.'));
         $memoryInputProcessor->processInput($input = new Input('gpt-4', $bag, []));
 
-        // Caller's bag must reflect the combined system message so downstream
-        // processors can append messages visible to the caller's reference.
-        // See #1726.
-        $this->assertSame($bag, $input->getMessageBag());
-        $this->assertCount(1, $bag);
-        $this->assertStringContainsString('Some memory content', $bag->getSystemMessage()->getContent());
+        $this->assertSame('You are a helpful assistant.', $bag->getSystemMessage()->getContent());
+        $this->assertCount(1, $input->getMessageBag());
+        $this->assertStringContainsString('Some memory content', $input->getMessageBag()->getSystemMessage()->getContent());
     }
 
     public function testItDoesNotCompoundTheMemoryPromptOnRepeatedCallsWithTheSameBag()
@@ -183,17 +180,14 @@ final class MemoryInputProcessorTest extends TestCase
 
         $memoryInputProcessor = new MemoryInputProcessor([$memoryProvider]);
 
-        // Since the processor mutates the caller's bag in place, the combined
-        // system message survives the agent call. Chat::submit() persists that
-        // bag and reuses it on the next turn, so the processor runs again on
-        // its own output and must not wrap the memory prompt a second time.
-        $bag = new MessageBag(Message::forSystem('You are a helpful assistant.'));
+        // a persisted bag can carry the combined system message into the next turn
+        $firstInput = new Input('gpt-4', new MessageBag(Message::forSystem('You are a helpful assistant.')), []);
+        $memoryInputProcessor->processInput($firstInput);
+        $firstTurnSystemMessage = $firstInput->getMessageBag()->getSystemMessage()->getContent();
 
-        $memoryInputProcessor->processInput(new Input('gpt-4', $bag, []));
-        $firstTurnSystemMessage = $bag->getSystemMessage()->getContent();
-
-        $memoryInputProcessor->processInput(new Input('gpt-4', $bag, []));
-        $secondTurnSystemMessage = $bag->getSystemMessage()->getContent();
+        $secondInput = new Input('gpt-4', $firstInput->getMessageBag(), []);
+        $memoryInputProcessor->processInput($secondInput);
+        $secondTurnSystemMessage = $secondInput->getMessageBag()->getSystemMessage()->getContent();
 
         $this->assertSame(1, substr_count($secondTurnSystemMessage, '# Conversation Memory'));
         $this->assertSame($firstTurnSystemMessage, $secondTurnSystemMessage);
@@ -208,15 +202,13 @@ final class MemoryInputProcessorTest extends TestCase
 
         $memoryInputProcessor = new MemoryInputProcessor([$memoryProvider]);
 
-        $bag = new MessageBag(Message::forSystem('You are a helpful assistant.'));
-        $memoryInputProcessor->processInput(new Input('gpt-4', $bag, []));
+        $input = new Input('gpt-4', new MessageBag(Message::forSystem('You are a helpful assistant.')), []);
+        $memoryInputProcessor->processInput($input);
 
-        // The original prompt must travel as metadata on the combined message:
-        // Chat message stores persist metadata, so idempotence survives a
-        // serialization round-trip through the store.
+        // persisted as message metadata, so idempotence survives a round-trip through a message store
         $this->assertSame(
             'You are a helpful assistant.',
-            $bag->getSystemMessage()->getMetadata()->get('memory_original_system_prompt'),
+            $input->getMessageBag()->getSystemMessage()->getMetadata()->get('memory_original_system_prompt'),
         );
     }
 
@@ -229,13 +221,13 @@ final class MemoryInputProcessorTest extends TestCase
 
         $memoryInputProcessor = new MemoryInputProcessor([$memoryProvider]);
 
-        $bag = new MessageBag(Message::ofUser('Hi'));
+        $firstInput = new Input('gpt-4', new MessageBag(Message::ofUser('Hi')), []);
+        $memoryInputProcessor->processInput($firstInput);
+        $firstTurnSystemMessage = $firstInput->getMessageBag()->getSystemMessage()->getContent();
 
-        $memoryInputProcessor->processInput(new Input('gpt-4', $bag, []));
-        $firstTurnSystemMessage = $bag->getSystemMessage()->getContent();
-
-        $memoryInputProcessor->processInput(new Input('gpt-4', $bag, []));
-        $secondTurnSystemMessage = $bag->getSystemMessage()->getContent();
+        $secondInput = new Input('gpt-4', $firstInput->getMessageBag(), []);
+        $memoryInputProcessor->processInput($secondInput);
+        $secondTurnSystemMessage = $secondInput->getMessageBag()->getSystemMessage()->getContent();
 
         $this->assertStringNotContainsString('# System Prompt', $secondTurnSystemMessage);
         $this->assertSame($firstTurnSystemMessage, $secondTurnSystemMessage);
@@ -253,12 +245,12 @@ final class MemoryInputProcessorTest extends TestCase
 
         $memoryInputProcessor = new MemoryInputProcessor([$memoryProvider]);
 
-        $bag = new MessageBag(Message::forSystem('You are a helpful assistant.'));
+        $firstInput = new Input('gpt-4', new MessageBag(Message::forSystem('You are a helpful assistant.')), []);
+        $memoryInputProcessor->processInput($firstInput);
+        $secondInput = new Input('gpt-4', $firstInput->getMessageBag(), []);
+        $memoryInputProcessor->processInput($secondInput);
 
-        $memoryInputProcessor->processInput(new Input('gpt-4', $bag, []));
-        $memoryInputProcessor->processInput(new Input('gpt-4', $bag, []));
-
-        $systemMessage = $bag->getSystemMessage()->getContent();
+        $systemMessage = $secondInput->getMessageBag()->getSystemMessage()->getContent();
 
         // Memory must be re-derived per call, while the original prompt is kept.
         $this->assertStringContainsString('Second turn memory', $systemMessage);

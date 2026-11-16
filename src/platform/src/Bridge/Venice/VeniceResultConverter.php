@@ -40,6 +40,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 final class VeniceResultConverter implements ResultConverterInterface
 {
+    use VeniceErrorHandlingTrait;
+
     /**
      * @param string $provider the name stamped onto the handles of the generations this converter queues
      */
@@ -57,6 +59,8 @@ final class VeniceResultConverter implements ResultConverterInterface
     {
         /** @var ResponseInterface $response */
         $response = $result->getObject();
+
+        $this->throwOnHttpError($response);
 
         $rawUrl = $response->getInfo('url');
 

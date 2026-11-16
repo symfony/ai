@@ -21,7 +21,7 @@ $messages = new MessageBag(
     Message::forSystem('You are a thoughtful philosopher.'),
     Message::ofUser('What is the purpose of an ant? Answer in a few sentences.'),
 );
-$result = $platform->invoke('kimi-k2p6', $messages, ['stream' => true]);
+$result = $platform->invoke('kimi-k3', $messages, ['stream' => true]);
 
 foreach ($result->asTextStream() as $delta) {
     echo $delta;

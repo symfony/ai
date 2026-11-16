@@ -21,12 +21,14 @@ use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolExecutorInterface;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\CommentaryResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -59,7 +61,6 @@ final class Runner
         private readonly ?ToolboxInterface $toolbox = null,
         private readonly ?ToolExecutorInterface $toolExecutor = null,
         private readonly ?int $maxToolCalls = 50,
-        private readonly bool $excludeToolMessages = false,
         private readonly bool $includeSources = false,
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
         private readonly ToolResultConverter $resultConverter = new ToolResultConverter(),
@@ -67,14 +68,14 @@ final class Runner
     }
 
     /**
-     * @param array<string, mixed> $options
+     * @param array<string, mixed>              $options
+     * @param (\Closure(MessageBag): void)|null $onToolRound receives the messages after each completed tool round
      *
      * @return \Generator<int, UpdateInterface, mixed, void>
      */
-    public function run(string $model, MessageBag $messages, array $options, ?Cancellation $cancellation = null): \Generator
+    public function run(string $model, MessageBag $messages, array $options, ?Cancellation $cancellation = null, ?\Closure $onToolRound = null): \Generator
     {
         [$options, $allowedTools] = $this->exposeTools($options);
-        $messages = $this->excludeToolMessages ? clone $messages : $messages;
 
         $sources = new SourceCollection();
         $metadata = new Metadata();
@@ -126,13 +127,18 @@ final class Runner
             $this->denyRestrictedToolCalls($toolCalls, $allowedTools);
             $toolResults = yield from $this->toolExecutor->execute($toolCalls);
 
-            $messages->add($assistantMessage ?? Message::ofAssistant($result));
+            $messages = $messages->with($this->toAssistantMessage($result, $assistantMessage, $result->getMetadata()->all()));
             foreach ($toolResults as $i => $toolResult) {
-                $messages->add(Message::ofToolCall($toolCalls[$i], $this->resultConverter->convert($toolResult)));
+                // a tool returning nothing still has to answer its call
+                $messages = $messages->with(Message::ofToolCall($toolCalls[$i], $this->resultConverter->convert($toolResult) ?? ''));
 
                 if (null !== $toolResult->getSources()) {
                     $sources = $sources->merge($toolResult->getSources());
                 }
+            }
+
+            if (null !== $onToolRound) {
+                $onToolRound($messages);
             }
 
             $event = new ToolCallsExecuted($toolResults);
@@ -140,10 +146,19 @@ final class Runner
 
             if ($event->hasResult()) {
                 $result = $event->getResult();
+                $assistantMessage = null;
 
                 break;
             }
         }
+
+        $roundMetadata = $result->getMetadata()->all();
+        if ($this->includeSources) {
+            $roundMetadata['sources'] = $sources;
+        }
+        $answer = fn (?ResultInterface $replacement = null): MessageBag => $messages->with(null === $replacement
+            ? $this->toAssistantMessage($result, $assistantMessage, $roundMetadata)
+            : $this->toAssistantMessage($replacement, null, $roundMetadata));
 
         // Merged in order, so mergeable values like the token usage add up and the final result's own values win
         $metadata->merge($result->getMetadata());
@@ -153,7 +168,20 @@ final class Runner
             $result->getMetadata()->add('sources', $sources);
         }
 
-        yield new ResultUpdate($result);
+        yield new ResultUpdate($result, $answer);
+    }
+
+    /**
+     * The round's answer as assistant message, carrying the metadata of that round only, like its token usage.
+     *
+     * @param array<string, mixed> $metadata
+     */
+    private function toAssistantMessage(ResultInterface $result, ?AssistantMessage $streamedMessage, array $metadata): AssistantMessage
+    {
+        $message = $streamedMessage ?? Message::ofAssistant($result);
+        $message->getMetadata()->set($metadata);
+
+        return $message;
     }
 
     /**
@@ -222,8 +250,12 @@ final class Runner
                 $parts[] = new ThinkingResult($content->getContent(), $content->getSignature());
             }
 
+            if ($content instanceof Commentary) {
+                $parts[] = new CommentaryResult($content->getContent());
+            }
+
             if ($content instanceof Text) {
-                $parts[] = new TextResult($content->getText(), $content->getSignature());
+                $parts[] = new TextResult($content->getText(), $content->getSignature(), $content->getPhase());
             }
         }
 

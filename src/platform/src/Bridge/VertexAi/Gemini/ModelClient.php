@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\VertexAi\SchemaNormalizer;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model as BaseModel;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
@@ -70,6 +71,12 @@ final class ModelClient implements ModelClientInterface
             $options['generationConfig']['responseSchema'] = SchemaNormalizer::normalize($responseSchema);
 
             unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
+        }
+
+        // Vertex AI only reads generation parameters nested under "generationConfig"
+        if (isset($options[PlatformOptions::MAX_OUTPUT_TOKENS])) {
+            $options['generationConfig']['maxOutputTokens'] ??= $options[PlatformOptions::MAX_OUTPUT_TOKENS];
+            unset($options[PlatformOptions::MAX_OUTPUT_TOKENS]);
         }
 
         if (isset($options['generationConfig'])) {

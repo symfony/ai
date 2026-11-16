@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\McpBundle\Tests\Client;
 
-use Mcp\Client;
+use Mcp\Client\Client;
 use Mcp\Schema\ClientCapabilities;
 use Mcp\Schema\Enum\ProtocolVersion;
 use Mcp\Schema\PromptReference;
@@ -151,7 +151,7 @@ final class ServerConnectionTest extends TestCase
     {
         $client = $this->createMock(Client::class);
         $client->method('isConnected')->willReturn(true);
-        $client->method('disconnect')->willThrowException(new \Mcp\Exception\ConnectionException('already gone'));
+        $client->method('disconnect')->willThrowException(new \Mcp\Client\Exception\ConnectionException('already gone'));
 
         $transport = new InMemoryTransport();
         $connection = new ServerConnection('research', 'github', $client, $transport);

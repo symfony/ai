@@ -5,7 +5,6 @@ Components
     :maxdepth: 2
 
     agent
-    chat
     mate
     platform
     store

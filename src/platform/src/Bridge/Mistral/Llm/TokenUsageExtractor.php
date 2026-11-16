@@ -35,8 +35,8 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
 
         $headers = $rawResponse->getHeaders(false);
 
-        $remainingTokensMinute = $headers['x-ratelimit-limit-tokens-minute'][0] ?? null;
-        $remainingTokensMonth = $headers['x-ratelimit-limit-tokens-month'][0] ?? null;
+        $remainingTokensMinute = $headers['x-ratelimit-remaining-tokens-minute'][0] ?? null;
+        $remainingTokensMonth = $headers['x-ratelimit-remaining-tokens-month'][0] ?? null;
 
         $content = $rawResult->getData();
 

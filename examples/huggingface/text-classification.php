@@ -10,14 +10,11 @@
  */
 
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
-use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
 
-$result = $platform->invoke('ProsusAI/finbert', 'I like you. I love you.', [
-    'task' => Task::TEXT_CLASSIFICATION,
-]);
+$result = $platform->invoke('ProsusAI/finbert', 'I like you. I love you.');
 
 dump($result->asObject());

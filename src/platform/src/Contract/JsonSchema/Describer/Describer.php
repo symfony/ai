@@ -93,5 +93,10 @@ final class Describer implements ObjectDescriberInterface, PropertyDescriberInte
         foreach ($this->propertyDescribers as $describer) {
             $describer->describeProperty($subject, $schema);
         }
+
+        // an enum lists every allowed value, so a nullable property must list null too
+        if (isset($schema['enum']) && \in_array('null', (array) ($schema['type'] ?? []), true) && !\in_array(null, $schema['enum'], true)) {
+            $schema['enum'][] = null;
+        }
     }
 }

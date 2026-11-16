@@ -28,7 +28,7 @@ final class StoreFactory
         ?HttpClientInterface $httpClient = null,
         string $vectorsField = '_vectors',
         int $dimensions = 1536,
-        string $spaceType = 'l2',
+        string $metric = 'l2',
     ): StoreInterface&ManagedStoreInterface {
         $httpClient ??= HttpClient::create();
 
@@ -36,6 +36,6 @@ final class StoreFactory
             $httpClient = ScopingHttpClient::forBaseUri($httpClient, rtrim($endpoint, '/').'/');
         }
 
-        return new Store($httpClient, $indexName, $vectorsField, $dimensions, $spaceType);
+        return new Store($httpClient, $indexName, $vectorsField, $dimensions, $metric);
     }
 }

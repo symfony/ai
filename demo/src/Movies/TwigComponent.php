@@ -47,7 +47,7 @@ final class TwigComponent
     }
 
     /**
-     * Resolve the movie slugs stored on an assistant message to real movies, ready to render as cards.
+     * Resolve the movie ids stored on an assistant message to real movies, ready to render as cards.
      *
      * @return list<array{movie: Movie, reason: string}>
      */
@@ -59,7 +59,7 @@ final class TwigComponent
 
         $suggestions = [];
         foreach ($message->getMetadata()->get('movies') as $suggestion) {
-            $movie = $this->movies->findOne($suggestion->slug);
+            $movie = $this->movies->find($suggestion->id);
             if (null !== $movie) {
                 $suggestions[] = ['movie' => $movie, 'reason' => $suggestion->reason];
             }
@@ -74,7 +74,7 @@ final class TwigComponent
             return null;
         }
 
-        return $this->movies->findOne($this->detailSlug);
+        return $this->movies->findOneBySlug($this->detailSlug);
     }
 
     #[LiveAction]

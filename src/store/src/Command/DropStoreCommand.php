@@ -30,6 +30,9 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 #[AsCommand(name: 'ai:store:drop', description: 'Drop the required infrastructure for the store')]
 final class DropStoreCommand extends Command
 {
+    use ServiceArgumentTrait;
+    use StoreOptionsTrait;
+
     /**
      * @param ServiceLocator<ManagedStoreInterface> $stores
      */
@@ -52,16 +55,27 @@ final class DropStoreCommand extends Command
             ->addArgument('store', InputArgument::REQUIRED, 'Service name of the store to drop')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Force dropping the store even if it contains vectors')
             ->setHelp(<<<EOF
-The <info>%command.name%</info> command drops the stores:
+The <info>%command.name%</info> command drops a store:
 
-    <info>php %command.full_name%</info>
+    <info>php %command.full_name% <store> --force</info>
 
-Or a specific store only:
+Pass runtime options supported by the store with <comment>--option</comment>:
 
-    <info>php %command.full_name% <store></info>
+    <info>php %command.full_name% <store> --force --option optimize</info>
 EOF
             )
         ;
+        $this->addStoreOptionsOption();
+    }
+
+    protected function interact(InputInterface $input, OutputInterface $output): void
+    {
+        $this->interactForService($input, $output, 'store', 'store', $this->getStoreNames());
+
+        if (!$input->getOption('force') && null !== $input->getArgument('store')) {
+            $question = \sprintf('Do you really want to drop the "%s" store?', $input->getArgument('store'));
+            $input->setOption('force', (new SymfonyStyle($input, $output))->confirm($question, false));
+        }
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -70,10 +84,7 @@ EOF
             throw new RuntimeException('No store is configured to be dropped.');
         }
 
-        $storeName = $input->getArgument('store');
-        if (!$this->stores->has($storeName)) {
-            throw new RuntimeException(\sprintf('The "%s" store does not exist, use "%s".', $storeName, implode('", "', $this->getStoreNames())));
-        }
+        $storeName = $this->resolveServiceName($input->getArgument('store'), 'store', $this->getStoreNames());
 
         $store = $this->stores->get($storeName);
         if (!$store instanceof ManagedStoreInterface) {
@@ -88,12 +99,10 @@ EOF
             return Command::FAILURE;
         }
 
-        $storeName = $input->getArgument('store');
-
-        $store = $this->stores->get($storeName);
+        $options = $this->getStoreOptions($input);
 
         try {
-            $store->drop();
+            $store->drop($options);
             $io->success(\sprintf('The "%s" store was dropped successfully.', $storeName));
         } catch (\Exception $e) {
             throw new RuntimeException(\sprintf('An error occurred while dropping the "%s" store: ', $storeName).$e->getMessage(), previous: $e);

@@ -22,7 +22,8 @@ use Symfony\Component\Filesystem\Filesystem;
  * A managed skill is a real copy, never a symlink into vendor/: the point is that you can read and
  * diff exactly what your agent will load. Only the .claude/skills/ mirror is a relative symlink to
  * the canonical .agents/skills/ copy, so the two can never drift apart; on filesystems without
- * symlink support it falls back to a second copy.
+ * symlink support it falls back to a second copy. When .claude/skills/ already is .agents/skills/
+ * (a project that links one folder to the other), there is nothing to mirror.
  *
  * Every outcome is recorded back into mate/extensions.php, next to the intent it derives from.
  * Skills whose source vanished are pruned immediately, together with their entry.
@@ -222,7 +223,11 @@ final class SkillInstaller
         $mirrorPath = $this->rootDir.'/'.self::CLAUDE_SKILLS_DIR.'/'.$installedName;
 
         if (!is_link($mirrorPath)) {
-            return is_dir($mirrorPath) ? 'copied' : 'missing';
+            if (!is_dir($mirrorPath)) {
+                return 'missing';
+            }
+
+            return $this->claudeSkillsDirIsAgentsDir() ? 'linked' : 'copied';
         }
 
         $expected = $this->mirrorLinkTarget($installedName);
@@ -439,6 +444,12 @@ final class SkillInstaller
 
     private function linkMirror(string $mirrorPath, string $installedName, string $agentsTarget): bool
     {
+        // The mirror path is the copy itself here: removing it and linking would leave a link
+        // that points at itself.
+        if ($this->claudeSkillsDirIsAgentsDir()) {
+            return true;
+        }
+
         $this->filesystem->remove($mirrorPath);
         $this->filesystem->mkdir(\dirname($mirrorPath));
 
@@ -456,6 +467,13 @@ final class SkillInstaller
         $this->copyDirectory($agentsTarget, $mirrorPath);
 
         return false;
+    }
+
+    private function claudeSkillsDirIsAgentsDir(): bool
+    {
+        $claudeDir = realpath($this->rootDir.'/'.self::CLAUDE_SKILLS_DIR);
+
+        return false !== $claudeDir && $claudeDir === realpath($this->rootDir.'/'.self::AGENTS_SKILLS_DIR);
     }
 
     private function copyDirectory(string $source, string $destination): void

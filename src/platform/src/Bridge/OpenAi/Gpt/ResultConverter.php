@@ -71,23 +71,28 @@ final class ResultConverter extends OpenResponsesResultConverter
     }
 
     /**
-     * Converts OpenAI's reset time format (e.g. "1s", "6m0s", "2m30s") into seconds.
-     *
-     * Supported formats:
-     * - "1s"
-     * - "6m0s"
-     * - "2m30s"
+     * Converts OpenAI's reset time, a Go duration such as "20ms", "1s", "6m0s" or "8.64s", into whole seconds, rounded up.
      */
     private static function parseResetTime(string $resetTime): ?int
     {
-        if (preg_match('/^(?:(\d+)m)?(?:(\d+)s)?$/', $resetTime, $matches)) {
-            $minutes = isset($matches[1]) ? (int) $matches[1] : 0;
-            $secs = isset($matches[2]) ? (int) $matches[2] : 0;
-
-            return ($minutes * 60) + $secs;
+        if (!preg_match('/^(?:\d+(?:\.\d+)?(?:ms|h|m|s))+$/', $resetTime)) {
+            return null;
         }
 
-        return null;
+        preg_match_all('/(\d+(?:\.\d+)?)(ms|h|m|s)/', $resetTime, $parts, \PREG_SET_ORDER);
+
+        // Summed in milliseconds, so that a fraction such as 0.1s cannot round a whole second up
+        $milliseconds = 0;
+        foreach ($parts as [, $value, $unit]) {
+            $milliseconds += (int) round((float) $value * match ($unit) {
+                'ms' => 1,
+                's' => 1000,
+                'm' => 60000,
+                'h' => 3600000,
+            });
+        }
+
+        return intdiv($milliseconds + 999, 1000);
     }
 
     /**

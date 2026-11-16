@@ -18,7 +18,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('FIREWORKS_API_KEY'), http_client());
 
-$agent = new Agent($platform, 'kimi-k2p6');
+$agent = new Agent($platform, 'kimi-k3');
 $messages = new MessageBag(
     Message::forSystem('You are a pirate and you write funny.'),
     Message::ofUser('What is the Symfony framework? Answer in a few sentences.'),

@@ -58,13 +58,13 @@ Loads the visible text and title of a webpage. No API key required.
 Firecrawl
 ~~~~~~~~~
 
-Scrapes, crawls, and maps websites using the `Firecrawl`_ service.
+Searches the web and scrapes, crawls, and maps websites using the `Firecrawl`_ service.
 
 .. code-block:: terminal
 
     $ composer require symfony/ai-firecrawl-tool
 
-`Firecrawl Scrape Example`_ | `Firecrawl Crawl Example`_ | `Firecrawl Map Example`_
+`Firecrawl Search Example`_ | `Firecrawl Scrape Example`_ | `Firecrawl Crawl Example`_ | `Firecrawl Map Example`_
 
 Wikipedia
 ~~~~~~~~~
@@ -138,7 +138,8 @@ Filesystem
 ~~~~~~~~~~
 
 Provides sandboxed file operations for the agent. Supports reading, writing, listing, and managing files
-within a defined base path.
+within a defined base path. It is meant for local agents, like CLI or coding assistants, that work on
+files of the person running them. In a web application, prefer tools that are specific to your domain.
 
 .. code-block:: terminal
 
@@ -148,6 +149,11 @@ within a defined base path.
 
     Always restrict the ``basePath`` to a directory the agent is allowed to access.
     The ``allowDelete`` option is disabled by default for safety.
+
+    Never use a directory that a web server serves as ``basePath``. The tool denies common
+    executable extensions like ``php`` or ``phtml`` by default, but a list of denied extensions can
+    never cover every web server configuration. To limit the files the agent can write, set
+    ``allowedExtensions`` to the extensions it needs, e.g. ``['txt', 'md', 'json']``.
 
 Date & Time
 -----------
@@ -178,7 +184,7 @@ it offers, and each reaches the model prefixed with the server name, e.g. ``file
 
 Reach the server through a toolset and hand it to the toolbox::
 
-    use Mcp\Client;
+    use Mcp\Client\Client;
     use Mcp\Client\Transport\StdioTransport;
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Agent\Bridge\Mcp\ClientToolset;
@@ -194,7 +200,9 @@ Reach the server through a toolset and hand it to the toolbox::
 
 To offer them next to local tools, put both toolboxes behind a
 :class:`Symfony\\AI\\Agent\\Toolbox\\ChainToolbox`. A server that cannot be reached contributes no
-tools and is asked again after ``retryAfter`` seconds (60 by default).
+tools and is asked again after ``retryAfter`` seconds (60 by default). The failure is only logged as an
+error, and the toolbox discards it unless you pass a PSR-3 logger as its third argument. Pass one to
+find out why a toolbox offers fewer tools than expected.
 
 The tool list is fetched on first use and kept. Call ``reset()`` on the toolbox to fetch it again on
 the next use, e.g. between the messages of a long-running worker. In a Symfony application the bundle
@@ -229,6 +237,7 @@ See :doc:`/components/agent` for a full RAG integration example.
 .. _`Tavily`: https://tavily.com/
 .. _`Tavily Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/tavily.php
 .. _`Firecrawl`: https://www.firecrawl.dev/
+.. _`Firecrawl Search Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/firecrawl-search.php
 .. _`Firecrawl Scrape Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/firecrawl-scrape.php
 .. _`Firecrawl Crawl Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/firecrawl-crawl.php
 .. _`Firecrawl Map Example`: https://github.com/symfony/ai/blob/main/examples/toolbox/firecrawl-map.php

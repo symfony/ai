@@ -23,18 +23,20 @@ Using a file-based SQLite database for persistence::
 
     use Symfony\AI\Store\Bridge\Sqlite\Store;
 
+    $store = new Store('sqlite:/path/to/vectors.db', 'my_vectors');
+    $store->setup();
+
+Given a DSN, the store opens the connection on its first query and keeps it.
+It also accepts a ``\PDO`` instance::
+
     $pdo = new \PDO('sqlite:/path/to/vectors.db');
     $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
     $store = new Store($pdo, 'my_vectors');
-    $store->setup();
 
 Using an in-memory SQLite database (for testing)::
 
-    $pdo = new \PDO('sqlite::memory:');
-    $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-
-    $store = new Store($pdo, 'my_vectors');
+    $store = new Store('sqlite::memory:', 'my_vectors');
     $store->setup();
 
 Factory Methods
@@ -102,13 +104,13 @@ Query Options
 
 The SQLite store supports the following query options:
 
-* ``maxItems`` (int) - Limit the number of results returned
+* ``limit`` (int) - Limit the number of results returned
 * ``filter`` (callable) - Filter documents by metadata before distance calculation
 
 Example combining both options::
 
     $results = $store->query($vectorQuery, [
-        'maxItems' => 5,
+        'limit' => 5,
         'filter' => fn(VectorDocumentInterface $doc) => $doc->getMetadata()['active'] === true,
     ]);
 
@@ -138,13 +140,13 @@ Basic Usage
 
 ::
 
-    use Symfony\AI\Store\Bridge\Sqlite\Distance;
+    use Symfony\AI\Store\Bridge\Sqlite\Metric;
     use Symfony\AI\Store\Bridge\Sqlite\VecStore;
 
     $pdo = new \PDO('sqlite:/path/to/vectors.db');
     $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
-    $store = new VecStore($pdo, 'my_vectors', Distance::Cosine, 1536);
+    $store = new VecStore($pdo, 'my_vectors', Metric::Cosine, 1536);
     $store->setup();
 
 You can check if the extension is available before creating the store::
@@ -153,30 +155,37 @@ You can check if the extension is available before creating the store::
         $store = new VecStore($pdo, 'my_vectors');
     }
 
+.. note::
+
+    Given a DSN instead of a ``\PDO`` instance, the ``VecStore`` opens the connection
+    itself and cannot load the extension. Use a DSN only when ``sqlite-vec`` is built
+    into your SQLite library. Otherwise, pass a ``\PDO`` instance on which you called
+    ``loadExtension()``. The same applies to ``StoreFactory::createVecStore()``.
+
 Factory Methods
 ---------------
 
 Create from a PDO connection::
 
-    $store = VecStore::fromPdo($pdo, 'my_vectors', Distance::Cosine, 1536);
+    $store = VecStore::fromPdo($pdo, 'my_vectors', Metric::Cosine, 1536);
 
 Create from a Doctrine DBAL connection::
 
-    $store = VecStore::fromDbal($dbalConnection, 'my_vectors', Distance::Cosine, 1536);
+    $store = VecStore::fromDbal($dbalConnection, 'my_vectors', Metric::Cosine, 1536);
 
 Distance Metrics
 ----------------
 
 The VecStore supports two distance metrics provided by sqlite-vec:
 
-* ``Distance::Cosine`` (default) - Cosine distance
-* ``Distance::L2`` - Euclidean (L2) distance
+* ``Metric::Cosine`` (default) - Cosine distance
+* ``Metric::L2`` - Euclidean (L2) distance
 
 ::
 
-    use Symfony\AI\Store\Bridge\Sqlite\Distance;
+    use Symfony\AI\Store\Bridge\Sqlite\Metric;
 
-    $store = new VecStore($pdo, 'my_vectors', Distance::L2, 1536);
+    $store = new VecStore($pdo, 'my_vectors', Metric::L2, 1536);
 
 Vector Dimension
 ----------------
@@ -184,10 +193,10 @@ Vector Dimension
 The vector dimension must be specified at table creation time (default: 1536)::
 
     // For OpenAI ada-002 embeddings (1536 dimensions)
-    $store = new VecStore($pdo, 'my_vectors', Distance::Cosine, 1536);
+    $store = new VecStore($pdo, 'my_vectors', Metric::Cosine, 1536);
 
     // For smaller models (e.g., 768 dimensions)
-    $store = new VecStore($pdo, 'my_vectors', Distance::Cosine, 768);
+    $store = new VecStore($pdo, 'my_vectors', Metric::Cosine, 768);
 
 Symfony AI Bundle Configuration
 -------------------------------
@@ -203,8 +212,8 @@ To use the ``VecStore`` with the Symfony AI Bundle, set ``vec: true`` in the sto
                 my_store:
                     dsn: 'sqlite:/path/to/vectors.db'
                     vec: true
-                    distance: cosine  # or L2
-                    vector_dimension: 1536
+                    metric: cosine  # or L2
+                    dimensions: 1536
 
 Or with a Doctrine DBAL connection:
 
@@ -216,5 +225,5 @@ Or with a Doctrine DBAL connection:
                 my_store:
                     connection: default
                     vec: true
-                    distance: cosine
-                    vector_dimension: 1536
+                    metric: cosine
+                    dimensions: 1536

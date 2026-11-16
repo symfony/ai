@@ -12,7 +12,7 @@
 namespace Symfony\AI\Store\Tests\Document\Loader;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
+use Symfony\AI\Store\Document\DocumentInterface;
 use Symfony\AI\Store\Document\Loader\RstLoader;
 
 /**
@@ -68,7 +68,7 @@ final class RstLoaderTest extends TestCase
     private function titles(string $content): array
     {
         return array_map(
-            static fn (EmbeddableDocumentInterface $document): ?string => $document->getMetadata()->getTitle(),
+            static fn (DocumentInterface $document): ?string => $document->getMetadata()->getTitle(),
             iterator_to_array((new RstLoader())->loadContent($content, 'controller.rst'), false),
         );
     }

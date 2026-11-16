@@ -2,9 +2,10 @@ Voyage AI
 =========
 
 Voyage AI offers a number of models for embedding text, contextualized chunks, interleaved multimodal data, and reranking.
-The bundle currently supports text embedding and multimodal embedding.
+The bundle currently supports text embedding, multimodal embedding, and reranking.
 
-For comprehensive information about Voyage AI, see the `Voyage AI API reference`_
+For comprehensive information about Voyage AI, see the `Voyage AI API reference`_ and the
+`Voyage AI Rerank API reference`_
 
 Setup
 -----
@@ -50,6 +51,24 @@ Basic multimodal embedding usage example::
 
     $vectors = $result->asVectors();
 
+Reranking usage example::
+
+    use Symfony\AI\Platform\Bridge\Voyage\Factory;
+
+    $platform = Factory::createPlatform($_ENV['VOYAGE_API_KEY'], $httpClient);
+
+    $result = $platform->invoke('rerank-3', [
+        'query' => 'What is artificial intelligence?',
+        'texts' => [
+            'Artificial intelligence is the simulation of human intelligence processes by machines.',
+            'The weather today is sunny with a high of 75 degrees.',
+        ],
+    ]);
+
+    foreach ($result->asReranking() as $entry) {
+        echo $entry->getIndex().': '.$entry->getScore().\PHP_EOL;
+    }
+
 
 Examples
 --------
@@ -59,6 +78,8 @@ See the ``examples/voyage/`` directory for complete working examples:
 * ``text-embeddings.php`` - Basic text embedding example
 * ``multiple-text-embeddings.php`` - Embedding multiple text values
 * ``multimodal-embeddings.php`` - Embedding multimodal data (single and multiple values)
+* ``rerank.php`` - Reranking documents by relevance to a query
 
 .. _Voyage AI API reference: https://docs.voyageai.com/reference/embeddings-api
+.. _Voyage AI Rerank API reference: https://docs.voyageai.com/reference/reranker-api
 .. _Voyage AI dashboard: https://dashboard.voyageai.com/organization/api-keys

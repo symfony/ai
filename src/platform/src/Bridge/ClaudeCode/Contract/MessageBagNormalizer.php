@@ -20,7 +20,8 @@ use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 
 /**
  * Normalizes a MessageBag for the Claude Code CLI by extracting the system
- * prompt into a dedicated field and the last user message as the prompt.
+ * prompt into a dedicated field and the text of the user messages after
+ * the last assistant message as the prompt.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
@@ -40,28 +41,36 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
     {
         $messages = $this->normalizer->normalize($data->withoutSystemMessage()->getMessages(), $format, $context);
 
-        $prompt = '';
-        foreach (array_reverse($messages) as $message) {
-            if ('user' !== ($message['role'] ?? null)) {
+        $texts = [];
+        $lastUserTexts = [];
+        foreach ($messages as $message) {
+            $role = $message['role'] ?? null;
+
+            if ('assistant' === $role) {
+                $texts = [];
                 continue;
             }
 
-            if (\is_string($message['content'])) {
-                $prompt = $message['content'];
-                break;
+            if ('user' !== $role) {
+                continue;
             }
 
-            if (\is_array($message['content'])) {
+            $lastUserTexts = [];
+            if (\is_string($message['content'])) {
+                $lastUserTexts[] = $message['content'];
+            } elseif (\is_array($message['content'])) {
                 foreach ($message['content'] as $block) {
                     if ('text' === ($block['type'] ?? null)) {
-                        $prompt = $block['text'];
-                        break 2;
+                        $lastUserTexts[] = $block['text'];
                     }
                 }
             }
+
+            array_push($texts, ...$lastUserTexts);
         }
 
-        $array = ['prompt' => $prompt];
+        // Without a user message after the last assistant message, fall back to the last user message
+        $array = ['prompt' => implode("\n\n", [] !== $texts ? $texts : $lastUserTexts)];
 
         if (null !== $system = $data->getSystemMessage()) {
             $array['system_prompt'] = (string) $system->getContent();

@@ -17,6 +17,8 @@ use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\Provider;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class FactoryTest extends TestCase
 {
@@ -64,5 +66,22 @@ final class FactoryTest extends TestCase
             ->getModels();
 
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testCreateModelCatalogUsesScopedHttpClient()
+    {
+        $requestedUrl = '';
+        $headers = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requestedUrl, &$headers): ResponseInterface {
+            $requestedUrl = $url;
+            $headers = $options['normalized_headers'] ?? [];
+
+            return new MockResponse('{"data": []}');
+        });
+
+        Factory::createModelCatalog('key', 'secret', 'https://platform.higgsfield.ai', $httpClient)->getModels();
+
+        $this->assertSame('https://platform.higgsfield.ai/models', $requestedUrl);
+        $this->assertSame(['Authorization: Key key:secret'], $headers['authorization'] ?? []);
     }
 }

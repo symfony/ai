@@ -37,6 +37,12 @@ for bridge_dir in ${BRIDGE_PATH}/; do
     fi
 
     bridge_name=$(basename "$bridge_dir")
+
+    # A component can hold bridges of several types, like the tools and message stores of the agent component
+    bridge_type=$(jq -r '.type // empty' "${bridge_dir%/}/composer.json" 2>/dev/null || true)
+    if [[ "$bridge_type" == symfony-ai-* && "$bridge_type" != "symfony-ai-${BRIDGE_TYPE}" ]]; then
+        continue
+    fi
     # Remove trailing /* from bridge_path and append bridge_name
     base_path="${BRIDGE_PATH%/*}"
     expected_path="${base_path}/${bridge_name}"

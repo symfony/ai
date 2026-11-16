@@ -431,6 +431,98 @@ final class LogSearchToolTest extends TestCase
         $this->assertSame(['null', 'string'], $schema['properties']['term']['type']);
     }
 
+    public function testSearchReadsCompressedRotationsAfterThePlainFiles()
+    {
+        $dir = $this->createDirectoryWithCompressedRotation();
+
+        try {
+            $tool = new LogSearchTool(new LogReader(new LogParser(), $dir));
+
+            $result = $this->decodeUntrusted($tool->search('Deploy'));
+
+            $this->assertSame(['dev.log', 'dev-2026-09-26.log.gz'], array_column($result['entries'], 'source_file'));
+            $this->assertSame([], $result['skipped_files']);
+        } finally {
+            $this->removeDirectory($dir);
+        }
+    }
+
+    public function testSearchContextReadsCompressedRotations()
+    {
+        $dir = $this->createDirectoryWithCompressedRotation();
+
+        try {
+            $tool = new LogSearchTool(new LogReader(new LogParser(), $dir));
+
+            $result = $this->decodeUntrusted($tool->searchContext('user_id', '1187'));
+
+            $this->assertSame(['dev-2026-09-26.log.gz'], array_column($result['entries'], 'source_file'));
+        } finally {
+            $this->removeDirectory($dir);
+        }
+    }
+
+    public function testSearchReportsNoSkippedFilesWithoutCompressedRotations()
+    {
+        $result = $this->decodeUntrusted($this->tool->search('logged in'));
+
+        $this->assertSame([], $result['skipped_files']);
+    }
+
+    public function testSearchNamesACompressedRotationItStoppedReadingAtTheCap()
+    {
+        $dir = $this->createDirectoryWithCompressedRotation();
+
+        try {
+            $tool = new LogSearchTool(new LogReader(new LogParser(), $dir, compressedBytes: 10));
+
+            $result = $this->decodeUntrusted($tool->search('Deploy'), DecodeOptions::lenient());
+
+            $this->assertSame(['dev.log'], array_column($result['entries'], 'source_file'));
+            $this->assertEqualsCanonicalizing(['dev-2026-09-26.log.gz', 'dev.log.1.gz'], $result['skipped_files']);
+        } finally {
+            $this->removeDirectory($dir);
+        }
+    }
+
+    public function testListFilesListsCompressedRotations()
+    {
+        $dir = $this->createDirectoryWithCompressedRotation();
+
+        try {
+            $tool = new LogSearchTool(new LogReader(new LogParser(), $dir));
+
+            $result = $this->decodeUntrusted($tool->listFiles());
+
+            $this->assertEqualsCanonicalizing(['dev.log', 'dev-2026-09-26.log.gz', 'dev.log.1.gz'], array_column($result['files'], 'name'));
+            $this->assertSame([], $result['skipped_files']);
+        } finally {
+            $this->removeDirectory($dir);
+        }
+    }
+
+    public function testToolDescriptionsMentionSkippedFiles()
+    {
+        $reflection = new \ReflectionClass(LogSearchTool::class);
+
+        foreach (['search', 'searchContext', 'listFiles'] as $method) {
+            $attribute = $reflection->getMethod($method)->getAttributes()[0]->newInstance();
+
+            $this->assertStringContainsString('skipped_files', $attribute->description ?? '');
+        }
+    }
+
+    private function createDirectoryWithCompressedRotation(): string
+    {
+        $dir = sys_get_temp_dir().'/monolog_gz_'.uniqid();
+        mkdir($dir);
+        file_put_contents($dir.'/dev.log', "[2026-09-27 08:01:00] app.INFO: Deploy finished {\"user_id\":1251} []\n");
+        file_put_contents($dir.'/dev-2026-09-26.log.gz', (string) gzencode("[2026-09-26 16:11:00] app.ERROR: Deploy broke {\"user_id\":1187} []\n"));
+        file_put_contents($dir.'/dev.log.1.gz', (string) gzencode("[2026-09-25 10:00:00] app.INFO: Older {} []\n"));
+
+        return $dir;
+    }
+
     private function createMultiKernelTool(): LogSearchTool
     {
         return new LogSearchTool(new LogReader(new LogParser(), [

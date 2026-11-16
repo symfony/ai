@@ -15,10 +15,14 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Factory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\ModelCatalog;
+use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\HttpClient\ScopingHttpClient;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class FactoryTest extends TestCase
 {
@@ -52,5 +56,34 @@ final class FactoryTest extends TestCase
         ]));
 
         $this->assertInstanceOf(ModelCatalog::class, $provider->getModelCatalog());
+    }
+
+    public function testCreateModelCatalogUsesScopedHttpClient()
+    {
+        $requestedUrl = '';
+        $headers = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requestedUrl, &$headers): ResponseInterface {
+            $requestedUrl = $url;
+            $headers = $options['normalized_headers'] ?? [];
+
+            return new MockResponse('[]');
+        });
+
+        Factory::createModelCatalog('https://api.elevenlabs.io/v1', 'secret', $httpClient)->getModels();
+
+        $this->assertSame('https://api.elevenlabs.io/v1/models', $requestedUrl);
+        $this->assertSame(['xi-api-key: secret'], $headers['xi-api-key'] ?? []);
+    }
+
+    public function testCreatePlatformUsesGivenModelCatalog()
+    {
+        $model = new Model('custom-model');
+
+        $catalog = $this->createStub(ModelCatalogInterface::class);
+        $catalog->method('getModel')->willReturn($model);
+
+        $platform = Factory::createPlatform(apiKey: 'secret', httpClient: new MockHttpClient(), modelCatalog: $catalog);
+
+        $this->assertSame($model, $platform->getModelCatalog()->getModel('custom-model'));
     }
 }

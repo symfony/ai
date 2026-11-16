@@ -32,6 +32,7 @@ To use a specific AI platform, install the corresponding bridge package:
 | Codex               | `symfony/ai-codex-platform`               |
 | Cohere              | `symfony/ai-cohere-platform`              |
 | Decart              | `symfony/ai-decart-platform`              |
+| Decision            | `symfony/ai-decision-platform`            |
 | Deepgram            | `symfony/ai-deepgram-platform`            |
 | DeepSeek            | `symfony/ai-deep-seek-platform`           |
 | Docker Model Runner | `symfony/ai-docker-model-runner-platform` |

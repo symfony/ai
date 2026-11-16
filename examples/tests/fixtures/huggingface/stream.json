@@ -1,0 +1,118 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://router.huggingface.co/v1/chat/completions",
+                "signature": "8258242a4b3090238e8a0cc1ac49ce06",
+                "signature_v2": "db7ce2689798c203ab71d7dd829c6ec1",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"stream\":true,\"stream_options\":{\"include_usage\":true},\"messages\":[{\"role\":\"user\",\"content\":\"What is the eighth prime number?\"}],\"model\":\"openai\\/gpt-oss-120b\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "text/event-stream; charset=utf-8"
+                    ],
+                    "x-ratelimit-remaining-tokens-hour": [
+                        "134983608"
+                    ],
+                    "x-ratelimit-remaining-tokens-minute": [
+                        "733608"
+                    ],
+                    "x-powered-by": [
+                        "huggingface-moon"
+                    ],
+                    "cross-origin-opener-policy": [
+                        "same-origin"
+                    ],
+                    "referrer-policy": [
+                        "strict-origin-when-cross-origin"
+                    ],
+                    "vary": [
+                        "Origin"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "access-control-expose-headers": [
+                        "X-Repo-Commit,X-Request-Id,X-Error-Code,X-Error-Message,X-Total-Count,ETag,Link,Accept-Ranges,Content-Range,X-Linked-Size,X-Linked-ETag,X-Xet-Hash"
+                    ],
+                    "x-robots-tag": [
+                        "none"
+                    ],
+                    "x-inference-provider": [
+                        "cerebras"
+                    ],
+                    "inference-id": [
+                        "chatcmpl-d0e96c97-dc58-42d4-9c8e-d3ba61174a32"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=31536000"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "x-ratelimit-limit-requests-day": [
+                        "2880000"
+                    ],
+                    "x-ratelimit-limit-requests-hour": [
+                        "120000"
+                    ],
+                    "x-ratelimit-limit-requests-minute": [
+                        "2000"
+                    ],
+                    "x-ratelimit-limit-tokens-day": [
+                        "1080000000"
+                    ],
+                    "x-ratelimit-limit-tokens-hour": [
+                        "45000000"
+                    ],
+                    "x-ratelimit-limit-tokens-minute": [
+                        "750000"
+                    ],
+                    "x-ratelimit-remaining-requests-day": [
+                        "2879999"
+                    ],
+                    "x-ratelimit-remaining-requests-hour": [
+                        "119999"
+                    ],
+                    "x-ratelimit-remaining-requests-minute": [
+                        "1999"
+                    ],
+                    "x-ratelimit-remaining-tokens-day": [
+                        "1079983608"
+                    ],
+                    "x-cache": [
+                        "Miss from cloudfront"
+                    ],
+                    "via": [
+                        "1.1 43f35563da782c297e1e31fe6ff75030.cloudfront.net (CloudFront)"
+                    ],
+                    "x-amz-cf-pop": [
+                        "TXL52-P3"
+                    ],
+                    "x-amz-cf-id": [
+                        "lijeBSG6kPElmwlv_2yH0OIv4DNf-DlShkrSVvZCKSnJC8K0U_xSUw=="
+                    ]
+                },
+                "body_format": "sse",
+                "body": "data: {\"id\":\"chatcmpl-d0e96c97-dc58-42d4-9c8e-d3ba61174a32\",\"choices\":[{\"delta\":{\"role\":\"assistant\"},\"index\":0}],\"created\":1792709072,\"model\":\"gpt-oss-120b\",\"system_fingerprint\":\"fp_a9089f3cce52797e7952\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"id\":\"chatcmpl-d0e96c97-dc58-42d4-9c8e-d3ba61174a32\",\"choices\":[{\"delta\":{\"reasoning\":\"We\"},\"index\":0}],\"created\":1792709072,\"model\":\"gpt-oss-120b\",\"system_fingerprint\":\"fp_a9089f3cce52797e7952\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"id\":\"chatcmpl-d0e96c97-dc58-42d4-9c8e-d3ba61174a32\",\"choices\":[{\"delta\":{\"reasoning\":\" need to answer: what's the eighth prime number? Let's list primes\"},\"index\":0}],\"created\":1792709072,\"model\":\"gpt-oss-120b\",\"system_fingerprint\":\"fp_a9089f3cce52797e7952\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"id\":\"chatcmpl-d0e96c97-dc58-42d4-9c8e-d3ba61174a32\",\"choices\":[{\"delta\":{\"reasoning\":\": 2,3,5,7,11,13,17,19\"},\"index\":0}],\"created\":1792709072,\"model\":\"gpt-oss-120b\",\"system_fingerprint\":\"fp_a9089f3cce52797e7952\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"id\":\"chatcmpl-d0e96c97-dc58-42d4-9c8e-d3ba61174a32\",\"choices\":[{\"delta\":{\"reasoning\":\". So the eighth prime\"},\"index\":0}],\"created\":1792709072,\"model\":\"gpt-oss-120b\",\"system_fingerprint\":\"fp_a9089f3cce52797e7952\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"id\":\"chatcmpl-d0e96c97-dc58-42d4-9c8e-d3ba61174a32\",\"choices\":[{\"delta\":{\"reasoning\":\" is 19. Provide answer\"},\"index\":0}],\"created\":1792709072,\"model\":\"gpt-oss-120b\",\"system_fingerprint\":\"fp_a9089f3cce52797e7952\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"id\":\"chatcmpl-d0e96c97-dc58-42d4-9c8e-d3ba61174a32\",\"choices\":[{\"delta\":{\"reasoning\":\".\"},\"index\":0}],\"created\":1792709072,\"model\":\"gpt-oss-120b\",\"system_fingerprint\":\"fp_a9089f3cce52797e7952\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"id\":\"chatcmpl-d0e96c97-dc58-42d4-9c8e-d3ba61174a32\",\"choices\":[{\"delta\":{\"content\":\"The eighth prime number is **19**\",\"reasoning\":\" Possibly mention counting.\"},\"index\":0}],\"created\":1792709072,\"model\":\"gpt-oss-120b\",\"system_fingerprint\":\"fp_a9089f3cce52797e7952\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"id\":\"chatcmpl-d0e96c97-dc58-42d4-9c8e-d3ba61174a32\",\"choices\":[{\"delta\":{\"content\":\".\\n\\n(Counting the primes in\"},\"index\":0}],\"created\":1792709072,\"model\":\"gpt-oss-120b\",\"system_fingerprint\":\"fp_a9089f3cce52797e7952\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"id\":\"chatcmpl-d0e96c97-dc58-42d4-9c8e-d3ba61174a32\",\"choices\":[{\"delta\":{\"content\":\" order: 2, 3, \"},\"index\":0}],\"created\":1792709072,\"model\":\"gpt-oss-120b\",\"system_fingerprint\":\"fp_a9089f3cce52797e7952\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"id\":\"chatcmpl-d0e96c97-dc58-42d4-9c8e-d3ba61174a32\",\"choices\":[{\"delta\":{\"content\":\"5, 7, 11, 13, 17, **19**.)\"},\"index\":0}],\"created\":1792709072,\"model\":\"gpt-oss-120b\",\"system_fingerprint\":\"fp_a9089f3cce52797e7952\",\"object\":\"chat.completion.chunk\"}\n\ndata: {\"id\":\"chatcmpl-d0e96c97-dc58-42d4-9c8e-d3ba61174a32\",\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\",\"index\":0}],\"created\":1792709072,\"model\":\"gpt-oss-120b\",\"system_fingerprint\":\"fp_a9089f3cce52797e7952\",\"object\":\"chat.completion.chunk\",\"usage\":{\"total_tokens\":173,\"completion_tokens\":99,\"completion_tokens_details\":{\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0,\"reasoning_tokens\":47},\"prompt_tokens\":74,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"time_info\":{\"created\":1792709072.7450826,\"queue_time\":0.0030480280000000012,\"prompt_time\":0.001332221,\"completion_time\":0.040313176,\"total_time\":0.05139470100402832}}\n\ndata: [DONE]\n\n"
+            }
+        }
+    ]
+}

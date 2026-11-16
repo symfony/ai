@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Bridge\Weaviate;
 
+use Composer\InstalledVersions;
 use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
@@ -124,6 +125,9 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return VectorQuery::class === $queryClass;
     }
 
+    /**
+     * @param array{limit?: positive-int} $options
+     */
     public function query(QueryInterface $query, array $options = []): iterable
     {
         if (!$query instanceof VectorQuery) {
@@ -137,14 +141,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
                     %s (
                         nearVector: {
                             vector: [%s]
-                        }
+                        }%s
                     ) {
                         uuid,
                         vector,
                         _metadata
                     }
                 }
-            }', $this->collection, implode(', ', $vector->getData())),
+            }', $this->collection, implode(', ', $vector->getData()), isset($options['limit']) ? \sprintf(', limit: %d', $options['limit']) : ''),
         ]);
 
         foreach ($results['data']['Get'][$this->collection] as $item) {
@@ -181,11 +185,15 @@ final class Store implements ManagedStoreInterface, StoreInterface
      */
     private function request(string $method, string $endpoint, array $payload): array
     {
+        $options = [
+            'headers' => ['X-Weaviate-Client-Integration' => 'symfony-ai/'.self::resolveVersion()],
+        ];
+
         if ([] !== $payload) {
-            $finalPayload['json'] = $payload;
+            $options['json'] = $payload;
         }
 
-        $response = $this->httpClient->request($method, $endpoint, $finalPayload ?? []);
+        $response = $this->httpClient->request($method, $endpoint, $options);
 
         if (200 === $response->getStatusCode() && '' === $response->getContent(false)) {
             return [];
@@ -223,6 +231,15 @@ final class Store implements ManagedStoreInterface, StoreInterface
             : new Vector($data['vector']);
 
         return new VectorDocument($id, $vector, new Metadata(json_decode($data['_metadata'], true)));
+    }
+
+    private static function resolveVersion(): string
+    {
+        if (!class_exists(InstalledVersions::class) || !InstalledVersions::isInstalled('symfony/ai-weaviate-store')) {
+            return 'unknown';
+        }
+
+        return ltrim(InstalledVersions::getPrettyVersion('symfony/ai-weaviate-store') ?? 'unknown', 'v');
     }
 
     private function collectionExists(): bool

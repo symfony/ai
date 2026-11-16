@@ -13,12 +13,18 @@ namespace Symfony\Component\Config\Definition\Configurator;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
+$modelCatalog = require __DIR__.'/model_catalog.php';
+
 return (new ArrayNodeDefinition('huggingface'))
     ->children()
         ->stringNode('api_key')->isRequired()->end()
-        ->stringNode('provider')->defaultValue('hf-inference')->end()
+        ->stringNode('provider')
+            ->defaultNull()
+            ->info('Inference provider for chat completion, Hugging Face picks one when null')
+        ->end()
         ->stringNode('http_client')
             ->defaultValue('http_client')
             ->info('Service ID of the HTTP client to use')
         ->end()
+        ->append($modelCatalog('static_or_api'))
     ->end();

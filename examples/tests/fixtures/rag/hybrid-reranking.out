@@ -29,6 +29,8 @@ Query: "crime family mafia"
   20. Jurassic Park (Score: 0.2852)
 
 --- Text-Only Results (keyword matching) ---
+  1. The Godfather (Score: 0.0000)
+  2. Gladiator (Score: 0.0000)
 
 --- Hybrid RRF Results (CombinedStore, no reranker) ---
   1. The Godfather (RRF Score: 0.016393)
@@ -53,11 +55,11 @@ Query: "crime family mafia"
   20. Jurassic Park (RRF Score: 0.012500)
 
 --- Hybrid RRF + HuggingFace Reranking Results ---
-  1. The Godfather (Relevance: 0.0172)
-  2. Reservoir Dogs (Relevance: 0.0172)
-  3. Kill Bill: Vol. 1 (Relevance: 0.0172)
-  4. The Matrix (Relevance: 0.0172)
-  5. Pulp Fiction (Relevance: 0.0172)
+  1. The Godfather (Relevance: -7.4139)
+  2. Pulp Fiction (Relevance: -10.1210)
+  3. Reservoir Dogs (Relevance: -10.7232)
+  4. Gladiator (Relevance: -11.1614)
+  5. Interstellar (Relevance: -11.2017)
 
 === Summary ===
 - Vector retrieval finds semantically similar documents via embeddings

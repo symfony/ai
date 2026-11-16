@@ -57,6 +57,7 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
                 ...$this->models,
                 ...$this->fetchRemoteModels(),
                 ...$this->fetchRemoteEmbeddings(),
+                ...$this->fetchRemoteDecisions(),
             ];
             ksort($this->models);
             $this->modelsAreLoaded = true;
@@ -138,6 +139,22 @@ final class ModelApiCatalog extends AbstractOpenRouterModelCatalog
             yield $embedding['id'] => [
                 'class' => EmbeddingsModel::class,
                 'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
+            ];
+        }
+    }
+
+    /**
+     * @return iterable<string, array{class: class-string<DecisionModel>, capabilities: list<Capability::*>}>
+     */
+    protected function fetchRemoteDecisions(): iterable
+    {
+        $responseDecisions = $this->httpClient->request('GET', $this->baseUrl.'/v1/models', [
+            'query' => ['output_modalities' => 'decisions'],
+        ]);
+        foreach ($responseDecisions->toArray()['data'] as $decision) {
+            yield $decision['id'] => [
+                'class' => DecisionModel::class,
+                'capabilities' => [Capability::INPUT_TEXT],
             ];
         }
     }

@@ -1,6 +1,20 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add text-to-speech support through the OpenAI-compatible `POST /v1/audio/speech` endpoint (Ollama >= 0.40.9)
+ * Add image inputs for Clef decision models (Ollama >= 0.35.1)
+ * Add a `$modelCatalog` argument to `Factory::createProvider()` and `Factory::createPlatform()`, and `Factory::createModelCatalog()` to build the API-based catalog on its own, e.g. to wrap it in a `CachedModelCatalog`
+ * Read the cached prompt tokens that Ollama >= 0.33.3 reports as `prompt_eval_cached_count` into the token usage
+
+0.15
+----
+
+ * Add `UserMessageNormalizer` to send image content in Ollama's native message format
+ * Add support for decision models (`decision` capability, Ollama >= 0.35.0), served through `POST /v1/systemone`
+
 0.14
 ----
 

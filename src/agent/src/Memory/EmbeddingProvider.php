@@ -66,6 +66,6 @@ final class EmbeddingProvider implements MemoryProviderInterface
             return [];
         }
 
-        return [new Memory('## Dynamic memories fitting user message'.\PHP_EOL.\PHP_EOL.$content)];
+        return [new Memory('## Dynamic memories fitting user message'."\n\n".$content)];
     }
 }

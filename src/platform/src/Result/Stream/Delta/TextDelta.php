@@ -18,6 +18,7 @@ final class TextDelta implements DeltaInterface, \Stringable
 {
     public function __construct(
         private readonly string $text,
+        private readonly ?string $phase = null,
     ) {
     }
 
@@ -29,5 +30,10 @@ final class TextDelta implements DeltaInterface, \Stringable
     public function getText(): string
     {
         return $this->text;
+    }
+
+    public function getPhase(): ?string
+    {
+        return $this->phase;
     }
 }

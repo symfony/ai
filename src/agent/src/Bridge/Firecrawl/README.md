@@ -6,6 +6,7 @@ Provides [Firecrawl](https://www.firecrawl.dev/) integration for Symfony AI Agen
 Firecrawl Documentation
 -----------------------
 
+ * [Search API reference (v2)](https://docs.firecrawl.dev/api-reference/endpoint/search)
  * [API reference (v1)](https://docs.firecrawl.dev/api-reference/v1-endpoint/map)
  * [Docs](https://docs.firecrawl.dev/)
 

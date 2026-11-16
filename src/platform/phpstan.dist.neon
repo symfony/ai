@@ -4,6 +4,8 @@ includes:
 
 parameters:
     level: 6
+    scanFiles:
+        - dev/update-model-catalogs.php
     paths:
         - src/
         - tests/

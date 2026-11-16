@@ -10,7 +10,6 @@
  */
 
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
-use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -24,8 +23,6 @@ $input = [
     ],
 ];
 
-$result = $platform->invoke('google/tapas-base-finetuned-wtq', $input, [
-    'task' => Task::TABLE_QUESTION_ANSWERING,
-]);
+$result = $platform->invoke('google/tapas-base-finetuned-wtq', $input);
 
 dump($result->asObject());

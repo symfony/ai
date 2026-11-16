@@ -12,17 +12,22 @@
 namespace Symfony\AI\Platform\Tests\Message;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Message\IdentifierAwareTrait;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\SystemMessage;
 use Symfony\AI\Platform\Message\UserMessage;
+use Symfony\AI\Platform\Metadata\MetadataAwareTrait;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Uid\AbstractUid;
 use Symfony\Component\Uid\TimeBasedUidInterface;
+use Symfony\Component\Uid\Uuid;
 
 final class MessageBagTest extends TestCase
 {
@@ -131,6 +136,47 @@ final class MessageBagTest extends TestCase
         $this->assertSame('Hello, world!', $userMessage->getContent()[0]->getText());
     }
 
+    public function testSystemMessageRemovalPreservesOrderIdentityAndDuplicates()
+    {
+        $userMessage = Message::ofUser('Hello!');
+        $assistantMessage = Message::ofAssistant('Hi!');
+        $systemMessage = Message::forSystem('System prompt.');
+        $originalMessages = [$systemMessage, $userMessage, $systemMessage, $assistantMessage, $userMessage, $systemMessage];
+        $messageBag = new MessageBag(...$originalMessages);
+        $expectedMessages = [$userMessage, $assistantMessage, $userMessage];
+
+        $newMessageBag = $messageBag->withoutSystemMessage();
+
+        $this->assertNotSame($messageBag, $newMessageBag);
+        $this->assertSame($messageBag->getId(), $newMessageBag->getId());
+        $this->assertSame($originalMessages, $messageBag->getMessages());
+        $this->assertSame($expectedMessages, $newMessageBag->getMessages());
+    }
+
+    public function testSystemMessageRemovalFromEmptyBag()
+    {
+        $messageBag = new MessageBag();
+
+        $this->assertSame([], $messageBag->withoutSystemMessage()->getMessages());
+    }
+
+    public function testSystemMessageRemovalWithOnlySystemMessages()
+    {
+        $messageBag = new MessageBag(Message::forSystem('First prompt.'), Message::forSystem('Second prompt.'));
+
+        $this->assertSame([], $messageBag->withoutSystemMessage()->getMessages());
+        $this->assertCount(2, $messageBag);
+    }
+
+    public function testSystemMessageRemovalWithoutSystemMessages()
+    {
+        $originalMessages = [Message::ofUser('Hello!'), Message::ofAssistant('Hi!')];
+        $messageBag = new MessageBag(...$originalMessages);
+
+        $this->assertSame($originalMessages, $messageBag->withoutSystemMessage()->getMessages());
+        $this->assertSame($originalMessages, $messageBag->getMessages());
+    }
+
     public function testWithoutToolMessages()
     {
         $messageBag = new MessageBag(
@@ -177,15 +223,16 @@ final class MessageBagTest extends TestCase
         $this->assertSame('My amazing system prompt.', $newMessageBagMessage->getContent());
     }
 
-    public function testPrependMutatesInPlace()
+    public function testWithSystemMessagePrependsToCopy()
     {
-        $messageBag = new MessageBag(
+        $originalBag = new MessageBag(
             Message::ofAssistant('It is time to sleep.'),
             Message::ofUser('Hello, world!'),
         );
 
-        $messageBag->prepend(Message::forSystem('My amazing system prompt.'));
+        $messageBag = $originalBag->withSystemMessage(Message::forSystem('My amazing system prompt.'));
 
+        $this->assertCount(2, $originalBag);
         $this->assertCount(3, $messageBag);
 
         $first = $messageBag->getMessages()[0];
@@ -203,7 +250,7 @@ final class MessageBagTest extends TestCase
             Message::forSystem('Another system prompt at the end'),
         );
 
-        $messageBag->removeSystemMessage();
+        $messageBag = $messageBag->withoutSystemMessage();
 
         $this->assertCount(2, $messageBag);
 
@@ -236,6 +283,53 @@ final class MessageBagTest extends TestCase
         );
 
         $this->assertTrue($messageBag->containsImage());
+    }
+
+    public function testForIdCreatesABagWithTheGivenIdAndMessages()
+    {
+        $id = Uuid::v7();
+        $message = Message::ofUser('Hello!');
+
+        $messageBag = MessageBag::forId($id, $message);
+
+        $this->assertSame($id, $messageBag->getId());
+        $this->assertSame([$message], $messageBag->getMessages());
+    }
+
+    public function testForIdTurnsStringsIntoUserMessages()
+    {
+        $messageBag = MessageBag::forId(Uuid::v7(), Message::forSystem('Be brief.'), 'What is my name?');
+
+        $this->assertInstanceOf(SystemMessage::class, $messageBag->getMessages()[0]);
+        $this->assertInstanceOf(UserMessage::class, $messageBag->getMessages()[1]);
+        $this->assertSame('What is my name?', $messageBag->getUserMessage()?->asText());
+    }
+
+    public function testWithIdReturnsCopyWithGivenId()
+    {
+        $id = Uuid::v7();
+        $messageBag = new MessageBag(Message::ofUser('Hello!'));
+        $messageBag->getMetadata()->add('key', 'value');
+
+        $newMessageBag = $messageBag->withId($id);
+
+        $this->assertNotSame($messageBag, $newMessageBag);
+        $this->assertSame($id, $newMessageBag->getId());
+        $this->assertFalse($messageBag->getId()->equals($id));
+        $this->assertSame($messageBag->getMessages(), $newMessageBag->getMessages());
+        $this->assertSame('value', $newMessageBag->getMetadata()->get('key'));
+    }
+
+    public function testCopiesDoNotShareMetadata()
+    {
+        $messageBag = new MessageBag();
+        $messageBag->getMetadata()->add('key', 'value');
+
+        $newMessageBag = $messageBag->with(Message::ofUser('Hello!'));
+        $newMessageBag->getMetadata()->add('other', 'value');
+
+        $this->assertFalse($messageBag->getMetadata()->has('other'));
+        $this->assertSame('value', $newMessageBag->getMetadata()->get('key'));
     }
 
     public function testItCanHandleMetadata()
@@ -395,9 +489,10 @@ final class MessageBagTest extends TestCase
         /** @var AbstractUid&TimeBasedUidInterface $existingMessageUuid */
         $existingMessageUuid = $userMessage->getId();
 
-        $messageBag->replace($existingMessageUuid, Message::ofUser('Hello from a new user message'));
+        $newMessageBag = $messageBag->replace($existingMessageUuid, Message::ofUser('Hello from a new user message'));
 
-        $this->assertSame('Hello from a new user message', $messageBag->getUserMessage()->asText());
+        $this->assertSame('Hello World', $messageBag->getUserMessage()->asText());
+        $this->assertSame('Hello from a new user message', $newMessageBag->getUserMessage()->asText());
     }
 
     public function testMessageBagCanReturnLatestAs()
@@ -408,6 +503,85 @@ final class MessageBagTest extends TestCase
         $messageBag = new MessageBag($latestMessageAsUser, $latestMessageAsAssistant);
 
         $this->assertSame($latestMessageAsUser, $messageBag->latestAs(Role::User));
+    }
+
+    public function testMessageBagReturnsLastMessageOfRoleAsLatest()
+    {
+        $firstUserMessage = Message::ofUser('First');
+        $lastUserMessage = Message::ofUser('Last');
+
+        $messageBag = new MessageBag($firstUserMessage, Message::ofAssistant('Answer'), $lastUserMessage, Message::ofAssistant('Answer'));
+
+        $this->assertSame($lastUserMessage, $messageBag->latestAs(Role::User));
+    }
+
+    public function testLatestAsThrowsWithoutMessageOfRole()
+    {
+        $messageBag = new MessageBag(Message::ofUser('Hello'));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No message found for role "Assistant".');
+
+        $messageBag->latestAs(Role::Assistant);
+    }
+
+    public function testLatestAsReturnsMessageClassOfRole()
+    {
+        $system = Message::forSystem('System');
+        $user = Message::ofUser('User');
+        $assistant = Message::ofAssistant('Assistant');
+        $toolCall = Message::ofToolCall(new ToolCall('tool', 'tool_name'), 'Result');
+
+        $messageBag = new MessageBag($system, $user, $assistant, $toolCall);
+
+        $this->assertSame($system, $messageBag->latestAs(Role::System));
+        $this->assertSame($user, $messageBag->latestAs(Role::User));
+        $this->assertSame($assistant, $messageBag->latestAs(Role::Assistant));
+        $this->assertSame($toolCall, $messageBag->latestAs(Role::ToolCall));
+    }
+
+    public function testLatestAsSkipsCustomMessageOfRole()
+    {
+        $userMessage = Message::ofUser('Hello');
+
+        $messageBag = new MessageBag($userMessage, $this->createCustomUserMessage());
+
+        $this->assertSame($userMessage, $messageBag->latestAs(Role::User));
+    }
+
+    public function testLatestAsThrowsWithOnlyCustomMessageOfRole()
+    {
+        $messageBag = new MessageBag($this->createCustomUserMessage());
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No message found for role "User".');
+
+        $messageBag->latestAs(Role::User);
+    }
+
+    public function testReplaceThrowsForUnknownUuid()
+    {
+        $messageBag = new MessageBag(Message::ofUser('Hello'));
+        $uuid = Uuid::v7();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('No message found for Uuid: "%s".', $uuid->toRfc4122()));
+
+        $messageBag->replace($uuid, Message::ofUser('Replacement'));
+    }
+
+    public function testReplaceThrowsForDuplicateUuid()
+    {
+        $userMessage = Message::ofUser('Hello');
+        $messageBag = new MessageBag($userMessage, $userMessage);
+
+        /** @var AbstractUid&TimeBasedUidInterface $uuid */
+        $uuid = $userMessage->getId();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('More than one message found for Uuid');
+
+        $messageBag->replace($uuid, Message::ofUser('Replacement'));
     }
 
     public function testIsLastMessageFromReturnsFalseForEmptyBag()
@@ -426,9 +600,27 @@ final class MessageBagTest extends TestCase
         $this->assertFalse($messageBag->isLastMessageFrom(Role::Assistant));
         $this->assertFalse($messageBag->isLastMessageFrom(Role::System));
 
-        $messageBag->add(Message::ofAssistant('Hi there!'));
+        $messageBag = $messageBag->with(Message::ofAssistant('Hi there!'));
 
         $this->assertFalse($messageBag->isLastMessageFrom(Role::User));
         $this->assertTrue($messageBag->isLastMessageFrom(Role::Assistant));
+    }
+
+    private function createCustomUserMessage(): MessageInterface
+    {
+        return new class implements MessageInterface {
+            use IdentifierAwareTrait;
+            use MetadataAwareTrait;
+
+            public function getRole(): Role
+            {
+                return Role::User;
+            }
+
+            public function getContent(): string
+            {
+                return 'Custom';
+            }
+        };
     }
 }

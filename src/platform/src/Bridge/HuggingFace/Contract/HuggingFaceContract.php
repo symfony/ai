@@ -23,7 +23,6 @@ final class HuggingFaceContract extends Contract
     {
         return parent::create([
             new FileNormalizer(),
-            new MessageBagNormalizer(),
             ...$normalizers,
         ]);
     }

@@ -123,7 +123,7 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient(new MockHttpClient(), 'test-key');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Jev payload must be an array with a "state" key and a "questions" map.');
+        $this->expectExceptionMessage('Decision payload must be an array with a "state" key and a "questions" map.');
 
         $client->request(new Jev('jev-latest'), 'invalid string payload');
     }
@@ -133,7 +133,7 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient(new MockHttpClient(), 'test-key');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Jev payload must be an array with a "state" key and a "questions" map.');
+        $this->expectExceptionMessage('Decision payload must be an array with a "state" key and a "questions" map.');
 
         $client->request(new Jev('jev-latest'), ['questions' => ['is_urgent' => ['type' => 'noul', 'instructions' => 'Urgent?']]]);
     }
@@ -143,7 +143,7 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient(new MockHttpClient(), 'test-key');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Jev payload must be an array with a "state" key and a "questions" map.');
+        $this->expectExceptionMessage('Decision payload must be an array with a "state" key and a "questions" map.');
 
         $client->request(new Jev('jev-latest'), ['state' => 'state']);
     }
@@ -156,5 +156,24 @@ final class ModelClientTest extends TestCase
         $this->expectExceptionMessage('Question "is_urgent" must be an array, "string" given.');
 
         $client->request(new Jev('jev-latest'), ['state' => 'state', 'questions' => ['is_urgent' => 'Urgent?']]);
+    }
+
+    public function testItRejectsImagesBeforeSendingARequest()
+    {
+        $httpClient = new MockHttpClient();
+        $client = new ModelClient($httpClient, 'test-key');
+
+        try {
+            $client->request(new Jev('jev-latest'), [
+                'state' => 'A photo',
+                'questions' => ['q' => ['type' => 'noul', 'instructions' => 'Portrait?']],
+                'images' => [base64_encode('image')],
+            ]);
+            $this->fail('TypeSafe must reject image inputs.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertSame('The decision model "jev-latest" does not support image inputs.', $e->getMessage());
+        }
+
+        $this->assertSame(0, $httpClient->getRequestsCount());
     }
 }

@@ -1,9 +1,8 @@
-Symfony setup overview:
+The page explains how to install and start with Symfony. Key points:
 
-- Requirements: PHP 8.4+ and common extensions (ctype, iconv, PCRE, Session, SimpleXML, Tokenizer). Install Composer. Symfony CLI is optional but recommended (symfony check:requirements).
-- Create projects: use Symfony CLI (symfony new my_project --version="8.1.*" [--webapp|--demo]) or Composer (composer create-project symfony/skeleton:"8.1.*" ... ; composer require webapp).
-- Existing projects: git clone, composer install, adjust .env, ensure var/cache and var/log are writable; run php bin/console about to inspect the app.
-- Run apps: production with Nginx/Apache; for development use Symfony local server (symfony server:start / symfony serve -d; symfony open:local). Docker integration available.
-- Packages: use Symfony Flex (recipes automate install/config). Packs bundle related deps.
-- Security: check dependencies with symfony check:security (or composer audit in CI).
-- Versions: choose LTS or specific versions via --version. Learn via the Symfony Demo and docs to start coding.
+- Requirements: PHP 8.4+ with common extensions (ctype, iconv, PCRE, Session, SimpleXML, Tokenizer) and Composer. Installing the optional Symfony CLI is recommended—it provides tools (e.g., symfony check:requirements).
+- Creating projects: use symfony new (with --webapp for full web stack) or composer create-project; you can pick specific, LTS, or next versions. A --demo option creates the Symfony Demo app for learning.
+- Existing projects: clone the repo, run composer install, adjust .env, and use php bin/console about to inspect the project.
+- Running apps: in production use Nginx/Apache; for development use the Symfony local server (symfony server:start / symfony serve -d), with commands to open the app automatically.
+- Packages: use Composer and Symfony Flex (recipes, packs) to automate setup. Check dependencies with symfony check:security (or composer audit in CI).
+- Links to Docker integration, web server configuration, permissions, upgrades, and more are provided.

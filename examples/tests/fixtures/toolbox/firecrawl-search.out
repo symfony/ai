@@ -1,0 +1,28 @@
+1) Messenger: Sync & Queued Message Handling — https://symfony.com/doc/current/messenger.html  
+   The official Symfony Messenger guide covering dispatching, transports, routing, handlers, middleware, failure & retry handling, and usage examples for sync and async messaging.
+
+2) The Messenger Component (Symfony 7.3 Docs) — https://symfony.com/doc/7.3/components/messenger.html  
+   Versioned component documentation describing how to use the Messenger component (standalone or in apps), its API, and component-specific usage details.
+
+3) Messenger component (Symfony Packages) — https://symfony.com/packages/messenger  
+   Package page with installation instructions, links to the component source, Packagist stats, and quick links to the full documentation.
+
++-------------------------------------------------------+----------------- Tool Sources --------------------------------------------------------------------------+
+| Name (Reference)                                      | Content                                                                                                 |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Messenger: Sync & Queued Message Handling             | # Messenger: Sync & Queued Message Handling                                                             |
+| https://symfony.com/doc/current/messenger.html        | ## [Extending Messenger](https://symfony.com/doc/current...                                             |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| The Messenger Component (Symfony 7.3 Docs)            | The Messenger component helps applications send and receive messages to/from other applications or v... |
+| https://symfony.com/doc/7.3/components/messenger.h... |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Messenger component (Symfony Packages)                | # Messenger Component                                                                                   |
+| https://symfony.com/packages/messenger                | [Documentation](https://symfony.com/doc/current/components/messenger.html) [So...                       |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Messenger! Queue work for Later Video Tutorial Scr... | Symfony's Messenger component to build an async app. Learn message dispatching, transport configurat... |
+| https://symfonycasts.com/screencast/messenger         |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
+| Mastering Message Brokering in Symfony: A Practica... | The Messenger component in Symfony offers powerful tools for implementing various message broker pat... |
+| https://medium.com/@skowron.dev/mastering-message-... |                                                                                                         |
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+
++-------------------------------------------------------+---------------------------------------------------------------------------------------------------------+

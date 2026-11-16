@@ -11,11 +11,8 @@
 
 namespace Symfony\AI\Platform\Bridge\TypeSafe;
 
-use Symfony\AI\Platform\Bridge\TypeSafe\Answer\AnswerInterface;
-use Symfony\AI\Platform\Bridge\TypeSafe\Answer\Answers;
-use Symfony\AI\Platform\Bridge\TypeSafe\Answer\ChoiceAnswer;
-use Symfony\AI\Platform\Bridge\TypeSafe\Answer\NoulAnswer;
-use Symfony\AI\Platform\Bridge\TypeSafe\Answer\ScoreAnswer;
+use Symfony\AI\Platform\Bridge\Decision\AnswersConverter;
+use Symfony\AI\Platform\Bridge\Decision\TokenUsageExtractor;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
@@ -54,22 +51,7 @@ final class ResultConverter implements ResultConverterInterface
             throw new RuntimeException(\sprintf('Unexpected response code %d: "%s"', $httpResponse->getStatusCode(), $httpResponse->getContent(false)));
         }
 
-        $data = $result->getData();
-
-        if (!isset($data['answers']) || !\is_array($data['answers'])) {
-            throw new RuntimeException('Response does not contain answers.');
-        }
-
-        $answers = [];
-        foreach ($data['answers'] as $id => $answer) {
-            if (!\is_array($answer)) {
-                throw new RuntimeException(\sprintf('Answer "%s" is expected to be an array, "%s" given.', $id, get_debug_type($answer)));
-            }
-
-            $answers[$id] = $this->convertAnswer((string) $id, $answer);
-        }
-
-        return new ObjectResult(new Answers($answers));
+        return new ObjectResult((new AnswersConverter())->convert($result->getData()));
     }
 
     public function getTokenUsageExtractor(): TokenUsageExtractorInterface
@@ -111,43 +93,5 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         return [] !== $violations ? implode('; ', $violations) : null;
-    }
-
-    /**
-     * @param array<string, mixed> $answer
-     */
-    private function convertAnswer(string $id, array $answer): AnswerInterface
-    {
-        $type = $answer['type'] ?? null;
-
-        [$requiredKeys, $arrayKeys] = match ($type) {
-            'noul' => [['noul'], []],
-            'choice' => [['choice', 'probabilities', 'confidence'], ['probabilities']],
-            'score' => [['score', 'legend', 'probabilities', 'confidence'], ['legend', 'probabilities']],
-            default => [[], []],
-        };
-
-        foreach ($requiredKeys as $key) {
-            if (!isset($answer[$key])) {
-                throw new RuntimeException(\sprintf('Answer "%s" of type "%s" is missing the "%s" key.', $id, $type, $key));
-            }
-        }
-
-        foreach ($arrayKeys as $key) {
-            if (isset($answer[$key]) && !\is_array($answer[$key])) {
-                throw new RuntimeException(\sprintf('Answer "%s" of type "%s" expects the "%s" key to be an array, "%s" given.', $id, $type, $key, get_debug_type($answer[$key])));
-            }
-        }
-
-        if ('choice' === $type && !\is_string($answer['choice'])) {
-            throw new RuntimeException(\sprintf('Answer "%s" of type "choice" expects the "choice" key to be a string, "%s" given.', $id, get_debug_type($answer['choice'])));
-        }
-
-        return match ($type) {
-            'noul' => NoulAnswer::fromArray($answer),
-            'choice' => ChoiceAnswer::fromArray($answer),
-            'score' => ScoreAnswer::fromArray($answer),
-            default => throw new RuntimeException(\sprintf('Answer "%s" has an unsupported type "%s".', $id, \is_string($type) ? $type : get_debug_type($type))),
-        };
     }
 }

@@ -18,9 +18,11 @@ final class ObjectResult extends BaseResult
 {
     /**
      * @param object|array<string, mixed> $structuredOutput
+     * @param string|null                 $text             the JSON the model answered with
      */
     public function __construct(
         private readonly object|array $structuredOutput,
+        private readonly ?string $text = null,
     ) {
     }
 
@@ -30,5 +32,10 @@ final class ObjectResult extends BaseResult
     public function getContent(): object|array
     {
         return $this->structuredOutput;
+    }
+
+    public function getText(): ?string
+    {
+        return $this->text;
     }
 }

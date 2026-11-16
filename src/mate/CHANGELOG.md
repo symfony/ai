@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Change `init` and `discover` to stop creating a `CLAUDE.md`, since Claude Code falls back to `AGENTS.md` without one; an existing `CLAUDE.md` or `.claude/CLAUDE.md` still gets the managed `@AGENTS.md` import
+
 0.14
 ----
 

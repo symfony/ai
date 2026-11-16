@@ -70,10 +70,10 @@ database or are toggled by configuration, build the instance from that source an
 Approach 2: Add Models via the AI Bundle Configuration
 ------------------------------------------------------
 
-In a Symfony application using the AI Bundle, you can extend a platform's built-in catalog
-declaratively with the ``model`` configuration key — no per-call override and no custom catalog
-service. This is the natural fit for local models (`LM Studio`_, `Ollama`_) or a model that has
-not been added to the bridge yet:
+In a Symfony application using the AI Bundle, you can extend a platform's catalog with the
+``models`` option of its ``model_catalog``. You don't need a per-call override or a custom catalog
+service. This fits local models (`LM Studio`_, `Ollama`_) or a model that has not been added to
+the bridge yet:
 
 .. code-block:: yaml
 
@@ -82,30 +82,35 @@ not been added to the bridge yet:
         platform:
             lmstudio:
                 host_url: '%env(LMSTUDIO_HOST_URL)%'
-
-        model:
-            lmstudio:
-                qwen3-coder-next:
-                    class: 'Symfony\AI\Platform\Bridge\Generic\CompletionsModel'
-                    capabilities:
-                        - !php/const Symfony\AI\Platform\Capability::INPUT_MESSAGES
-                        - !php/const Symfony\AI\Platform\Capability::OUTPUT_TEXT
-                        - !php/const Symfony\AI\Platform\Capability::OUTPUT_STREAMING
-                        - !php/const Symfony\AI\Platform\Capability::TOOL_CALLING
+                model_catalog:
+                    models:
+                        qwen3-coder-next:
+                            class: 'Symfony\AI\Platform\Bridge\Generic\CompletionsModel'
+                            capabilities:
+                                - !php/const Symfony\AI\Platform\Capability::INPUT_MESSAGES
+                                - !php/const Symfony\AI\Platform\Capability::OUTPUT_TEXT
+                                - !php/const Symfony\AI\Platform\Capability::OUTPUT_STREAMING
+                                - !php/const Symfony\AI\Platform\Capability::TOOL_CALLING
 
         agent:
             coder:
                 platform: 'ai.platform.lmstudio'
                 model: 'qwen3-coder-next'
 
-Models are keyed by platform name. For each one you provide the model ``class`` (it must extend
+For each model you provide the model ``class`` (it must extend
 :class:`Symfony\\AI\\Platform\\Model`; for generic OpenAI-compatible platforms use
 :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\CompletionsModel` for chat models or
 :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\EmbeddingsModel` for embeddings) and the list of
 ``capabilities`` it supports.
 
-The configured models are merged into the built-in catalog and take precedence over models with
-the same name, so the same key also lets you override the capabilities of an existing model.
+The configured models take precedence over models with the same name in the platform's catalog,
+so the same key also lets you override the capabilities of an existing model. This works with
+every catalog, also with a custom one or one that fetches its models from the provider API.
+
+In both approaches, the capabilities you list come from the
+:class:`Symfony\\AI\\Platform\\Capability` enum: input/output modalities, ``TOOL_CALLING``,
+``EMBEDDINGS``, ``RERANKING``, ``THINKING``, and the voice/image/video variants. List the ones the
+model actually has, since they drive routing and ``$model->supports(...)`` checks.
 
 Approach 3: Use a Continuously Updated Catalog
 ----------------------------------------------
@@ -187,6 +192,105 @@ directly::
 
 A model id resolves to the first provider (in array order) whose catalog knows it. When several
 providers expose the *same* id, order the array so the preferred one comes first.
+
+Combining Catalogs Explicitly
+-----------------------------
+
+A provider holds one catalog, but that catalog can be a composition.
+:class:`Symfony\\AI\\Platform\\ModelCatalog\\CompositeModelCatalog` merges several catalogs and
+resolves against them in order — first match wins. It is the plain-PHP way to keep a bridge's
+bundled catalog *and* add your own models on top::
+
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
+    use Symfony\AI\Platform\Bridge\OpenAi\ModelCatalog as OpenAiCatalog;
+    use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
+
+    $platform = OpenAiFactory::createPlatform(
+        apiKey: $_ENV['OPENAI_API_KEY'],
+        modelCatalog: new CompositeModelCatalog([
+            new MyCustomCatalog(), // checked first, so it overrides/extends...
+            new OpenAiCatalog(),   // ...the bridge's curated catalog
+        ]),
+    );
+
+For a single extra model on one bridge, pass an ``additionalModels`` array to that bridge's
+``ModelCatalog`` constructor instead; reach for ``CompositeModelCatalog`` to combine whole catalogs.
+
+Writing a Custom Catalog
+------------------------
+
+A catalog implements :class:`Symfony\\AI\\Platform\\ModelCatalog\\ModelCatalogInterface`:
+``getModel(string $name): Model`` and ``getModels(): array``. Extend
+:class:`Symfony\\AI\\Platform\\ModelCatalog\\AbstractModelCatalog` and fill its ``$models`` map for a
+static list (it parses ``model?temperature=0.5`` options and ``model:size`` variants for you), or
+implement the interface directly to source models from a database, feature flags, or a registry::
+
+    final class DatabaseModelCatalog implements ModelCatalogInterface
+    {
+        public function __construct(private readonly ModelRepository $repository)
+        {
+        }
+
+        public function getModel(string $modelName): Model
+        {
+            $row = $this->repository->find($modelName)
+                ?? throw new ModelNotFoundException(\sprintf('Model "%s" is not registered.', $modelName));
+
+            return new Gpt($row->name, $row->capabilities);
+        }
+
+        public function getModels(): array
+        {
+            // [name => ['class' => Gpt::class, 'capabilities' => [...]], ...]
+        }
+    }
+
+Throw :class:`Symfony\\AI\\Platform\\Exception\\ModelNotFoundException` for unknown names — that is
+the signal ``CompositeModelCatalog`` uses to fall through to the next catalog. For a provider that
+serves arbitrary models, return them with the full capability set instead; see
+:class:`Symfony\\AI\\Platform\\ModelCatalog\\FallbackModelCatalog`.
+
+Caching an API-Based Catalog
+----------------------------
+
+Some catalogs resolve a model by calling the provider's API (e.g. the Ollama bridge queries
+``api/show`` per model). Wrap any catalog in
+:class:`Symfony\\AI\\Platform\\ModelCatalog\\CachedModelCatalog` to resolve each model once and
+serve the rest from a cache pool implementing the Symfony Cache Contracts
+(:class:`Symfony\\Contracts\\Cache\\CacheInterface`, e.g. any adapter of the Cache component),
+persisting across requests::
+
+    use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
+    use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog as OllamaCatalog;
+    use Symfony\AI\Platform\ModelCatalog\CachedModelCatalog;
+    use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+    use Symfony\Component\HttpClient\HttpClient;
+    use Symfony\Component\HttpClient\ScopingHttpClient;
+
+    $endpoint = 'http://localhost:11434';
+    $catalog = new OllamaCatalog(ScopingHttpClient::forBaseUri(HttpClient::create(), $endpoint));
+
+    $platform = OllamaFactory::createPlatform(
+        $endpoint,
+        modelCatalog: new CachedModelCatalog($catalog, new FilesystemAdapter(), ttl: 3600),
+    );
+
+Failed lookups (``ModelNotFoundException``) are not cached, so a model pulled after the first lookup
+resolves on the next call. The list returned by ``getModels()`` is cached as a whole, though: it only
+shows newly pulled models once its ``ttl`` expires or the pool is cleared.
+
+The cache keys are derived from the class of the wrapped catalog, so catalogs of different bridges
+can share one pool. To wrap two catalogs of the same class, e.g. two Ollama servers, pass a distinct
+``namespace`` to each::
+
+    $local = new CachedModelCatalog($localCatalog, $cache, namespace: 'ollama_local');
+    $remote = new CachedModelCatalog($remoteCatalog, $cache, namespace: 'ollama_remote');
+
+In the AI Bundle, enable the ``cache`` option of the platform's ``model_catalog`` instead, see
+:ref:`ai-bundle-model-catalog`.
+
+Note that ``$platform->getModelCatalog()->getModels()`` queries *every* provider's catalog,
+triggering a live request per API-based provider — cache those if you call it on a hot path.
 
 Choosing an Approach
 --------------------

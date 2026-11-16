@@ -30,13 +30,14 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 #[AsCommand(name: 'ai:store:setup', description: 'Prepare the required infrastructure for the store')]
 final class SetupStoreCommand extends Command
 {
+    use ServiceArgumentTrait;
+    use StoreOptionsTrait;
+
     /**
      * @param ServiceLocator<ManagedStoreInterface> $stores
-     * @param array<string, mixed>                  $setupStoresOptions
      */
     public function __construct(
         private readonly ServiceLocator $stores,
-        private readonly array $setupStoresOptions = [],
     ) {
         parent::__construct();
     }
@@ -53,16 +54,22 @@ final class SetupStoreCommand extends Command
         $this
             ->addArgument('store', InputArgument::REQUIRED, 'Service name of the store to setup')
             ->setHelp(<<<EOF
-The <info>%command.name%</info> command setups the stores:
-
-    <info>php %command.full_name%</info>
-
-Or a specific store only:
+The <info>%command.name%</info> command sets up a store:
 
     <info>php %command.full_name% <store></info>
+
+Pass runtime options supported by the store with <comment>--option</comment>:
+
+    <info>php %command.full_name% <store> --option forceDatabaseCreation=true</info>
 EOF
             )
         ;
+        $this->addStoreOptionsOption();
+    }
+
+    protected function interact(InputInterface $input, OutputInterface $output): void
+    {
+        $this->interactForService($input, $output, 'store', 'store', $this->getStoreNames());
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -71,10 +78,7 @@ EOF
             throw new RuntimeException('No store is configured to be set up.');
         }
 
-        $storeName = $input->getArgument('store');
-        if (!$this->stores->has($storeName)) {
-            throw new RuntimeException(\sprintf('The "%s" store does not exist, use "%s".', $storeName, implode('", "', $this->getStoreNames())));
-        }
+        $storeName = $this->resolveServiceName($input->getArgument('store'), 'store', $this->getStoreNames());
 
         $store = $this->stores->get($storeName);
         if ($store instanceof TraceableStore) {
@@ -85,11 +89,10 @@ EOF
         }
 
         $io = new SymfonyStyle($input, $output);
-
-        $storeName = $input->getArgument('store');
+        $options = $this->getStoreOptions($input);
 
         try {
-            $store->setup($this->setupStoresOptions[$storeName] ?? []);
+            $store->setup($options);
             $io->success(\sprintf('The "%s" store was set up successfully.', $storeName));
         } catch (\Exception $e) {
             throw new RuntimeException(\sprintf('An error occurred while setting up the "%s" store: ', $storeName).$e->getMessage(), previous: $e);

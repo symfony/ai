@@ -1,6 +1,6 @@
 services:
     surrealdb:
-        image: surrealdb/surrealdb:v2
+        image: surrealdb/surrealdb:v3
         command: ['start', '--user', 'symfony', '--pass', 'symfony']
         ports:
             - '8000:8000'

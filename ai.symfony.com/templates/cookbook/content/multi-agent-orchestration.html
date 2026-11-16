@@ -13,6 +13,7 @@ the content of the user's question.</p>
 <ul>
     <li>Symfony AI Platform component</li>
 <li>Symfony AI Agent component</li>
+<li>An OpenAI API key</li>
 </ul>
 </div>
 <div class="section">
@@ -20,7 +21,7 @@ the content of the user's question.</p>
     Step 1: Install Packages
     
 </h2>
-<p>Install the Platform and Agent components via Composer:</p>
+<p>Install the Platform and Agent components and the OpenAI bridge via Composer:</p>
 <div translate="no" class="highlight-php notranslate">
     <table class="highlighttable">
         <tbody>
@@ -32,7 +33,7 @@ the content of the user's question.</p>
                 </td>
                 <td class="code">
                     <div class="highlight">
-                        <pre class="hljs php">composer <span class="hljs-keyword">require</span> symfony/ai-platform symfony/ai-agent</pre>
+                        <pre class="hljs php">composer <span class="hljs-keyword">require</span> symfony/ai-platform symfony/ai-agent symfony/ai-open-ai-platform</pre>
                     </div>
                 </td>
             </tr>
@@ -47,7 +48,10 @@ the content of the user's question.</p>
 </h2>
 <p>Each specialist agent is a regular <a href="https://github.com/symfony/ai/blob/main/src/agent/src/Agent.php" class="reference external" title="Symfony\AI\Agent\Agent" rel="external noopener noreferrer" target="_blank">Agent</a> with a
 <a href="https://github.com/symfony/ai/blob/main/src/agent/src/InputProcessor/SystemPromptInputProcessor.php" class="reference external" title="Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor" rel="external noopener noreferrer" target="_blank">SystemPromptInputProcessor</a> that defines its area of
-expertise. Give each agent a descriptive <code translate="no" class="notranslate">name</code> so the orchestrator can identify it:</p>
+expertise. Give each agent a descriptive <code translate="no" class="notranslate">name</code> so the orchestrator can identify it. The
+orchestrator picks an agent through structured output, so register the
+<a href="https://github.com/symfony/ai/blob/main/src/platform/src/StructuredOutput/PlatformSubscriber.php" class="reference external" title="Symfony\AI\Platform\StructuredOutput\PlatformSubscriber" rel="external noopener noreferrer" target="_blank">PlatformSubscriber</a> on the platform's event
+dispatcher:</p>
 <div translate="no" class="highlight-php notranslate">
     <table class="highlighttable">
         <tbody>
@@ -73,13 +77,29 @@ expertise. Give each agent a descriptive <code translate="no" class="notranslate
 17
 18
 19
-20</pre>
+20
+21
+22
+23
+24
+25
+26
+27
+28</pre>
                     </div>
                 </td>
                 <td class="code">
                     <div class="highlight">
                         <pre class="hljs php"><span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">Agent</span>;
 <span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">InputProcessor</span>\<span class="hljs-title">SystemPromptInputProcessor</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Bridge</span>\<span class="hljs-title">OpenAi</span>\<span class="hljs-title">Factory</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">StructuredOutput</span>\<span class="hljs-title">PlatformSubscriber</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">Component</span>\<span class="hljs-title">EventDispatcher</span>\<span class="hljs-title">EventDispatcher</span>;
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>dispatcher</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">EventDispatcher</span>();
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>dispatcher</span>-&gt;<span class="hljs-title invoke__">addSubscriber</span>(<span class="hljs-keyword">new</span> <span class="hljs-title invoke__">PlatformSubscriber</span>());
+
+<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span> = Factory::<span class="hljs-title invoke__">createPlatform</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>apiKey</span>, <span class="hljs-attr">eventDispatcher</span>: <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>dispatcher</span>);
 
 <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>technical</span> = <span class="hljs-keyword">new</span> <span class="hljs-title invoke__">Agent</span>(
     <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>platform</span>,

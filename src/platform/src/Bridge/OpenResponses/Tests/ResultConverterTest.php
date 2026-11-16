@@ -26,8 +26,11 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\FinishReason\FinishReason;
 use Symfony\AI\Platform\FinishReason\FinishReasonCase;
+use Symfony\AI\Platform\Message\Content\Commentary;
+use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
+use Symfony\AI\Platform\Result\CommentaryResult;
 use Symfony\AI\Platform\Result\ComputerCallResult;
 use Symfony\AI\Platform\Result\CustomToolCallResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
@@ -40,6 +43,8 @@ use Symfony\AI\Platform\Result\McpListToolsResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\Stream\AssistantMessageStreamListener;
+use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
@@ -55,6 +60,8 @@ use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\WebSearchResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -1044,6 +1051,22 @@ final class ResultConverterTest extends TestCase
         $converter->convert(new RawHttpResult($httpResponse));
     }
 
+    public function testThrowsMaxOutputTokensExceptionWhenIncompleteResponseHasEmptyOutput()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'incomplete',
+            'incomplete_details' => ['reason' => 'max_output_tokens'],
+            'output' => [],
+        ]);
+
+        $this->expectException(MaxOutputTokensException::class);
+        $this->expectExceptionMessage('Responses API truncated the response after reaching the output token limit.');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
     /**
      * @param array<string, mixed> $item
      */
@@ -1118,6 +1141,180 @@ final class ResultConverterTest extends TestCase
         $this->assertTrue($result->getMetadata()->get('finish_reason')->is(FinishReasonCase::LENGTH));
     }
 
+    public function testThrowsMaxOutputTokensExceptionWhenIncompleteResponseHoldsOnlyCommentary()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'incomplete',
+            'incomplete_details' => ['reason' => 'max_output_tokens'],
+            'output' => [
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'phase' => 'commentary',
+                    'content' => [['type' => 'output_text', 'text' => 'I will look up the weather and']],
+                ],
+            ],
+        ]);
+
+        $this->expectException(MaxOutputTokensException::class);
+        $this->expectExceptionMessage('Responses API truncated the response after reaching the output token limit.');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testThrowsRuntimeExceptionWhenOutputHoldsOnlyCommentary()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'completed',
+            'output' => [
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'phase' => 'commentary',
+                    'content' => [['type' => 'output_text', 'text' => 'I will look up the weather.']],
+                ],
+            ],
+        ]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Response does not contain any content.');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    public function testConvertKeepsThePhaseOfTheAnswer()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'completed',
+            'output' => [
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'phase' => 'final_answer',
+                    'content' => [['type' => 'output_text', 'text' => '425']],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertSame('425', $result->getContent());
+        $this->assertSame('final_answer', $result->getPhase());
+    }
+
+    public function testConvertLeavesThePhaseEmptyWithoutOne()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'completed',
+            'output' => [
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'content' => [['type' => 'output_text', 'text' => '425']],
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(TextResult::class, $result);
+        $this->assertNull($result->getPhase());
+    }
+
+    public function testStreamKeepsThePhaseOfTheAnswerNextToCommentary()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            ['type' => 'response.output_item.added', 'item' => ['type' => 'message', 'id' => 'msg_1', 'phase' => 'commentary']],
+            ['type' => 'response.output_text.delta', 'item_id' => 'msg_1', 'delta' => 'I will run code.'],
+            ['type' => 'response.output_item.done', 'item' => ['type' => 'message', 'id' => 'msg_1', 'phase' => 'commentary']],
+            ['type' => 'response.output_item.added', 'item' => ['type' => 'message', 'id' => 'msg_2', 'phase' => 'final_answer']],
+            ['type' => 'response.output_text.delta', 'item_id' => 'msg_2', 'delta' => '4'],
+            ['type' => 'response.output_text.delta', 'item_id' => 'msg_2', 'delta' => '25'],
+            ['type' => 'response.output_item.done', 'item' => ['type' => 'message', 'id' => 'msg_2', 'phase' => 'final_answer']],
+            ['type' => 'response.completed', 'response' => ['output' => []]],
+        ];
+
+        $listener = new AssistantMessageStreamListener();
+        foreach ($converter->convert(new InMemoryRawResult([], $events, $httpResponse), ['stream' => true])->getContent() as $delta) {
+            if ($delta instanceof DeltaInterface) {
+                $listener->accumulate($delta);
+            }
+        }
+
+        $this->assertEquals(
+            [new Commentary('I will run code.'), new Text('425', null, 'final_answer')],
+            $listener->getAssistantMessage()->getContent(),
+        );
+    }
+
+    public function testStreamLeavesThePhaseOfTextWithoutOneEmpty()
+    {
+        $converter = new ResultConverter();
+
+        $httpResponse = $this->createStub(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(200);
+
+        $events = [
+            ['type' => 'response.output_item.added', 'item' => ['type' => 'message', 'id' => 'msg_1']],
+            ['type' => 'response.output_text.delta', 'item_id' => 'msg_1', 'delta' => '425'],
+            ['type' => 'response.output_item.done', 'item' => ['type' => 'message', 'id' => 'msg_1']],
+            ['type' => 'response.completed', 'response' => ['output' => []]],
+        ];
+
+        $chunks = iterator_to_array($converter->convert(new InMemoryRawResult([], $events, $httpResponse), ['stream' => true])->getContent());
+
+        $this->assertInstanceOf(TextDelta::class, $chunks[0]);
+        $this->assertSame('425', $chunks[0]->getText());
+        $this->assertNull($chunks[0]->getPhase());
+    }
+
+    public function testConvertCommentaryNextToFunctionCallIntoMultiPartResult()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('toArray')->willReturn([
+            'status' => 'completed',
+            'output' => [
+                [
+                    'type' => 'message',
+                    'role' => 'assistant',
+                    'phase' => 'commentary',
+                    'content' => [['type' => 'output_text', 'text' => 'I will look up the weather.']],
+                ],
+                [
+                    'type' => 'function_call',
+                    'id' => 'fc_1',
+                    'call_id' => 'call_1',
+                    'name' => 'weather',
+                    'arguments' => '{"city":"Berlin"}',
+                ],
+            ],
+        ]);
+
+        $result = $converter->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        [$commentary, $toolCall] = $result->getContent();
+        $this->assertInstanceOf(CommentaryResult::class, $commentary);
+        $this->assertSame('I will look up the weather.', $commentary->getContent());
+        $this->assertInstanceOf(ToolCallResult::class, $toolCall);
+        $this->assertSame('weather', $toolCall->getContent()[0]->getName());
+    }
+
     public function testThrowsRuntimeExceptionWhenOutputYieldsNoContent()
     {
         $converter = new ResultConverter();
@@ -1185,6 +1382,77 @@ final class ResultConverterTest extends TestCase
         $this->expectExceptionMessage('Invalid API key provided');
 
         $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    #[DataProvider('provideAuthenticationErrorBodies')]
+    public function testThrowsAuthenticationExceptionWithUnexpectedBody(string $body)
+    {
+        $client = new MockHttpClient(new MockResponse($body, ['http_code' => 401]));
+
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('Authentication failed (HTTP 401).');
+
+        (new ResultConverter())->convert(new RawHttpResult($client->request('POST', 'https://example.com/v1/responses')));
+    }
+
+    public static function provideAuthenticationErrorBodies(): iterable
+    {
+        yield 'empty object' => ['{}'];
+        yield 'empty body' => [''];
+        yield 'HTML' => ['<html>Unauthorized</html>'];
+        yield 'JSON null' => ['null'];
+        yield 'JSON string' => ['"Unauthorized"'];
+        yield 'string error' => ['{"error":"Unauthorized"}'];
+        yield 'null message' => ['{"error":{"message":null}}'];
+        yield 'array message' => ['{"error":{"message":[]}}'];
+        yield 'integer message' => ['{"error":{"message":401}}'];
+        yield 'empty message' => ['{"error":{"message":""}}'];
+        yield 'array detail' => ['{"detail":[{"msg":"Unauthorized"}]}'];
+    }
+
+    /**
+     * @param class-string<\Throwable> $exceptionClass
+     */
+    #[DataProvider('provideErrorStatusCodes')]
+    public function testUsesDetailAsErrorMessageFallback(int $statusCode, string $exceptionClass)
+    {
+        $client = new MockHttpClient(new MockResponse('{"detail":"Missing Bearer authorization header"}', ['http_code' => $statusCode]));
+
+        $this->expectException($exceptionClass);
+        $this->expectExceptionMessage('Missing Bearer authorization header');
+
+        (new ResultConverter())->convert(new RawHttpResult($client->request('POST', 'https://example.com/v1/responses')));
+    }
+
+    public function testPrefersErrorMessageOverDetail()
+    {
+        $client = new MockHttpClient(new MockResponse('{"error":{"message":"Invalid API key provided"},"detail":"Unauthorized"}', ['http_code' => 401]));
+
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('Invalid API key provided');
+
+        (new ResultConverter())->convert(new RawHttpResult($client->request('POST', 'https://example.com/v1/responses')));
+    }
+
+    /**
+     * @param class-string<\Throwable> $exceptionClass
+     */
+    #[DataProvider('provideErrorStatusCodes')]
+    public function testThrowsPlatformExceptionWithNonStringErrorMessage(int $statusCode, string $exceptionClass)
+    {
+        $client = new MockHttpClient(new MockResponse('{"error":{"message":[]}}', ['http_code' => $statusCode]));
+
+        $this->expectException($exceptionClass);
+
+        (new ResultConverter())->convert(new RawHttpResult($client->request('POST', 'https://example.com/v1/responses')));
+    }
+
+    public static function provideErrorStatusCodes(): iterable
+    {
+        yield 'bad request' => [400, BadRequestException::class];
+        yield 'authentication' => [401, AuthenticationException::class];
+        yield 'rate limit' => [429, RateLimitExceededException::class];
+        yield 'server error' => [500, ServerException::class];
     }
 
     public function testThrowsExceptionWhenNoOutput()

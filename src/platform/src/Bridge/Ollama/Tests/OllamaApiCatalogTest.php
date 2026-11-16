@@ -13,9 +13,12 @@ namespace Symfony\AI\Platform\Bridge\Ollama\Tests;
 
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Ollama\Decision;
 use Symfony\AI\Platform\Bridge\Ollama\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
+use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -42,6 +45,85 @@ final class OllamaApiCatalogTest extends TestCase
             Capability::OUTPUT_STRUCTURED,
         ], $model->getCapabilities());
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testModelCatalogKeepsTheOptionsOutOfTheModelName()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): JsonMockResponse {
+            $this->assertSame('http://127.0.0.1:11434/api/show', $url);
+            $this->assertSame(['model' => 'qwen3:8b'], json_decode($options['body'], true));
+
+            return new JsonMockResponse(['capabilities' => ['completion', 'tools', 'thinking']]);
+        }, 'http://127.0.0.1:11434');
+
+        $model = (new ModelCatalog($httpClient))->getModel('qwen3:8b?think=false&temperature=0.2');
+
+        $this->assertSame('qwen3:8b', $model->getName());
+        $this->assertSame(['think' => false, 'temperature' => 0.2], $model->getOptions());
+    }
+
+    public function testModelCatalogReturnsDecisionModelWithoutCapabilities()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'capabilities' => ['decision', 'tools', 'thinking', 'completion'],
+            ]),
+        ], 'http://127.0.0.1:11434');
+
+        $model = (new ModelCatalog($httpClient))->getModel('nimble');
+
+        $this->assertInstanceOf(Decision::class, $model);
+        $this->assertSame('nimble', $model->getName());
+        $this->assertSame([], $model->getCapabilities());
+    }
+
+    public function testModelCatalogPreservesVisionForDecisionModels()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['capabilities' => ['decision', 'vision', 'completion', 'tools']]),
+        ], 'http://127.0.0.1:11434');
+
+        $model = (new ModelCatalog($httpClient))->getModel('clef-flash');
+
+        $this->assertInstanceOf(Decision::class, $model);
+        $this->assertSame([Capability::INPUT_IMAGE], $model->getCapabilities());
+    }
+
+    public function testModelCatalogCanReturnDecisionModelsFromApi()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'models' => [
+                    ['name' => 'nimble', 'details' => []],
+                    ['name' => 'llama3', 'details' => []],
+                ],
+            ]),
+            new JsonMockResponse([
+                'capabilities' => ['decision', 'tools', 'thinking', 'completion'],
+            ]),
+            new JsonMockResponse([
+                'capabilities' => ['completion'],
+            ]),
+        ], 'http://127.0.0.1:11434');
+
+        $models = (new ModelCatalog($httpClient))->getModels();
+
+        $this->assertSame(['class' => Decision::class, 'capabilities' => []], $models['nimble']);
+        $this->assertSame(Ollama::class, $models['llama3']['class']);
+    }
+
+    public function testModelCatalogStillRejectsUnknownCapabilities()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'capabilities' => ['completion', 'unknown'],
+            ]),
+        ], 'http://127.0.0.1:11434');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "unknown" capability is not supported');
+
+        (new ModelCatalog($httpClient))->getModel('foo');
     }
 
     public function testModelCatalogCanReturnEmbeddingModelsFromApi()
@@ -128,6 +210,55 @@ final class OllamaApiCatalogTest extends TestCase
             Capability::OUTPUT_STRUCTURED,
         ], $model->getCapabilities());
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testModelCatalogCanReturnTextToSpeechModelsFromApi()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'capabilities' => ['speech'],
+                'voices' => ['default', 'Zoey', 'Easton'],
+            ]),
+        ], 'http://127.0.0.1:11434');
+
+        $modelCatalog = new ModelCatalog($httpClient);
+
+        $model = $modelCatalog->getModel('phonon');
+
+        $this->assertInstanceOf(TextToSpeech::class, $model);
+        $this->assertSame('phonon', $model->getName());
+        $this->assertSame([
+            Capability::INPUT_TEXT,
+            Capability::OUTPUT_AUDIO,
+            Capability::TEXT_TO_SPEECH,
+        ], $model->getCapabilities());
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testGetModelsCanReturnTextToSpeechModelsFromApi()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'models' => [
+                    [
+                        'name' => 'phonon',
+                        'details' => [],
+                    ],
+                ],
+            ]),
+            new JsonMockResponse([
+                'capabilities' => ['speech'],
+            ]),
+        ], 'http://127.0.0.1:11434');
+
+        $models = (new ModelCatalog($httpClient))->getModels();
+
+        $this->assertSame(TextToSpeech::class, $models['phonon']['class']);
+        $this->assertSame([
+            Capability::INPUT_TEXT,
+            Capability::OUTPUT_AUDIO,
+            Capability::TEXT_TO_SPEECH,
+        ], $models['phonon']['capabilities']);
     }
 
     public function testModelCatalogCanReturnInsertModelsFromApi()

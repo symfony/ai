@@ -1,8 +1,8 @@
 <!-- This file is generated from docs/cookbook by "bin/console app:cookbook:build". Do not edit. -->
 <div class="section">
 
-<p>The <a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="reference internal">AI Bundle</a> is the Symfony integration for the Platform, Agent,
-Store, and Chat components. Instead of wiring services by hand, you describe platforms, agents,
+<p>The <a href="https://symfony.com/doc/current/ai/bundles/ai-bundle.html" class="reference internal">AI Bundle</a> is the Symfony integration for the Platform, Agent
+and Store components. Instead of wiring services by hand, you describe platforms, agents,
 tools, and stores in <code translate="no" class="notranslate">config/packages/ai.yaml</code> and the bundle registers everything in the
 container for you. This guide is a fast track from an empty configuration to an agent that
 answers questions over your own documents. Each step links to a dedicated cookbook article when
@@ -120,7 +120,8 @@ decorators.</p>
     
 </h2>
 <p>An <em>agent</em> combines a platform, a model, and optionally tools and a system prompt. The simplest
-agent only needs a model — it uses the first configured platform by default:</p>
+agent only needs a model — when exactly one platform is configured, it is used by default;
+otherwise set the agent's <code translate="no" class="notranslate">platform</code> option:</p>
 <div translate="no" class="highlight-yaml notranslate">
     <table class="highlighttable">
         <tbody>
@@ -324,7 +325,7 @@ specific one with the <code translate="no" class="notranslate">ai.agent.&lt;name
     </table>
 </div>
 <p>Use the array form for more control — for example, to append the available tool definitions to
-the prompt, or to load a long prompt from a file:</p>
+the prompt (this requires <code translate="no" class="notranslate">tools</code>, see Step 5), or to load a long prompt from a file:</p>
 <div translate="no" class="highlight-yaml notranslate">
     <table class="highlighttable">
         <tbody>
@@ -341,7 +342,8 @@ the prompt, or to load a long prompt from a file:</p>
 8
 9
 10
-11</pre>
+11
+12</pre>
                     </div>
                 </td>
                 <td class="code">
@@ -353,6 +355,7 @@ the prompt, or to load a long prompt from a file:</p>
             <span class="hljs-attr">prompt:</span>
                 <span class="hljs-attr">text:</span> <span class="hljs-string">'You are a concise assistant for a Symfony application.'</span>
                 <span class="hljs-attr">include_tools:</span> <span class="hljs-literal">true</span>
+            <span class="hljs-attr">tools:</span> <span class="hljs-literal">true</span>
         <span class="hljs-attr">reviewer:</span>
             <span class="hljs-attr">model:</span> <span class="hljs-string">'gpt-4o-mini'</span>
             <span class="hljs-attr">prompt:</span>
@@ -545,7 +548,7 @@ infrastructure and run the indexer from the console:</p>
                 </td>
                 <td class="code">
                     <div class="highlight">
-                        <pre class="hljs terminal bash"><span class="hljs-prompt">$ </span>php bin/console ai:store:setup ai.store.chromadb.knowledge_base
+                        <pre class="hljs terminal bash"><span class="hljs-prompt">$ </span>php bin/console ai:store:setup knowledge_base
 <span class="hljs-prompt">$ </span>php bin/console ai:store:index docs --<span class="hljs-built_in">source</span>=/path/to/document.txt</pre>
                     </div>
                 </td>
@@ -711,7 +714,7 @@ agent.</p>
     </table>
 </div>
 <p>From here you can grow in any direction: add more platforms and agents, route between them with
-multi-agent orchestration, persist conversations with message stores and chats, or expose your
+multi-agent orchestration, persist conversations with message stores, or expose your
 tools over MCP.</p>
 </div>
 <div class="section">

@@ -10,14 +10,11 @@
  */
 
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
-use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
 
-$result = $platform->invoke('dbmdz/bert-large-cased-finetuned-conll03-english', 'John Smith works at Microsoft in London.', [
-    'task' => Task::TOKEN_CLASSIFICATION,
-]);
+$result = $platform->invoke('dbmdz/bert-large-cased-finetuned-conll03-english', 'John Smith works at Microsoft in London.');
 
 dump($result->asObject());

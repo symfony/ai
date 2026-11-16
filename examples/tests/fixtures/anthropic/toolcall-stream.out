@@ -1,41 +1,45 @@
 <thinking>
-The user wants me to:
+The user is asking me to:
 1. Define "unicorn" in 30 words
 2. Look up Irish history on Wikipedia and summarize it in 2 sentences
 3. Tell them before I call tools
 
-So I should:
-1. First provide the definition of unicorn
-2. Tell them I'm about to search Wikipedia for Irish history
-3. Then make the Wikipedia call
-4. Summarize what I find in 2 sentences
+So I should first tell them what I'm going to do, then make the Wikipedia call, and provide both answers.
 
-Let me start with the unicorn definition and tell them what I'm going to do.
+Let me start by telling them what I'm about to do, then I'll define unicorn, and then call Wikipedia for Irish history.
 </thinking>
-I'll help you with both tasks!
+I'll help you with both tasks. Let me tell you what I'm going to do:
 
-**Unicorn definition (30 words):**
-A unicorn is a mythical creature typically depicted as a white horse with a single, spiraling horn projecting from its forehead. It symbolizes purity, grace, and magic in various cultural traditions and folklore.
+1. First, I'll define "unicorn" in 30 words
+2. Then, I'll search Wikipedia for information about Irish history and summarize it in 2 sentences
 
-**Before searching Wikipedia:**
-I'm now going to search Wikipedia for information about Irish history to provide you with a 2-sentence summary.<thinking>
-Good, I found several articles. The most relevant one appears to be "History of Ireland". Let me retrieve that article.
+Here's the unicorn definition:
+**Unicorn**: A legendary mythical creature depicted as a horse-like animal with a single spiral horn projecting from its forehead, symbolizing purity, grace, and magic in folklore and medieval art.
+
+Now I'll look up Irish history on Wikipedia:<thinking>
+Good, I found several results. The most appropriate one would be "History of Ireland" as it's the general overview. Let me retrieve that article.
 </thinking>
 <thinking>
-Wow, that's a very long and comprehensive article about Irish history. Now I need to condense this into just 2 sentences as the user requested. I should try to capture the main themes and broad sweep of Irish history.
+Wow, that's a very long and detailed article about Irish history. Now I need to summarize it in just 2 sentences. Let me think about the most important aspects to capture:
 
-Key themes I see:
-- Ancient prehistoric and Celtic origins
-- Viking invasions
-- Norman/English conquest starting in 1169
-- 800+ years of English/British rule with various rebellions
-- Religious conflicts (Catholic vs Protestant)
-- The Great Famine
-- Independence movement and partition in 1920s
-- Modern economic development
+- The history spans from prehistoric times (~34,000 years ago) to the present
+- Early Celtic/Gaelic culture
+- Christianity arrived around 400-795 AD
+- Viking invasions starting 795 AD
+- Norman invasion in 1169
+- English/British control and conflicts for 800+ years
+- Great Famine in 1845
+- Independence movement in early 20th century
+- Partition in 1922 creating Irish Free State and Northern Ireland
+- Troubles in Northern Ireland
+- Modern economic development (Celtic Tiger)
 
-Let me create 2 sentences that capture this sweep:
+I need to condense this into 2 sentences that give a meaningful overview. Let me try:
+
+"Ireland's history spans from prehistoric settlement around 34,000 years ago through Celtic, Christian, Viking, and Norman periods, followed by over 800 years of English/British political and military involvement beginning with the Norman invasion in 1169. The island was partitioned in 1922, with 26 counties becoming the independent Irish Free State (later the Republic of Ireland) while six northeastern counties remained part of the United Kingdom as Northern Ireland, leading to decades of sectarian conflict known as the Troubles before the 1998 Good Friday Agreement brought relative peace."
+
+That's 2 sentences and captures the main arc of Irish history.
 </thinking>
-**Irish History Summary (2 sentences):**
+**Irish History (2 sentences):**
 
-Ireland's history spans from prehistoric settlements around 10,500 BC through Celtic, Viking, and Norman periods, followed by over 800 years of English and British political and military involvement beginning with the Norman invasion of 1169, marked by recurring conflicts, rebellions, and the devastating Great Famine of 1845-1852. After centuries of struggle for independence, Ireland was partitioned in 1922 into the Irish Free State (later the Republic of Ireland) comprising 26 counties and Northern Ireland (6 counties remaining in the UK), with the latter experiencing decades of sectarian conflict known as "the Troubles" until the 1998 Good Friday Agreement brought relative peace.
+Ireland's history spans from prehistoric settlement around 34,000 years ago through Celtic, Christian, Viking, and Norman periods, followed by over 800 years of English and British political and military involvement beginning with the Norman invasion in 1169. The island was partitioned in 1922, with 26 counties becoming the independent Irish Free State (later the Republic of Ireland) while six northeastern counties remained part of the United Kingdom as Northern Ireland, leading to decades of sectarian conflict known as the Troubles before the 1998 Good Friday Agreement brought relative peace.

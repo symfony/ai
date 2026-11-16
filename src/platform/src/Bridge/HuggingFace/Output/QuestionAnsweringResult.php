@@ -43,17 +43,4 @@ final class QuestionAnsweringResult
     {
         return $this->score;
     }
-
-    /**
-     * @param array{answer: string, start: int, end: int, score: float} $data
-     */
-    public static function fromArray(array $data): self
-    {
-        return new self(
-            $data['answer'],
-            $data['start'],
-            $data['end'],
-            $data['score'],
-        );
-    }
 }

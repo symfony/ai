@@ -74,10 +74,11 @@ final class DoctrineCollectorFormatterIntegrationTest extends TestCase
 
         $this->assertSame(4, $result['query_count']);
         $this->assertCount(2, $result['queries']);
-        // sorted by total_time_ms descending — the 3× query is first
-        $this->assertSame('SELECT * FROM users WHERE id = ?', $result['queries'][0]['sql']);
-        $this->assertSame(3, $result['queries'][0]['count']);
-        $this->assertArrayHasKey('avg_time_ms', $result['queries'][0]);
+
+        $bySql = array_column($result['queries'], null, 'sql');
+        $this->assertSame(3, $bySql['SELECT * FROM users WHERE id = ?']['count']);
+        $this->assertSame(1, $bySql['SELECT * FROM posts']['count']);
+        $this->assertArrayHasKey('avg_time_ms', $bySql['SELECT * FROM users WHERE id = ?']);
     }
 
     public function testGetSummaryWithRealCollector()

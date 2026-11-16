@@ -25,9 +25,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 /**
  * Builds a routing-aware mock provider/platform that returns scripted responses of any result type.
  *
- * Complements {@see InMemoryPlatform}: use this when a test must go through real routing, coexist
- * with real providers, return non-text results, or assert on the exact payload/options the platform
- * built (via {@see MockModelClient::getCalls()}).
+ * The exact payload/options the platform built are available via {@see MockModelClient::getCalls()}.
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */

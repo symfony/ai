@@ -27,8 +27,8 @@ final class StoreFactory
         ?string $endpoint = null,
         #[\SensitiveParameter] ?string $apiKey = null,
         ?HttpClientInterface $httpClient = null,
-        int $embeddingsDimension = 1536,
-        string $embeddingsDistance = 'Cosine',
+        int $dimensions = 1536,
+        string $metric = 'Cosine',
         bool $async = false,
     ): StoreInterface&ManagedStoreInterface {
         if (null !== $endpoint) {
@@ -44,6 +44,6 @@ final class StoreFactory
             $httpClient = ScopingHttpClient::forBaseUri($httpClient ?? HttpClient::create(), $endpoint, $defaultOptions);
         }
 
-        return new Store($httpClient, $collectionName, $embeddingsDimension, $embeddingsDistance, $async);
+        return new Store($httpClient, $collectionName, $dimensions, $metric, $async);
     }
 }

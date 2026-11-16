@@ -150,9 +150,9 @@ class InitCommand extends Command
             $actions[] = ['⚠', 'Warning', 'Could not update AGENTS.md managed instructions block'];
         }
 
-        if ($materializationResult['claude_file_updated']) {
+        if (true === $materializationResult['claude_file_updated']) {
             $actions[] = ['✓', 'Updated', 'CLAUDE.md (imports AGENTS.md for Claude Code)'];
-        } else {
+        } elseif (false === $materializationResult['claude_file_updated']) {
             $actions[] = ['⚠', 'Warning', 'Could not update CLAUDE.md to import AGENTS.md'];
         }
 

@@ -129,11 +129,35 @@ final class ValidatorConstraintsFixture
     #[Assert\Positive]
     public int $positiveNumber;
 
+    #[Assert\Negative]
+    public int $strictlyNegativeNumber;
+
+    #[Assert\LessThan(50)]
+    public int $lessThanNumber;
+
     #[Assert\Range(min: 5, max: 15)]
     public int $rangedNumber;
 
     #[Assert\Regex(pattern: '/^[a-z]+$/')]
     public string $regexString;
+
+    #[Assert\Regex(pattern: '/^\d{3}/')]
+    public string $regexAnchoredAtStart;
+
+    #[Assert\Regex(pattern: '/^\d+\/\d+$/')]
+    public string $regexEscapedDelimiter;
+
+    #[Assert\Regex(pattern: '/^[a-z]+$/i')]
+    public string $regexWithModifier;
+
+    #[Assert\Regex(pattern: '/^(?:\p{Lu}+|\p{Ll}+)$/u', htmlPattern: '[A-Z]+|[a-z]+')]
+    public string $regexWithHtmlPattern;
+
+    #[Assert\Regex(pattern: '/^[a-z]+$/', htmlPattern: '')]
+    public string $regexWithoutHtmlPattern;
+
+    #[Assert\Regex(pattern: '/\d/', match: false)]
+    public string $regexNotMatching;
 
     #[Assert\Time(withSeconds: false)]
     public string $time;

@@ -19,6 +19,7 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithBackedEnums;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithObjectAccessors;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithToolParameterAttribute;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleBackedEnum;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\GroupedDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning;
@@ -28,6 +29,7 @@ use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UnionType\UnionTypeDto;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\User;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithConstructor;
+use Symfony\Component\Validator\Constraints as Assert;
 
 final class FactoryTest extends TestCase
 {
@@ -222,6 +224,22 @@ final class FactoryTest extends TestCase
         $this->assertNotNull($actual);
         $this->assertSame(['task'], $actual['required']);
         $this->assertSame(['type' => ['string', 'null']], $actual['properties']['artifactId']);
+    }
+
+    public function testBuildPropertiesAddsNullToTheEnumOfNullableProperties()
+    {
+        $dto = new class {
+            public ?ExampleBackedEnum $priority = null;
+
+            #[Assert\Choice(choices: ['low', 'high'])]
+            public ?string $level = null;
+        };
+
+        $actual = $this->factory->buildProperties($dto::class);
+
+        $this->assertNotNull($actual);
+        $this->assertSame(['type' => ['integer', 'null'], 'enum' => [1, 5, null]], $actual['properties']['priority']);
+        $this->assertSame(['type' => ['string', 'null'], 'enum' => ['low', 'high', null]], $actual['properties']['level']);
     }
 
     public function testBuildPropertiesWithOnlyOptionalFieldsRejectsUnknownProperties()
@@ -455,7 +473,7 @@ final class FactoryTest extends TestCase
                 ],
                 'fallback' => [
                     'type' => ['string', 'null'],
-                    'enum' => ['and', 'or', 'not'],
+                    'enum' => ['and', 'or', 'not', null],
                     'description' => 'Optional fallback mode',
                 ],
             ],

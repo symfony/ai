@@ -28,7 +28,7 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
             'test_collection',
             'http://127.0.0.1:6333',
             'changeMe',
-            embeddingsDimension: 3,
+            dimensions: 3,
         );
     }
 }

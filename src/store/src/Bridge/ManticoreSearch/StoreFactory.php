@@ -28,7 +28,7 @@ final class StoreFactory
         ?HttpClientInterface $httpClient = null,
         string $field = '_vectors',
         string $type = 'hnsw',
-        string $similarity = 'cosine',
+        string $metric = 'cosine',
         int $dimensions = 1536,
         string $quantization = '8bit',
     ): StoreInterface&ManagedStoreInterface {
@@ -38,6 +38,6 @@ final class StoreFactory
             $httpClient = ScopingHttpClient::forBaseUri($httpClient, rtrim($endpoint, '/').'/');
         }
 
-        return new Store($httpClient, $table, $field, $type, $similarity, $dimensions, $quantization);
+        return new Store($httpClient, $table, $field, $type, $metric, $dimensions, $quantization);
     }
 }

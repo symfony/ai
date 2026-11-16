@@ -11,12 +11,12 @@
 
 namespace Symfony\AI\Agent\Bridge\Mcp\Tests;
 
-use Mcp\Client;
+use Mcp\Client\Client;
 use Mcp\Client\Configuration;
+use Mcp\Client\Exception\ConnectionException as McpConnectionException;
+use Mcp\Client\Exception\RequestException;
 use Mcp\Client\Protocol;
 use Mcp\Client\Transport\TransportInterface;
-use Mcp\Exception\ConnectionException as McpConnectionException;
-use Mcp\Exception\RequestException;
 use Mcp\Schema\ClientCapabilities;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Implementation;

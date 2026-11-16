@@ -1,6 +1,26 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add an optional reason to `ExecutionInterface::cancel()` and `Exception\CancellationException` carrying it, thrown by `getResult()` of a canceled execution
+ * Add `Toolbox\Exception\ToolErrorException`, whose message is the result that the model gets for the failed tool call
+ * Add `Toolbox\Source\SourceCollectionNormalizer`, keeping the sources of an answer when its messages are serialized
+ * Add `MessageStore\MessageStoreInterface::delete()` removing a single conversation
+ * Add `MessageStore\ManagedMessageStoreInterface`, `MessageStore\TraceableMessageStore` and the `ai:message-store:setup` & `ai:message-store:drop` commands
+ * Add `MessageStore\ConflictDetector` for message store bridges detecting messages saved in the meantime
+ * Add `MessageStore\MessageStoreInterface` and `MessageStore\InMemoryMessageStore` keeping message bags by their ID, and the `$messageStore` argument of `Agent` continuing and saving the stored conversation
+ * Add `ExecutionInterface`, returned by `AgentInterface::call()`
+ * Add `ExecutionStatus` and `Execution::getStatus()`, `isSuspended()`, `getPendingToolCalls()`, `getError()` and `getId()` to read where an execution stands
+ * Keep the phase of a streamed text when the `Runner` turns the round into a result
+ * Add `Execution::getMessages()` returning the given messages followed by the messages of the run, each assistant message carrying the metadata of its own model request
+ * Add an optional `$messages` argument to `Update\Result`, for agents providing the messages of their execution
+ * [BC BREAK] The agent no longer changes the given `MessageBag`: input processors replace it with `Input::setMessageBag()`, and the tool loop runs on its own copy
+ * [BC BREAK] Remove the `excludeToolMessages` argument of `Agent`, tool messages never reach the caller's `MessageBag`
+ * Add a `$toolResultConverter` argument to `Agent` to customize how tool results are converted for the model
+ * Add tool effect hints to `AsTool` and the tool factories
+
 0.15
 ----
 

@@ -10,7 +10,6 @@
  */
 
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
-use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -26,8 +25,6 @@ $longText = <<<TEXT
     free-standing structure in France after the Millau Viaduct.
     TEXT;
 
-$result = $platform->invoke('facebook/bart-large-cnn', $longText, [
-    'task' => Task::SUMMARIZATION,
-]);
+$result = $platform->invoke('facebook/bart-large-cnn', $longText);
 
 echo $result->asText().\PHP_EOL;

@@ -11,7 +11,7 @@
 
 namespace App\Mcp\Tools;
 
-use Mcp\Capability\Attribute\McpTool;
+use Mcp\Server\Capability\Attribute\McpTool;
 use Psr\Log\LoggerInterface;
 
 /**

@@ -32,8 +32,8 @@ final class StoreFactory
         #[\SensitiveParameter] ?string $password = null,
         ?HttpClientInterface $httpClient = null,
         string $embeddingsField = 'embeddings',
-        int $embeddingsDimension = 1536,
-        string $embeddingsDistance = 'cosine',
+        int $dimensions = 1536,
+        string $metric = 'cosine',
         bool $quantization = false,
     ): StoreInterface&ManagedStoreInterface {
         if (null === $username && null !== $password) {
@@ -57,6 +57,6 @@ final class StoreFactory
             $httpClient = ScopingHttpClient::forBaseUri($httpClient, $endpoint, $defaultOptions);
         }
 
-        return new Store($httpClient, $databaseName, $vectorIndexName, $nodeName, $embeddingsField, $embeddingsDimension, $embeddingsDistance, $quantization);
+        return new Store($httpClient, $databaseName, $vectorIndexName, $nodeName, $embeddingsField, $dimensions, $metric, $quantization);
     }
 }

@@ -11,15 +11,17 @@
 
 namespace App\Tests\Recipe;
 
+use App\Conversation\ConversationIds;
 use App\Recipe\Chat;
 use App\Recipe\Data\Recipe;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\MessageStore\InMemoryMessageStore;
 use Symfony\AI\Agent\MockAgent;
+use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\Stream\Delta\PartialObjectDelta;
 use Symfony\AI\Platform\Result\StreamResult;
-use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Session;
@@ -73,7 +75,8 @@ final class ChatTest extends TestCase
         $agent = new MockAgent(['Give me pancakes' => $stream]);
         $chat = self::createChat($agent);
 
-        $recipes = iterator_to_array($chat->getRecipeStream(new MessageBag(Message::ofUser('Give me pancakes'))));
+        $chat->submitMessage('Give me pancakes');
+        $recipes = iterator_to_array($chat->getRecipeStream($chat->loadMessages()));
 
         $agent->assertCallCount(1);
         $this->assertSame(['stream' => true, 'response_format' => Recipe::class], $agent->getLastCall()['options']);
@@ -81,6 +84,11 @@ final class ChatTest extends TestCase
         $this->assertCount(2, $recipes);
         $this->assertSame('Pancakes', $recipes[1]->name);
         $this->assertSame(20, $recipes[1]->duration);
+
+        $this->assertSame($recipes[1], $chat->getRecipe());
+        $answer = $chat->loadMessages()->getMessages()[1];
+        $this->assertInstanceOf(AssistantMessage::class, $answer);
+        $this->assertSame($recipes[1]->toString(), $answer->asText());
     }
 
     private static function createChat(MockAgent $agent): Chat
@@ -93,6 +101,6 @@ final class ChatTest extends TestCase
         $request->setSession($session);
         $requestStack->push($request);
 
-        return new Chat($requestStack, new ArrayAdapter(), $agent);
+        return new Chat(new ConversationIds($requestStack), new InMemoryMessageStore(), $agent);
     }
 }

@@ -13,6 +13,8 @@ namespace Symfony\Component\Config\Definition\Configurator;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
+$modelCatalog = require __DIR__.'/model_catalog.php';
+
 return (new ArrayNodeDefinition('higgsfield'))
     ->children()
         ->stringNode('api_key')->isRequired()->end()
@@ -24,7 +26,5 @@ return (new ArrayNodeDefinition('higgsfield'))
             ->defaultValue('http_client')
             ->info('Service ID of the HTTP client to use')
         ->end()
-        ->stringNode('model_catalog')
-            ->info('Service ID of the model catalog to use')
-        ->end()
+        ->append($modelCatalog('api'))
     ->end();

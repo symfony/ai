@@ -56,7 +56,7 @@ final class Ollama implements HasSourcesInterface
      * @return array{
      *     title: string,
      *     content: string,
-     *     links: string[],
+     *     links: string[]|null,
      * }
      */
     public function fetchWebPage(string $url): array
@@ -68,7 +68,7 @@ final class Ollama implements HasSourcesInterface
         $payload = $response->toArray();
 
         $this->addSource(
-            new Source($payload['title'], implode(', ', $payload['links']), $payload['content'])
+            new Source($payload['title'], implode(', ', $payload['links'] ?? []), $payload['content'])
         );
 
         return $payload;

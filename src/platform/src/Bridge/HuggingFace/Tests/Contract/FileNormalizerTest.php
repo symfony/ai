@@ -13,10 +13,11 @@ namespace Symfony\AI\Platform\Bridge\HuggingFace\Tests\Contract;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\HuggingFace\Classification;
+use Symfony\AI\Platform\Bridge\HuggingFace\Completions;
 use Symfony\AI\Platform\Bridge\HuggingFace\Contract\FileNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\Content\File;
-use Symfony\AI\Platform\Model;
 
 final class FileNormalizerTest extends TestCase
 {
@@ -25,7 +26,10 @@ final class FileNormalizerTest extends TestCase
         $normalizer = new FileNormalizer();
 
         $this->assertTrue($normalizer->supportsNormalization(new File('some content', 'image/jpeg'), context: [
-            Contract::CONTEXT_MODEL => new Model('test-model'),
+            Contract::CONTEXT_MODEL => new Classification('test-model'),
+        ]));
+        $this->assertFalse($normalizer->supportsNormalization(new File('some content', 'image/jpeg'), context: [
+            Contract::CONTEXT_MODEL => new Completions('test-model'),
         ]));
         $this->assertFalse($normalizer->supportsNormalization('not a file'));
     }

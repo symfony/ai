@@ -1,0 +1,152 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.openai.com/v1/responses",
+                "signature": "c272946474a2ab4b746d9549b4d60e27",
+                "signature_v2": "d25f82819c08c73a482d216b20d2300f",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"model\":\"gpt-5-mini\",\"input\":[{\"role\":\"user\",\"content\":\"My name is Christopher.\"}],\"instructions\":\"You are a helpful assistant. You only answer with short sentences.\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "access-control-expose-headers": [
+                        "X-Request-ID, Server-Timing-Total",
+                        "CF-Ray",
+                        "CF-Ray"
+                    ],
+                    "openai-organization": [
+                        "[redacted]"
+                    ],
+                    "openai-project": [
+                        "[redacted]"
+                    ],
+                    "openai-version": [
+                        "2020-10-01"
+                    ],
+                    "x-ratelimit-limit-requests": [
+                        "10000"
+                    ],
+                    "x-ratelimit-limit-tokens": [
+                        "10000000"
+                    ],
+                    "x-ratelimit-remaining-requests": [
+                        "9999"
+                    ],
+                    "x-ratelimit-remaining-tokens": [
+                        "10000000"
+                    ],
+                    "x-ratelimit-reset-requests": [
+                        "6ms"
+                    ],
+                    "x-ratelimit-reset-tokens": [
+                        "0s"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\n  \"id\": \"resp_0e6daa806ae130b3006ade9af5d59487d283e01ddc673330a4\",\n  \"object\": \"response\",\n  \"created_at\": 1792973557,\n  \"status\": \"completed\",\n  \"access_programs\": null,\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"developer\"\n  },\n  \"completed_at\": 1792973559,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": \"You are a helpful assistant. You only answer with short sentences.\",\n  \"max_output_tokens\": null,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-5-mini-2025-08-07\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"rs_0e6daa806ae130b3006ade9af6869c87d2bd1191d4f8c71e17\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq3pr3lFpfZdlSwR7tgRXcFL5Xfq-MeZp2h8mdO8rjxoujTzUicxTdQ30jv_rOM0JQB9Cp4PjktRDEjJpYqwNspIR_P_s4BMz1D8z2pingvynOOwdlOErwJ_UPVBEsaFG8znfz5vvkaDohf9wSna_JeO8r5NUFigTncQa0qYZVv87RnwEL7qcC1Rg8ewvoX3_Wl_atYv4dxE1YZesBjRXIY0tCOVPAvYpVf67Y_w86iaQi2pO0sZ8y3tQfqjw9WGdu5KQxWVu1MlcRd1kOvVXgVI4wXPr9jmrkjLqIt0zlSn6uygv2OyZd-J2sLfHyetMhbkOqBmXHbuWzNJHxsrF8oD8BAomd7XZ3BcbV7112P1DFRnTLsLVE9P4K2l4heHQkPsTyAzdyodtS6sVLpfLoEWLehImrgJzJ7UjIaOLpKjcf-tKKg2my-zoWCHltjdaF3hD-VgDnFF8XOiHIr1QzA-11XLllIS6D_3JtnmYAHD8PmNBShywww7RnyaoMn1ak6HXJyYz4TT1yjHPEZBlrURQSNRCCv4DMKdTyG3n8GaIXizUpzOBM_OKHXVmTZ68OBMO9Y3dhmegwMkjMonp_DIQ-bEqH1q_Aztd9MJYSfxQ6tmReZUv1TdEuGcx162n9JukCO7i3mQv8N705wis685REv7gqQQVe8dmAVkvKYc548MDKn9XKLlcMLmHFg5uPDWyoUamSCwYtkdaHi07nluNb9oKAf8gX9NAz677LCD5fL1O_rCxq9vNqc_rGzT02cCBTnGhiOGiGwA0WXyPnq2EtrmHVmfEHU_rjr4DhdBIV1xPx80h7yRplB7Ri-ymAqERZJ3PzbwRrqvthpeUWj9BOlD3swbo7LkNn2G3PfcMEG1kgCNdLKTJ7xvXlaAOugMDka0JLHVPmqokaIwnq3uBdWOVXyn-QLvtg5GUSxlWjVvEGfoKO5UDEdy9gBlkseVy1RlHlxnqofxjrGeLj_yRpZkbsDdNKBxrmli7XzMDGaA4QIU4Z_Xj1sjDltnWt64JkZbimDIk7_W6Z6jvR6uK_GVf0NSls81R62iUBGH83HDXwNwiOMGYFkLDHpqgZdNB5_w-Ck27FxvEr3k2zBtMEYvJwEbfzcKJ7B1EqopmD0omTsJnZJ8dyvtgsxj6jqcMUgRaN4nI0lErHZ0TtBrCQYQ9ba_AF4AL7ImH9iACQRkoNYKpGNntTtu7sLV1E05iGpdvxer-sYLQ5ddjMlufI04tEPV22escd8RemY-bJlroaQ-eOW3ezvtiFsSVX6XeiId6Knn1JmJFyOc5W8qaBBPc51jNN5EAm6wEeYuD4HEqGwU0ZO-zeRPOcfU0w5Mmwi2ROqs6cjBAD1QpxOt4Kbw1sBy8bTSQvGFZ6_s7lbcK98NAb9hyBtMLkkoA81g3lD0td-4XmxEHyzULtq1XrLEaRpFVOhDprZ_R4u2Ofbb3AfaKdB_rn5J8xmK2KemE7wGT5aff4XqN4xjGOT96Cd5irSfCoPcFEaZOGtVBxtqw9d2hS6S7Ox-IsuGEQgJ-fU2N7p10961k7Nq40zXBfjtPqglGFu0g8cLq7jScvfPM-1Gpb0qPi0AF08gqXRSPjmSNhRB1tjSRWDjtF10eL5Bxq7TRJkLOl4Yadl0FFtqmkZzAcjqVmUV_DhdkrYO1-icWcY4kTKclLf8MS8YqP934UJTsTEUeOZoeZElkT85y4zKc08gZ5EPYvK6Sq60VE6hY8HcW8wFWMZxSbWD7PLyzhJuBcvEtLIzqYG3vDZ5EfHFBu-fKnQz3LpkBn1kAGyL-PKIUFMVJ47XnW1eZMtJV4tKIZ-WphsMPNpGPyar5kDjcqwkLMqmz0pmvj5Vdr3bEtPN5bn3tdbkePc69pLQM5VDQHhSyUiibpUhYY9lLomjbeW8yNSVheXaAbeuq0u0S-uGH3Nxy0dESiUytYlNiVI0Iffh3u3YseeyuQhxyWX1afsZbP1ADdlbvakPC4AJyybox9LodOLfqGZ15hb-rbd-su0yLmrYfEy4NfPl2YYvH3nsv5IcOBTNS-tMDT5YdYsru7VJSrZ6rnW0EHnJ6vwByp1i_D10iC7lthWJgYPOqf8SRjA05jF3AGdwnl3KCBz5phWTilEsxN30tyORFmjqAKzbFiQZ7h4GLIbvIeDtgr0aixqzntJkLc38hU2sZIhdYZGz6UumrMdiQc_JHYUaRAPm8E-XRiWR2MBGnzI_2bjlWKG93xgewBnI4SacdqsaYew36ywn5mA9W7YYrzGB8RldOmE3WIQMr2FEHtyBw6qGVYOtMKk4MN0QxAjw6-XBJ9vEU9f3nVP59QTC-ViCGDorxPE0BHfv125Tp9xASxBE2L9t82pOvt6LBakP4jOLmQhivGN8JyMzhfJBuQppNYZFjmvsrMJMn_bwvKlbD0diK67TlPLqvypb87EgcD5iuK8pAldMQkrPbUclBV0LHIghCbCljeZrt4FT4=\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"msg_0e6daa806ae130b3006ade9af7478087d2a5548a17693367f0\",\n      \"type\": \"message\",\n      \"status\": \"completed\",\n      \"content\": [\n        {\n          \"type\": \"output_text\",\n          \"annotations\": [],\n          \"logprobs\": [],\n          \"text\": \"Nice to meet you, Christopher. How can I help you today?\"\n        }\n      ],\n      \"role\": \"assistant\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"in_memory\",\n  \"reasoning\": {\n    \"context\": \"current_turn\",\n    \"effort\": \"medium\",\n    \"mode\": \"standard\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": true,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"text\"\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"auto\",\n  \"tool_usage\": {\n    \"image_gen\": {\n      \"input_tokens\": 0,\n      \"input_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"output_tokens\": 0,\n      \"output_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"total_tokens\": 0\n    },\n    \"web_search\": {\n      \"num_requests\": 0\n    }\n  },\n  \"tools\": [],\n  \"top_logprobs\": 0,\n  \"top_p\": 1.0,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 28,\n    \"input_tokens_details\": {\n      \"cache_write_tokens\": 0,\n      \"cached_tokens\": 0\n    },\n    \"output_tokens\": 99,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 64\n    },\n    \"total_tokens\": 127\n  },\n  \"user\": null,\n  \"metadata\": {}\n}"
+            }
+        },
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.openai.com/v1/responses",
+                "signature": "fcada22db7eb5ac773852f7eae6aa542",
+                "signature_v2": "94cbb81bb9eaf03e61cf0fcc2cd7f941",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"model\":\"gpt-5-mini\",\"input\":[{\"role\":\"user\",\"content\":\"My name is Christopher.\"},{\"id\":\"rs_0e6daa806ae130b3006ade9af6869c87d2bd1191d4f8c71e17\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABq3pr3lFpfZdlSwR7tgRXcFL5Xfq-MeZp2h8mdO8rjxoujTzUicxTdQ30jv_rOM0JQB9Cp4PjktRDEjJpYqwNspIR_P_s4BMz1D8z2pingvynOOwdlOErwJ_UPVBEsaFG8znfz5vvkaDohf9wSna_JeO8r5NUFigTncQa0qYZVv87RnwEL7qcC1Rg8ewvoX3_Wl_atYv4dxE1YZesBjRXIY0tCOVPAvYpVf67Y_w86iaQi2pO0sZ8y3tQfqjw9WGdu5KQxWVu1MlcRd1kOvVXgVI4wXPr9jmrkjLqIt0zlSn6uygv2OyZd-J2sLfHyetMhbkOqBmXHbuWzNJHxsrF8oD8BAomd7XZ3BcbV7112P1DFRnTLsLVE9P4K2l4heHQkPsTyAzdyodtS6sVLpfLoEWLehImrgJzJ7UjIaOLpKjcf-tKKg2my-zoWCHltjdaF3hD-VgDnFF8XOiHIr1QzA-11XLllIS6D_3JtnmYAHD8PmNBShywww7RnyaoMn1ak6HXJyYz4TT1yjHPEZBlrURQSNRCCv4DMKdTyG3n8GaIXizUpzOBM_OKHXVmTZ68OBMO9Y3dhmegwMkjMonp_DIQ-bEqH1q_Aztd9MJYSfxQ6tmReZUv1TdEuGcx162n9JukCO7i3mQv8N705wis685REv7gqQQVe8dmAVkvKYc548MDKn9XKLlcMLmHFg5uPDWyoUamSCwYtkdaHi07nluNb9oKAf8gX9NAz677LCD5fL1O_rCxq9vNqc_rGzT02cCBTnGhiOGiGwA0WXyPnq2EtrmHVmfEHU_rjr4DhdBIV1xPx80h7yRplB7Ri-ymAqERZJ3PzbwRrqvthpeUWj9BOlD3swbo7LkNn2G3PfcMEG1kgCNdLKTJ7xvXlaAOugMDka0JLHVPmqokaIwnq3uBdWOVXyn-QLvtg5GUSxlWjVvEGfoKO5UDEdy9gBlkseVy1RlHlxnqofxjrGeLj_yRpZkbsDdNKBxrmli7XzMDGaA4QIU4Z_Xj1sjDltnWt64JkZbimDIk7_W6Z6jvR6uK_GVf0NSls81R62iUBGH83HDXwNwiOMGYFkLDHpqgZdNB5_w-Ck27FxvEr3k2zBtMEYvJwEbfzcKJ7B1EqopmD0omTsJnZJ8dyvtgsxj6jqcMUgRaN4nI0lErHZ0TtBrCQYQ9ba_AF4AL7ImH9iACQRkoNYKpGNntTtu7sLV1E05iGpdvxer-sYLQ5ddjMlufI04tEPV22escd8RemY-bJlroaQ-eOW3ezvtiFsSVX6XeiId6Knn1JmJFyOc5W8qaBBPc51jNN5EAm6wEeYuD4HEqGwU0ZO-zeRPOcfU0w5Mmwi2ROqs6cjBAD1QpxOt4Kbw1sBy8bTSQvGFZ6_s7lbcK98NAb9hyBtMLkkoA81g3lD0td-4XmxEHyzULtq1XrLEaRpFVOhDprZ_R4u2Ofbb3AfaKdB_rn5J8xmK2KemE7wGT5aff4XqN4xjGOT96Cd5irSfCoPcFEaZOGtVBxtqw9d2hS6S7Ox-IsuGEQgJ-fU2N7p10961k7Nq40zXBfjtPqglGFu0g8cLq7jScvfPM-1Gpb0qPi0AF08gqXRSPjmSNhRB1tjSRWDjtF10eL5Bxq7TRJkLOl4Yadl0FFtqmkZzAcjqVmUV_DhdkrYO1-icWcY4kTKclLf8MS8YqP934UJTsTEUeOZoeZElkT85y4zKc08gZ5EPYvK6Sq60VE6hY8HcW8wFWMZxSbWD7PLyzhJuBcvEtLIzqYG3vDZ5EfHFBu-fKnQz3LpkBn1kAGyL-PKIUFMVJ47XnW1eZMtJV4tKIZ-WphsMPNpGPyar5kDjcqwkLMqmz0pmvj5Vdr3bEtPN5bn3tdbkePc69pLQM5VDQHhSyUiibpUhYY9lLomjbeW8yNSVheXaAbeuq0u0S-uGH3Nxy0dESiUytYlNiVI0Iffh3u3YseeyuQhxyWX1afsZbP1ADdlbvakPC4AJyybox9LodOLfqGZ15hb-rbd-su0yLmrYfEy4NfPl2YYvH3nsv5IcOBTNS-tMDT5YdYsru7VJSrZ6rnW0EHnJ6vwByp1i_D10iC7lthWJgYPOqf8SRjA05jF3AGdwnl3KCBz5phWTilEsxN30tyORFmjqAKzbFiQZ7h4GLIbvIeDtgr0aixqzntJkLc38hU2sZIhdYZGz6UumrMdiQc_JHYUaRAPm8E-XRiWR2MBGnzI_2bjlWKG93xgewBnI4SacdqsaYew36ywn5mA9W7YYrzGB8RldOmE3WIQMr2FEHtyBw6qGVYOtMKk4MN0QxAjw6-XBJ9vEU9f3nVP59QTC-ViCGDorxPE0BHfv125Tp9xASxBE2L9t82pOvt6LBakP4jOLmQhivGN8JyMzhfJBuQppNYZFjmvsrMJMn_bwvKlbD0diK67TlPLqvypb87EgcD5iuK8pAldMQkrPbUclBV0LHIghCbCljeZrt4FT4=\",\"summary\":[]},{\"role\":\"assistant\",\"type\":\"message\",\"content\":\"Nice to meet you, Christopher. How can I help you today?\"},{\"role\":\"user\",\"content\":\"What is my name?\"}],\"instructions\":\"You are a helpful assistant. You only answer with short sentences.\"}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "access-control-expose-headers": [
+                        "X-Request-ID, Server-Timing-Total",
+                        "CF-Ray",
+                        "CF-Ray"
+                    ],
+                    "openai-organization": [
+                        "[redacted]"
+                    ],
+                    "openai-project": [
+                        "[redacted]"
+                    ],
+                    "openai-version": [
+                        "2020-10-01"
+                    ],
+                    "x-ratelimit-limit-requests": [
+                        "10000"
+                    ],
+                    "x-ratelimit-limit-tokens": [
+                        "10000000"
+                    ],
+                    "x-ratelimit-remaining-requests": [
+                        "9999"
+                    ],
+                    "x-ratelimit-remaining-tokens": [
+                        "10000000"
+                    ],
+                    "x-ratelimit-reset-requests": [
+                        "6ms"
+                    ],
+                    "x-ratelimit-reset-tokens": [
+                        "0s"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\n  \"id\": \"resp_0e6daa806ae130b3006ade9af7c25887d2b86bdf752f621b6e\",\n  \"object\": \"response\",\n  \"created_at\": 1792973559,\n  \"status\": \"completed\",\n  \"access_programs\": null,\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"developer\"\n  },\n  \"completed_at\": 1792973561,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": \"You are a helpful assistant. You only answer with short sentences.\",\n  \"max_output_tokens\": null,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-5-mini-2025-08-07\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"rs_0e6daa806ae130b3006ade9af86dc887d285b461b0205dfcc6\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq3pr5Ar-aLqDVvDIF4VhwkjGVRch1ZTmYRFLcK56usBmjuGtYvZAHw0U-XB12DSgeHld8TyntC9kaDQDSePOM49bXyyy6lChn4I0hGKp94mnz-nAlIhVghMDE3FFBHtuKuTA-k2E36UhZfntSWBOYnruIoKYpnRP_dHsCYv3OsI_BakCKr8OJeNbyreD_lgxSgz5A0tvKcciRxromDlta2cw0bBodhq8zw2cKk3dsbwESJOJ2-kar646DpIv_QFePHS0Xw4dawwrZ19QFFG4H4E41teCR7aXwckxXwKD2sYpPuOlDs7BndrjxQphxc5MeKidJ6vcgTNP3HnGD62roeJD_sviSRAbxo7rprl86OhfRHOtjU3aceydzJ06Ua8_kg-CPJCEZwvLmFNMX1y6qjLqGGNYDv-zoeH-SacR9Ly3N2uprKWuAUy5gtJCXyXoy4_752lXqc7XQg369SWBxpsGobA39rr-oKtepxjzlZCXFoFrJX_GEYIzTjN63DjMHuj1yhAX3uqme8yDWgxy2kqWzKm7JLdFAbw-2BaGaD9bXkt0L7kKnIGtPLuW_TxSE7rGWuE7UOiBgHLorO11hK6xgyL7VM4XXq8ZGZhgbwdR5ewjNTFccs8B8s8oiJwd7fWoaDgcahO0E9Rhm6WSvY8zqmgsYfBFjAeR1OOgE7QJkgr5Q3fZJB_Ufpk9srlTTG-zaxOEQoFYDCL9of7Ts1E5NwrMzAySruTOidXQJiSOK7QS1kCmVpxH_yDvb9evnxYcg_xAkgNClKAGYZxpDB9qAHD0rUzdIHIcjinZlPgREZLYoyh_aZdzO9zQq-zd9wO4-_f8RMVBRlJibK5HnhexT7PYmOlItAslkHP3lmzRkUhVXOGTF7g7XFHABJ1VfqVGt8yItamhLBUxpd4lvRU2WvFQQCfKZurYoUUGGUv6KyetW36KnJmaqw8LFRWGj5t9buV41m73c2YYkDgk8Rfp4HjItjrRhVNDEVeJOmlBFAO4GrNFlfKuF-IpoMXCI82_Y9Ifh5N-_2h9tMuyg9RyY36fzF0KXS1S8wP_xqd7sFysvNxsdM8xWMdeaaerYpJpREeHC9jH-9MB7Q2botSLki6_d8j-ul-T7digxJYCVValrO6JWOI-ifANO6y1ANNsvzOQIoSnwiTUxRVTj5JM1xcQcx2MEgNLZ_lZYH2ZIAwZCTVH1Tmiu-5Gwedia96D81WclfS2M0czdlJsa8sN6gbf4kNGlmIV7mwwAbSu1-sZvsKIszArNyoumbZeD8Dlo_iw3LrP8XcVlwVLnelqQjF8Hmf-01GbRJd2NOoIZ4vTrIQs3HBMfsXeEXygS88dfYz7AEqx61Z1ap2YHnIJiNkGhwTEEGEQqSKOZkimabBAXsRaZ56c2tlZkwuzwVBtWQ5DABT3rGUhqyLmhrwGpft7y6iSEsqzRZYcMg0GF26mCZztCXcpTLg7KCgkOXOlW5WakAHH7tpK6sLWkou9JfhcW3KUrLBpkJSWtbZUf0-52JipaB5XziZbL1Uzo23cjzAS7CIvbxsl9PciePQk9-qO8Wi2FmzpQt7_cL3TuhlGpJZ7OcUkv7XArZCQOSfAtcim__DdVTG8IRYfmYGd-vNgRUGMLAEjoDrJqR4xn0L-AmsSurYvJ4_LLoegHA4Apf39rOosZZLA2whlDyDDi5QJzmYF-VtPxlyHPpbpDrSCNhonkFAxXcX30tL0FEDyGt4U9KeYDoZTZA1XM_DiIO0iJEIZMZfopmuB2N9BhE2CG-LM-y8wg6CkTLIfd1j-l8K30T6K4paut0onYUHzTPyvqphREgGm3128spo-quq_R_D-LVk-Y4sLY6F-5AbC1aqx9DmH0OmauD3jCqay2jAzF0cElj1efsr012RvcOhC6f-roli2PR95DzY36De64HpOqWdFbO6GRL_Bhwt-S5xQPvKOxHMcx48kug9WGhUX1lrTmji30k2QwTiSAxD9Pq14vSj5RLCQTVA0E4zqVqgMOu03ovcG4ZCtqAmZDixSUQpP1q4Fn4j6XwDVBieSnEWK-rfoRnkgALw8fXo7NEncnHyaA2qWFiX-xCB2VJagZkylSW21gcQI0TN9-MI-NSx-UYm93GJQ8QVwjeGq1izn4Qsw9TYNUgOFmFSTb0axd3ifS3dBl29inhW_BnxhaLi-MPFP4zmvWE0ql3_6HzRtRf7hv1CpfPEeX0aLl5Vo=\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"msg_0e6daa806ae130b3006ade9af9102887d28a54920770dd23a4\",\n      \"type\": \"message\",\n      \"status\": \"completed\",\n      \"content\": [\n        {\n          \"type\": \"output_text\",\n          \"annotations\": [],\n          \"logprobs\": [],\n          \"text\": \"Your name is Christopher.\"\n        }\n      ],\n      \"role\": \"assistant\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"in_memory\",\n  \"reasoning\": {\n    \"context\": \"current_turn\",\n    \"effort\": \"medium\",\n    \"mode\": \"standard\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": true,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"text\"\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"auto\",\n  \"tool_usage\": {\n    \"image_gen\": {\n      \"input_tokens\": 0,\n      \"input_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"output_tokens\": 0,\n      \"output_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"total_tokens\": 0\n    },\n    \"web_search\": {\n      \"num_requests\": 0\n    }\n  },\n  \"tools\": [],\n  \"top_logprobs\": 0,\n  \"top_p\": 1.0,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 57,\n    \"input_tokens_details\": {\n      \"cache_write_tokens\": 0,\n      \"cached_tokens\": 0\n    },\n    \"output_tokens\": 65,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 0\n    },\n    \"total_tokens\": 122\n  },\n  \"user\": null,\n  \"metadata\": {}\n}"
+            }
+        }
+    ]
+}

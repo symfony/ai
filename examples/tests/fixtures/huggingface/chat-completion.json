@@ -3,9 +3,9 @@
         {
             "request": {
                 "method": "POST",
-                "url": "https://router.huggingface.co/nscale/v1/chat/completions",
-                "signature": "bc48f8920469d035aa9261a5daf8eb11",
-                "signature_v2": "8ad12956d871235f2dd66f4b9307bcc4",
+                "url": "https://router.huggingface.co/v1/chat/completions",
+                "signature": "411fe460067a0bca10e25c05f55d21c0",
+                "signature_v2": "d35a97f1d3dd4e507fcd1313ce8aeb17",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -14,16 +14,13 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"messages\":[{\"role\":\"user\",\"content\":\"Hello, how are you doing today?\"}],\"model\":\"meta-llama\\/Llama-3.1-8B-Instruct\"}"
+                "body": "{\"messages\":[{\"role\":\"user\",\"content\":\"Hello, how are you doing today?\"}],\"model\":\"meta-llama\\/Llama-3.1-8B-Instruct:nscale\"}"
             },
             "response": {
                 "status": 200,
                 "headers": {
                     "content-type": [
-                        "application/json; charset=utf-8"
-                    ],
-                    "content-length": [
-                        "705"
+                        "application/json"
                     ],
                     "x-inference-provider": [
                         "nscale"
@@ -50,26 +47,29 @@
                         "none"
                     ],
                     "inference-id": [
-                        "d4946d6b-20db-4dc8-a013-352fcf87263c"
+                        "171c7215-ddfc-468d-9f23-30978c291db0"
                     ],
-                    "strict-transport-security": [
-                        "max-age=31536000"
+                    "server": [
+                        "envoy"
                     ],
                     "x-cache": [
                         "Miss from cloudfront"
                     ],
                     "via": [
-                        "1.1 123136ea2cc2a463fc0f7d5c10776632.cloudfront.net (CloudFront)"
+                        "1.1 585caab32986cfd6caf0ef1746a721a0.cloudfront.net (CloudFront)"
                     ],
                     "x-amz-cf-pop": [
                         "TXL52-P3"
                     ],
                     "x-amz-cf-id": [
-                        "VbKi7FQ3qOtGpFbZBT8FoFKhlseOsThTkHKedzMy09f5pG0rSs2t_Q=="
+                        "951QSB69CryC_VbeEvC5axOTcb132Q4E20_Krs3HaMMzfiJRJcWalQ=="
+                    ],
+                    "strict-transport-security": [
+                        "max-age=31536000"
                     ]
                 },
                 "body_format": "json",
-                "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"content\":\"I'm doing well, thank you for asking. I'm a large language model, so I don't have emotions or feelings like humans do, but I'm functioning properly and ready to assist you with any questions or topics you'd like to discuss. How about you? How's your day going so far?\",\"role\":\"assistant\",\"tool_calls\":[]},\"stop_reason\":null}],\"created\":1789329253,\"id\":\"chatcmpl-60b2c470-a575-4612-82cf-e18248cd9cd1\",\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"object\":\"chat.completion\",\"prompt_logprobs\":null,\"system_fingerprint\":\"vllm-0.21.0-dbb32ef8\",\"usage\":{\"completion_tokens\":63,\"prompt_tokens\":43,\"prompt_tokens_details\":null,\"total_tokens\":106}}"
+                "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"content\":\"I'm doing well, thank you for asking. I'm a large language model, so I don't have emotions or feelings like humans do, but I'm functioning properly and ready to help with any questions or tasks you may have. How about you? Is there something I can assist you with today?\",\"role\":\"assistant\"}}],\"created\":1792701658,\"id\":\"chatcmpl-af1a9b7d-8800-4c60-b1f3-fd4a95055ea7\",\"model\":\"meta-llama/Llama-3.1-8B-Instruct\",\"object\":\"chat.completion\",\"system_fingerprint\":\"vllm-0.21.0-dbb32ef8\",\"usage\":{\"prompt_tokens\":43,\"total_tokens\":105,\"completion_tokens\":62}}"
             }
         }
     ]

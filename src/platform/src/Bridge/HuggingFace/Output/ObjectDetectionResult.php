@@ -31,22 +31,4 @@ final class ObjectDetectionResult
     {
         return $this->objects;
     }
-
-    /**
-     * @param array<array{label: string, score: float, box: array{xmin: float, ymin: float, xmax: float, ymax: float}}> $data
-     */
-    public static function fromArray(array $data): self
-    {
-        return new self(array_map(
-            static fn (array $item) => new DetectedObject(
-                $item['label'],
-                $item['score'],
-                $item['box']['xmin'],
-                $item['box']['ymin'],
-                $item['box']['xmax'],
-                $item['box']['ymax'],
-            ),
-            $data,
-        ));
-    }
 }

@@ -12,7 +12,7 @@
 namespace Symfony\AI\Store\Tests\Document\Loader;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
+use Symfony\AI\Store\Document\DocumentInterface;
 use Symfony\AI\Store\Document\Loader\RstToctreeLoader;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
@@ -62,7 +62,7 @@ final class RstToctreeLoaderTest extends TestCase
         $documents = iterator_to_array($loader->load($this->fixturesDir.'/simple.rst'), false);
 
         $titles = array_map(
-            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
+            static fn (DocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
             $documents,
         );
 
@@ -109,7 +109,7 @@ final class RstToctreeLoaderTest extends TestCase
         $this->assertGreaterThanOrEqual(2, \count($documents));
 
         $titles = array_map(
-            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
+            static fn (DocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
             $documents,
         );
 
@@ -143,7 +143,7 @@ final class RstToctreeLoaderTest extends TestCase
         $pageSource = $this->fixturesDir.'/with_toctree/page.rst';
         $pageDocs = array_filter(
             $documents,
-            static fn (EmbeddableDocumentInterface $doc): bool => $doc->getMetadata()->getSource() === $pageSource,
+            static fn (DocumentInterface $doc): bool => $doc->getMetadata()->getSource() === $pageSource,
         );
 
         $this->assertNotEmpty($pageDocs);
@@ -166,7 +166,7 @@ final class RstToctreeLoaderTest extends TestCase
         $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_absolute_toctree/index.rst'), false);
 
         $titles = array_map(
-            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
+            static fn (DocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
             $documents,
         );
 
@@ -198,7 +198,7 @@ final class RstToctreeLoaderTest extends TestCase
         $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_glob_toctree/index.rst'), false);
 
         $titles = array_map(
-            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
+            static fn (DocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
             $documents,
         );
 
@@ -215,7 +215,7 @@ final class RstToctreeLoaderTest extends TestCase
         // alpha.rst is listed explicitly AND matched by the glob — it should appear only once
         $alphaDocs = array_filter(
             $documents,
-            static fn (EmbeddableDocumentInterface $doc): bool => 'Alpha Topic' === $doc->getMetadata()->getTitle(),
+            static fn (DocumentInterface $doc): bool => 'Alpha Topic' === $doc->getMetadata()->getTitle(),
         );
 
         $this->assertCount(1, $alphaDocs);
@@ -227,7 +227,7 @@ final class RstToctreeLoaderTest extends TestCase
         $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_trailing_slash_toctree/index.rst'), false);
 
         $titles = array_map(
-            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
+            static fn (DocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
             $documents,
         );
 
@@ -283,7 +283,7 @@ final class RstToctreeLoaderTest extends TestCase
         $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_absolute_toctree/index.rst'), false);
 
         $titles = array_map(
-            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
+            static fn (DocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
             $documents,
         );
 
@@ -298,7 +298,7 @@ final class RstToctreeLoaderTest extends TestCase
         $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_absolute_toctree/index.rst'), false);
 
         $titles = array_map(
-            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
+            static fn (DocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
             $documents,
         );
 
@@ -313,7 +313,7 @@ final class RstToctreeLoaderTest extends TestCase
         $documents = iterator_to_array($loader->load($this->fixturesDir.'/with_absolute_toctree/index.rst'), false);
 
         $titles = array_map(
-            static fn (EmbeddableDocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
+            static fn (DocumentInterface $doc): string => $doc->getMetadata()->getTitle() ?? '',
             $documents,
         );
 

@@ -11,18 +11,18 @@
 
 namespace Symfony\AI\McpBundle\DependencyInjection;
 
-use Mcp\Capability\Attribute\CompletionProvider;
-use Mcp\Capability\Attribute\McpPrompt;
-use Mcp\Capability\Attribute\McpResource;
-use Mcp\Capability\Attribute\McpResourceTemplate;
-use Mcp\Capability\Attribute\McpTool;
-use Mcp\Capability\Discovery\DocBlockParser;
-use Mcp\Capability\Discovery\SchemaGenerator;
-use Mcp\Capability\Registry\ReferenceHandler;
-use Mcp\Exception\ExceptionInterface as McpExceptionInterface;
 use Mcp\Schema\Annotations;
+use Mcp\Schema\Exception\ExceptionInterface as McpExceptionInterface;
 use Mcp\Schema\Icon;
 use Mcp\Schema\ToolAnnotations;
+use Mcp\Server\Capability\Attribute\CompletionProvider;
+use Mcp\Server\Capability\Attribute\McpPrompt;
+use Mcp\Server\Capability\Attribute\McpResource;
+use Mcp\Server\Capability\Attribute\McpResourceTemplate;
+use Mcp\Server\Capability\Attribute\McpTool;
+use Mcp\Server\Capability\Discovery\DocBlockParser;
+use Mcp\Server\Capability\Discovery\SchemaGenerator;
+use Mcp\Server\Capability\Registry\ReferenceHandler;
 use Symfony\AI\McpBundle\App\McpAppReferenceHandler;
 use Symfony\AI\McpBundle\App\McpAppRenderer;
 use Symfony\AI\McpBundle\Exception\LogicException;

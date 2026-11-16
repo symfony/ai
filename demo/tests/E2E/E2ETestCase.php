@@ -75,8 +75,7 @@ abstract class E2ETestCase extends PantherTestCase
     }
 
     /**
-     * Opens one of the use cases, and makes sure its chat starts empty: the chats of the recipe and
-     * the turbo stream bot are stored in the cache, which outlives the browser session.
+     * Opens one of the use cases, and makes sure its chat starts empty.
      */
     protected function visit(string $path): void
     {

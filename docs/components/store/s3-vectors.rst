@@ -38,22 +38,36 @@ Basic Configuration
         vectorBucketName: 'my-vector-bucket',
         indexName: 'my-index',
         filter: [], // Optional: default filter for queries
-        topK: 3, // Optional: default number of results
+        limit: 3, // Optional: default number of results
+        dimensions: 1536, // Optional: dimensions of the index, default: 1536
+        metric: \AsyncAws\S3Vectors\Enum\DistanceMetric::COSINE, // Optional
+        dataType: \AsyncAws\S3Vectors\Enum\DataType::FLOAT_32, // Optional
+        kmsKeyId: 'your-kms-key-id', // Optional: encrypts the bucket and the index
+        tags: ['env' => 'production'], // Optional
     );
 
 Setup the Vector Store
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Before using the store, you need to initialize it with the appropriate configuration::
+Before using the store, create the vector bucket and the index::
 
-    // Setup the vector bucket and index
-    $store->setup([
-        'dimension' => 1536,
-        'distanceMetric' => \AsyncAws\S3Vectors\Enum\DistanceMetric::COSINE, // Optional
-        'dataType' => \AsyncAws\S3Vectors\Enum\DataType::FLOAT_32, // Optional
-        'encryption' => ['kmsKeyId' => 'your-kms-key-id'], // Optional
-        'tags' => ['env' => 'production'], // Optional
-    ]);
+    $store->setup();
+
+When using the AI Bundle, run ``ai:store:setup`` to create the vector bucket and index:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        store:
+            s3vectors:
+                my_store:
+                    vector_bucket_name: 'my-vector-bucket'
+                    index_name: 'my-index'
+                    configuration:
+                        region: 'us-east-1'
+                    dimensions: 1536              # default: 1536
+                    metric: cosine              # cosine (default) or euclidean
 
 Usage
 -----
@@ -86,7 +100,7 @@ Query Similar Vectors
     $results = $store->query(
         query: new VectorQuery(new Vector([0.1, 0.2, 0.3, ...])),
         options: [
-            'topK' => 5,
+            'limit' => 5,
             'filter' => ['category' => 'documentation'],
         ]
     );

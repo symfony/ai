@@ -32,7 +32,7 @@
                         "5000000"
                     ],
                     "anthropic-ratelimit-input-tokens-reset": [
-                        "2026-09-13T19:52:34Z"
+                        "2026-11-03T21:08:57Z"
                     ],
                     "anthropic-ratelimit-output-tokens-limit": [
                         "1000000"
@@ -41,7 +41,7 @@
                         "1000000"
                     ],
                     "anthropic-ratelimit-output-tokens-reset": [
-                        "2026-09-13T19:52:36Z"
+                        "2026-11-03T21:08:58Z"
                     ],
                     "anthropic-ratelimit-requests-limit": [
                         "5000"
@@ -50,7 +50,7 @@
                         "4999"
                     ],
                     "anthropic-ratelimit-requests-reset": [
-                        "2026-09-13T19:52:31Z"
+                        "2026-11-03T21:08:52Z"
                     ],
                     "anthropic-ratelimit-tokens-limit": [
                         "6000000"
@@ -59,46 +59,46 @@
                         "6000000"
                     ],
                     "anthropic-ratelimit-tokens-reset": [
-                        "2026-09-13T19:52:34Z"
-                    ],
-                    "server": [
-                        "cloudflare"
+                        "2026-11-03T21:08:57Z"
                     ],
                     "strict-transport-security": [
                         "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "traceresponse": [
+                        "00-3f447d0799b6ce1746a465a69560a595-84bb2d36f9f58c35-01"
                     ],
                     "anthropic-organization-id": [
                         "152d88d9-0d18-4cae-80c9-c425a5bf4e25"
                     ],
                     "anthropic-workspace-id": [
-                        "wrkspc_01Eo1YZvq8sNWFRAfhfjg7gS"
-                    ],
-                    "traceresponse": [
-                        "00-0025fa33fe01e9dc5c6b2c71ed33f9b6-e055ec725ce666b5-01"
+                        "wrkspc_01VtCNo1p2RhA6Wdyk9fA7Er"
                     ],
                     "vary": [
                         "Accept-Encoding"
                     ],
-                    "content-security-policy": [
-                        "default-src 'none'; frame-ancestors 'none'"
+                    "server": [
+                        "cloudflare"
                     ],
                     "x-robots-tag": [
                         "none"
+                    ],
+                    "content-security-policy": [
+                        "default-src 'none'; frame-ancestors 'none'"
                     ],
                     "content-encoding": [
                         "gzip"
                     ]
                 },
                 "body_format": "json",
-                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011Cf22FyU8xdp9qExtAodh8\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"I'll compute the 10th Fibonacci number using a short Python snippet.\"},{\"type\":\"server_tool_use\",\"id\":\"srvtoolu_018HyTZg6wYCGC3FAKqoaMWn\",\"name\":\"bash_code_execution\",\"input\":{\"command\":\"python3 -c \\\"a, b = 0, 1\\nfor _ in range(10):\\n    a, b = b, a + b\\nprint(f'The 10th Fibonacci number is: {a}')\\\"\"}},{\"type\":\"bash_code_execution_tool_result\",\"tool_use_id\":\"srvtoolu_018HyTZg6wYCGC3FAKqoaMWn\",\"content\":{\"type\":\"bash_code_execution_result\",\"stdout\":\"The 10th Fibonacci number is: 55\\n\",\"stderr\":\"\",\"return_code\":0,\"content\":[]}},{\"type\":\"text\",\"text\":\"The 10th Fibonacci number is **55**.\\n\\nThe snippet uses the classic iterative approach where we start with `a=0` and `b=1`, then iterate 10 times, swapping values so that `a` becomes `b` and `b` becomes `a+b`. After 10 iterations, `a` contains the 10th Fibonacci number.\\n\\nThe Fibonacci sequence goes: 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, **55**, ...\"}],\"container\":{\"id\":\"container_01Qjqyt5NyL9UXRwNgsKH33w\",\"expires_at\":\"2026-09-13T20:52:34.280933Z\"},\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":2404,\"cache_read_input_tokens\":2255,\"cache_creation\":{\"ephemeral_5m_input_tokens\":2404,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":249,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"server_tool_use\":{\"web_search_requests\":0,\"web_fetch_requests\":0}}}"
+                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CgggLRFLNDQCtb838UBkH\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"I'll compute the 10th Fibonacci number using a short Python snippet.\"},{\"type\":\"server_tool_use\",\"id\":\"srvtoolu_01142ixLe7LtfUiRCDipCKeo\",\"name\":\"bash_code_execution\",\"input\":{\"command\":\"python3 -c \\\"a, b = 0, 1\\nfor _ in range(10):\\n    a, b = b, a + b\\nprint(f'The 10th Fibonacci number is: {a}')\\\"\"}},{\"type\":\"bash_code_execution_tool_result\",\"tool_use_id\":\"srvtoolu_01142ixLe7LtfUiRCDipCKeo\",\"content\":{\"type\":\"bash_code_execution_result\",\"stdout\":\"The 10th Fibonacci number is: 55\\n\",\"stderr\":\"\",\"return_code\":0,\"content\":[]}},{\"type\":\"text\",\"text\":\"The **10th Fibonacci number is 55**.\\n\\nThe snippet uses the iterative approach where we start with `a=0, b=1` (the 0th and 1st Fibonacci numbers) and iterate 10 times, swapping values to get the next number in the sequence: 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55.\"}],\"container\":{\"id\":\"container_01QK8a2SVWLAgnHZDETfqTGx\",\"expires_at\":\"2026-11-03T22:08:56.265515Z\"},\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":8,\"cache_creation_input_tokens\":2404,\"cache_read_input_tokens\":2255,\"cache_creation\":{\"ephemeral_5m_input_tokens\":2404,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":223,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\",\"server_tool_use\":{\"web_search_requests\":0,\"web_fetch_requests\":0}},\"diagnostics\":null}"
             }
         },
         {
             "request": {
                 "method": "POST",
                 "url": "https://api.anthropic.com/v1/messages",
-                "signature": "b20a143385d57d073e5f6db7ac4aac16",
-                "signature_v2": "baadd68a50b5560ecd437ed010ab2ddf",
+                "signature": "a32256321587721ef5eb173684ab5027",
+                "signature_v2": "350d20cfa0da16fa5bbe3dc75724bb5b",
                 "headers": {
                     "x-api-key": [
                         "[redacted]"
@@ -110,7 +110,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"max_tokens\":1000,\"tools\":[{\"type\":\"code_execution_20250825\",\"name\":\"code_execution\"}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":\"Compute the 10th Fibonacci number using a short Python snippet.\"},{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"I\\u0027ll compute the 10th Fibonacci number using a short Python snippet.\"},{\"type\":\"server_tool_use\",\"name\":\"bash_code_execution\",\"input\":{\"command\":\"python3 -c \\u0022a, b = 0, 1\\nfor _ in range(10):\\n    a, b = b, a + b\\nprint(f\\u0027The 10th Fibonacci number is: {a}\\u0027)\\u0022\"},\"id\":\"srvtoolu_018HyTZg6wYCGC3FAKqoaMWn\"},{\"type\":\"bash_code_execution_tool_result\",\"tool_use_id\":\"srvtoolu_018HyTZg6wYCGC3FAKqoaMWn\",\"content\":{\"type\":\"bash_code_execution_result\",\"stdout\":\"The 10th Fibonacci number is: 55\\n\",\"stderr\":\"\",\"return_code\":0,\"content\":[]}},{\"type\":\"text\",\"text\":\"The 10th Fibonacci number is **55**.\\n\\nThe snippet uses the classic iterative approach where we start with `a=0` and `b=1`, then iterate 10 times, swapping values so that `a` becomes `b` and `b` becomes `a+b`. After 10 iterations, `a` contains the 10th Fibonacci number.\\n\\nThe Fibonacci sequence goes: 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, **55**, ...\"}]},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What number did your snippet print? Answer with the number only.\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+                "body": "{\"max_tokens\":1000,\"tools\":[{\"type\":\"code_execution_20250825\",\"name\":\"code_execution\"}],\"tool_choice\":{\"type\":\"auto\"},\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Compute the 10th Fibonacci number using a short Python snippet.\",\"cache_control\":{\"type\":\"ephemeral\"}}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"I\\u0027ll compute the 10th Fibonacci number using a short Python snippet.\"},{\"type\":\"server_tool_use\",\"name\":\"bash_code_execution\",\"input\":{\"command\":\"python3 -c \\u0022a, b = 0, 1\\nfor _ in range(10):\\n    a, b = b, a + b\\nprint(f\\u0027The 10th Fibonacci number is: {a}\\u0027)\\u0022\"},\"id\":\"srvtoolu_01142ixLe7LtfUiRCDipCKeo\"},{\"type\":\"bash_code_execution_tool_result\",\"tool_use_id\":\"srvtoolu_01142ixLe7LtfUiRCDipCKeo\",\"content\":{\"type\":\"bash_code_execution_result\",\"stdout\":\"The 10th Fibonacci number is: 55\\n\",\"stderr\":\"\",\"return_code\":0,\"content\":[]}},{\"type\":\"text\",\"text\":\"The **10th Fibonacci number is 55**.\\n\\nThe snippet uses the iterative approach where we start with `a=0, b=1` (the 0th and 1st Fibonacci numbers) and iterate 10 times, swapping values to get the next number in the sequence: 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55.\"}]},{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What number did your snippet print? Answer with the number only.\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"model\":\"claude-sonnet-4-5-20250929\"}"
             },
             "response": {
                 "status": 200,
@@ -125,7 +125,7 @@
                         "5000000"
                     ],
                     "anthropic-ratelimit-input-tokens-reset": [
-                        "2026-09-13T19:52:37Z"
+                        "2026-11-03T21:08:59Z"
                     ],
                     "anthropic-ratelimit-output-tokens-limit": [
                         "1000000"
@@ -134,7 +134,7 @@
                         "1000000"
                     ],
                     "anthropic-ratelimit-output-tokens-reset": [
-                        "2026-09-13T19:52:37Z"
+                        "2026-11-03T21:08:59Z"
                     ],
                     "anthropic-ratelimit-requests-limit": [
                         "5000"
@@ -143,7 +143,7 @@
                         "4999"
                     ],
                     "anthropic-ratelimit-requests-reset": [
-                        "2026-09-13T19:52:36Z"
+                        "2026-11-03T21:08:59Z"
                     ],
                     "anthropic-ratelimit-tokens-limit": [
                         "6000000"
@@ -152,38 +152,38 @@
                         "6000000"
                     ],
                     "anthropic-ratelimit-tokens-reset": [
-                        "2026-09-13T19:52:37Z"
-                    ],
-                    "server": [
-                        "cloudflare"
+                        "2026-11-03T21:08:59Z"
                     ],
                     "strict-transport-security": [
                         "max-age=31536000; includeSubDomains; preload"
+                    ],
+                    "traceresponse": [
+                        "00-32a75125c8dad9d984e03bece5b8cc80-762719b049468d97-01"
                     ],
                     "anthropic-organization-id": [
                         "152d88d9-0d18-4cae-80c9-c425a5bf4e25"
                     ],
                     "anthropic-workspace-id": [
-                        "wrkspc_01Eo1YZvq8sNWFRAfhfjg7gS"
-                    ],
-                    "traceresponse": [
-                        "00-a6a75630801cece8e8d7ebc9bf66de3c-1244068d661eafd2-01"
+                        "wrkspc_01VtCNo1p2RhA6Wdyk9fA7Er"
                     ],
                     "vary": [
                         "Accept-Encoding"
                     ],
-                    "content-security-policy": [
-                        "default-src 'none'; frame-ancestors 'none'"
+                    "server": [
+                        "cloudflare"
                     ],
                     "x-robots-tag": [
                         "none"
+                    ],
+                    "content-security-policy": [
+                        "default-src 'none'; frame-ancestors 'none'"
                     ],
                     "content-encoding": [
                         "gzip"
                     ]
                 },
                 "body_format": "json",
-                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011Cf22GQKcWxtV4QAuPFKfd\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"55\"}],\"container\":null,\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":3,\"cache_creation_input_tokens\":144,\"cache_read_input_tokens\":2404,\"cache_creation\":{\"ephemeral_5m_input_tokens\":144,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\"}}"
+                "body": "{\"model\":\"claude-sonnet-4-5-20250929\",\"id\":\"msg_011CgggLsuhpNriiE4SZ3QRT\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"55\"}],\"container\":null,\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"stop_details\":null,\"usage\":{\"input_tokens\":3,\"cache_creation_input_tokens\":118,\"cache_read_input_tokens\":2404,\"cache_creation\":{\"ephemeral_5m_input_tokens\":118,\"ephemeral_1h_input_tokens\":0},\"output_tokens\":5,\"service_tier\":\"standard\",\"inference_geo\":\"not_available\",\"speed\":\"standard\"},\"diagnostics\":null}"
             }
         }
     ]

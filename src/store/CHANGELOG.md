@@ -1,6 +1,25 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add `Document\Transformer\RegexSplitTransformer` to split documents on a regex pattern
+ * Add the `limit` option to cap the number of documents returned by `StoreInterface::query()`, and pass it from `ai:store:retrieve`
+ * [BC BREAK] Rename the `maxItems` option of `InMemory\Store::query()` to `limit`
+ * [BC BREAK] Rename the `topK` option read by `EventListener\RerankerListener` to `limit`, as well as the `topK` arguments of its constructor and of `Reranker\RerankerInterface::rerank()`
+ * Add the `overFetchFactor` argument to `CombinedStore` to fetch more documents from the sub-stores of a hybrid query than its `limit`
+ * [BC BREAK] Rename the `maxItems` argument of `Distance\DistanceCalculator::calculate()` to `limit`
+ * Add the `overFetchFactor` argument to `EventListener\RerankerListener`, registered on `PreQueryEvent` as well it fetches that many times the `limit` from the store before reranking
+ * [BC BREAK] Rename `Document\EmbeddableDocumentInterface` to `Document\DocumentInterface`
+ * Add `--option` to the `ai:store:setup` and `ai:store:drop` commands to pass runtime options to the store
+ * [BC BREAK] Remove the setup options argument of `Command\SetupStoreCommand`, use `--option` instead
+ * Add `Bridge\Doctrine\OrmStore`, keeping vectors in an `#[Embedding]` field of a Doctrine entity, embedding entities in batches or on flush, and returning entities when queried, on PostgreSQL/pgvector, SQLite/sqlite-vec and MariaDB 11.7
+ * Accept any `IndexerInterface` in `Indexer\ConfiguredSourceIndexer`, not only a `SourceIndexer`
+ * Add interactive selection of the store, indexer or retriever to the `ai:store:*` commands, proposing the closest matches for unknown names
+ * Ask for confirmation in `ai:store:drop` and `ai:store:clear` when running interactively without `--force`
+ * Add `Bridge\Doctrine\Mirror\MirrorListener` and `Bridge\Doctrine\Mirror\EntityRetriever`, mirroring entities with `#[Embedding]` on the class into any store and loading them for the hits
+
 0.14
 ----
 

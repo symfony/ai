@@ -23,12 +23,22 @@ vendor/bin/mate tools:call symfony-profiler-list --limit=1
 vendor/bin/mate resources:read symfony-profiler://profile/<token>
 ```
 
-Add `--format=json` to the `tools:*`, `resources:read`, `debug:*`, `skills:list` and
-`skills:validate` commands for machine-readable output.
+Add `--format=json` to the `tools:*`, `resources:read`, `debug:*`, `skills:install`,
+`skills:list` and `skills:validate` commands for machine-readable output.
 
 The package ships with the `symfony/ai-mate-composer-plugin`, which automatically
 refreshes Mate extension discovery after `composer install` and `composer update` once the
 project has been initialized.
+
+## Backward Compatibility
+
+Mate is a development tool, so its backward compatibility promise is narrower than the one of
+the other components. Covered are the CLI interface (commands, arguments, options), the
+definition of tools and resources (name, parameters, input schema), the user-facing
+customization (`mate/config.php`, `mate/extensions.php`, `extra.ai-mate`) and the extension
+points (`#[MateTool]`, `#[MateResource]`, `#[MateResourceTemplate]`). Not covered are the
+content of tool responses, agent instructions, skills and everything marked `@internal`.
+See the [documentation](https://symfony.com/doc/current/ai/components/mate.html#backward-compatibility).
 
 ## Installation
 
@@ -42,6 +52,7 @@ https://github.com/symfony/ai to create issues or submit pull requests.
 ## Resources
 
 - [Documentation](https://symfony.com/doc/current/ai/components/mate.html)
+- [awesome-mate](https://github.com/MatesOfMate/awesome-mate): community extensions, tools and articles
 - [Report issues](https://github.com/symfony/ai/issues) and
   [send Pull Requests](https://github.com/symfony/ai/pulls)
   in the [main Symfony AI repository](https://github.com/symfony/ai)

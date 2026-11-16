@@ -15,6 +15,8 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Deepgram\Factory;
 use Symfony\AI\Platform\Bridge\Deepgram\ModelCatalog;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -121,6 +123,35 @@ final class FactoryTest extends TestCase
         $result = $platform->invoke('aura-2-thalia-en', new Text('Hello world'));
 
         $this->assertSame('audio-bytes', $result->asBinary());
+    }
+
+    public function testCreateModelCatalogUsesScopedHttpClient()
+    {
+        $requestedUrl = '';
+        $headers = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requestedUrl, &$headers): ResponseInterface {
+            $requestedUrl = $url;
+            $headers = $options['normalized_headers'] ?? [];
+
+            return new MockResponse('{"stt": [], "tts": []}');
+        });
+
+        Factory::createModelCatalog('https://api.deepgram.com/v1', 'secret', $httpClient)->getModels();
+
+        $this->assertSame('https://api.deepgram.com/v1/models', $requestedUrl);
+        $this->assertSame(['Authorization: Token secret'], $headers['authorization'] ?? []);
+    }
+
+    public function testCreatePlatformUsesGivenModelCatalog()
+    {
+        $model = new Model('custom-model');
+
+        $catalog = $this->createStub(ModelCatalogInterface::class);
+        $catalog->method('getModel')->willReturn($model);
+
+        $platform = Factory::createPlatform(apiKey: 'secret', httpClient: new MockHttpClient(), modelCatalog: $catalog);
+
+        $this->assertSame($model, $platform->getModelCatalog()->getModel('custom-model'));
     }
 
     /**

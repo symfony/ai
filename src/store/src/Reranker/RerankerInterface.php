@@ -25,7 +25,7 @@ interface RerankerInterface
      *
      * @param list<VectorDocumentInterface> $documents
      *
-     * @return list<VectorDocumentInterface> Reranked documents with updated scores, limited to $topK
+     * @return list<VectorDocumentInterface> Reranked documents with updated scores, limited to $limit
      */
-    public function rerank(string $query, array $documents, int $topK = 5): array;
+    public function rerank(string $query, array $documents, int $limit = 5): array;
 }

@@ -108,6 +108,32 @@ final class CatalogBasedModelRouterTest extends TestCase
         $router->resolve(new Model('custom-model', []), [$provider], 'Hello');
     }
 
+    public function testThrowsWithBridgeSubclassHintForBaseModelInstance()
+    {
+        $provider = $this->createStub(ProviderInterface::class);
+        $provider->method('supports')->willReturn(false);
+
+        $router = new CatalogBasedModelRouter();
+
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage('a base "Symfony\AI\Platform\Model" instance has no model client. Pass a bridge-specific model subclass instead');
+
+        $router->resolve(new Model('custom-model', []), [$provider], 'Hello');
+    }
+
+    public function testThrowsWithoutBridgeSubclassHintForModelSubclass()
+    {
+        $provider = $this->createStub(ProviderInterface::class);
+        $provider->method('supports')->willReturn(false);
+
+        $router = new CatalogBasedModelRouter();
+
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage('No provider found for model "custom-model".');
+
+        $router->resolve(new class('custom-model', []) extends Model {}, [$provider], 'Hello');
+    }
+
     public function testThrowsWhenNoProvidersGiven()
     {
         $router = new CatalogBasedModelRouter();

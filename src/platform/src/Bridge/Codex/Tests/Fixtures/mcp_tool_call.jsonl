@@ -1,0 +1,7 @@
+{"type":"thread.started","thread_id":"00000000-0000-4000-8000-000000000001"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"I’ll read README.md with the files server’s read_file tool."}}
+{"type":"item.started","item":{"id":"item_1","type":"mcp_tool_call","server":"files","tool":"read_file","arguments":{"path":"README.md"},"result":null,"error":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_1","type":"mcp_tool_call","server":"files","tool":"read_file","arguments":{"path":"README.md"},"result":{"content":[{"type":"text","text":"# Lantern\n\nThe project codename is Lantern. It has one rule: keep answers short.\n"}],"structured_content":null},"error":null,"status":"completed"}}
+{"type":"item.completed","item":{"id":"item_2","type":"agent_message","text":"The project codename is Lantern."}}
+{"type":"turn.completed","usage":{"input_tokens":45427,"cached_input_tokens":41984,"cache_write_input_tokens":0,"output_tokens":89,"reasoning_output_tokens":0}}

@@ -12,12 +12,14 @@
 namespace Symfony\AI\Platform\Bridge\Fireworks;
 
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
 use Symfony\AI\Platform\ModelRouterInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\Provider;
 use Symfony\AI\Platform\ProviderInterface;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -37,6 +39,7 @@ final class Factory
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'fireworks',
+        ?ModelCatalogInterface $modelCatalog = null,
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
@@ -44,7 +47,7 @@ final class Factory
             $name,
             [new FireworksClient($httpClient, $apiKey)],
             [new FireworksResultConverter()],
-            new ModelCatalog($httpClient, $apiKey),
+            $modelCatalog ?? new ModelCatalog($httpClient, $apiKey),
             $contract ?? Contract::create(),
             $eventDispatcher,
         );
@@ -60,11 +63,19 @@ final class Factory
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'fireworks',
         ?ModelRouterInterface $modelRouter = null,
+        ?ModelCatalogInterface $modelCatalog = null,
     ): Platform {
         return new Platform(
-            [self::createProvider($apiKey, $httpClient, $contract, $eventDispatcher, $name)],
+            [self::createProvider($apiKey, $httpClient, $contract, $eventDispatcher, $name, $modelCatalog)],
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );
+    }
+
+    public static function createModelCatalog(
+        #[\SensitiveParameter] string $apiKey,
+        ?HttpClientInterface $httpClient = null,
+    ): ModelCatalogInterface {
+        return new ModelCatalog($httpClient ?? HttpClient::create(), $apiKey);
     }
 }

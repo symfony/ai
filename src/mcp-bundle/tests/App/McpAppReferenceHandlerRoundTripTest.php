@@ -11,9 +11,9 @@
 
 namespace Symfony\AI\McpBundle\Tests\App;
 
-use Mcp\Capability\Registry;
-use Mcp\Capability\Registry\ReferenceHandler;
 use Mcp\Server\Builder;
+use Mcp\Server\Capability\Registry;
+use Mcp\Server\Capability\Registry\ReferenceHandler;
 use Mcp\Server\Session\SessionInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;

@@ -24,6 +24,17 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
 {
     protected static function createStore(): StoreInterface
     {
-        return StoreFactory::create('test', 'test', 'symfony', 'symfony', 'http://127.0.0.1:8000', table: 'test_vectors', embeddingsDimension: 3);
+        return StoreFactory::create('test', 'test', 'symfony', 'symfony', 'http://127.0.0.1:8000', table: 'test_vectors', dimensions: 3);
+    }
+
+    protected static function getSetupOptions(): array
+    {
+        return ['forceDatabaseCreation' => true];
+    }
+
+    protected function waitForIndexing(): void
+    {
+        // HNSW writes are compacted in the background, a DELETE racing that compaction conflicts
+        sleep(2);
     }
 }

@@ -1,0 +1,62 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://openrouter.ai/api/alpha/decisions",
+                "signature": "9d2d73a6d401cd45ed9c85b05c7281a6",
+                "signature_v2": "11c57d2b6f601935b1141762a37d1a00",
+                "headers": {
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "typesafe/jev-1.13",
+                    "state": "Hi, I've been trying to connect my Stripe account for 3 days and it keeps failing. I'm losing sales. Please help ASAP.",
+                    "questions": {
+                        "department": {
+                            "type": "choice",
+                            "instructions": "Which team should handle this?",
+                            "criteria": {
+                                "billing": "Payment or subscription issues",
+                                "technical": "Bugs or integration problems",
+                                "sales": "Pricing or account questions"
+                            }
+                        },
+                        "frustration": {
+                            "type": "score",
+                            "instructions": "How frustrated does the customer appear?",
+                            "criteria": [
+                                "Calm, just stating facts",
+                                "Frustrated but civil",
+                                "Very angry, strong language"
+                            ]
+                        },
+                        "is_urgent": {
+                            "type": "noul",
+                            "instructions": "Does the message convey urgency or time-sensitivity?",
+                            "criteria": {
+                                "true": "Urgent or time-sensitive",
+                                "false": "No time pressure"
+                            }
+                        }
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"id\":\"gen-dec-1762425610-Qm3vXk8LpR2tYw9Zc4Nb\",\"model\":\"typesafe\\/jev-1.13-20260917\",\"provider\":\"TypeSafe\",\"answers\":{\"department\":{\"type\":\"choice\",\"choice\":\"technical\",\"confidence\":0.62,\"probabilities\":{\"billing\":0.31,\"technical\":0.69,\"sales\":0.0}},\"frustration\":{\"type\":\"score\",\"score\":1.0,\"confidence\":1.0,\"legend\":{\"0\":\"Calm, just stating facts\",\"1\":\"Frustrated but civil\",\"2\":\"Very angry, strong language\"},\"probabilities\":{\"0\":0.0,\"1\":1.0,\"2\":0.0}},\"is_urgent\":{\"type\":\"noul\",\"noul\":0.99}},\"usage\":{\"input_tokens\":431,\"output_tokens\":73,\"cost\":5.04e-5}}"
+            }
+        }
+    ]
+}

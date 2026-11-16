@@ -25,18 +25,26 @@ final class StoreFactory
         \PDO $connection,
         string $tableName,
         string $vectorFieldName = 'embedding',
-        Distance $distance = Distance::L2,
+        Metric $metric = Metric::L2,
         string $lang = 'english',
+        int $dimensions = 1536,
+        string $vectorType = 'vector',
+        string $indexMethod = 'hnsw',
+        ?string $indexOpclass = null,
     ): ManagedStoreInterface&StoreInterface {
-        return new Store($connection, $tableName, $vectorFieldName, $distance, $lang);
+        return new Store($connection, $tableName, $vectorFieldName, $metric, $lang, $dimensions, $vectorType, $indexMethod, $indexOpclass);
     }
 
     public static function createStoreFromDbal(
         Connection $connection,
         string $tableName,
         string $vectorFieldName = 'embedding',
-        Distance $distance = Distance::L2,
+        Metric $metric = Metric::L2,
         string $lang = 'english',
+        int $dimensions = 1536,
+        string $vectorType = 'vector',
+        string $indexMethod = 'hnsw',
+        ?string $indexOpclass = null,
     ): ManagedStoreInterface&StoreInterface {
         $pdo = $connection->getNativeConnection();
 
@@ -44,6 +52,6 @@ final class StoreFactory
             throw new InvalidArgumentException('Only DBAL connections using PDO driver are supported.');
         }
 
-        return static::createStoreFromPdo($pdo, $tableName, $vectorFieldName, $distance, $lang);
+        return static::createStoreFromPdo($pdo, $tableName, $vectorFieldName, $metric, $lang, $dimensions, $vectorType, $indexMethod, $indexOpclass);
     }
 }

@@ -25,7 +25,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
-use Symfony\AI\Platform\Test\InMemoryPlatform;
+use Symfony\AI\Platform\Test\MockPlatformFactory;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
 use Symfony\Component\Clock\MockClock;
@@ -101,7 +101,7 @@ final class StreamingAgentToolCallTest extends TestCase
         $toolbox = new Toolbox([$clock, $wikipedia]);
 
         $invocationCount = 0;
-        $platform = new InMemoryPlatform(function ($model, $input, $options) use (&$invocationCount) {
+        $platform = MockPlatformFactory::createPlatform(function ($model, $input, $options) use (&$invocationCount) {
             ++$invocationCount;
 
             return match ($invocationCount) {

@@ -1,12 +1,12 @@
-+---------- Token Usage --+-------+
-| Model                   | sonar |
-| Prompt tokens           | 15    |
-| Completion tokens       | 175   |
-| Thinking tokens         | n/a   |
-| Tool tokens             | n/a   |
-| Cached tokens           | n/a   |
-| Remaining tokens minute | n/a   |
-| Remaining tokens month  | n/a   |
-| Remaining tokens        | n/a   |
-| Total tokens            | 190   |
-+-------------------------+-------+
++---------------- Token Usage ----------------+
+| Model                   | openai/gpt-6-luna |
+| Prompt tokens           | 2211              |
+| Completion tokens       | 142               |
+| Thinking tokens         | 0                 |
+| Tool tokens             | n/a               |
+| Cached tokens           | 2208              |
+| Remaining tokens minute | n/a               |
+| Remaining tokens month  | n/a               |
+| Remaining tokens        | n/a               |
+| Total tokens            | 2353              |
++-------------------------+-------------------+

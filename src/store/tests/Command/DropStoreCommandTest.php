@@ -39,6 +39,8 @@ final class DropStoreCommandTest extends TestCase
         $forceOption = $definition->getOption('force');
         $this->assertSame('Force dropping the store even if it contains vectors', $forceOption->getDescription());
         $this->assertFalse($forceOption->acceptValue());
+
+        $this->assertTrue($definition->getOption('option')->isArray());
     }
 
     public function testCommandCannotDropWithoutStores()
@@ -68,7 +70,7 @@ final class DropStoreCommandTest extends TestCase
         $this->expectExceptionCode(0);
         $tester->execute([
             'store' => 'foo',
-        ]);
+        ], ['interactive' => false]);
     }
 
     public function testCommandCannotDropInvalidStore()
@@ -144,5 +146,45 @@ final class DropStoreCommandTest extends TestCase
         ]);
 
         $this->assertStringContainsString('The "foo" store was dropped successfully.', $tester->getDisplay());
+    }
+
+    public function testCommandPassesOptionsToTheStore()
+    {
+        $store = $this->createMock(ManagedStoreInterface::class);
+        $store->expects($this->once())->method('drop')->with(['optimize' => true]);
+
+        $command = new DropStoreCommand(new ServiceLocator([
+            'foo' => static fn (): object => $store,
+        ]));
+
+        $tester = new CommandTester($command);
+
+        $tester->execute([
+            'store' => 'foo',
+            '--force' => true,
+            '--option' => ['optimize'],
+        ]);
+
+        $this->assertStringContainsString('The "foo" store was dropped successfully.', $tester->getDisplay());
+    }
+
+    public function testCommandAsksForConfirmationWithoutForceOption()
+    {
+        $store = $this->createMock(ManagedStoreInterface::class);
+        $store->expects($this->once())->method('drop');
+
+        $command = new DropStoreCommand(new ServiceLocator([
+            'foo' => static fn (): object => $store,
+        ]));
+
+        $tester = new CommandTester($command);
+        $tester->setInputs(['yes']);
+        $tester->execute([
+            'store' => 'foo',
+        ]);
+
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString('Do you really want to drop the "foo" store?', $display);
+        $this->assertStringContainsString('The "foo" store was dropped successfully.', $display);
     }
 }

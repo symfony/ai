@@ -16,6 +16,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlainConverter;
@@ -23,7 +24,7 @@ use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\TextResult;
-use Symfony\AI\Platform\Test\InMemoryPlatform;
+use Symfony\AI\Platform\Test\MockPlatformFactory;
 use Symfony\Component\Clock\MonotonicClock;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
@@ -98,7 +99,7 @@ final class FailoverPlatformTest extends TestCase
 
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
-            new InMemoryPlatform(static fn (): string => 'foo'),
+            MockPlatformFactory::createPlatform(static fn (): string => 'foo'),
         ], self::createRateLimiterFactory(), logger: $logger);
 
         $result = $failoverPlatform->invoke('foo', 'foo');
@@ -117,10 +118,10 @@ final class FailoverPlatformTest extends TestCase
 
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
-            new InMemoryPlatform(static fn (): string => 'foo'),
+            MockPlatformFactory::createPlatform(static fn (): string => 'foo'),
         ], self::createRateLimiterFactory(), logger: $logger);
 
-        $this->assertInstanceOf(FallbackModelCatalog::class, $failoverPlatform->getModelCatalog());
+        $this->assertInstanceOf(CompositeModelCatalog::class, $failoverPlatform->getModelCatalog());
     }
 
     public function testPlatformCanPerformInvokeWhileRemovingPlatformAfterRetryPeriod()
@@ -147,7 +148,7 @@ final class FailoverPlatformTest extends TestCase
 
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
-            new InMemoryPlatform(static fn (): string => 'bar'),
+            MockPlatformFactory::createPlatform(static fn (): string => 'bar'),
         ], self::createRateLimiterFactory(), logger: $logger);
 
         $firstResult = $failoverPlatform->invoke('foo', 'foo');
@@ -182,10 +183,11 @@ final class FailoverPlatformTest extends TestCase
 
         $failoverPlatform = new FailoverPlatform([
             $failedPlatform,
-            new InMemoryPlatform(static fn (): string => 'bar'),
+            MockPlatformFactory::createPlatform(static fn (): string => 'bar'),
         ], self::createRateLimiterFactory(), logger: $logger);
 
-        $this->assertInstanceOf(FallbackModelCatalog::class, $failoverPlatform->getModelCatalog());
+        $modelCatalog = $failoverPlatform->getModelCatalog();
+        $this->assertInstanceOf(CompositeModelCatalog::class, $modelCatalog);
 
         $clock->sleep(4);
 

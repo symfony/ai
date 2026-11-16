@@ -22,6 +22,7 @@ Question                                                 Tool or resource
 =======================================================  ==================================================
 Which service handles this, is a listener registered?    ``symfony-services``
 How is one service wired?                                ``symfony-service-detail``
+Which ``.env`` file sets a variable, is it resolved?     ``symfony-dotenv-check``
 Which requests failed or were slow?                      ``symfony-profiler-list``
 What happened in one request?                            ``symfony-profiler://profile/{token}``
 What did one collector record (``db``, ``exception``)?   ``symfony-profiler://profile/{token}/{collector}``
@@ -53,6 +54,9 @@ text. Every such response is therefore wrapped in an envelope:
 
 The notice tells the agent to treat everything under ``untrusted_data`` as data and never as
 instructions. When you parse a response in a script, read the payload from that key.
+
+``symfony-dotenv-check`` returns its result without this envelope. It reports on the ``.env``
+files of the project and on the environment of the Mate process.
 
 .. _mate-multi-kernel:
 
@@ -128,6 +132,62 @@ nothing matched.
 The extension looks for a ``*DebugContainer.xml`` file in the cache directory itself, then in its
 ``dev``, ``test`` and ``prod`` subdirectories. Kernels with a custom class name are found too.
 
+Environment Variables
+~~~~~~~~~~~~~~~~~~~~~
+
+The ``symfony-dotenv-check`` tool is registered when ``symfony/dotenv`` is installed. Use it to
+find out which ``.env`` file declares a variable and whether the variable has a value. The tool
+never returns the value itself.
+
+``symfony-dotenv-check``
+    Read the files ``.env`` (or ``.env.dist`` when there is no ``.env``), ``.env.local``,
+    ``.env.<APP_ENV>`` and ``.env.<APP_ENV>.local``, in the same order as Symfony. When
+    ``APP_ENV`` is ``test``, ``.env.local`` is skipped. ``APP_ENV`` comes from the environment
+    of the Mate process, then from the ``.env`` file. The default is ``dev``.
+
+    ===========  ==========================================================================
+    Parameter    Description
+    ===========  ==========================================================================
+    ``key``      Check only this variable, even when no ``.env`` file declares it.
+    ``limit``    Maximum number of variables when listing. Default ``200``, ``0`` for all.
+    ===========  ==========================================================================
+
+    The result holds ``app_env``, the candidate files under ``files`` and the variables under
+    ``variables``, plus ``count`` and ``truncated``. Each file shows whether it ``exists``,
+    whether it was ``considered`` and whether it is ``parseable``. Each variable lists the files
+    that declare it under ``declared_in``, tells with ``resolved`` whether the Mate process has
+    a value for it, and has a ``state``:
+
+    ==============================================  =============================================
+    State                                           Meaning
+    ==============================================  =============================================
+    ``file``                                        The value comes from the last file that
+                                                    declares the variable.
+    ``ambient_override``                            A file declares the variable, but the shell
+                                                    or CI environment sets another value.
+    ``ambient_only``                                No file declares the variable. Only the
+                                                    shell or CI environment sets it.
+    ``declared_empty_in_file``                      The last file that declares the variable
+                                                    sets it to an empty value.
+    ``declared_not_resolved_in_this_process``       A file declares a value, but the Mate process
+                                                    doesn't have it.
+    ``not_set``                                     No file declares the variable and the
+                                                    environment doesn't set it.
+    ==============================================  =============================================
+
+    By default, Mate doesn't load the ``.env`` files of your project into its own process. A
+    variable that is only set in a file therefore shows ``declared_not_resolved_in_this_process``,
+    even when your application resolves it. This is the normal case and not an error.
+
+    When the Mate process has a value, the variable shows its ``length``, a masked ``preview``
+    with the first and last character (e.g. ``s***t``) and ``looks_like_placeholder`` instead of
+    the value. The last one is ``true`` for values like ``changeme`` or ``your_api_key``. These
+    fields describe the value in the Mate process, not the value in the file.
+
+.. code-block:: terminal
+
+    $ vendor/bin/mate tools:call symfony-dotenv-check --key=DATABASE_URL
+
 Profiler
 ~~~~~~~~
 
@@ -135,12 +195,16 @@ The profiler tools are registered when ``symfony/http-kernel`` is installed. The
 ``symfony/web-profiler-bundle`` to have profiles to read.
 
 ``symfony-profiler-list``
-    List profiles with summary data, most recent first.
+    List profiles with summary data, most recent first. The result starts with ``total`` (the
+    number of matching profiles) and ``truncated``, followed by the ``profiles``. When
+    ``truncated`` is true only the newest profiles are listed (at most 500). Narrow the
+    filters instead of listing everything to count or aggregate.
 
     ==============  =======================================================================
     Parameter       Description
     ==============  =======================================================================
     ``limit``       Maximum number of profiles. Default ``20``. Use ``1`` for the latest.
+                    ``0`` or more than ``500`` gives the maximum of ``500``.
     ``method``      HTTP method.
     ``url``         URL path. Partial match.
     ``ip``          Client IP address.
@@ -186,7 +250,11 @@ ships formatters for these collectors:
 ===============  ===================================================================
 Collector        Notes
 ===============  ===================================================================
+``config``       Recorded PHP/Symfony versions, environment and debug mode.
+                 Runtime details: PHP SAPI, timezone, Xdebug, APCu and OPcache.
 ``request``      Request and response data, redacted (see below).
+``router``       Redirect status, redirecting route, target host and path.
+                 Query strings, fragments and userinfo are omitted.
 ``exception``    The exception with its stack trace.
 ``logger``       Log entry counts per level.
 ``time``         Timing metrics.
@@ -195,6 +263,9 @@ Collector        Notes
                  Capped at 50 queries. Query parameters are redacted.
 ``mailer``       Symfony Mailer messages: recipients, body preview, attachments.
 ``translation``  Locales and the state of the translated messages.
+``http_client``  Outbound HttpClient calls: method, URL, status, duration, error, redirects,
+                 slowest first. Capped at 50 calls. Headers and bodies are never exposed;
+                 secret-looking URL parts are masked.
 ===============  ===================================================================
 
 A collector without a formatter is exposed with its raw data.
@@ -272,6 +343,11 @@ reads the standard Monolog line format and JSON.
     $ vendor/bin/mate tools:call monolog-search --level=ERROR --from="-1 hour"
     $ vendor/bin/mate tools:call monolog-context-search --key=order_id --value=4711
     $ vendor/bin/mate tools:call monolog-tail --limit=20 --channel=security
+
+Compressed rotations (``*.log.gz``) are read after the plain ``*.log`` files, up to 256 MB of
+decompressed text per file, and need ``ext-zlib``. ``monolog-search``, ``monolog-context-search`` and
+``monolog-list-files`` name the ones that could not be read in full under ``skipped_files``, so an
+empty result is not mistaken for an empty log. ``monolog-tail`` reads only the newest plain file.
 
 With several log directories, entries and files carry a ``kernel_context`` field. The name differs
 from the ``context`` of the Symfony extension on purpose: a log record already has a context of its

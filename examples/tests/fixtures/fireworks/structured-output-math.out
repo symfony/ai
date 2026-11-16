@@ -1,22 +1,26 @@
 Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\MathReasoning {
-  +steps: array:4 [
+  +steps: array:5 [
     0 => Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step {
-      +explanation: "Your goal is to isolate the variable **x** (get it by itself on one side). Think of the equation as a balance scale — whatever you do to one side, you must do to the other."
-      +output: "Starting equation: 8x + 7 = -23"
+      +explanation: "Our goal is to isolate x. The equation is 8x + 7 = -23. First, we undo the addition of 7 by subtracting 7 from BOTH sides of the equation. Whatever we do to one side, we must do to the other to keep it balanced."
+      +output: "8x + 7 - 7 = -23 - 7"
     }
     1 => Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step {
-      +explanation: "First, undo the `+ 7`. The inverse of adding 7 is **subtracting 7**. Subtract 7 from both sides."
-      +output: "8x + 7 − 7 = −23 − 7\n8x = −30"
+      +explanation: "Simplify both sides. On the left, +7 and -7 cancel out, leaving just 8x. On the right, -23 - 7 = -30 (subtracting 7 moves further negative)."
+      +output: "8x = -30"
     }
     2 => Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step {
-      +explanation: "Now x is being multiplied by 8. To undo that, do the inverse: **divide both sides by 8**."
-      +output: "8x / 8 = −30 / 8\nx = −30/8"
+      +explanation: "Now x is being multiplied by 8. To undo multiplication, we divide BOTH sides by 8."
+      +output: "8x / 8 = -30 / 8"
     }
     3 => Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step {
-      +explanation: "Simplify the fraction by dividing the numerator and denominator by their greatest common factor, which is 2."
-      +output: "x = −15/4"
+      +explanation: "Simplify: the 8s cancel on the left, leaving x alone. On the right, -30/8 simplifies to -15/4, which as a decimal is -3.75."
+      +output: "x = -15/4 = -3.75"
+    }
+    4 => Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\Step {
+      +explanation: "Let's check our answer by plugging x = -3.75 back into the original equation: 8(-3.75) + 7 = -30 + 7 = -23. ✓ It matches, so our solution is correct!"
+      +output: "8(-3.75) + 7 = -23 ✓"
     }
   ]
-  +finalAnswer: "x = −15/4 (or −3.75 in decimal form)"
+  +finalAnswer: "To solve 8x + 7 = -23, subtract 7 from both sides to get 8x = -30, then divide both sides by 8 to get x = -15/4 = -3.75. Always remember: whatever operation you perform on one side of the equation, you must perform on the other side too!"
   +result: -3.75
 }

@@ -1,210 +1,49 @@
-# HuggingFace Bridge
+Hugging Face Platform
+=====================
 
-The HuggingFace bridge provides integration with [Hugging Face Inference Providers](https://huggingface.co/docs/inference-providers/index),
-enabling access to thousands of pre-trained models for various AI tasks including natural language processing, computer
-vision, audio processing, and more.
-
-## HuggingFace Documentation
-
-- [Inference Providers overview](https://huggingface.co/docs/inference-providers/index)
-- [Tasks reference](https://huggingface.co/docs/inference-providers/tasks/index)
-- [Authentication / access tokens](https://huggingface.co/docs/hub/en/security-tokens)
-
-## Features
-
-- **Multi-Provider Support**: Access models through multiple inference providers (HuggingFace Inference, Cerebras, Cohere, Groq, Together, and others)
-- **Comprehensive Task Support**: Support for 40+ different AI tasks including:
-  - Chat completion and text generation
-  - Image classification, object detection, and segmentation
-  - Automatic speech recognition and audio classification
-  - Text classification, translation, summarization
-  - Feature extraction and embeddings
-  - And many more...
-- **Model Discovery**: Built-in API client to discover and query available models
-- **Flexible Input/Output**: Support for text, images, audio, and binary data
-- **Type-Safe Results**: Structured result objects for each task type
-
-## Installation
-
-Install the `symfony/ai-hugging-face-platform` package:
+Hugging Face platform bridge for Symfony AI, built on [Hugging Face Inference Providers](https://huggingface.co/docs/inference-providers/index).
 
 ```bash
 composer require symfony/ai-hugging-face-platform
 ```
 
-## Quick Start
-
-### Initialize the Platform
-
-Create a [Hugging Face access token](https://huggingface.co/settings/tokens) with the
-**Make calls to Inference Providers** permission and use it as the API key.
-
 ```php
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
-use Symfony\AI\Platform\Bridge\HuggingFace\Provider;
-
-$platform = Factory::createPlatform(
-    apiKey: 'hf_your_api_key_here',
-    provider: Provider::FEATHERLESS_AI,
-);
-```
-
-The HTTP client is optional; a default client is used when none is provided. Choose a provider that serves the model
-and task you want to use.
-
-### Chat Completion Example
-
-```php
-use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
-$messages = new MessageBag(
-    Message::ofUser('Hello, how are you doing today?')
-);
+$platform = Factory::createPlatform('hf_your_api_key_here');
 
-$result = $platform->invoke('HuggingFaceH4/zephyr-7b-beta', $messages, [
-    'task' => Task::CHAT_COMPLETION,
-]);
-
+$result = $platform->invoke('openai/gpt-oss-120b', new MessageBag(Message::ofUser('Hello!')));
 echo $result->asText();
 ```
 
-### Image Classification Example
+See the [Hugging Face documentation of Symfony AI](https://symfony.com/doc/current/ai/components/platform/huggingface.html)
+for chat completion, tool calling, the other tasks and the model catalogs.
 
-```php
-use Symfony\AI\Platform\Bridge\HuggingFace\Task;
-use Symfony\AI\Platform\Message\Content\Image;
+Hugging Face Documentation
+--------------------------
 
-$image = Image::fromFile('/path/to/image.jpg');
+ * [Inference Providers overview](https://huggingface.co/docs/inference-providers/index)
+ * [Tasks reference](https://huggingface.co/docs/inference-providers/tasks/index)
+ * [Chat completion](https://huggingface.co/docs/inference-providers/tasks/chat-completion)
+ * [OpenAI-compatible chat completions endpoint](https://huggingface.co/docs/inference-providers/index#alternative-openai-compatible-chat-completions-endpoint-chat-only)
+ * [Function calling](https://huggingface.co/docs/inference-providers/guides/function-calling)
+ * [Hub API: listing models](https://huggingface.co/docs/hub/en/api#get-apimodels)
+ * [Authentication / access tokens](https://huggingface.co/docs/hub/en/security-tokens)
 
-$result = $platform->invoke('google/vit-base-patch16-224', $image, [
-    'task' => Task::IMAGE_CLASSIFICATION,
-    'provider' => Provider::HF_INFERENCE,
-]);
+Model Discovery
+---------------
 
-$classifications = $result->asObject()->getClassifications();
-foreach ($classifications as $classification) {
-    echo $classification->getLabel() . ': ' . $classification->getScore() . PHP_EOL;
-}
-```
+The `ModelListCommand` (`ai:huggingface:model-list`) lists models of the Hugging Face Hub, filtered by
+`--provider`, `--task`, `--search` or `--warm`. The `ModelInfoCommand` (`ai:huggingface:model-info <model-name>`)
+shows the inference providers of one model. Register both in a Symfony Console application, as in
+[`examples/huggingface/_model.php`](https://github.com/symfony/ai/blob/main/examples/huggingface/_model.php).
 
-### Feature Extraction (Embeddings)
+Resources
+---------
 
-```php
-$result = $platform->invoke('sentence-transformers/all-MiniLM-L6-v2', 'Hello world', [
-    'task' => Task::FEATURE_EXTRACTION,
-    'provider' => Provider::HF_INFERENCE,
-]);
-
-$vectors = $result->asVectors();
-```
-
-## Providers
-
-The bridge supports multiple inference providers. For a complete list of available providers and their constants, see
-the [`Provider` interface](./Provider.php).
-
-Specify a provider when creating the platform:
-
-```php
-use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
-use Symfony\AI\Platform\Bridge\HuggingFace\Provider;
-
-$platform = Factory::createPlatform(
-    apiKey: 'your_api_key',
-    provider: Provider::GROQ,
-);
-```
-
-## Supported Tasks
-
-The bridge supports 40+ AI tasks across multiple categories including:
-
-- **Natural Language Processing**: Chat completion, text generation, classification, translation, summarization, embeddings, and more
-- **Computer Vision**: Image classification, object detection, segmentation, depth estimation, and more
-- **Audio**: Speech recognition, audio classification, text-to-speech, and more
-- **Multimodal**: Visual question answering, document understanding, and more
-
-For the complete list of supported tasks and their constants, see the [`Task` interface](./Task.php).
-
-## Model Discovery
-
-The bridge includes commands to discover available models without using inference credits. They help to research and use
-models, and can be registered in a Symfony Console application.
-
-### Command-Line Interface
-
-The HuggingFace bridge provides two console commands for model discovery:
-
-#### List Models
-
-List available models with optional filtering:
-
-```bash
-ai:huggingface:model-list [options]
-```
-
-Options:
-- `--provider, -p`: Filter by inference provider (e.g., `hf-inference`)
-- `--task, -t`: Filter by task type (e.g., `text-generation`)
-- `--search, -s`: Search term to filter models
-- `--warm, -w`: Only list models with warm inference status (served by an inference provider)
-
-Examples:
-```bash
-# List all text generation models
-ai:huggingface:model-list --task=text-generation
-
-# List warm models for a specific provider
-ai:huggingface:model-list --provider=hf-inference --warm
-
-# Search for specific models
-ai:huggingface:model-list --search=llama
-```
-
-#### Get Model Information
-
-Retrieve detailed information about a specific model:
-
-```bash
-ai:huggingface:model-info <model-name>
-```
-
-Examples:
-```bash
-# Get information about a specific model
-ai:huggingface:model-info meta-llama/Llama-2-7b-chat
-ai:huggingface:model-info gpt2
-```
-
-Output includes:
-- Model ID, downloads, and community likes
-- Task type (pipeline tag)
-- Whether the model has warm inference status (served by an inference provider); an absent status does not indicate a cold model
-- Inference provider mappings and availability
-
-## Options and Configuration
-
-When invoking the platform, you can pass task-specific options:
-
-```php
-$result = $platform->invoke('model/id', $input, [
-    'task' => Task::TEXT_GENERATION,
-    'temperature' => 0.7,
-    'top_p' => 0.9,
-    'top_k' => 50,
-    'max_new_tokens' => 256,
-    'repetition_penalty' => 1.2,
-    // ... other provider-specific parameters
-]);
-```
-
-You can also override the provider per request:
-
-```php
-$result = $platform->invoke('model/id', $input, [
-    'task' => Task::CHAT_COMPLETION,
-    'provider' => Provider::GROQ,  // Override default provider
-]);
-```
+ * [Contributing](https://symfony.com/doc/current/contributing/index.html)
+ * [Report issues](https://github.com/symfony/ai/issues) and
+   [send Pull Requests](https://github.com/symfony/ai/pulls)
+   in the [main Symfony AI repository](https://github.com/symfony/ai)

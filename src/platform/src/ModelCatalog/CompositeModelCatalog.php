@@ -16,11 +16,7 @@ use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Model;
 
 /**
- * Merges multiple model catalogs into a single catalog.
- *
- * Iterates through all registered catalogs and returns the first match.
- * This is used by Platform to provide a unified view of all models
- * available across multiple providers.
+ * Merges several model catalogs into one, the first catalog knowing a model wins.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */

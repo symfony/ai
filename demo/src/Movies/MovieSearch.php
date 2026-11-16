@@ -11,68 +11,43 @@
 
 namespace App\Movies;
 
-use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+use Symfony\AI\Store\Bridge\Doctrine\EntityVectorDocument;
+use Symfony\AI\Store\RetrieverInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Plain in-memory search over the movie collection, exposed to the agent as a tool.
- *
- * No vector store is involved: the agent calls this tool with a free-text query and gets the matching
- * movies back - including their "slug", which it then reuses to reference movies in its structured answer.
+ * Searches the movies for the result grid of the MCP app, the agent uses the similarity search tool.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-#[AsTool(
-    name: 'movie_search',
-    description: 'Search the movie collection by title, director or cast member. Returns the matching movies, each with a "slug" you must reuse to reference a movie in your answer. Pass an empty query to list the whole collection.',
-)]
 final class MovieSearch
 {
     public function __construct(
         private readonly MovieRepository $movies,
+        #[Autowire(service: 'ai.retriever.movies')]
+        private readonly RetrieverInterface $retriever,
     ) {
     }
 
     /**
-     * @param string $query Search term matched against title, director and cast; pass an empty string to list all movies
+     * @param string $query What to look for, e.g. "space exploration" or "Keanu Reeves"; pass an empty string to list all movies
+     * @param int    $limit The maximum number of movies to return
      *
-     * @return list<Movie> the matching movies (serialized to the model via {@see Movie::jsonSerialize()})
+     * @return list<Movie> the matching movies, best match first
      */
-    public function __invoke(string $query = ''): array
+    public function __invoke(string $query = '', int $limit = 5): array
     {
-        $needle = mb_strtolower(trim($query));
-
-        $results = [];
-        foreach ($this->movies->findAll() as $movie) {
-            if ('' !== $needle && !$this->matches($movie, $needle)) {
-                continue;
-            }
-
-            $results[] = $movie;
+        if ('' === trim($query)) {
+            return $this->movies->findAll();
         }
 
-        return $results;
-    }
-
-    private function matches(Movie $movie, string $needle): bool
-    {
-        if (str_contains(mb_strtolower($movie->title), $needle)) {
-            return true;
-        }
-
-        if (str_contains(mb_strtolower($movie->director ?? ''), $needle)) {
-            return true;
-        }
-
-        foreach ($movie->cast as $member) {
-            if (str_contains(mb_strtolower($member['name']), $needle)) {
-                return true;
-            }
-
-            if (str_contains(mb_strtolower($member['role']), $needle)) {
-                return true;
+        $movies = [];
+        foreach ($this->retriever->retrieve($query, ['limit' => max(1, $limit)]) as $document) {
+            if ($document instanceof EntityVectorDocument && $document->getEntity() instanceof Movie) {
+                $movies[] = $document->getEntity();
             }
         }
 
-        return false;
+        return $movies;
     }
 }

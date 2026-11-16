@@ -124,7 +124,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $searcher = new Searcher();
 
-        $results = $searcher->search($query->getVector()->getData(), $options['k'] ?? 10, true, true);
+        $results = $searcher->search($query->getVector()->getData(), $options['limit'] ?? 10, true, true);
 
         foreach ($results as $result) {
             yield $this->convertToVectorDocument($result);

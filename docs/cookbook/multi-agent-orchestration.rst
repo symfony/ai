@@ -17,23 +17,35 @@ Prerequisites
 
 * Symfony AI Platform component
 * Symfony AI Agent component
+* An OpenAI API key
 
 Step 1: Install Packages
 ------------------------
 
-Install the Platform and Agent components via Composer::
+Install the Platform and Agent components and the OpenAI bridge via Composer::
 
-    composer require symfony/ai-platform symfony/ai-agent
+    composer require symfony/ai-platform symfony/ai-agent symfony/ai-open-ai-platform
 
 Step 2: Create Specialist Agents
 --------------------------------
 
 Each specialist agent is a regular :class:`Symfony\\AI\\Agent\\Agent` with a
 :class:`Symfony\\AI\\Agent\\InputProcessor\\SystemPromptInputProcessor` that defines its area of
-expertise. Give each agent a descriptive ``name`` so the orchestrator can identify it::
+expertise. Give each agent a descriptive ``name`` so the orchestrator can identify it. The
+orchestrator picks an agent through structured output, so register the
+:class:`Symfony\\AI\\Platform\\StructuredOutput\\PlatformSubscriber` on the platform's event
+dispatcher::
 
     use Symfony\AI\Agent\Agent;
     use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
+    use Symfony\AI\Platform\Bridge\OpenAi\Factory;
+    use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
+    use Symfony\Component\EventDispatcher\EventDispatcher;
+
+    $dispatcher = new EventDispatcher();
+    $dispatcher->addSubscriber(new PlatformSubscriber());
+
+    $platform = Factory::createPlatform($apiKey, eventDispatcher: $dispatcher);
 
     $technical = new Agent(
         $platform,

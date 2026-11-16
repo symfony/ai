@@ -12,6 +12,7 @@
 namespace Symfony\AI\Agent\Tests\Toolbox;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolError;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolWithBackedEnums;
@@ -84,6 +85,17 @@ final class FaultTolerantToolboxTest extends TestCase
 
         $this->assertSame($expected, $actual->getResult());
         $this->assertSame($toolCall, $actual->getToolCall());
+    }
+
+    public function testTheModelGetsTheMessageOfAToolErrorException()
+    {
+        $toolbox = new FaultTolerantToolbox(new Toolbox([new ToolError()], new ReflectionToolFactory()));
+
+        $toolCall = new ToolCall('call_1234', 'tool_error', ['id' => '42']);
+        $result = $toolbox->execute($toolCall);
+
+        $this->assertSame('There is no order "42".', $result->getResult());
+        $this->assertSame($toolCall, $result->getToolCall());
     }
 
     public function testAbsentTool()

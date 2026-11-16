@@ -30,7 +30,7 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
             'test_database',
             'test_collection',
             'test_index',
-            embeddingsDimension: 3,
+            dimensions: 3,
         );
     }
 

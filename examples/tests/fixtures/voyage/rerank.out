@@ -1,0 +1,16 @@
+Index: 0, Score: 0.9893
+Index: 2, Score: 0.8734
+Index: 3, Score: 0.1101
+Index: 1, Score: 0.0246
++--------- Token Usage ---+-----+
+| Model                   | n/a |
+| Prompt tokens           | n/a |
+| Completion tokens       | n/a |
+| Thinking tokens         | n/a |
+| Tool tokens             | n/a |
+| Cached tokens           | n/a |
+| Remaining tokens minute | n/a |
+| Remaining tokens month  | n/a |
+| Remaining tokens        | n/a |
+| Total tokens            | 41  |
++-------------------------+-----+

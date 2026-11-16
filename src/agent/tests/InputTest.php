@@ -62,7 +62,7 @@ final class InputTest extends TestCase
     public function testGetMessageBag()
     {
         $messageBag = new MessageBag();
-        $messageBag->add(Message::ofUser('Hello'));
+        $messageBag = $messageBag->with(Message::ofUser('Hello'));
 
         $input = new Input('model', $messageBag);
 
@@ -78,7 +78,7 @@ final class InputTest extends TestCase
         $input = new Input('model', $originalMessageBag);
 
         $newMessageBag = new MessageBag();
-        $newMessageBag->add(Message::ofUser('New message'));
+        $newMessageBag = $newMessageBag->with(Message::ofUser('New message'));
 
         $input->setMessageBag($newMessageBag);
 

@@ -92,7 +92,7 @@ Basic Configuration
         apiKey: 'your-anon-key',
         table: 'documents',
         vectorFieldName: 'embedding',
-        vectorDimension: 768,               // depending on your embedding model
+        dimensions: 768,                    // depending on your embedding model
         functionName: 'match_documents',
     );
 
@@ -110,7 +110,7 @@ Bundle Configuration
                     api_key: '%env(SUPABASE_API_KEY)%'
                     table: 'documents'
                     vector_field: 'embedding'
-                    vector_dimension: 768
+                    dimensions: 768
                     function_name: 'match_documents'
 
 Environment Variables
@@ -153,7 +153,7 @@ Querying Documents
     use Symfony\AI\Store\Query\VectorQuery;
 
     $results = $store->query(new VectorQuery($queryVector), [
-        'max_items' => 10,
+        'limit' => 10,
         'min_score' => 0.7
     ]);
 

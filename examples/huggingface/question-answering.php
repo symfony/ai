@@ -10,7 +10,6 @@
  */
 
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
-use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -21,8 +20,6 @@ $input = [
     'context' => 'Paris is the capital and most populous city of France, with an estimated population of 2,175,601 residents as of 2018, in an area of more than 105 square kilometres.',
 ];
 
-$result = $platform->invoke('deepset/roberta-base-squad2', $input, [
-    'task' => Task::QUESTION_ANSWERING,
-]);
+$result = $platform->invoke('deepset/roberta-base-squad2', $input);
 
 dump($result->asObject());

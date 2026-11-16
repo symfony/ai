@@ -15,10 +15,13 @@ use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Sqlite\Store;
+use Symfony\AI\Store\Bridge\Sqlite\Tests\Fixtures\RejectingPdoStatement;
+use Symfony\AI\Store\Distance\DistanceCalculator;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
@@ -227,7 +230,7 @@ final class StoreTest extends TestCase
         $this->assertSame('doc-1', $results[0]->getId());
     }
 
-    public function testQueryVectorWithMaxItems()
+    public function testQueryVectorWithLimit()
     {
         $store = $this->createStore();
         $store->setup();
@@ -238,7 +241,7 @@ final class StoreTest extends TestCase
             new VectorDocument('doc-3', new Vector([0.0, 0.0, 1.0]), new Metadata(['name' => 'third'])),
         ]);
 
-        $results = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])), ['maxItems' => 2]));
+        $results = iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])), ['limit' => 2]));
 
         $this->assertCount(2, $results);
     }
@@ -327,6 +330,53 @@ final class StoreTest extends TestCase
         $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), $metadata));
 
         $results = iterator_to_array($store->query(new TextQuery('nonexistent')));
+
+        $this->assertCount(0, $results);
+    }
+
+    public function testQueryTextEscapesDoubleQuotesInTerms()
+    {
+        $store = $this->createStore();
+        $store->setup();
+
+        $metadata = new Metadata(['name' => 'quoted']);
+        $metadata->setText('The file src/Quote"d.php is edited');
+
+        $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), $metadata));
+
+        $results = iterator_to_array($store->query(new TextQuery('src/Quote"d.php')));
+
+        $this->assertCount(1, $results);
+        $this->assertSame('doc-1', $results[0]->getId());
+    }
+
+    public function testQueryTextIgnoresNulBytesInTerms()
+    {
+        $store = $this->createStore();
+        $store->setup();
+
+        $metadata = new Metadata(['name' => 'test']);
+        $metadata->setText('The quick brown fox');
+
+        $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), $metadata));
+
+        $results = iterator_to_array($store->query(new TextQuery("fo\0x")));
+
+        $this->assertCount(1, $results);
+        $this->assertSame('doc-1', $results[0]->getId());
+    }
+
+    public function testQueryTextKeepsQuotedOperatorsInsideThePhrase()
+    {
+        $store = $this->createStore();
+        $store->setup();
+
+        $metadata = new Metadata(['name' => 'secret']);
+        $metadata->setText('The secret plan');
+
+        $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), $metadata));
+
+        $results = iterator_to_array($store->query(new TextQuery('alpha" OR "secret')));
 
         $this->assertCount(0, $results);
     }
@@ -460,7 +510,7 @@ final class StoreTest extends TestCase
         $this->assertSame('doc-both', $results[0]->getId());
     }
 
-    public function testQueryHybridRespectsMaxItems()
+    public function testQueryHybridRespectsLimit()
     {
         $store = $this->createStore();
         $store->setup();
@@ -477,7 +527,7 @@ final class StoreTest extends TestCase
 
         $results = iterator_to_array($store->query(
             new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.5),
-            ['maxItems' => 3],
+            ['limit' => 3],
         ));
 
         $this->assertCount(3, $results);
@@ -573,7 +623,7 @@ final class StoreTest extends TestCase
 
         $results = iterator_to_array($store->query(
             new HybridQuery(new Vector([1.0, 0.0, 0.0]), ['keyword'], 0.5),
-            ['maxItems' => 3, 'rrfCandidatePoolSize' => 5],
+            ['limit' => 3, 'rrfCandidatePoolSize' => 5],
         ));
 
         $this->assertCount(3, $results);
@@ -680,6 +730,46 @@ final class StoreTest extends TestCase
         // No FTS entry since no text metadata
         $result = $pdo->query('SELECT COUNT(*) FROM test_vectors_fts');
         $this->assertSame(0, (int) $result->fetchColumn());
+    }
+
+    public function testConnectsToTheDsnOnTheFirstQuery()
+    {
+        $store = new Store('missing-driver:dbname=test', 'test_vectors');
+
+        $this->expectException(\PDOException::class);
+        $this->expectExceptionMessage('could not find driver');
+
+        $store->count();
+    }
+
+    public function testReusesTheConnectionOpenedFromTheDsn()
+    {
+        $store = new Store('sqlite::memory:', 'test_vectors');
+        $store->setup();
+        $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3])));
+
+        $this->assertSame(1, $store->count());
+    }
+
+    public function testRejectsConnectionOptionsWithAPdoInstance()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The connection options can only be used with a DSN, not with a PDO instance.');
+
+        new Store(new \PDO('sqlite::memory:'), 'test_vectors', new DistanceCalculator(), ['db_connection_options' => []]);
+    }
+
+    public function testPassesTheConnectionOptionsToPdo()
+    {
+        $store = new Store('sqlite::memory:', 'test_vectors', new DistanceCalculator(), [
+            'db_connection_options' => [\PDO::ATTR_STATEMENT_CLASS => [RejectingPdoStatement::class]],
+        ]);
+        $store->setup();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Statement created with the configured class.');
+
+        $store->count();
     }
 
     /**

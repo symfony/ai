@@ -32,10 +32,10 @@ final class StaticMemoryProvider implements MemoryProviderInterface
             return [];
         }
 
-        $content = '## Static Memory'.\PHP_EOL;
+        $content = '## Static Memory'."\n";
 
         foreach ($this->memory as $memory) {
-            $content .= \PHP_EOL.'- '.$memory;
+            $content .= "\n".'- '.$memory;
         }
 
         return [new Memory($content)];

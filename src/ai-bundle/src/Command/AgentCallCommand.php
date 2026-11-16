@@ -132,7 +132,6 @@ final class AgentCallCommand extends Command
         $io->newLine();
 
         $messages = new MessageBag();
-        $systemPromptDisplayed = false;
 
         while (true) {
             $userInput = $io->ask('You');
@@ -146,16 +145,9 @@ final class AgentCallCommand extends Command
                 break;
             }
 
-            $messages->add(Message::ofUser($userInput));
-
             try {
-                $result = $agent->call($messages)->getResult();
-
-                if (!$systemPromptDisplayed && null !== ($systemMessage = $messages->getSystemMessage())) {
-                    $io->section('System Prompt');
-                    $io->block($systemMessage->getContent(), null, 'fg=gray', ' ', true);
-                    $systemPromptDisplayed = true;
-                }
+                $execution = $agent->call($messages->with(Message::ofUser($userInput)));
+                $result = $execution->getResult();
 
                 if ($result instanceof TextResult) {
                     $io->write('<fg=yellow>Assistant</>:');
@@ -163,7 +155,7 @@ final class AgentCallCommand extends Command
                     $io->writeln($result->getContent());
                     $io->newLine();
 
-                    $messages->add(Message::ofAssistant($result));
+                    $messages = $execution->getMessages();
                 } else {
                     $io->error('Unexpected response type from agent');
                 }

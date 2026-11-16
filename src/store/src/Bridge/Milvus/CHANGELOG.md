@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * [BC BREAK] Rename the `metricType` argument of `Store` and `StoreFactory` to `metric`
+
 0.14
 ----
 

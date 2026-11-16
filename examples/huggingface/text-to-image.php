@@ -10,14 +10,11 @@
  */
 
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
-use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
 
-$result = $platform->invoke('stabilityai/stable-diffusion-3-medium-diffusers', 'Astronaut riding a horse', [
-    'task' => Task::TEXT_TO_IMAGE,
-]);
+$result = $platform->invoke('stabilityai/stable-diffusion-3-medium-diffusers', 'Astronaut riding a horse');
 
 echo $result->asDataUri().\PHP_EOL;

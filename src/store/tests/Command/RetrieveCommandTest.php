@@ -82,7 +82,7 @@ final class RetrieveCommandTest extends TestCase
         $retriever = $this->createMock(RetrieverInterface::class);
         $retriever->expects($this->once())
             ->method('retrieve')
-            ->with('test query', ['maxItems' => 10])
+            ->with('test query', ['limit' => 10])
             ->willReturn([$document]);
 
         $command = new RetrieveCommand(new ServiceLocator([
@@ -122,7 +122,7 @@ final class RetrieveCommandTest extends TestCase
         $retriever = $this->createMock(RetrieverInterface::class);
         $retriever->expects($this->once())
             ->method('retrieve')
-            ->with('my query', ['maxItems' => 5])
+            ->with('my query', ['limit' => 5])
             ->willReturn($documents);
 
         $command = new RetrieveCommand(new ServiceLocator([
@@ -148,7 +148,7 @@ final class RetrieveCommandTest extends TestCase
         $retriever = $this->createMock(RetrieverInterface::class);
         $retriever->expects($this->once())
             ->method('retrieve')
-            ->with('unknown query', ['maxItems' => 10])
+            ->with('unknown query', ['limit' => 10])
             ->willReturn([]);
 
         $command = new RetrieveCommand(new ServiceLocator([
@@ -295,7 +295,7 @@ final class RetrieveCommandTest extends TestCase
         $retriever = $this->createMock(RetrieverInterface::class);
         $retriever->expects($this->once())
             ->method('retrieve')
-            ->with('test', ['maxItems' => 3])
+            ->with('test', ['limit' => 3])
             ->willReturn($documents);
 
         $command = new RetrieveCommand(new ServiceLocator([
@@ -315,5 +315,59 @@ final class RetrieveCommandTest extends TestCase
         $this->assertStringContainsString('Result #3', $display);
         $this->assertStringNotContainsString('Result #4', $display);
         $this->assertStringContainsString('Found 3 result(s)', $display);
+    }
+
+    public function testCommandAsksForMissingRetrieverAndQuery()
+    {
+        $retriever = $this->createMock(RetrieverInterface::class);
+        $retriever->expects($this->once())
+            ->method('retrieve')
+            ->with('test query', ['limit' => 10])
+            ->willReturn([]);
+
+        $command = new RetrieveCommand(new ServiceLocator([
+            'blog' => static fn (): RetrieverInterface => $retriever,
+            'docs' => fn (): RetrieverInterface => $this->createMock(RetrieverInterface::class),
+        ]));
+
+        $tester = new CommandTester($command);
+        $tester->setInputs(['blog', 'test query']);
+        $tester->execute([]);
+
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString('Which retriever do you want to use?', $display);
+        $this->assertStringContainsString('What do you want to search for?', $display);
+        $this->assertStringContainsString('Retrieving documents using "blog" retriever', $display);
+    }
+
+    public function testCommandFailsWithoutQueryInNonInteractiveMode()
+    {
+        $command = new RetrieveCommand(new ServiceLocator([
+            'blog' => fn (): RetrieverInterface => $this->createMock(RetrieverInterface::class),
+        ]));
+
+        $tester = new CommandTester($command);
+        $tester->execute([
+            'retriever' => 'blog',
+        ], ['interactive' => false]);
+
+        $this->assertSame(1, $tester->getStatusCode());
+        $this->assertStringContainsString('A search query is required.', $tester->getDisplay());
+    }
+
+    public function testCommandSuggestsAlternativesForUnknownRetriever()
+    {
+        $command = new RetrieveCommand(new ServiceLocator([
+            'blog' => fn (): RetrieverInterface => $this->createMock(RetrieverInterface::class),
+        ]));
+
+        $tester = new CommandTester($command);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The "blgo" retriever does not exist, did you mean "blog"?');
+        $tester->execute([
+            'retriever' => 'blgo',
+            'query' => 'test query',
+        ], ['interactive' => false]);
     }
 }

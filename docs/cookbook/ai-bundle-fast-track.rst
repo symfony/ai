@@ -7,8 +7,8 @@
 AI Bundle Fast Track
 ====================
 
-The :doc:`AI Bundle </bundles/ai-bundle>` is the Symfony integration for the Platform, Agent,
-Store, and Chat components. Instead of wiring services by hand, you describe platforms, agents,
+The :doc:`AI Bundle </bundles/ai-bundle>` is the Symfony integration for the Platform, Agent
+and Store components. Instead of wiring services by hand, you describe platforms, agents,
 tools, and stores in ``config/packages/ai.yaml`` and the bundle registers everything in the
 container for you. This guide is a fast track from an empty configuration to an agent that
 answers questions over your own documents. Each step links to a dedicated cookbook article when
@@ -66,7 +66,8 @@ Step 3: Configure an Agent
 --------------------------
 
 An *agent* combines a platform, a model, and optionally tools and a system prompt. The simplest
-agent only needs a model — it uses the first configured platform by default:
+agent only needs a model — when exactly one platform is configured, it is used by default;
+otherwise set the agent's ``platform`` option:
 
 .. code-block:: yaml
 
@@ -145,7 +146,7 @@ The system prompt shapes how the agent behaves. For simple cases pass a string:
                 prompt: 'You are a concise assistant for a Symfony application.'
 
 Use the array form for more control — for example, to append the available tool definitions to
-the prompt, or to load a long prompt from a file:
+the prompt (this requires ``tools``, see Step 5), or to load a long prompt from a file:
 
 .. code-block:: yaml
 
@@ -156,6 +157,7 @@ the prompt, or to load a long prompt from a file:
                 prompt:
                     text: 'You are a concise assistant for a Symfony application.'
                     include_tools: true
+                tools: true
             reviewer:
                 model: 'gpt-4o-mini'
                 prompt:
@@ -241,7 +243,7 @@ infrastructure and run the indexer from the console:
 
 .. code-block:: terminal
 
-    $ php bin/console ai:store:setup ai.store.chromadb.knowledge_base
+    $ php bin/console ai:store:setup knowledge_base
     $ php bin/console ai:store:index docs --source=/path/to/document.txt
 
 An indexer without a ``loader`` becomes a ``DocumentIndexer`` that you feed documents directly in
@@ -323,7 +325,7 @@ A complete fast-track configuration looks like this:
                     - 'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'
 
 From here you can grow in any direction: add more platforms and agents, route between them with
-multi-agent orchestration, persist conversations with message stores and chats, or expose your
+multi-agent orchestration, persist conversations with message stores, or expose your
 tools over MCP.
 
 Learn More

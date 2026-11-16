@@ -30,7 +30,7 @@ final class Reranker implements RerankerInterface
     ) {
     }
 
-    public function rerank(string $query, array $documents, int $topK = 5): array
+    public function rerank(string $query, array $documents, int $limit = 5): array
     {
         if ([] === $documents) {
             return [];
@@ -49,14 +49,14 @@ final class Reranker implements RerankerInterface
             ->asReranking();
 
         usort($entries, static fn ($a, $b): int => $b->getScore() <=> $a->getScore());
-        $entries = \array_slice($entries, 0, $topK);
+        $entries = \array_slice($entries, 0, $limit);
 
         $reranked = [];
         foreach ($entries as $entry) {
             $reranked[] = $documents[$entry->getIndex()]->withScore($entry->getScore());
         }
 
-        $this->logger->debug('Reranking completed, returning {topK} documents', ['topK' => \count($reranked)]);
+        $this->logger->debug('Reranking completed, returning {count} documents', ['count' => \count($reranked)]);
 
         return $reranked;
     }

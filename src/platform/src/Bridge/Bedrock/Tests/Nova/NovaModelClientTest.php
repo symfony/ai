@@ -15,6 +15,7 @@ use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
 use AsyncAws\BedrockRuntime\Result\InvokeModelResponse;
 use AsyncAws\Core\Configuration;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
@@ -186,5 +187,36 @@ final class NovaModelClientTest extends TestCase
 
         $response = $this->modelClient->request($this->model, ['message' => 'test'], $options);
         $this->assertInstanceOf(RawBedrockResult::class, $response);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    #[DataProvider('provideMaxTokensOptions')]
+    public function testTranslatesCanonicalMaxOutputTokens(array $options, int $expectedMaxTokens)
+    {
+        $this->bedrockClient->expects($this->once())
+            ->method('invokeModel')
+            ->with($this->callback(function ($arg) use ($expectedMaxTokens) {
+                $body = json_decode($arg->getBody(), true);
+                $this->assertSame(['maxTokens' => $expectedMaxTokens], $body['inferenceConfig']);
+                $this->assertArrayNotHasKey('max_output_tokens', $body);
+
+                return true;
+            }))
+            ->willReturn($this->createMock(InvokeModelResponse::class));
+
+        $this->modelClient = new NovaModelClient($this->bedrockClient);
+
+        $this->modelClient->request($this->model, ['message' => 'test'], $options);
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, int}>
+     */
+    public static function provideMaxTokensOptions(): iterable
+    {
+        yield 'canonical only' => [['max_output_tokens' => 500], 500];
+        yield 'explicit max_tokens wins' => [['max_tokens' => 2000, 'max_output_tokens' => 500], 2000];
     }
 }

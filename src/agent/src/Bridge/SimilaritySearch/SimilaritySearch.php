@@ -12,50 +12,36 @@
 namespace Symfony\AI\Agent\Bridge\SimilaritySearch;
 
 use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
-use Symfony\AI\Store\Document\VectorDocumentInterface;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
+use Symfony\AI\Agent\Toolbox\Source\HasSourcesTrait;
 use Symfony\AI\Store\RetrieverInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 #[AsTool('similarity_search', description: 'Searches for documents similar to a query or sentence.')]
-final class SimilaritySearch
+final class SimilaritySearch implements HasSourcesInterface
 {
-    /**
-     * @var VectorDocumentInterface[]
-     */
-    private array $usedDocuments = [];
+    use HasSourcesTrait;
 
     public function __construct(
         private readonly RetrieverInterface $retriever,
-        private readonly string $promptTemplate = 'Found documents with the following information:',
     ) {
     }
 
     /**
      * @param string $searchTerm string used for similarity search
      */
-    public function __invoke(string $searchTerm): string
+    public function __invoke(string $searchTerm): SimilaritySearchResult
     {
-        $this->usedDocuments = iterator_to_array($this->retriever->retrieve($searchTerm));
+        // taken before retrieving, since a suspending retriever lets a parallel call replace the collection
+        $sources = $this->getSourceCollection();
+        $documents = iterator_to_array($this->retriever->retrieve($searchTerm), false);
 
-        if ([] === $this->usedDocuments) {
-            return 'No results found';
+        foreach ($documents as $document) {
+            $sources->add(new DocumentSource($document));
         }
 
-        $result = $this->promptTemplate.\PHP_EOL;
-        foreach ($this->usedDocuments as $document) {
-            $result .= json_encode($document->getMetadata());
-        }
-
-        return $result;
-    }
-
-    /**
-     * @return VectorDocumentInterface[]
-     */
-    public function getUsedDocuments(): array
-    {
-        return $this->usedDocuments;
+        return new SimilaritySearchResult($documents);
     }
 }

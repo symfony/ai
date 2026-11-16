@@ -14,12 +14,15 @@ use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerResourceTemplate;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
+use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ConfigCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\DoctrineCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ExceptionCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\HttpClientCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\LoggerCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\MailerCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\MemoryCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\RequestCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\RouterCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\TimeCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\TranslationCollectorFormatter;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
@@ -27,6 +30,7 @@ use Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider;
 use Symfony\AI\Mate\Bridge\Symfony\Service\ServiceArgumentResolver;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\Dotenv\Dotenv;
+use Symfony\Component\HttpClient\DataCollector\HttpClientDataCollector;
 use Symfony\Component\HttpKernel\Profiler\Profile;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -71,7 +75,13 @@ return static function (ContainerConfigurator $configurator) {
             ]);
 
         // Built-in collector formatters
+        $services->set(ConfigCollectorFormatter::class)
+            ->tag('ai_mate.profiler_collector_formatter');
+
         $services->set(RequestCollectorFormatter::class)
+            ->tag('ai_mate.profiler_collector_formatter');
+
+        $services->set(RouterCollectorFormatter::class)
             ->tag('ai_mate.profiler_collector_formatter');
 
         $services->set(ExceptionCollectorFormatter::class)
@@ -94,6 +104,11 @@ return static function (ContainerConfigurator $configurator) {
 
         $services->set(MemoryCollectorFormatter::class)
             ->tag('ai_mate.profiler_collector_formatter');
+
+        if (class_exists(HttpClientDataCollector::class)) {
+            $services->set(HttpClientCollectorFormatter::class)
+                ->tag('ai_mate.profiler_collector_formatter');
+        }
 
         // Capabilities
         $services->set(ProfilerTool::class)

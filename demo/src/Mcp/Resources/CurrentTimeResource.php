@@ -11,7 +11,7 @@
 
 namespace App\Mcp\Resources;
 
-use Mcp\Capability\Attribute\McpResource;
+use Mcp\Server\Capability\Attribute\McpResource;
 
 class CurrentTimeResource
 {

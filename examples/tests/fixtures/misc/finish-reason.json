@@ -171,8 +171,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.anthropic.com/v1/messages",
-                "signature": "93a7db3843d622e326bce9478d1d0ae6",
-                "signature_v2": "f03dfe6871b84c63cd848cfd8b5b1c41",
+                "signature": "5d09f54bd78bb3701b23c4eeebe32bc8",
+                "signature_v2": "60a26697e882932287df3b386501c0f5",
                 "headers": {
                     "x-api-key": [
                         "[redacted]"
@@ -184,7 +184,7 @@
                         "application/json"
                     ]
                 },
-                "body": "{\"max_tokens\":100,\"stream\":true,\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Reply with a single short sentence.\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"model\":\"claude-sonnet-4-5-20250929\"}"
+                "body": "{\"stream\":true,\"max_tokens\":100,\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Reply with a single short sentence.\",\"cache_control\":{\"type\":\"ephemeral\"}}]}],\"model\":\"claude-sonnet-4-5-20250929\"}"
             },
             "response": {
                 "status": 200,

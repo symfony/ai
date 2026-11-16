@@ -13,9 +13,12 @@ namespace Symfony\AI\Platform\Bridge\EdenAi\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\EdenAi\Factory;
+use Symfony\AI\Platform\Bridge\EdenAi\ModelApiCatalog;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Mathieu Santostefano <msantostefano@proton.me>
@@ -56,5 +59,21 @@ final class FactoryTest extends TestCase
         $this->assertTrue($provider->supports('image/object_detection/google'));
         $this->assertTrue($provider->supports('image/generation/openai'));
         $this->assertTrue($provider->supports('openai/gpt-4o'));
+    }
+
+    public function testCreateModelCatalogFetchesModelsFromBaseUrl()
+    {
+        $requestedUrls = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url) use (&$requestedUrls): ResponseInterface {
+            $requestedUrls[] = $url;
+
+            return new MockResponse('{"data": [], "features": []}');
+        });
+
+        $catalog = Factory::createModelCatalog($httpClient, 'https://gateway.example.com');
+
+        $this->assertInstanceOf(ModelApiCatalog::class, $catalog);
+        $catalog->getModels();
+        $this->assertContains('https://gateway.example.com/v3/models', $requestedUrls);
     }
 }

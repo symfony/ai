@@ -47,24 +47,4 @@ final class ZeroShotClassificationResult
     {
         return $this->sequence;
     }
-
-    /**
-     * @param array{labels: array<string>, scores: array<float>, sequence?: string}|list<array{label: string, score: float}> $data
-     */
-    public static function fromArray(array $data): self
-    {
-        // Serverless format: [{label: "refund", score: 0.97}, ...]
-        if (isset($data[0]['label'])) {
-            return new self(
-                array_map(static fn (array $item): string => $item['label'], $data),
-                array_map(static fn (array $item): float => $item['score'], $data),
-            );
-        }
-
-        return new self(
-            $data['labels'],
-            $data['scores'],
-            $data['sequence'] ?? null,
-        );
-    }
 }

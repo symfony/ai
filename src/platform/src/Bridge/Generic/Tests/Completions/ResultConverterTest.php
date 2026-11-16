@@ -42,6 +42,8 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -553,6 +555,69 @@ class ResultConverterTest extends TestCase
         $converter->convert(new RawHttpResult($httpResponse));
     }
 
+    /**
+     * @param class-string<\Throwable> $exception
+     */
+    #[DataProvider('provideTopLevelErrorMessages')]
+    public function testThrowsWithTheErrorMessageFromATopLevelMessage(int $statusCode, string $message, string $exception)
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createResponse(json_encode(['message' => $message, 'type' => 'invalid_request_error']), $statusCode);
+
+        $this->expectException($exception);
+        $this->expectExceptionMessage($message);
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    /**
+     * @return iterable<string, array{int, string, class-string<\Throwable>}>
+     */
+    public static function provideTopLevelErrorMessages(): iterable
+    {
+        yield 'unauthorized' => [401, 'Invalid credentials in Authorization header', AuthenticationException::class];
+        yield 'bad request' => [400, 'Failed to apply chat template to messages due to error: Tool "ping" is missing function parameters.', BadRequestException::class];
+        yield 'rate limit' => [429, 'Rate limit reached, try again later', RateLimitExceededException::class];
+        yield 'server error' => [503, 'Model is overloaded', ServerException::class];
+    }
+
+    /**
+     * @param class-string<\Throwable> $exception
+     */
+    #[DataProvider('provideNonStringErrorMessages')]
+    public function testFallsBackToTheDefaultMessageOnANonStringErrorMessage(int $statusCode, string $body, string $exception, string $message)
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createResponse($body, $statusCode);
+
+        $this->expectException($exception);
+        $this->expectExceptionMessage($message);
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    /**
+     * @return iterable<string, array{int, string, class-string<\Throwable>, string}>
+     */
+    public static function provideNonStringErrorMessages(): iterable
+    {
+        yield 'unauthorized' => [401, '{"message":["a","b"]}', AuthenticationException::class, 'Authentication failed.'];
+        yield 'bad request' => [400, '{"message":{"detail":[{"msg":"x"}]}}', BadRequestException::class, 'Bad Request'];
+        yield 'rate limit' => [429, '{"message":["a","b"]}', RateLimitExceededException::class, 'Rate limit exceeded.'];
+        yield 'server error' => [503, '{"error":{"message":{"detail":[{"msg":"x"}]}}}', ServerException::class, 'Server error (HTTP 503).'];
+    }
+
+    public function testThrowsExceedContextSizeExceptionOnATopLevelErrorCode()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createResponse('{"message":"This request exceeds the model\'s maximum of 8192 tokens.","code":"context_length_exceeded"}', 400);
+
+        $this->expectException(ExceedContextSizeException::class);
+        $this->expectExceptionMessage('This request exceeds the model\'s maximum of 8192 tokens.');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
     public function testThrowsOnUnhandledErrorStatusBeforeStreaming()
     {
         $converter = new ResultConverter();
@@ -720,6 +785,39 @@ class ResultConverterTest extends TestCase
         $this->assertSame(['city' => 'Beijing'], $completed[0]->getArguments());
     }
 
+    public function testStreamingToolInputDeltasIncludeTheArgumentsOfTheStartChunk()
+    {
+        // llama.cpp sends the opening "{" in the chunk that carries the id and the name
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['id' => 'call_1', 'type' => 'function', 'index' => 0, 'function' => ['name' => 'get_weather', 'arguments' => '{']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 0, 'function' => ['arguments' => '"city":']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 0, 'function' => ['arguments' => '"Paris"}']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'tool_calls']]],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $toolInputDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof ToolInputDelta));
+        $this->assertSame('{"city":"Paris"}', implode('', array_map(static fn (ToolInputDelta $d) => $d->getPartialJson(), $toolInputDeltas)));
+        foreach ($toolInputDeltas as $delta) {
+            $this->assertSame('call_1', $delta->getId());
+            $this->assertSame('get_weather', $delta->getName());
+        }
+    }
+
     public function testStreamingParallelToolCallsWithProviderIndexOnSingleElementChunks()
     {
         // OpenAI-compatible streams often send one tool_calls[] entry per chunk; the real slot is
@@ -824,7 +922,7 @@ class ResultConverterTest extends TestCase
         $this->assertSame(['call_a', 'call_b'], array_map(static fn (ToolCallStart $start): string => $start->getId(), $toolCallStarts));
 
         $toolInputDeltas = array_values(array_filter($chunks, static fn ($c) => $c instanceof ToolInputDelta));
-        $this->assertSame([['call_a', '"Paris"'], ['call_a', '}']], array_map(static fn (ToolInputDelta $delta): array => [$delta->getId(), $delta->getPartialJson()], $toolInputDeltas));
+        $this->assertSame([['call_a', '{"city":'], ['call_a', '"Paris"'], ['call_a', '}'], ['call_b', '{"tz":"CET"}']], array_map(static fn (ToolInputDelta $delta): array => [$delta->getId(), $delta->getPartialJson()], $toolInputDeltas));
 
         $toolCallCompletes = array_values(array_filter($chunks, static fn ($c) => $c instanceof ToolCallComplete));
         $this->assertCount(1, $toolCallCompletes);
@@ -1046,11 +1144,13 @@ class ResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertCount(3, $chunks);
+        $this->assertCount(4, $chunks);
         $this->assertInstanceOf(ToolCallStart::class, $chunks[0]);
-        $this->assertInstanceOf(ToolCallComplete::class, $chunks[1]);
-        $this->assertInstanceOf(MetadataDelta::class, $chunks[2]);
-        $this->assertSame(FinishReasonCase::TOOL_CALL, $chunks[2]->getValue()->getCase());
+        $this->assertInstanceOf(ToolInputDelta::class, $chunks[1]);
+        $this->assertSame('{}', $chunks[1]->getPartialJson());
+        $this->assertInstanceOf(ToolCallComplete::class, $chunks[2]);
+        $this->assertInstanceOf(MetadataDelta::class, $chunks[3]);
+        $this->assertSame(FinishReasonCase::TOOL_CALL, $chunks[3]->getValue()->getCase());
     }
 
     public function testStreamingCompletesToolCallsWithStopFinishReason()
@@ -1066,19 +1166,21 @@ class ResultConverterTest extends TestCase
 
         $chunks = iterator_to_array($streamResult->getContent());
 
-        $this->assertCount(3, $chunks);
+        $this->assertCount(4, $chunks);
         $this->assertInstanceOf(ToolCallStart::class, $chunks[0]);
-        $this->assertInstanceOf(ToolCallComplete::class, $chunks[1]);
+        $this->assertInstanceOf(ToolInputDelta::class, $chunks[1]);
+        $this->assertSame('{"city":"Berlin"}', $chunks[1]->getPartialJson());
+        $this->assertInstanceOf(ToolCallComplete::class, $chunks[2]);
 
-        $completed = $chunks[1]->getToolCalls();
+        $completed = $chunks[2]->getToolCalls();
         $this->assertCount(1, $completed);
         $this->assertSame('call_1', $completed[0]->getId());
         $this->assertSame('get_weather', $completed[0]->getName());
         $this->assertSame(['city' => 'Berlin'], $completed[0]->getArguments());
 
-        $this->assertInstanceOf(MetadataDelta::class, $chunks[2]);
-        $this->assertSame(FinishReasonCase::STOP, $chunks[2]->getValue()->getCase());
-        $this->assertSame('stop', $chunks[2]->getValue()->getRaw());
+        $this->assertInstanceOf(MetadataDelta::class, $chunks[3]);
+        $this->assertSame(FinishReasonCase::STOP, $chunks[3]->getValue()->getCase());
+        $this->assertSame('stop', $chunks[3]->getValue()->getRaw());
     }
 
     public function testStreamingCompletesToolCallsOnceWhenTheFinishReasonIsRepeated()
@@ -1233,6 +1335,11 @@ class ResultConverterTest extends TestCase
         $this->assertInstanceOf(FinishReason::class, $finishReason);
         $this->assertTrue($finishReason->is(FinishReasonCase::LENGTH));
         $this->assertSame('length', $finishReason->getRaw());
+    }
+
+    private function createResponse(string $body, int $statusCode): ResponseInterface
+    {
+        return (new MockHttpClient(new MockResponse($body, ['http_code' => $statusCode])))->request('POST', 'https://api.example.com/v1/chat/completions');
     }
 
     private function httpResponseStub(): object

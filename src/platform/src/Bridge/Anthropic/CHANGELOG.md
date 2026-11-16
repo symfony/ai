@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add a prompt-caching breakpoint on the previous user message to keep cache hits across agent loop turns
+
 0.14
 ----
 

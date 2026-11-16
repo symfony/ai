@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
@@ -69,6 +70,12 @@ final class ModelClient implements ModelClientInterface
             $options['responseMimeType'] = 'application/json';
             $options['responseJsonSchema'] = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'];
             unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
+        }
+
+        // generationConfig expects the camelCase "maxOutputTokens" and rejects unknown fields
+        if (isset($options[PlatformOptions::MAX_OUTPUT_TOKENS])) {
+            $options['maxOutputTokens'] ??= $options[PlatformOptions::MAX_OUTPUT_TOKENS];
+            unset($options[PlatformOptions::MAX_OUTPUT_TOKENS]);
         }
 
         $config = ['generationConfig' => $options];

@@ -1,7 +1,0 @@
-Symfony\AI\Platform\Bridge\HuggingFace\Output\SentenceSimilarityResult {
-  -similarities: array:3 [
-    0 => 0.96560376882553
-    1 => 0.82159447669983
-    2 => 0.24906286597252
-  ]
-}

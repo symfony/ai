@@ -50,7 +50,7 @@ final class Factory
             $name,
             [new HiggsfieldClient($httpClient)],
             [new HiggsfieldResultConverter($name)],
-            $modelCatalog ?? new CuratedModelCatalog(new ModelCatalog($httpClient)),
+            $modelCatalog ?? self::createCuratedModelCatalog($httpClient),
             $contract ?? HiggsfieldContract::create(),
             $eventDispatcher,
         );
@@ -87,6 +87,20 @@ final class Factory
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );
+    }
+
+    public static function createModelCatalog(
+        #[\SensitiveParameter] string $apiKey,
+        #[\SensitiveParameter] string $apiSecret,
+        ?string $baseUrl = null,
+        ?HttpClientInterface $httpClient = null,
+    ): ModelCatalogInterface {
+        return self::createCuratedModelCatalog(self::createScopedHttpClient($apiKey, $apiSecret, $baseUrl, $httpClient));
+    }
+
+    private static function createCuratedModelCatalog(HttpClientInterface $httpClient): ModelCatalogInterface
+    {
+        return new CuratedModelCatalog(new ModelCatalog($httpClient));
     }
 
     private static function createScopedHttpClient(

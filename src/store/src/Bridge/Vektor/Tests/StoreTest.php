@@ -122,6 +122,24 @@ final class StoreTest extends TestCase
         $store->drop();
     }
 
+    public function testStoreReturnsAsManyResultsAsTheLimit()
+    {
+        $store = new Store(sys_get_temp_dir(), 3);
+        $store->setup();
+
+        $store->add([
+            new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])),
+            new VectorDocument(Uuid::v4(), new Vector([0.4, 0.5, 0.6])),
+            new VectorDocument(Uuid::v4(), new Vector([0.7, 0.8, 0.9])),
+        ]);
+
+        $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 2]);
+
+        $this->assertCount(2, iterator_to_array($results));
+
+        $store->drop();
+    }
+
     public function testCountReturnsDocumentCount()
     {
         $store = new Store(sys_get_temp_dir(), 3);

@@ -12,18 +12,132 @@
 namespace Symfony\Component\Config\Definition\Configurator;
 
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
-use Symfony\AI\Platform\Capability;
-use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelOptionsParser;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Document\VectorizerInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\ExprBuilder;
+use Symfony\Component\Config\Definition\Dumper\JsonSchemaDumper;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 return static function (DefinitionConfigurator $configurator): void {
     $import = fn (string $resource): ArrayNodeDefinition => require __DIR__.'/'.$resource.'.php';
+    $assertUniqueNames = static fn (string $message, array $subTypes = []): \Closure => static function (array $types) use ($message, $subTypes): array {
+        $namesByArgument = [];
+        foreach ($types as $type => $services) {
+            if (isset($subTypes[$type])) {
+                $services = $services[$subTypes[$type]] ?? [];
+                $type .= '.'.$subTypes[$type];
+            }
+
+            foreach (array_keys($services) as $name) {
+                $namesByArgument[(new Target((string) $name))->getParsedName()][] = $type.'.'.$name;
+            }
+        }
+
+        foreach ($namesByArgument as $names) {
+            if (\count($names) > 1) {
+                throw new InvalidArgumentException(\sprintf($message, implode('", "', $names)));
+            }
+        }
+
+        return $types;
+    };
+
+    $tools = (new ArrayNodeDefinition('tools'))
+        ->info('Tools are opt-in: set to true to inject all services tagged with "ai.tool", or configure an explicit list of tools. When the option is omitted (or set to null or false), no tools are registered.')
+        ->addDefaultsIfNotSet()
+        ->treatFalseLike(['enabled' => false])
+        ->treatTrueLike(['enabled' => true])
+        ->treatNullLike(['enabled' => false])
+        ->beforeNormalization()
+            ->ifArray()
+            ->then(static function (array $v): array {
+                $services = $v['services'] ?? $v;
+                unset($services['enabled'], $services['execution_strategy']);
+                $executionStrategy = $v['execution_strategy'] ?? null;
+
+                return [
+                    'enabled' => $v['enabled'] ?? ([] !== $services || null !== $executionStrategy),
+                    'execution_strategy' => $executionStrategy,
+                    'services' => $services,
+                ];
+            })
+        ->end()
+        ->children()
+            ->booleanNode('enabled')->defaultFalse()->end()
+            ->scalarNode('execution_strategy')
+                ->info('The tool execution strategy. Built-in options are "sequential" (default) and "fiber". A custom service ID implementing ToolExecutorInterface can also be provided.')
+                ->defaultNull()
+            ->end()
+            ->arrayNode('services')
+                ->arrayPrototype()
+                    ->children()
+                        ->stringNode('service')->cannotBeEmpty()->end()
+                        ->stringNode('agent')->cannotBeEmpty()->end()
+                        ->stringNode('mcp_server')
+                            ->info('A remote MCP server whose tools are exposed to this agent, as "<client>.<server>" referencing a connection configured under "mcp.clients".')
+                            ->example('research.filesystem')
+                            ->cannotBeEmpty()
+                        ->end()
+                        ->stringNode('name')->end()
+                        ->stringNode('description')->end()
+                        ->stringNode('method')->end()
+                        ->stringNode('prefix')
+                            ->info('Only with "mcp_server": prefix put in front of every remote tool name. Defaults to "<server>_".')
+                            ->cannotBeEmpty()
+                        ->end()
+                    ->end()
+                    ->beforeNormalization()
+                        ->ifString()
+                        ->then(static function (string $v) {
+                            return ['service' => $v];
+                        })
+                    ->end()
+                    ->validate()
+                        ->ifTrue(static function ($v) {
+                            $configured = 0;
+                            foreach (['service', 'agent', 'mcp_server'] as $key) {
+                                if (isset($v[$key]) && '' !== $v[$key]) {
+                                    ++$configured;
+                                }
+                            }
+
+                            return 1 !== $configured;
+                        })
+                        ->thenInvalid('Exactly one of "service", "agent" or "mcp_server" must be configured.')
+                    ->end()
+                    ->validate()
+                        ->ifTrue(static function ($v) {
+                            if (!isset($v['prefix'])) {
+                                return false;
+                            }
+
+                            return !isset($v['mcp_server']);
+                        })
+                        ->thenInvalid('The "prefix" option is only supported together with "mcp_server".')
+                    ->end()
+                    ->validate()
+                        ->ifTrue(static function ($v) {
+                            if (!isset($v['mcp_server'])) {
+                                return false;
+                            }
+
+                            return !str_contains($v['mcp_server'], '.');
+                        })
+                        ->thenInvalid('Invalid MCP server reference, expected the "<client>.<server>" format.')
+                    ->end()
+                ->end()
+            ->end()
+        ->end();
+
+    // the JSON schema of the configuration, added in Symfony 8.2, describes a list of tools only with this
+    if (class_exists(JsonSchemaDumper::class)) {
+        $tools->acceptAndWrap([ExprBuilder::TYPE_ARRAY], 'services');
+    }
 
     $configurator->rootNode()
         ->children()
@@ -66,49 +180,6 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('platform/venice'))
                     ->append($import('platform/vertexai'))
                     ->append($import('platform/voyage'))
-                ->end()
-            ->end()
-            ->arrayNode('model')
-                ->useAttributeAsKey('platform')
-                ->arrayPrototype()
-                    ->useAttributeAsKey('model_name')
-                    ->normalizeKeys(false)
-                    ->validate()
-                        ->ifEmpty()
-                        ->thenInvalid('Model name cannot be empty.')
-                    ->end()
-                    ->arrayPrototype()
-                        ->children()
-                            ->stringNode('class')
-                                ->info('The fully qualified class name of the model (must extend '.Model::class.')')
-                                ->defaultValue(Model::class)
-                                ->cannotBeEmpty()
-                                ->validate()
-                                    ->ifTrue(static function ($v) {
-                                        return !class_exists($v);
-                                    })
-                                    ->thenInvalid('The model class "%s" does not exist.')
-                                ->end()
-                                ->validate()
-                                    ->ifTrue(static function ($v) {
-                                        return !is_a($v, Model::class, true);
-                                    })
-                                    ->thenInvalid('The model class "%s" must extend '.Model::class.'.')
-                                ->end()
-                            ->end()
-                            ->arrayNode('capabilities')
-                                ->info('Array of capabilities that this model supports')
-                                ->enumPrototype(Capability::class)
-                                    ->enumFqcn(Capability::class)
-                                ->end()
-                                ->defaultValue([])
-                                ->validate()
-                                    ->ifEmpty()
-                                    ->thenInvalid('At least one capability must be specified for each model.')
-                                ->end()
-                            ->end()
-                        ->end()
-                    ->end()
                 ->end()
             ->end()
             ->arrayNode('agent')
@@ -270,100 +341,14 @@ return static function (DefinitionConfigurator $configurator): void {
                                 ->end()
                             ->end()
                         ->end()
-                        ->arrayNode('tools')
-                            ->info('Tools are opt-in: set to true to inject all services tagged with "ai.tool", or configure an explicit list of tools. When the option is omitted (or set to null or false), no tools are registered.')
-                            ->addDefaultsIfNotSet()
-                            ->treatFalseLike(['enabled' => false])
-                            ->treatTrueLike(['enabled' => true])
-                            ->treatNullLike(['enabled' => false])
-                            ->beforeNormalization()
-                                ->ifArray()
-                                ->then(static function (array $v): array {
-                                    $services = $v['services'] ?? $v;
-                                    unset($services['enabled'], $services['execution_strategy']);
-                                    $executionStrategy = $v['execution_strategy'] ?? null;
-
-                                    return [
-                                        'enabled' => $v['enabled'] ?? ([] !== $services || null !== $executionStrategy),
-                                        'execution_strategy' => $executionStrategy,
-                                        'services' => $services,
-                                    ];
-                                })
-                            ->end()
-                            ->children()
-                                ->booleanNode('enabled')->defaultFalse()->end()
-                                ->scalarNode('execution_strategy')
-                                    ->info('The tool execution strategy. Built-in options are "sequential" (default) and "fiber". A custom service ID implementing ToolExecutorInterface can also be provided.')
-                                    ->defaultNull()
-                                ->end()
-                                ->arrayNode('services')
-                                    ->arrayPrototype()
-                                        ->children()
-                                            ->stringNode('service')->cannotBeEmpty()->end()
-                                            ->stringNode('agent')->cannotBeEmpty()->end()
-                                            ->stringNode('mcp_server')
-                                                ->info('A remote MCP server whose tools are exposed to this agent, as "<client>.<server>" referencing a connection configured under "mcp.clients".')
-                                                ->example('research.filesystem')
-                                                ->cannotBeEmpty()
-                                            ->end()
-                                            ->stringNode('name')->end()
-                                            ->stringNode('description')->end()
-                                            ->stringNode('method')->end()
-                                            ->stringNode('prefix')
-                                                ->info('Only with "mcp_server": prefix put in front of every remote tool name. Defaults to "<server>_".')
-                                                ->cannotBeEmpty()
-                                            ->end()
-                                        ->end()
-                                        ->beforeNormalization()
-                                            ->ifString()
-                                            ->then(static function (string $v) {
-                                                return ['service' => $v];
-                                            })
-                                        ->end()
-                                        ->validate()
-                                            ->ifTrue(static function ($v) {
-                                                $configured = 0;
-                                                foreach (['service', 'agent', 'mcp_server'] as $key) {
-                                                    if (isset($v[$key]) && '' !== $v[$key]) {
-                                                        ++$configured;
-                                                    }
-                                                }
-
-                                                return 1 !== $configured;
-                                            })
-                                            ->thenInvalid('Exactly one of "service", "agent" or "mcp_server" must be configured.')
-                                        ->end()
-                                        ->validate()
-                                            ->ifTrue(static function ($v) {
-                                                if (!isset($v['prefix'])) {
-                                                    return false;
-                                                }
-
-                                                return !isset($v['mcp_server']);
-                                            })
-                                            ->thenInvalid('The "prefix" option is only supported together with "mcp_server".')
-                                        ->end()
-                                        ->validate()
-                                            ->ifTrue(static function ($v) {
-                                                if (!isset($v['mcp_server'])) {
-                                                    return false;
-                                                }
-
-                                                return !str_contains($v['mcp_server'], '.');
-                                            })
-                                            ->thenInvalid('Invalid MCP server reference, expected the "<client>.<server>" format.')
-                                        ->end()
-                                    ->end()
-                                ->end()
-                            ->end()
-                        ->end()
-                        ->booleanNode('exclude_tool_messages')
-                            ->info('Exclude tool messages from the conversation history')
-                            ->defaultFalse()
-                        ->end()
+                        ->append($tools)
                         ->booleanNode('include_sources')
                             ->info('Include sources exposed by tools as part of the tool result metadata')
                             ->defaultFalse()
+                        ->end()
+                        ->stringNode('message_store')
+                            ->info('Service name of the message store continuing and saving the conversations of the agent by their ID')
+                            ->defaultNull()
                         ->end()
                         ->scalarNode('max_tool_calls')
                             ->info('Maximum number of tool calls per agent call, null to disable')
@@ -455,6 +440,7 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('store/chromadb'))
                     ->append($import('store/clickhouse'))
                     ->append($import('store/cloudflare'))
+                    ->append($import('store/doctrine'))
                     ->append($import('store/elasticsearch'))
                     ->append($import('store/manticoresearch'))
                     ->append($import('store/mariadb'))
@@ -476,6 +462,9 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('store/weaviate'))
                     ->append($import('store/vektor'))
                 ->end()
+                ->validate()
+                    ->always($assertUniqueNames('The stores "%s" have conflicting names, store names must be unique across all store types.'))
+                ->end()
             ->end()
             ->arrayNode('message_store')
                 ->children()
@@ -490,14 +479,8 @@ return static function (DefinitionConfigurator $configurator): void {
                     ->append($import('message_store/session'))
                     ->append($import('message_store/surrealdb'))
                 ->end()
-            ->end()
-            ->arrayNode('chat')
-                ->useAttributeAsKey('name')
-                ->arrayPrototype()
-                    ->children()
-                        ->stringNode('agent')->cannotBeEmpty()->end()
-                        ->stringNode('message_store')->cannotBeEmpty()->end()
-                    ->end()
+                ->validate()
+                    ->always($assertUniqueNames('The message stores "%s" have conflicting names, message store names must be unique across all message store types.', ['doctrine' => 'dbal']))
                 ->end()
             ->end()
             ->arrayNode('vectorizer')

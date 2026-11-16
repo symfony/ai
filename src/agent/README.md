@@ -35,6 +35,22 @@ To use a specific tool, install the corresponding bridge package:
 | Wikipedia         | `symfony/ai-wikipedia-tool`         |
 | YouTube           | `symfony/ai-youtube-tool`           |
 
+## Message Store Bridges
+
+To continue and save conversations in a specific message store, install the corresponding bridge package:
+
+| Message Store | Package                                |
+|---------------|----------------------------------------|
+| Cache         | `symfony/ai-cache-message-store`       |
+| Cloudflare    | `symfony/ai-cloudflare-message-store`  |
+| Doctrine      | `symfony/ai-doctrine-message-store`    |
+| Meilisearch   | `symfony/ai-meilisearch-message-store` |
+| MongoDB       | `symfony/ai-mongo-db-message-store`    |
+| Pogocache     | `symfony/ai-pogocache-message-store`   |
+| Redis         | `symfony/ai-redis-message-store`       |
+| Session       | `symfony/ai-session-message-store`     |
+| SurrealDB     | `symfony/ai-surreal-db-message-store`  |
+
 **This repository is a READ-ONLY sub-tree split**. See
 https://github.com/symfony/ai to create issues or submit pull requests.
 

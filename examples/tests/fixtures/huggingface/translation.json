@@ -3,9 +3,9 @@
         {
             "request": {
                 "method": "POST",
-                "url": "https://router.huggingface.co/hf-inference/models/facebook/mbart-large-50-many-to-many-mmt",
-                "signature": "3bd4622fb74ad65bbd7efe907ba27194",
-                "signature_v2": "dd2527b00764dd8fe3e58d2b439102bd",
+                "url": "https://router.huggingface.co/hf-inference/models/Helsinki-NLP/opus-mt-ru-en",
+                "signature": "2935fed16d7d7f7f58f71d701d631973",
+                "signature_v2": "22edcb872fa3bf7e128d3105c2065dac",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -14,7 +14,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"inputs\":\"\\u041c\\u0435\\u043d\\u044f \\u0437\\u043e\\u0432\\u0443\\u0442 \\u0412\\u043e\\u043b\\u044c\\u0444\\u0433\\u0430\\u043d\\u0433 \\u0438 \\u044f \\u0436\\u0438\\u0432\\u0443 \\u0432 \\u0411\\u0435\\u0440\\u043b\\u0438\\u043d\\u0435\",\"parameters\":{\"src_lang\":\"ru_RU\",\"tgt_lang\":\"en_XX\"},\"src_lang\":\"ru_RU\",\"tgt_lang\":\"en_XX\"}"
+                "body": "{\"inputs\":\"\\u041c\\u0435\\u043d\\u044f \\u0437\\u043e\\u0432\\u0443\\u0442 \\u0412\\u043e\\u043b\\u044c\\u0444\\u0433\\u0430\\u043d\\u0433 \\u0438 \\u044f \\u0436\\u0438\\u0432\\u0443 \\u0432 \\u0411\\u0435\\u0440\\u043b\\u0438\\u043d\\u0435\"}"
             },
             "response": {
                 "status": 200,
@@ -23,7 +23,7 @@
                         "application/json"
                     ],
                     "content-length": [
-                        "65"
+                        "66"
                     ],
                     "x-inference-provider": [
                         "hf-inference"
@@ -56,35 +56,35 @@
                         "uvicorn"
                     ],
                     "x-inference-id": [
-                        "c87ad440-2ae9-4247-8e79-0e86f9e435c0"
+                        "c10eb53c-9be2-4704-bf00-dba86ef19afc"
                     ],
                     "x-proxied-host": [
-                        "http://10.109.4.18"
+                        "http://10.109.86.240"
                     ],
                     "x-proxied-path": [
                         "/"
                     ],
                     "x-proxied-replica": [
-                        "vvxr8qxo-0e7dcchk7"
+                        "lk1xr5u9-5dth8"
                     ],
                     "x-cache": [
                         "Miss from cloudfront"
                     ],
                     "via": [
-                        "1.1 b3f288e164adbaabe632e02a62ed3088.cloudfront.net (CloudFront)"
+                        "1.1 72fc99620258d0164f9db7bb2e1c4780.cloudfront.net (CloudFront)"
                     ],
                     "x-amz-cf-pop": [
                         "TXL52-P3"
                     ],
                     "x-amz-cf-id": [
-                        "VxHcV6jCnPbizvKdxmwEv6oo-Z9fFtE4UBdq-iq-CqwQKdz-KeaUEA=="
+                        "WXlSekt2oCCKBf3oA6pVYKV5T8jyr8w1nIwXVgB_GjJnJbYOrV7hNg=="
                     ],
                     "strict-transport-security": [
                         "max-age=31536000"
                     ]
                 },
                 "body_format": "json",
-                "body": "[{\"translation_text\":\"My name is Wolfgang and I live in Berlin\"}]"
+                "body": "[{\"translation_text\":\"My name is Wolfgang and I live in Berlin.\"}]"
             }
         }
     ]

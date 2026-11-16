@@ -28,14 +28,14 @@ final class Vectorizer implements VectorizerInterface
     ) {
     }
 
-    public function vectorize(string|\Stringable|EmbeddableDocumentInterface|array $values, array $options = []): Vector|VectorDocumentInterface|array
+    public function vectorize(string|\Stringable|DocumentInterface|array $values, array $options = []): Vector|VectorDocumentInterface|array
     {
         if (\is_string($values) || $values instanceof \Stringable) {
             return $this->vectorizeString($values, $options);
         }
 
-        if ($values instanceof EmbeddableDocumentInterface) {
-            return $this->vectorizeEmbeddableDocument($values, $options);
+        if ($values instanceof DocumentInterface) {
+            return $this->vectorizeDocument($values, $options);
         }
 
         if ([] === $values) {
@@ -43,10 +43,10 @@ final class Vectorizer implements VectorizerInterface
         }
 
         $firstElement = reset($values);
-        if ($firstElement instanceof EmbeddableDocumentInterface) {
-            $this->validateArray($values, EmbeddableDocumentInterface::class);
+        if ($firstElement instanceof DocumentInterface) {
+            $this->validateArray($values, DocumentInterface::class);
 
-            return $this->vectorizeEmbeddableDocuments($values, $options);
+            return $this->vectorizeDocuments($values, $options);
         }
 
         if (\is_string($firstElement) || $firstElement instanceof \Stringable) {
@@ -55,7 +55,7 @@ final class Vectorizer implements VectorizerInterface
             return $this->vectorizeStrings($values, $options);
         }
 
-        throw new RuntimeException('Array must contain only strings, Stringable objects, or EmbeddableDocumentInterface instances.');
+        throw new RuntimeException('Array must contain only strings, Stringable objects, or DocumentInterface instances.');
     }
 
     /**
@@ -99,9 +99,9 @@ final class Vectorizer implements VectorizerInterface
      *
      * @throws ExceptionInterface
      */
-    private function vectorizeEmbeddableDocument(EmbeddableDocumentInterface $document, array $options = []): VectorDocumentInterface
+    private function vectorizeDocument(DocumentInterface $document, array $options = []): VectorDocumentInterface
     {
-        $this->logger->debug('Vectorizing embeddable document', ['document_id' => $document->getId()]);
+        $this->logger->debug('Vectorizing document', ['document_id' => $document->getId()]);
         $result = $this->platform->invoke($this->model, $document->getContent(), $options);
         $vectors = $result->asVectors();
 
@@ -142,17 +142,17 @@ final class Vectorizer implements VectorizerInterface
     }
 
     /**
-     * @param array<EmbeddableDocumentInterface> $documents
-     * @param array<string, mixed>               $options
+     * @param array<DocumentInterface> $documents
+     * @param array<string, mixed>     $options
      *
      * @return array<VectorDocumentInterface>
      */
-    private function vectorizeEmbeddableDocuments(array $documents, array $options = []): array
+    private function vectorizeDocuments(array $documents, array $options = []): array
     {
         $documentCount = \count($documents);
         $this->logger->info('Starting vectorization process', ['document_count' => $documentCount]);
 
-        $result = $this->platform->invoke($this->model, array_map(static fn (EmbeddableDocumentInterface $document) => $document->getContent(), $documents), $options);
+        $result = $this->platform->invoke($this->model, array_map(static fn (DocumentInterface $document) => $document->getContent(), $documents), $options);
         $vectors = $result->asVectors();
 
         $vectorDocuments = [];

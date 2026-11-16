@@ -12,10 +12,14 @@
 namespace Symfony\AI\Platform\Bridge\Ollama\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Ollama\Decision;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter;
+use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\DeferredResult;
@@ -30,6 +34,8 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\TokenUsage\TokenUsageInterface;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 final class OllamaResultConverterTest extends TestCase
@@ -40,6 +46,16 @@ final class OllamaResultConverterTest extends TestCase
 
         $this->assertTrue($converter->supports(new Ollama('llama3.2')));
         $this->assertFalse($converter->supports(new Model('any-model')));
+    }
+
+    public function testDoesNotSupportDecisionModels()
+    {
+        $this->assertFalse((new OllamaResultConverter())->supports(new Decision('nimble')));
+    }
+
+    public function testDoesNotSupportTextToSpeechModels()
+    {
+        $this->assertFalse((new OllamaResultConverter())->supports(new TextToSpeech('phonon')));
     }
 
     public function testConvertTextResponse()
@@ -144,6 +160,26 @@ final class OllamaResultConverterTest extends TestCase
         $this->expectExceptionMessage('Message does not contain content');
 
         $converter->convert($rawResult);
+    }
+
+    public function testItThrowsServerExceptionOnServerError()
+    {
+        $response = (new MockHttpClient(new MockResponse('{"error":"Service unavailable."}', ['http_code' => 503])))->request('POST', 'http://localhost:11434/api/embed');
+
+        $this->expectException(ServerException::class);
+        $this->expectExceptionMessage('Server error (HTTP 503). Service unavailable.');
+
+        (new OllamaResultConverter())->convert(new RawHttpResult($response));
+    }
+
+    public function testItThrowsModelNotFoundExceptionOnNotFound()
+    {
+        $response = (new MockHttpClient(new MockResponse('{"error":"model \"foo\" not found, try pulling it first"}', ['http_code' => 404])))->request('POST', 'http://localhost:11434/api/embed');
+
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage('model "foo" not found, try pulling it first');
+
+        (new OllamaResultConverter())->convert(new RawHttpResult($response));
     }
 
     public function testItConvertsAResponseToAVectorResult()
@@ -322,6 +358,23 @@ final class OllamaResultConverterTest extends TestCase
         $this->expectExceptionMessage('Ollama stream error: "model runner crashed".');
 
         iterator_to_array($result->getContent());
+    }
+
+    public function testConvertStreamingResponseWithCachedPromptTokens()
+    {
+        $converter = new OllamaResultConverter();
+        $rawResult = new InMemoryRawResult(dataStream: (static function (): iterable {
+            yield ['model' => 'llama3.2', 'created_at' => '2026-11-11T21:00:00.000000Z', 'message' => ['role' => 'assistant', 'content' => 'Hello'], 'done' => true,
+                'done_reason' => 'stop', 'prompt_eval_count' => 42, 'prompt_eval_cached_count' => 36, 'eval_count' => 17];
+        })());
+
+        $result = $converter->convert($rawResult, options: ['stream' => true]);
+
+        $tokenUsages = array_values(array_filter(iterator_to_array($result->getContent(), false), static fn ($chunk) => $chunk instanceof TokenUsageInterface));
+
+        $this->assertCount(1, $tokenUsages);
+        $this->assertSame(42, $tokenUsages[0]->getPromptTokens());
+        $this->assertSame(36, $tokenUsages[0]->getCachedTokens());
     }
 
     /**

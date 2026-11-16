@@ -30,9 +30,9 @@ Prerequisites
 Step 1: Install Packages
 ------------------------
 
-Install the Platform and Agent components via Composer::
+Install the Platform and Agent components and the OpenAI bridge via Composer::
 
-    composer require symfony/ai-platform symfony/ai-agent
+    composer require symfony/ai-platform symfony/ai-agent symfony/ai-open-ai-platform
 
 Step 2: Model the Findings
 --------------------------

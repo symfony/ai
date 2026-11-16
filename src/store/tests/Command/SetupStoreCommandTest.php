@@ -13,6 +13,7 @@ namespace Symfony\AI\Store\Tests\Command;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Store\Command\SetupStoreCommand;
+use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\StoreInterface;
@@ -34,6 +35,8 @@ final class SetupStoreCommandTest extends TestCase
         $storeArgument = $definition->getArgument('store');
         $this->assertSame('Service name of the store to setup', $storeArgument->getDescription());
         $this->assertTrue($storeArgument->isRequired());
+
+        $this->assertTrue($definition->getOption('option')->isArray());
     }
 
     public function testCommandCannotSetupUndefinedStore()
@@ -63,7 +66,7 @@ final class SetupStoreCommandTest extends TestCase
         $this->expectExceptionCode(0);
         $tester->execute([
             'store' => 'foo',
-        ]);
+        ], ['interactive' => false]);
     }
 
     public function testCommandCannotSetupInvalidStore()
@@ -106,16 +109,11 @@ final class SetupStoreCommandTest extends TestCase
     public function testCommandCanSetupDefinedStore()
     {
         $store = $this->createMock(ManagedStoreInterface::class);
-        $store->expects($this->once())->method('setup')->with(['some_option' => 'some_value']);
+        $store->expects($this->once())->method('setup')->with([]);
 
-        $command = new SetupStoreCommand(
-            new ServiceLocator([
-                'foo' => static fn (): object => $store,
-            ]),
-            [
-                'foo' => ['some_option' => 'some_value'],
-            ]
-        );
+        $command = new SetupStoreCommand(new ServiceLocator([
+            'foo' => static fn (): object => $store,
+        ]));
 
         $tester = new CommandTester($command);
 
@@ -124,5 +122,154 @@ final class SetupStoreCommandTest extends TestCase
         ]);
 
         $this->assertStringContainsString('The "foo" store was set up successfully.', $tester->getDisplay());
+    }
+
+    public function testCommandPassesOptionsToTheStore()
+    {
+        $store = $this->createMock(ManagedStoreInterface::class);
+        $store->expects($this->once())->method('setup')->with([
+            'forceDatabaseCreation' => true,
+            'batchSize' => 100,
+            'name' => 'foo',
+            'flag' => true,
+        ]);
+
+        $command = new SetupStoreCommand(new ServiceLocator([
+            'foo' => static fn (): object => $store,
+        ]));
+
+        $tester = new CommandTester($command);
+
+        $tester->execute([
+            'store' => 'foo',
+            '--option' => ['forceDatabaseCreation=true', 'batchSize=100', 'name=foo', 'flag'],
+        ]);
+
+        $this->assertStringContainsString('The "foo" store was set up successfully.', $tester->getDisplay());
+    }
+
+    public function testCommandRejectsOptionWithoutName()
+    {
+        $store = $this->createMock(ManagedStoreInterface::class);
+        $store->expects($this->never())->method('setup');
+
+        $command = new SetupStoreCommand(new ServiceLocator([
+            'foo' => static fn (): object => $store,
+        ]));
+
+        $tester = new CommandTester($command);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The option "=true" must be given as "name=value".');
+
+        $tester->execute([
+            'store' => 'foo',
+            '--option' => ['=true'],
+        ]);
+    }
+
+    public function testCommandSuggestsStoreNameForServiceId()
+    {
+        $command = new SetupStoreCommand(new ServiceLocator([
+            'blog' => fn (): object => $this->createMock(ManagedStoreInterface::class),
+        ]));
+
+        $tester = new CommandTester($command);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The "ai.store.postgres.blog" store does not exist, did you mean "blog"?');
+        $tester->execute([
+            'store' => 'ai.store.postgres.blog',
+        ], ['interactive' => false]);
+    }
+
+    public function testCommandDoesNotResolveServiceIdMatchingMultipleStores()
+    {
+        $command = new SetupStoreCommand(new ServiceLocator([
+            'blog' => fn (): object => $this->createMock(ManagedStoreInterface::class),
+            'postgres.blog' => fn (): object => $this->createMock(ManagedStoreInterface::class),
+        ]));
+
+        $tester = new CommandTester($command);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The "ai.store.postgres.blog" store does not exist, did you mean "blog", "postgres.blog"?');
+        $tester->execute([
+            'store' => 'ai.store.postgres.blog',
+        ], ['interactive' => false]);
+    }
+
+    public function testCommandSuggestsAlternativesForUnknownStore()
+    {
+        $command = new SetupStoreCommand(new ServiceLocator([
+            'default' => fn (): object => $this->createMock(ManagedStoreInterface::class),
+            'blog' => fn (): object => $this->createMock(ManagedStoreInterface::class),
+        ]));
+
+        $tester = new CommandTester($command);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The "blgo" store does not exist, did you mean "blog"?');
+        $tester->execute([
+            'store' => 'blgo',
+        ], ['interactive' => false]);
+    }
+
+    public function testCommandAsksForMissingStore()
+    {
+        $store = $this->createMock(ManagedStoreInterface::class);
+        $store->expects($this->once())->method('setup');
+
+        $command = new SetupStoreCommand(new ServiceLocator([
+            'default' => fn (): object => $this->createMock(ManagedStoreInterface::class),
+            'blog' => static fn (): object => $store,
+        ]));
+
+        $tester = new CommandTester($command);
+        $tester->setInputs(['blog']);
+        $tester->execute([]);
+
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString('Which store do you want to use?', $display);
+        $this->assertStringContainsString('The "blog" store was set up successfully.', $display);
+    }
+
+    public function testCommandProposesAlternativesForUnknownStore()
+    {
+        $store = $this->createMock(ManagedStoreInterface::class);
+        $store->expects($this->once())->method('setup');
+
+        $command = new SetupStoreCommand(new ServiceLocator([
+            'default' => fn (): object => $this->createMock(ManagedStoreInterface::class),
+            'blog' => static fn (): object => $store,
+        ]));
+
+        $tester = new CommandTester($command);
+        $tester->setInputs(['']);
+        $tester->execute([
+            'store' => 'blgo',
+        ]);
+
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString('The "blgo" store does not exist.', $display);
+        $this->assertStringContainsString('[blog]', $display);
+        $this->assertStringContainsString('The "blog" store was set up successfully.', $display);
+    }
+
+    public function testCommandSelectsStoreByChoiceIndex()
+    {
+        $store = $this->createMock(ManagedStoreInterface::class);
+        $store->expects($this->once())->method('setup');
+
+        $command = new SetupStoreCommand(new ServiceLocator([
+            'default' => fn (): object => $this->createMock(ManagedStoreInterface::class),
+            'blog' => static fn (): object => $store,
+        ]));
+
+        $tester = new CommandTester($command);
+        $tester->setInputs(['1']);
+        $tester->execute([]);
+
+        $this->assertStringContainsString('The "blog" store was set up successfully.', $tester->getDisplay());
     }
 }

@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\McpBundle\Tests\Client;
 
-use Mcp\Client;
+use Mcp\Client\Client;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\Client\McpClient;
 use Symfony\AI\McpBundle\Client\ServerConnection;

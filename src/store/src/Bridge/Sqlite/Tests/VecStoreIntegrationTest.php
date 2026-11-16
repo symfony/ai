@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\Store\Bridge\Sqlite\Tests;
 
-use Symfony\AI\Store\Bridge\Sqlite\Distance;
+use Symfony\AI\Store\Bridge\Sqlite\Metric;
 use Symfony\AI\Store\Bridge\Sqlite\VecStore;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\AI\Store\Test\AbstractStoreIntegrationTestCase;
@@ -35,6 +35,6 @@ final class VecStoreIntegrationTest extends AbstractStoreIntegrationTestCase
             static::markTestSkipped('sqlite-vec extension is not available.');
         }
 
-        return new VecStore($pdo, 'test_vectors', Distance::Cosine, 3);
+        return new VecStore($pdo, 'test_vectors', Metric::Cosine, 3);
     }
 }

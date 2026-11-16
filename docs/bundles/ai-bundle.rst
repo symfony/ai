@@ -6,7 +6,6 @@ Symfony integration bundle for Symfony AI components.
 Integrating:
 
 * `Symfony AI Agent`_
-* `Symfony AI Chat`_
 * `Symfony AI Platform`_
 * `Symfony AI Store`_
 
@@ -130,10 +129,9 @@ Advanced Example with Multiple Agents
                     - { mcp_server: 'research.filesystem' } # Tools of a remote MCP server configured under "mcp.clients"
                 fault_tolerant_toolbox: false # Disables fault tolerant toolbox, default is true
                 max_tool_calls: 75 # Cap of tool-calling iterations per agent call (default 50); set to null to disable the limit
-                exclude_tool_messages: true # Drops tool call and tool result messages from the conversation history, default is false
             search_agent:
                 platform: 'ai.platform.perplexity'
-                model: 'sonar'
+                model: 'fast'
                 tools: false
             audio:
                 platform: 'ai.platform.elevenlabs'
@@ -177,7 +175,7 @@ Advanced Example with Multiple Agents
             research:
                 loader: 'Symfony\AI\Store\Document\Loader\TextFileLoader'
                 vectorizer: 'ai.vectorizer.mistral_embeddings'
-                store: 'ai.store.memory.research'
+                store: 'ai.store.cache.research'
 
             # ConfiguredSourceIndexer: loader + pre-configured source, call index() with no arguments
             docs:
@@ -273,13 +271,10 @@ this platform allows to reduce network calls / resource consumption:
 Store Dependency Injection
 --------------------------
 
-When using multiple stores in your application, the AI Bundle provides flexible dependency injection through store aliases.
-This allows you to inject specific stores into your services without conflicts, even when stores share the same name across different types.
-
-For each configured store, the bundle automatically creates two types of aliases:
-
-1. **Simple alias**: ``StoreInterface $storeName`` - Direct reference by store name
-2. **Type-prefixed alias**: ``StoreInterface $typeStoreName`` - Reference with store type prefix in camelCase
+When using multiple stores in your application, the AI Bundle registers an alias for each store,
+named after the store, to inject it into your services. Store names must be unique across all store
+types, so each name points to exactly one store. Names like ``blog_store`` and ``blogStore`` count as
+the same, because both lead to the ``StoreInterface $blogStore`` alias.
 
 .. code-block:: yaml
 
@@ -288,36 +283,26 @@ For each configured store, the bundle automatically creates two types of aliases
             memory:
                 main:
                     strategy: 'cosine'
-                products:
-                    strategy: 'manhattan'
             chromadb:
-                main:
+                documents:
                     collection: 'documents'
 
-From the configuration above, the following aliases are automatically registered:
-
-- ``StoreInterface $main`` - References the memory store (first occurrence)
-- ``StoreInterface $memoryMain`` - Explicitly references the memory store
-- ``StoreInterface $chromadbMain`` - Explicitly references the chromadb store
-- ``StoreInterface $products`` - References the memory products store
-- ``StoreInterface $memoryProducts`` - Explicitly references the memory products store
-
-You can inject stores into your services using the generated aliases::
+From the configuration above, the bundle registers ``StoreInterface $main`` for the memory store and
+``StoreInterface $documents`` for the chromadb store::
 
     use Symfony\AI\Store\StoreInterface;
 
     final readonly class DocumentService
     {
         public function __construct(
-            private StoreInterface $main,              // Uses memory store (first occurrence)
-            private StoreInterface $chromadbMain,      // Explicitly uses chromadb store
-            private StoreInterface $memoryProducts,    // Explicitly uses memory products store
+            private StoreInterface $main,
+            private StoreInterface $documents,
         ) {
         }
     }
 
-When multiple stores share the same name (like ``main`` in the example), the simple alias (``$main``) will reference the first occurrence.
-Use type-prefixed aliases (``$memoryMain``, ``$chromadbMain``) for explicit disambiguation.
+The same applies to message stores: their names must be unique across all message store types, and
+each one gets a ``MessageStoreInterface`` alias named after it.
 
 Model Configuration
 -------------------
@@ -358,17 +343,21 @@ You can also define models for the vectorizer this way:
             embeddings:
                 model: 'text-embedding-3-small?dimensions=512&encoding_format=float'
 
-Adding Models to a Platform's Catalog
--------------------------------------
+.. _ai-bundle-model-catalog:
 
-Each platform ships with a built-in model catalog that knows the available models and their
-capabilities. When you use a model that is not part of the built-in catalog – for example a
-local model served by `LM Studio`_ or `Ollama`_, or a freshly released model that has not been
-added to the bridge yet – you can register it through the ``model`` configuration key without
-having to wait for a new release or override the catalog service.
+Configuring the Model Catalog
+-----------------------------
 
-Models are added per platform, keyed by the platform name. For each model you provide the model
-class and the list of capabilities it supports:
+Each platform uses a model catalog that knows the available models and their capabilities. You
+can change this catalog with the ``model_catalog`` option of the platform.
+
+Adding Models
+~~~~~~~~~~~~~
+
+Sometimes you need a model that is not part of the platform's bundled list (e.g. a local model
+served by `LM Studio`_, or a model that has not been added to the bridge yet). Add it with the
+``models`` option. For each model you provide the model class and the list of capabilities it
+supports:
 
 .. code-block:: yaml
 
@@ -377,37 +366,105 @@ class and the list of capabilities it supports:
         platform:
             lmstudio:
                 host_url: '%env(LMSTUDIO_HOST_URL)%'
-
-        model:
-            lmstudio:
-                qwen3-coder-next:
-                    class: 'Symfony\AI\Platform\Bridge\Generic\CompletionsModel'
-                    capabilities:
-                        - !php/const Symfony\AI\Platform\Capability::INPUT_MESSAGES
-                        - !php/const Symfony\AI\Platform\Capability::INPUT_IMAGE
-                        - !php/const Symfony\AI\Platform\Capability::OUTPUT_TEXT
-                        - !php/const Symfony\AI\Platform\Capability::OUTPUT_STREAMING
-                        - !php/const Symfony\AI\Platform\Capability::TOOL_CALLING
-                        - !php/const Symfony\AI\Platform\Capability::OUTPUT_STRUCTURED
+                model_catalog:
+                    models:
+                        qwen3-coder-next:
+                            class: 'Symfony\AI\Platform\Bridge\Generic\CompletionsModel'
+                            capabilities:
+                                - !php/const Symfony\AI\Platform\Capability::INPUT_MESSAGES
+                                - !php/const Symfony\AI\Platform\Capability::INPUT_IMAGE
+                                - !php/const Symfony\AI\Platform\Capability::OUTPUT_TEXT
+                                - !php/const Symfony\AI\Platform\Capability::OUTPUT_STREAMING
+                                - !php/const Symfony\AI\Platform\Capability::TOOL_CALLING
+                                - !php/const Symfony\AI\Platform\Capability::OUTPUT_STRUCTURED
 
         agent:
             coder:
                 platform: 'ai.platform.lmstudio'
                 model: 'qwen3-coder-next'
 
-The configured models are merged into the platform's built-in catalog and take precedence over
-models defined there with the same name, so you can also use this to override the capabilities of
-an existing model.
+The configured models take precedence over models with the same name in the platform's catalog,
+so you can also use this option to change the capabilities of an existing model.
 
-* ``class`` (string): The fully qualified class name of the model. It must extend
-  :class:`Symfony\\AI\\Platform\\Model`. For platforms based on the generic bridge, use
+* ``class`` (string): The fully qualified class name of the model, defaults to
+  :class:`Symfony\\AI\\Platform\\Model`. It must extend :class:`Symfony\\AI\\Platform\\Model`.
+  For platforms based on the generic bridge, use
   :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\CompletionsModel` for chat/completion models or
   :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\EmbeddingsModel` for embedding models.
 * ``capabilities`` (list): The :class:`Symfony\\AI\\Platform\\Capability` cases the model supports.
   At least one capability must be specified for each model.
 
+The ``models`` option works with every platform and catalog: the bundled list, a custom
+``service`` and a catalog that fetches its models from the provider API. The ``generic``,
+``openresponses`` and ``transformersphp`` platforms accept any model name, and the ``models``
+option gives such a model its exact capabilities.
+
+Using a Custom Catalog
+~~~~~~~~~~~~~~~~~~~~~~
+
+To use your own catalog, pass the ID of a service that implements
+:class:`Symfony\\AI\\Platform\\ModelCatalog\\ModelCatalogInterface`:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            openai:
+                api_key: '%env(OPENAI_API_KEY)%'
+                model_catalog:
+                    service: 'app.model_catalog'
+
+                # a string is short for the "service" option
+                # model_catalog: 'app.model_catalog'
+
+Fetching Models from the Provider API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``amazeeai``, ``deepgram``, ``elevenlabs``, ``fireworks``, ``higgsfield``, ``ollama``,
+``together`` and ``venice`` platforms always fetch their models from the provider API, so they
+have no ``api`` option.
+
+The ``edenai``, ``huggingface`` and ``openrouter`` platforms ship a bundled list of models and can
+also fetch the models from the API. They use the bundled list by default. Set the ``api`` option to use the API:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            openrouter:
+                api_key: '%env(OPENROUTER_API_KEY)%'
+                model_catalog:
+                    api: true
+
+Caching the Model Catalog
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A catalog that fetches its models from the provider API sends a request for each model lookup.
+Enable the ``cache`` option to store the lookups in a cache pool and reuse them across requests:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            ollama:
+                endpoint: '%env(OLLAMA_HOST_URL)%'
+                model_catalog:
+                    cache: true
+
+                    # "true" is short for:
+                    # cache:
+                    #     service: 'cache.app' # the cache pool that stores the lookups
+                    #     ttl: 3600            # lifetime of the cached lookups in seconds
+
+Lookups of unknown models are not cached. The models of the ``models`` option are not cached
+either, so changes to them apply right away. You can use the ``cache`` option with a catalog that
+fetches its models from the API or with a custom ``service``. A bundled list needs no cache, so
+the bundle throws an exception if you enable the cache for it.
+
 .. _`LM Studio`: https://lmstudio.ai/
-.. _`Ollama`: https://ollama.com/
 
 HTTP Client Configuration
 -------------------------
@@ -462,6 +519,7 @@ For more control, such as including tool definitions in the system prompt, use t
                 prompt:
                     text: 'You are a helpful assistant that can answer questions.'
                     include_tools: true # Include tool definitions at the end of the system prompt
+                tools: true
 
 The array format supports these options:
 
@@ -687,6 +745,8 @@ Key Differences
 Configuration
 ^^^^^^^^^^^^^
 
+The orchestrator, handoff and fallback agents must be defined under ``ai.agent``:
+
 .. code-block:: yaml
 
     # config/packages/ai.yaml
@@ -830,7 +890,18 @@ The ``ai:store:setup`` command prepares the required infrastructure for a store 
     $ php bin/console ai:store:setup <store>
 
     # Setup the chromadb store
-    $ php bin/console ai:store:setup ai.store.chromadb.default
+    $ php bin/console ai:store:setup default
+
+    # Pass a runtime option supported by the store
+    $ php bin/console ai:store:setup default --option forceDatabaseCreation=true
+
+The commands name a store by its configured name, e.g. ``default``. If you leave out the store,
+indexer or retriever, or give an unknown one, the command asks you to select one of the configured
+services and lists the closest matches first.
+
+The ``--option`` (or ``-o``) option takes ``name=value`` and can be repeated. The value is decoded
+as JSON when possible (e.g. ``true`` or ``100``), and a ``name`` without value is set to ``true``.
+The ``ai:store:drop`` command accepts the same option.
 
 .. note::
 
@@ -865,11 +936,12 @@ The ``ai:store:drop`` command drops the infrastructure for a store (e.g., remove
     $ php bin/console ai:store:drop <store> --force
 
     # Drop the chromadb store
-    $ php bin/console ai:store:drop ai.store.chromadb.default --force
+    $ php bin/console ai:store:drop default --force
 
 .. warning::
 
     The ``--force`` (or ``-f``) option is required to prevent accidental data loss.
+    Without it, the command asks for confirmation in interactive mode.
     This command will permanently delete all data in the store.
 
 .. note::
@@ -964,6 +1036,23 @@ the :class:`Symfony\\AI\\Agent\\Attribute\\AsOutputProcessor` attributes::
         }
     }
 
+Overriding the Model of a Call
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An agent uses its configured model by default. Pass the ``model`` option to use another model for a
+single call::
+
+    $result = $agent->call($messages, ['model' => 'gpt-4o']);
+
+The model must be available on the platform of the agent. If the option isn't a string, the call throws
+an :class:`Symfony\\AI\\Agent\\Exception\\InvalidArgumentException`.
+
+The agent removes the ``model`` option before it calls the platform, so output processors don't find it in
+the options of the :class:`Symfony\\AI\\Agent\\Output`.
+
+A multi-agent passes its options on to the orchestrator and to the agent that answers. With the ``model``
+option, all of them use that model, so it must be available on the platform of each of these agents.
+
 Register Tools
 ~~~~~~~~~~~~~~
 
@@ -995,8 +1084,39 @@ Some tools may require additional configuration even when installed as dedicated
 
         Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch:
             $retriever: '@ai.retriever.main'
-            # optionally customize the result header
-            # $promptTemplate: 'Here are the relevant results:'
+
+The SimilaritySearch tool returns a
+:class:`Symfony\\AI\\Agent\\Bridge\\SimilaritySearch\\SimilaritySearchResult`, which the agent serializes
+with the ``serializer`` service. By default, the model gets a JSON list of the documents with their id and metadata.
+To change what the model gets, register a normalizer for this class::
+
+    use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearchResult;
+    use Symfony\AI\Store\Document\VectorDocumentInterface;
+    use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+
+    final class SimilaritySearchResultNormalizer implements NormalizerInterface
+    {
+        public function normalize(mixed $data, ?string $format = null, array $context = []): array
+        {
+            return array_map(
+                static fn (VectorDocumentInterface $document): array => [
+                    'id' => $document->getId(),
+                    'text' => $document->getMetadata()->getText(),
+                ],
+                $data->getDocuments(),
+            );
+        }
+
+        public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
+        {
+            return $data instanceof SimilaritySearchResult;
+        }
+
+        public function getSupportedTypes(?string $format): array
+        {
+            return [SimilaritySearchResult::class => true];
+        }
+    }
 
 Creating Custom Tools
 ---------------------
@@ -1040,7 +1160,7 @@ agent without any tools.
 
 To restrict the access to a tool, you can use the :class:`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool` attribute, which
 works similar to :class:`Symfony\\Component\\Security\\Http\\Attribute\\IsGranted` attribute in `symfony/security-http`. For this to work,
-make sure you have `symfony/security-core` installed in your project.
+make sure you have the SecurityBundle (``symfony/security-bundle``) installed in your project.
 
 ::
 
@@ -1059,6 +1179,33 @@ make sure you have `symfony/security-core` installed in your project.
 The attribute :class:`Symfony\\AI\\AiBundle\\Security\\Attribute\\IsGrantedTool` can be added on class- or method-level - even multiple
 times. If multiple attributes apply to one tool call, a logical AND is used and all access
 decisions have to grant access.
+
+Reusing MCP Schema Constraints
+------------------------------
+
+When ``mcp/sdk`` is installed, agent tools also use parameter constraints declared with
+``Mcp\Server\Capability\Attribute\Schema``::
+
+    use Mcp\Server\Capability\Attribute\Schema;
+    use Symfony\AI\Agent\Toolbox\Attribute\AsTool;
+
+    #[AsTool('search', 'Search articles')]
+    final class Search
+    {
+        public function __invoke(
+            string $query,
+            #[Schema(enum: ['article', 'advertisement'])] ?string $kind = null,
+            #[Schema(minimum: 1, maximum: 200)] int $limit = 20,
+        ): array {
+            // ...
+        }
+    }
+
+This lets a service shared with an MCP server declare its constraints once. The SDK's
+``definition`` argument contributes a raw schema fragment. If a parameter also carries
+``Symfony\AI\Platform\Contract\JsonSchema\Attribute\Schema``, its explicitly declared
+keywords take precedence, including complete ``enum`` lists. Method-level MCP schemas
+are not imported, and installing the MCP SDK is optional.
 
 Tool Execution Strategy
 -----------------------
@@ -1141,6 +1288,12 @@ bundles share one connection:
 The list stays explicit: an agent listing only ``mcp_server`` entries gets only the tools of those
 servers. To offer local tools next to them, list those tools as well. A server that cannot be reached
 contributes no tools; lower its ``init_timeout`` and ``max_retries`` to notice that sooner.
+
+The reason is only logged as an error on the application's default logger. In a long-running process,
+e.g. a Messenger worker, the server is then not asked again for the next 60 seconds; with PHP-FPM every
+request asks it again. To find out why an agent has fewer tools than expected, check the log and run
+``php bin/console debug:mcp --client=research --server=filesystem``, which connects to the server and
+prints what it advertises.
 
 Token Usage Tracking
 --------------------
@@ -1359,6 +1512,11 @@ the profiler, in the ``ai`` category. A platform invocation spans until its resu
 until its stream is fully consumed, so it includes the time waiting for the model's response. An
 agent call spans the consumption of its execution, since the agent only runs while it is consumed.
 
+Next to the platform calls, the registered tools and the tool calls, the panel lists the calls
+collected for agents, message stores and stores, as well as every configured component
+with the service id it was registered under. Components without a configured instance are
+omitted from both the toolbar and the panel.
+
 Testing agents
 ~~~~~~~~~~~~~~
 
@@ -1421,7 +1579,7 @@ reported - there is nothing to parse::
     $this->assertGreaterThan(0, $call['metadata']->get('token_usage')->getPromptTokens());
 
 Next to ``getPlatformCalls()``, ``getToolCalls()`` and ``getTools()``, the collector exposes the
-agents, chats, message stores and stores that took part in the request.
+agents, message stores and stores that took part in the request.
 
 .. note::
 
@@ -1433,8 +1591,9 @@ agents, chats, message stores and stores that took part in the request.
 Message stores
 --------------
 
-Message stores are critical to store messages sent to agents in the short / long term, they can be configured
-and reused in multiple chats, providing the capacity to agents to keep previous interactions.
+Message stores keep the conversations of your agents across requests. The agent loads the conversation with the ID
+of the message bag and saves it with each new message. See
+:ref:`Storing Conversations <agent-storing-conversations>` for how this works.
 
 Configuring message stores
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1449,29 +1608,36 @@ Message stores are defined in the ``message_store`` section of your configuratio
             cache:
                 youtube:
                     service: 'cache.app'
+                    # prefix of the cache keys, defaults to the name of the message store
                     key: 'youtube'
 
-Chats
------
-
-Chats are the entrypoint when it comes to sending messages to agents and retrieving content (mostly text)
-that contains the response from the agent.
-
-Each chat requires to define an agent and a message store.
-
-Configuring Chats
-~~~~~~~~~~~~~~~~~
-
-Chats are defined in the ``chat`` section of your configuration:
+Use the ``message_store`` option of an agent to continue and save its conversations in the store:
 
 .. code-block:: yaml
 
     ai:
         # ...
-        chat:
+        agent:
             youtube:
-                agent: 'ai.agent.youtube'
+                model: 'gpt-5-mini'
                 message_store: 'ai.message_store.cache.youtube'
+
+The calling code then sends only the new message, with the ID of the conversation::
+
+    use Symfony\AI\Platform\Message\Message;
+    use Symfony\AI\Platform\Message\MessageBag;
+
+    $messages = (new MessageBag(Message::ofUser('And what about the second video?')))->withId($conversationId);
+
+    $answer = $agent->call($messages)->asText();
+
+The cache store needs no setup. Other message stores need a table, an index or a collection (e.g. Doctrine DBAL).
+Create it before the first conversation, and remove it with all its conversations when you no longer need it:
+
+.. code-block:: terminal
+
+    $ php bin/console ai:message-store:setup ai.message_store.doctrine.dbal.main
+    $ php bin/console ai:message-store:drop ai.message_store.doctrine.dbal.main --force
 
 Speech
 ------
@@ -1547,6 +1713,5 @@ When only STT is configured (no TTS), the agent returns the same result type as 
 
 .. _`Model Context Protocol`: https://modelcontextprotocol.io
 .. _`Symfony AI Agent`: https://github.com/symfony/ai-agent
-.. _`Symfony AI Chat`: https://github.com/symfony/ai-chat
 .. _`Symfony AI Platform`: https://github.com/symfony/ai-platform
 .. _`Symfony AI Store`: https://github.com/symfony/ai-store

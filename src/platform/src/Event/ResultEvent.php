@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Event;
 
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ProviderInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\Contracts\EventDispatcher\Event;
 
@@ -31,7 +32,13 @@ final class ResultEvent extends Event
         private DeferredResult $deferredResult,
         private array $options = [],
         private readonly array|string|object $input = [],
+        private readonly ?ProviderInterface $provider = null,
     ) {
+    }
+
+    public function getProvider(): ?ProviderInterface
+    {
+        return $this->provider;
     }
 
     public function getModel(): Model

@@ -3,7 +3,8 @@ MCP Bundle
 
 Symfony integration bundle for `Model Context Protocol`_ using the official MCP SDK `mcp/sdk`_.
 
-Supports MCP capabilities (tools, prompts, resources, resource templates) as server via HTTP transport and STDIO.
+Your application can act as an MCP server that exposes tools, prompts, resources and resource templates,
+and as an MCP client of other MCP servers, both over HTTP or STDIO.
 
 Installation
 ------------
@@ -68,8 +69,8 @@ Tools
 
 Actions that can be executed::
 
-    use Mcp\Capability\Attribute\McpTool;
-    use Mcp\Capability\Attribute\Schema;
+    use Mcp\Server\Capability\Attribute\McpTool;
+    use Mcp\Server\Capability\Attribute\Schema;
 
     class CurrentTimeTool
     {
@@ -93,7 +94,7 @@ about the current request and session, or communicate with the MCP client.
 
     namespace App\Mcp;
 
-    use Mcp\Capability\Attribute\McpTool;
+    use Mcp\Server\Capability\Attribute\McpTool;
     use Mcp\Server\RequestContext;
 
     final class ClientInfoTool
@@ -144,7 +145,7 @@ Prompts
 
 System instructions for AI context::
 
-    use Mcp\Capability\Attribute\McpPrompt;
+    use Mcp\Server\Capability\Attribute\McpPrompt;
 
     class TimePrompts
     {
@@ -162,7 +163,7 @@ Resources
 
 Static data that can be read::
 
-    use Mcp\Capability\Attribute\McpResource;
+    use Mcp\Server\Capability\Attribute\McpResource;
 
     class TimeResource
     {
@@ -182,7 +183,7 @@ Resource Templates
 
 Dynamic resources with parameters::
 
-    use Mcp\Capability\Attribute\McpResourceTemplate;
+    use Mcp\Server\Capability\Attribute\McpResourceTemplate;
 
     class TimeResourceTemplate
     {
@@ -202,7 +203,7 @@ All capabilities are collected from the service container when it is compiled: t
 reflected once, including the generation of the tool input schemas, and the result is cached in the
 compiled container. Classes that are not registered as services (for example excluded in
 ``services.yaml`` or shipped by a third-party package) must be registered as services to be exposed.
-For fully custom registration logic you can implement ``Mcp\Capability\Registry\Loader\LoaderInterface``;
+For fully custom registration logic you can implement ``Mcp\Server\Capability\Registry\Loader\LoaderInterface``;
 implementations are autoconfigured with the ``mcp.loader`` tag and run when the server is built.
 
 Exposing capabilities
@@ -293,7 +294,7 @@ Access control is plain Symfony security — the routes have distinct, stable pa
             - { path: ^/mcp/editors, roles: ROLE_EDITOR }
 
 Each server gets its own registry, session store and HTTP route (named ``_mcp_endpoint_<name>``), and its
-own services under ``mcp.server.<name>.*``. Autowire a specific server with ``Mcp\Server $editorsServer``.
+own services under ``mcp.server.<name>.*``. Autowire a specific server with ``Mcp\Server\Server $editorsServer``.
 
 .. caution::
 
@@ -605,11 +606,29 @@ The ``Host`` header is still checked against ``allowed_hosts``. ``allowed_origin
 CORS headers to the response, so a browser client also needs them from your application, for
 example with NelmioCorsBundle.
 
+Request Body Size
+.................
+
+The HTTP transport rejects, with a ``413`` response, a request body larger than the limit of the SDK.
+Tools that receive files or other big payloads as arguments (base64 adds about a third on top of the
+raw size) can raise the limit per server, in bytes:
+
+.. code-block:: yaml
+
+    mcp:
+        servers:
+            default:
+                http:
+                    max_body_bytes: 20971520 # 20 MiB
+
+PHP's ``post_max_size`` and the limits of the web server or reverse proxy in front of the
+application (like ``client_max_body_size`` on nginx) still apply.
+
 Session Storage
 ...............
 
 The MCP Bundle supports four types of session storage, configured per server. Every server needs its own
-storage — see the caution in `Multiple Servers`_.
+storage — see the caution in `Multiple Servers`_. You can also run a server without sessions.
 
 **File Storage** (default) - Stores sessions on the filesystem:
 
@@ -684,6 +703,35 @@ See the `Symfony Cache documentation`_ for more details on configuring cache poo
 This wraps the configured Symfony session handler (e.g. Redis, database, filesystem — whatever
 your application uses for HTTP sessions) with a JSON envelope for application-level TTL.
 Expired sessions are cleaned up lazily on read.
+
+**No Sessions** - Serves HTTP clients of the ``initialize`` handshake without a session. Your servers behind
+a load balancer then need no shared store:
+
+.. code-block:: yaml
+
+    mcp:
+        servers:
+            default:
+                session:
+                    store: none
+
+The server answers ``initialize`` without an ``Mcp-Session-Id`` header and answers ``GET`` and ``DELETE``
+requests with HTTP ``405``. What a handler stores in the session is gone after the request.
+
+Handlers can't send requests to the client (elicitation, sampling or roots), and clients can't subscribe to
+resources or set a log level. See `Serving Without Sessions`_ in the SDK documentation for what fails and how.
+This option doesn't change the STDIO transport or the 2026-07-28 revision.
+
+Session Owner
+.............
+
+A session only serves the user that opened it. When a firewall authenticates the request, the bundle passes
+the user identifier to the SDK. If another user sends the same session id, the server answers with HTTP
+``404``, as it does for an unknown session. A session opened without an authenticated user only serves
+requests without one. The user identifier takes precedence over the principal of an SDK access token.
+
+To identify the owner in another way (e.g. by tenant), set the ``mcp.principal`` request attribute to a
+non-empty string. The bundle then ignores the user identifier.
 
 Session Locking
 ...............
@@ -991,7 +1039,14 @@ Failures surface as bundle exceptions naming the client and server:
 ``Symfony\AI\McpBundle\Exception\ExceptionInterface``.
 
 The HTTP transport uses the application's PSR-18 client (``psr18.http_client``, provided by
-``symfony/http-client``) unless the ``http_client`` option points at another service.
+``symfony/http-client``) unless the ``http_client`` option points at another service. The SDK turns off
+redirects on a ``Psr18Client`` of ``symfony/http-client``, so a ``3xx`` response fails with an error that
+names the status and the target. Configure the final URL of the server.
+
+.. warning::
+
+    Other PSR-18 clients (e.g. Guzzle) are used as they are. If such a client follows redirects to another
+    origin, it sends the configured ``headers`` to that origin. Turn off redirects on the client.
 
 Server-initiated Requests
 .........................
@@ -1089,7 +1144,7 @@ Configuration
                     lifetime: 30.0 # Seconds a stream is held; 0 means until the client or runtime ends it
 
                 session: # The handshake era's sessions; the modern era has none
-                    store: file # 'file', 'memory', 'cache' or 'framework' (default: file)
+                    store: file # 'file', 'memory', 'cache', 'framework' or 'none' (default: file)
                     directory: '%kernel.cache_dir%/mcp-sessions/default' # File store (default: cache_dir/mcp-sessions/<name>)
                     cache_pool: 'cache.mcp.sessions' # Cache pool service for the cache store (PSR-16)
                     prefix: 'mcp-default-' # Key prefix for the cache/framework stores and a factory lock (default: mcp-<name>-)
@@ -1254,17 +1309,17 @@ Available Events
 
 The MCP SDK dispatches the following events when capabilities are registered:
 
-- ``Mcp\Event\ToolListChangedEvent`` - When a tool is registered
-- ``Mcp\Event\ResourceListChangedEvent`` - When a resource is registered
-- ``Mcp\Event\ResourceTemplateListChangedEvent`` - When a resource template is registered
-- ``Mcp\Event\PromptListChangedEvent`` - When a prompt is registered
+- ``Mcp\Server\Event\ToolListChangedEvent`` - When a tool is registered
+- ``Mcp\Server\Event\ResourceListChangedEvent`` - When a resource is registered
+- ``Mcp\Server\Event\ResourceTemplateListChangedEvent`` - When a resource template is registered
+- ``Mcp\Server\Event\PromptListChangedEvent`` - When a prompt is registered
 
 Listening to Events
 ~~~~~~~~~~~~~~~~~~~
 
 You can create event listeners to respond to capability changes::
 
-    use Mcp\Event\ToolListChangedEvent;
+    use Mcp\Server\Event\ToolListChangedEvent;
     use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
     #[AsEventListener]
@@ -1286,3 +1341,4 @@ The events are simple marker events that notify when lists have changed, but don
 .. _`MCP Server List`: https://modelcontextprotocol.io/examples
 .. _`Symfony Cache documentation`: https://symfony.com/doc/current/components/cache.html
 .. _`Symfony Lock component`: https://symfony.com/doc/current/components/lock.html
+.. _`Serving Without Sessions`: https://github.com/modelcontextprotocol/php-sdk/blob/main/docs/run/sessions.md#serving-without-sessions

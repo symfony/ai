@@ -94,6 +94,42 @@ class PathValidatorTest extends TestCase
         $validator->validate('sample.txt');
     }
 
+    public function testValidateDeniesPhtmlByDefault()
+    {
+        $validator = new PathValidator($this->fixturesPath);
+        $this->expectException(PathSecurityException::class);
+        $this->expectExceptionMessage('Extension "phtml" is not allowed');
+
+        $validator->validate('shell.phtml', mustExist: false);
+    }
+
+    public function testValidateDirectoryContentsThrowsOnDeniedExtension()
+    {
+        $validator = new PathValidator(
+            $this->fixturesPath,
+            deniedExtensions: ['txt'],
+            deniedPatterns: [],
+        );
+        $this->expectException(PathSecurityException::class);
+        $this->expectExceptionMessage('Extension "txt" is not allowed');
+
+        $validator->validateDirectoryContents($this->fixturesPath.'/nested');
+    }
+
+    public function testValidateDirectoryContentsThrowsWhenExtensionNotInAllowedList()
+    {
+        $validator = new PathValidator(
+            $this->fixturesPath,
+            allowedExtensions: ['md'],
+            deniedExtensions: [],
+            deniedPatterns: [],
+        );
+        $this->expectException(PathSecurityException::class);
+        $this->expectExceptionMessage('Extension "txt" is not in the allowed list');
+
+        $validator->validateDirectoryContents($this->fixturesPath.'/nested');
+    }
+
     public function testValidateThrowsOnDeniedPattern()
     {
         $validator = new PathValidator(

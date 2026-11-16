@@ -62,6 +62,30 @@ final class ModelCatalog extends AbstractModelCatalog
                 'class' => Voyage::class,
                 'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS],
             ],
+            'rerank-3' => [
+                'class' => Reranker::class,
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::RERANKING],
+            ],
+            'rerank-3-lite' => [
+                'class' => Reranker::class,
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::RERANKING],
+            ],
+            'rerank-2' => [
+                'class' => Reranker::class,
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::RERANKING],
+            ],
+            'rerank-2-lite' => [
+                'class' => Reranker::class,
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::RERANKING],
+            ],
+            'rerank-2.5' => [
+                'class' => Reranker::class,
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::RERANKING],
+            ],
+            'rerank-2.5-lite' => [
+                'class' => Reranker::class,
+                'capabilities' => [Capability::INPUT_MULTIPLE, Capability::RERANKING],
+            ],
             'voyage-multimodal-3' => [
                 'class' => Voyage::class,
                 'capabilities' => [

@@ -39,7 +39,7 @@ foreach (Movies::all() as $movie) {
 }
 
 $platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$vectorizer = new Vectorizer($platform, 'BAAI/bge-small-en-v1.5?task=feature-extraction', logger());
+$vectorizer = new Vectorizer($platform, 'BAAI/bge-small-en-v1.5', logger());
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
 $indexer->index($documents);
 

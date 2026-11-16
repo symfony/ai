@@ -4,8 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.openai.com/v1/responses",
-                "signature": "ddaba7cde37b707b840e62a47f152d37",
-                "signature_v2": "27b2375b9426f457ba7f70759bcfa546",
+                "signature": "0abf85b72098d78a6fe6a3cdb1f89b37",
+                "signature_v2": "af3e329c65124cd9788361ad623139be",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -14,7 +14,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"tools\":[{\"type\":\"function\",\"name\":\"get_order\",\"description\":\"Get the status of an order by its reference and shipping destination\",\"parameters\":{\"type\":\"object\",\"properties\":{\"reference\":{\"type\":\"string\",\"description\":\"Order reference, e.g. \\u0022ORD-2026-0042\\u0022\",\"pattern\":\"^ORD-\\\\d{4}-\\\\d{4}$\"},\"destination\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\",\"maxLength\":255},\"countryCode\":{\"type\":\"string\",\"pattern\":\"[A-Z]{2}\"}},\"required\":[\"city\",\"countryCode\"],\"additionalProperties\":false}},\"required\":[\"reference\",\"destination\"],\"additionalProperties\":false}}],\"model\":\"gpt-5-mini\",\"input\":[{\"role\":\"user\",\"content\":\"Look up the order with reference \\u0022ORD-2026-0042\\u0022, shipping to Berlin, DE.\"}]}"
+                "body": "{\"tools\":[{\"type\":\"function\",\"name\":\"get_order\",\"description\":\"Get the status of an order by its reference and shipping destination\",\"parameters\":{\"type\":\"object\",\"properties\":{\"reference\":{\"type\":\"string\",\"description\":\"Order reference, e.g. \\u0022ORD-2026-0042\\u0022\",\"pattern\":\"^ORD-\\\\d{4}-\\\\d{4}$\"},\"destination\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\",\"maxLength\":255},\"countryCode\":{\"type\":\"string\",\"pattern\":\"^[A-Z]{2}$\"}},\"required\":[\"city\",\"countryCode\"],\"additionalProperties\":false}},\"required\":[\"reference\",\"destination\"],\"additionalProperties\":false}}],\"model\":\"gpt-5-mini\",\"input\":[{\"role\":\"user\",\"content\":\"Look up the order with reference \\u0022ORD-2026-0042\\u0022, shipping to Berlin, DE.\"}]}"
             },
             "response": {
                 "status": 200,
@@ -78,8 +78,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.openai.com/v1/responses",
-                "signature": "72cb01bbcfb117df0d0f85289edd8a5a",
-                "signature_v2": "91f263e46b911e00839aeee01148cf96",
+                "signature": "f947b25cd006ad8562d24a2aa4590b6f",
+                "signature_v2": "a2ae8a90840f9cb3df4e4ec702e414a7",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -88,7 +88,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"tools\":[{\"type\":\"function\",\"name\":\"get_order\",\"description\":\"Get the status of an order by its reference and shipping destination\",\"parameters\":{\"type\":\"object\",\"properties\":{\"reference\":{\"type\":\"string\",\"description\":\"Order reference, e.g. \\u0022ORD-2026-0042\\u0022\",\"pattern\":\"^ORD-\\\\d{4}-\\\\d{4}$\"},\"destination\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\",\"maxLength\":255},\"countryCode\":{\"type\":\"string\",\"pattern\":\"[A-Z]{2}\"}},\"required\":[\"city\",\"countryCode\"],\"additionalProperties\":false}},\"required\":[\"reference\",\"destination\"],\"additionalProperties\":false}}],\"model\":\"gpt-5-mini\",\"input\":[{\"role\":\"user\",\"content\":\"Look up the order with reference \\u0022ORD-2026-0042\\u0022, shipping to Berlin, DE.\"},{\"id\":\"rs_04e8cdce44ebc2ac006aa7006b1dec87d2b1350e313cd5c4a9\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABqpwBsNEFKole0CwKUm6_bNQ3xy_45IV4yWiXMbfNWsjyRqbDU8lv-8nnyhmjr6ybybGghOFgNhMul-DGiMvKJO1KxSAPECSJBn-8QGyRfRu69sjPT3eprFuqjeyOSURP4Xj4rIIzEZ7WCvES8lxvOPnLSScINOCb5L0a02GcIyjmArrfOJaGaF3y_YPPuqo9j4nPExy0C5bY15TMrOTWZu0damAo_0RejhMQx4mMTw47yrx5kvVJFb7PQfFl5MAMnBRbl4VD8NuyrVF27wCZr1mw5oPkIbBb4Bcq6POX5YUZCc8QUw6haq8a0mNlyvlF7x99IsMp7-O6xLS0oNJimjW8FDDDP0uXhbl09UgN0n9UhbzR5j_VYn3TtSzJ0OXcn2mIJ3tcv1BNEyWQ9SySuNosxv4nCkD2fuIa_ONPqHOSuuTqgdoDBuImwgD83CuJzXdiCDtqxAz_iQO1VtV5j9Z3s5-Cfiy5rqxRnt-Y5oXdEgiT-j_re7QJ0gXqxHHjjv3cn0bB4ph9hwWQLNV_mYRpSJsfrhspDv_BKNMV8VaDPVqQog_BnmUDNZttegJ0olTiFls2x7WEFk9DpBcB_gg3eRKP0fkgtX213CVXHKzarF6ZNxe9UbqeSVzNzaCPFvNwADlCcWCvJWTu9d0cVOSdCqs7w-VZD01U8x6b5o81HX055Lsn6FE3uhgOZHGlbt0RmPAaoeQxgSX9ty0RGhQ-cW5bEjduUrQLNJUs57GTOklQhZrtyib4z6FhkZXleR5Rz6f-SoJ3S3JZzU6DzWUouEZgfxjhYvd7cILCMxtNX8jkCKXAI4hPBvKtv52ROWqaYO0rA7-mjtk6YzgsBjPkR_USyYverph6Z89GIBwEeSUQ0N8uWLEvsDKsXTDCh4qlRY0OPVTkf_Qy525VjC_SqqClVx2sZhaec0fAVP5evqXtGmwd2MJpZSR9_zm9ouOZl5Sv_P_GCKZH9UZX8AvUvr7-B0afiGF8m9F_i8eHGlo8uCQQ0ySYpuJykZhrVKtE_LY5YfwGkoVsCDqQQu-iqQFFYv0vdJ67lIKpcUFtmtiBp7rKT3HUnkZds5LdZ3wC7olmr9W1YwZ98Zq3QtgeVJbNWbUV2Bvza0Ybi0JAeBKY4RRXIk9k-utkEXabpxJrugfAmLvEsrpB9OV2j1Myb2O0H9WDKB5IV6286JBB4rDESaAjNt04OGueJBryJsrDl_wC_0-VaoG0IqQi_Vnty2vM6J8avidHJtXHH5hO0xfx7P9DUxXp23DyHCAd7G61WZ3JNhYkYy6l4cDXr6o-t7gZGWqt1ZIXtwQzcqFyovqb7FOLoEckh8xe447uGqgtuwOpYgbR_hcmdYf3V7LhxfzGAy5MgcSYvpIyR0u-t_jrhM0eTLunYrlKzqUGkpJVTcmYixumcct3tRUVELirMz_sQI_vTIuBONG8hF2GEG0VYCBH_w3gnUSXNH3CFNFXAX82odMJkeuy-IyrKsJo00Yfc5zT3PvUfiS5XNDWWy-MgklhD4Z7yc8L3J5WG5hK5t6HnDsHU0TyWjrzs_S_eKsFFnFJDAsLn5nrvBLF6RmfpVL6rRqjLrzP5_vM9HLCg\",\"summary\":[]},{\"arguments\":\"{\\u0022reference\\u0022:\\u0022ORD-2026-0042\\u0022,\\u0022destination\\u0022:{\\u0022city\\u0022:\\u0022Berlin\\u0022,\\u0022countryCode\\u0022:\\u0022DE\\u0022}}\",\"call_id\":\"call_vwxpEcrPit6xPnimJhMI5683\",\"name\":\"get_order\",\"type\":\"function_call\"},{\"type\":\"function_call_output\",\"call_id\":\"call_vwxpEcrPit6xPnimJhMI5683\",\"output\":\"Order \\u0022ORD-2026-0042\\u0022 is being shipped to Berlin, DE.\"}]}"
+                "body": "{\"tools\":[{\"type\":\"function\",\"name\":\"get_order\",\"description\":\"Get the status of an order by its reference and shipping destination\",\"parameters\":{\"type\":\"object\",\"properties\":{\"reference\":{\"type\":\"string\",\"description\":\"Order reference, e.g. \\u0022ORD-2026-0042\\u0022\",\"pattern\":\"^ORD-\\\\d{4}-\\\\d{4}$\"},\"destination\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\",\"maxLength\":255},\"countryCode\":{\"type\":\"string\",\"pattern\":\"^[A-Z]{2}$\"}},\"required\":[\"city\",\"countryCode\"],\"additionalProperties\":false}},\"required\":[\"reference\",\"destination\"],\"additionalProperties\":false}}],\"model\":\"gpt-5-mini\",\"input\":[{\"role\":\"user\",\"content\":\"Look up the order with reference \\u0022ORD-2026-0042\\u0022, shipping to Berlin, DE.\"},{\"id\":\"rs_04e8cdce44ebc2ac006aa7006b1dec87d2b1350e313cd5c4a9\",\"type\":\"reasoning\",\"content\":[],\"encrypted_content\":\"gAAAAABqpwBsNEFKole0CwKUm6_bNQ3xy_45IV4yWiXMbfNWsjyRqbDU8lv-8nnyhmjr6ybybGghOFgNhMul-DGiMvKJO1KxSAPECSJBn-8QGyRfRu69sjPT3eprFuqjeyOSURP4Xj4rIIzEZ7WCvES8lxvOPnLSScINOCb5L0a02GcIyjmArrfOJaGaF3y_YPPuqo9j4nPExy0C5bY15TMrOTWZu0damAo_0RejhMQx4mMTw47yrx5kvVJFb7PQfFl5MAMnBRbl4VD8NuyrVF27wCZr1mw5oPkIbBb4Bcq6POX5YUZCc8QUw6haq8a0mNlyvlF7x99IsMp7-O6xLS0oNJimjW8FDDDP0uXhbl09UgN0n9UhbzR5j_VYn3TtSzJ0OXcn2mIJ3tcv1BNEyWQ9SySuNosxv4nCkD2fuIa_ONPqHOSuuTqgdoDBuImwgD83CuJzXdiCDtqxAz_iQO1VtV5j9Z3s5-Cfiy5rqxRnt-Y5oXdEgiT-j_re7QJ0gXqxHHjjv3cn0bB4ph9hwWQLNV_mYRpSJsfrhspDv_BKNMV8VaDPVqQog_BnmUDNZttegJ0olTiFls2x7WEFk9DpBcB_gg3eRKP0fkgtX213CVXHKzarF6ZNxe9UbqeSVzNzaCPFvNwADlCcWCvJWTu9d0cVOSdCqs7w-VZD01U8x6b5o81HX055Lsn6FE3uhgOZHGlbt0RmPAaoeQxgSX9ty0RGhQ-cW5bEjduUrQLNJUs57GTOklQhZrtyib4z6FhkZXleR5Rz6f-SoJ3S3JZzU6DzWUouEZgfxjhYvd7cILCMxtNX8jkCKXAI4hPBvKtv52ROWqaYO0rA7-mjtk6YzgsBjPkR_USyYverph6Z89GIBwEeSUQ0N8uWLEvsDKsXTDCh4qlRY0OPVTkf_Qy525VjC_SqqClVx2sZhaec0fAVP5evqXtGmwd2MJpZSR9_zm9ouOZl5Sv_P_GCKZH9UZX8AvUvr7-B0afiGF8m9F_i8eHGlo8uCQQ0ySYpuJykZhrVKtE_LY5YfwGkoVsCDqQQu-iqQFFYv0vdJ67lIKpcUFtmtiBp7rKT3HUnkZds5LdZ3wC7olmr9W1YwZ98Zq3QtgeVJbNWbUV2Bvza0Ybi0JAeBKY4RRXIk9k-utkEXabpxJrugfAmLvEsrpB9OV2j1Myb2O0H9WDKB5IV6286JBB4rDESaAjNt04OGueJBryJsrDl_wC_0-VaoG0IqQi_Vnty2vM6J8avidHJtXHH5hO0xfx7P9DUxXp23DyHCAd7G61WZ3JNhYkYy6l4cDXr6o-t7gZGWqt1ZIXtwQzcqFyovqb7FOLoEckh8xe447uGqgtuwOpYgbR_hcmdYf3V7LhxfzGAy5MgcSYvpIyR0u-t_jrhM0eTLunYrlKzqUGkpJVTcmYixumcct3tRUVELirMz_sQI_vTIuBONG8hF2GEG0VYCBH_w3gnUSXNH3CFNFXAX82odMJkeuy-IyrKsJo00Yfc5zT3PvUfiS5XNDWWy-MgklhD4Z7yc8L3J5WG5hK5t6HnDsHU0TyWjrzs_S_eKsFFnFJDAsLn5nrvBLF6RmfpVL6rRqjLrzP5_vM9HLCg\",\"summary\":[]},{\"arguments\":\"{\\u0022reference\\u0022:\\u0022ORD-2026-0042\\u0022,\\u0022destination\\u0022:{\\u0022city\\u0022:\\u0022Berlin\\u0022,\\u0022countryCode\\u0022:\\u0022DE\\u0022}}\",\"call_id\":\"call_vwxpEcrPit6xPnimJhMI5683\",\"name\":\"get_order\",\"type\":\"function_call\"},{\"type\":\"function_call_output\",\"call_id\":\"call_vwxpEcrPit6xPnimJhMI5683\",\"output\":\"Order \\u0022ORD-2026-0042\\u0022 is being shipped to Berlin, DE.\"}]}"
             },
             "response": {
                 "status": 200,
@@ -152,8 +152,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.openai.com/v1/responses",
-                "signature": "ded7cd3119c4c36b43f74446aacf3961",
-                "signature_v2": "d27d981a49ff163e727760a392a0d1b1",
+                "signature": "91d3673e2ff58ce3e3a1e5496a79e01a",
+                "signature_v2": "6f9fe5d8d000c0a7df1618bb469da14c",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -162,7 +162,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"tools\":[{\"type\":\"function\",\"name\":\"get_order\",\"description\":\"Get the status of an order by its reference and shipping destination\",\"parameters\":{\"type\":\"object\",\"properties\":{\"reference\":{\"type\":\"string\",\"description\":\"Order reference, e.g. \\u0022ORD-2026-0042\\u0022\",\"pattern\":\"^ORD-\\\\d{4}-\\\\d{4}$\"},\"destination\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\",\"maxLength\":255},\"countryCode\":{\"type\":\"string\",\"pattern\":\"[A-Z]{2}\"}},\"required\":[\"city\",\"countryCode\"],\"additionalProperties\":false}},\"required\":[\"reference\",\"destination\"],\"additionalProperties\":false}}],\"model\":\"gpt-5-mini\",\"input\":[{\"role\":\"user\",\"content\":\"Look up the order using exactly this reference, unmodified: \\u0022not-a-valid-reference\\u0022, shipping to Berlin, DE.\"}]}"
+                "body": "{\"tools\":[{\"type\":\"function\",\"name\":\"get_order\",\"description\":\"Get the status of an order by its reference and shipping destination\",\"parameters\":{\"type\":\"object\",\"properties\":{\"reference\":{\"type\":\"string\",\"description\":\"Order reference, e.g. \\u0022ORD-2026-0042\\u0022\",\"pattern\":\"^ORD-\\\\d{4}-\\\\d{4}$\"},\"destination\":{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\",\"maxLength\":255},\"countryCode\":{\"type\":\"string\",\"pattern\":\"^[A-Z]{2}$\"}},\"required\":[\"city\",\"countryCode\"],\"additionalProperties\":false}},\"required\":[\"reference\",\"destination\"],\"additionalProperties\":false}}],\"model\":\"gpt-5-mini\",\"input\":[{\"role\":\"user\",\"content\":\"Look up the order using exactly this reference, unmodified: \\u0022not-a-valid-reference\\u0022, shipping to Berlin, DE.\"}]}"
             },
             "response": {
                 "status": 200,

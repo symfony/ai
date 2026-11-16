@@ -48,14 +48,16 @@ $approved = false;
 $slogan = '';
 
 for ($round = 1; $round <= $maxRounds; ++$round) {
-    $slogan = $copywriter->call($copywriterMessages)->asText();
-    $copywriterMessages = $copywriterMessages->with(Message::ofAssistant($slogan));
+    $execution = $copywriter->call($copywriterMessages);
+    $slogan = $execution->asText();
+    $copywriterMessages = $execution->getMessages();
     $artDirectorMessages = $artDirectorMessages->with(Message::ofUser($slogan));
 
     output()->writeln(sprintf('<info>Round %d, copywriter:</info> %s', $round, $slogan));
 
-    $verdict = $artDirector->call($artDirectorMessages)->asText();
-    $artDirectorMessages = $artDirectorMessages->with(Message::ofAssistant($verdict));
+    $execution = $artDirector->call($artDirectorMessages);
+    $verdict = $execution->asText();
+    $artDirectorMessages = $execution->getMessages();
 
     // The reviewer decides when the loop is done, the round cap only keeps it from running forever
     $approved = str_contains(strtoupper($verdict), 'APPROVED');

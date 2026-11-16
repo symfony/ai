@@ -67,7 +67,7 @@ final class ClearStoreCommandTest extends TestCase
         $this->expectExceptionCode(0);
         $tester->execute([
             'store' => 'foo',
-        ]);
+        ], ['interactive' => false]);
     }
 
     public function testCommandCannotClearStoreWithException()
@@ -125,5 +125,25 @@ final class ClearStoreCommandTest extends TestCase
         ]);
 
         $this->assertStringContainsString('The "foo" store was cleared successfully.', $tester->getDisplay());
+    }
+
+    public function testCommandAsksForConfirmationWithoutForceOption()
+    {
+        $store = $this->createMock(StoreInterface::class);
+        $store->expects($this->once())->method('clear');
+
+        $command = new ClearStoreCommand(new ServiceLocator([
+            'foo' => static fn (): object => $store,
+        ]));
+
+        $tester = new CommandTester($command);
+        $tester->setInputs(['yes']);
+        $tester->execute([
+            'store' => 'foo',
+        ]);
+
+        $display = $tester->getDisplay();
+        $this->assertStringContainsString('Do you really want to clear the "foo" store?', $display);
+        $this->assertStringContainsString('The "foo" store was cleared successfully.', $display);
     }
 }

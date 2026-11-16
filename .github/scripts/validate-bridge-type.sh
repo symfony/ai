@@ -7,13 +7,13 @@
 # Arguments:
 #   bridge_type     Type of bridge (e.g., "store", "tool", "platform", "message-store")
 #                   This determines the expected composer.json type: symfony-ai-{bridge_type}
-#   component       Name of the parent component (e.g., agent, platform, store, chat)
+#   component       Name of the parent component (e.g., agent, platform, store)
 #                   If not provided, defaults to bridge_type
 #
 # Example:
 #   validate-bridge-type.sh store
 #   validate-bridge-type.sh tool agent
-#   validate-bridge-type.sh message-store chat
+#   validate-bridge-type.sh message-store agent
 #
 # The script builds the bridge path internally as: src/${component}/src/Bridge/*
 
@@ -39,6 +39,11 @@ for composer_file in ${BRIDGE_PATH}/composer.json; do
     bridge_name=$(basename "$bridge_dir")
 
     actual_type=$(jq -r '.type // empty' "$composer_file")
+
+    # The agent component holds both tool and message store bridges
+    if [[ "$COMPONENT" == "agent" && "$actual_type" != "$EXPECTED_TYPE" && ( "$actual_type" == "symfony-ai-tool" || "$actual_type" == "symfony-ai-message-store" ) ]]; then
+        continue
+    fi
 
     if [[ -z "$actual_type" ]]; then
         echo "::error file=$composer_file::${BRIDGE_TYPE} bridge '$bridge_name' is missing 'type' field in composer.json"

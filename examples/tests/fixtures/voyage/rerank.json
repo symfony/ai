@@ -1,0 +1,37 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.voyageai.com/v1/rerank",
+                "signature": "fc9af8e4dbeba5b212a5a0a119689dbe",
+                "signature_v2": "00e46861a834ed11ffb95fcc2ee64b27",
+                "headers": {
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "rerank-3",
+                    "query": "What is artificial intelligence?",
+                    "documents": [
+                        "Artificial intelligence is the simulation of human intelligence processes by machines.",
+                        "The weather today is sunny with a high of 75 degrees.",
+                        "Machine learning is a subset of AI that enables systems to learn from data.",
+                        "The best recipe for chocolate cake requires cocoa powder and butter."
+                    ]
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"object\":\"list\",\"data\":[{\"index\":0,\"relevance_score\":0.9893},{\"index\":2,\"relevance_score\":0.8734},{\"index\":3,\"relevance_score\":0.1101},{\"index\":1,\"relevance_score\":0.0246}],\"model\":\"rerank-3\",\"usage\":{\"total_tokens\":41}}"
+            }
+        }
+    ]
+}

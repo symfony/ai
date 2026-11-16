@@ -11,15 +11,23 @@
 
 namespace Symfony\AI\Agent\Execution;
 
+use Symfony\AI\Agent\Exception\CancellationException;
 use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result;
+use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Metadata\Metadata;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\TypedResultTrait;
+use Symfony\Component\Uid\AbstractUid;
+use Symfony\Component\Uid\TimeBasedUidInterface;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * A lazy agent execution that is also the {@see ResultInterface} it produces.
@@ -37,10 +45,8 @@ use Symfony\AI\Platform\Result\TypedResultTrait;
  * stream option, its deltas (asStream(), asTextStream(), asStreamedObject(), ...).
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
- *
- * @implements \IteratorAggregate<int, UpdateInterface>
  */
-final class Execution implements \IteratorAggregate, ResultInterface
+final class Execution implements ExecutionInterface
 {
     use TypedResultTrait {
         asVectors as private;
@@ -65,9 +71,15 @@ final class Execution implements \IteratorAggregate, ResultInterface
 
     private ?ResultInterface $result = null;
 
+    private ?Result $resultUpdate = null;
+
+    private ?string $error = null;
+
     private readonly Metadata $metadata;
 
     private readonly Cancellation $cancellation;
+
+    private readonly AbstractUid&TimeBasedUidInterface $id;
 
     /**
      * @param \Closure(): \Generator<int, UpdateInterface, mixed, void> $factory
@@ -80,6 +92,15 @@ final class Execution implements \IteratorAggregate, ResultInterface
     ) {
         $this->metadata = new Metadata();
         $this->cancellation = $cancellation ?? new Cancellation();
+        $this->id = Uuid::v7();
+    }
+
+    /**
+     * Identifies this run, the conversation is identified by the id of its MessageBag.
+     */
+    public function getId(): AbstractUid&TimeBasedUidInterface
+    {
+        return $this->id;
     }
 
     /**
@@ -88,6 +109,58 @@ final class Execution implements \IteratorAggregate, ResultInterface
     public function getIterator(): \Generator
     {
         yield from $this->consume();
+    }
+
+    public function getStatus(): ExecutionStatus
+    {
+        if ($this->canceled) {
+            return ExecutionStatus::Cancelled;
+        }
+
+        if (null !== $this->error) {
+            return ExecutionStatus::Failed;
+        }
+
+        if (null !== $this->result) {
+            return [] === $this->getPendingToolCalls() ? ExecutionStatus::Completed : ExecutionStatus::WaitingForInput;
+        }
+
+        return $this->consumed ? ExecutionStatus::Running : ExecutionStatus::Pending;
+    }
+
+    /**
+     * Whether tool calls of the model are unanswered, see {@see ExecutionStatus::WaitingForInput}.
+     */
+    public function isSuspended(): bool
+    {
+        return ExecutionStatus::WaitingForInput === $this->getStatus();
+    }
+
+    /**
+     * The tool calls of the final result, left unanswered by the agent.
+     *
+     * @return list<ToolCall>
+     */
+    public function getPendingToolCalls(): array
+    {
+        $parts = $this->result instanceof MultiPartResult ? $this->result->getContent() : [$this->result];
+
+        $toolCalls = [];
+        foreach ($parts as $part) {
+            if ($part instanceof ToolCallResult) {
+                array_push($toolCalls, ...array_values($part->getContent()));
+            }
+        }
+
+        return $toolCalls;
+    }
+
+    /**
+     * The message of the error of a failed execution.
+     */
+    public function getError(): ?string
+    {
+        return $this->error;
     }
 
     /**
@@ -121,18 +194,20 @@ final class Execution implements \IteratorAggregate, ResultInterface
     /**
      * Cancels the execution and its active HTTP response.
      */
-    public function cancel(): void
+    public function cancel(?string $reason = null): void
     {
         if ($this->canceled || $this->finished || null !== $this->result) {
             return;
         }
 
         $this->canceled = true;
-        $this->cancellation->request();
+        $this->cancellation->request($reason);
     }
 
     /**
      * Drives the execution to completion and returns the final result.
+     *
+     * @throws CancellationException when the execution was canceled
      */
     public function getResult(): ResultInterface
     {
@@ -141,7 +216,7 @@ final class Execution implements \IteratorAggregate, ResultInterface
         }
 
         if ($this->consumed && $this->canceled) {
-            throw new RuntimeException('The agent execution was canceled.');
+            throw new CancellationException($this->cancellation->getReason());
         }
 
         foreach ($this->consume() as $update) {
@@ -151,10 +226,26 @@ final class Execution implements \IteratorAggregate, ResultInterface
         }
 
         if ($this->canceled) {
-            throw new RuntimeException('The agent execution was canceled.');
+            throw new CancellationException($this->cancellation->getReason());
         }
 
         throw new RuntimeException('The agent execution finished without producing a result.');
+    }
+
+    /**
+     * Drives the execution to completion and returns the given messages followed by the new ones, ending with the answer.
+     *
+     * @throws LogicException when the agent doesn't provide the messages of its execution
+     */
+    public function getMessages(): MessageBag
+    {
+        $this->getResult();
+
+        if (null === $messages = $this->resultUpdate?->getMessages()) {
+            throw new LogicException('The agent did not provide the messages of its execution.');
+        }
+
+        return $messages;
     }
 
     public function getContent(): string|iterable|object|null
@@ -238,6 +329,7 @@ final class Execution implements \IteratorAggregate, ResultInterface
                 if ($update instanceof Result) {
                     // the final result carries the metadata aggregated over all rounds, e.g. token usage
                     $this->result = $update->getResult();
+                    $this->resultUpdate = $update;
                     $this->metadata->merge($update->getResult()->getMetadata());
 
                     foreach ($this->resultCallbacks as $callback) {
@@ -260,10 +352,16 @@ final class Execution implements \IteratorAggregate, ResultInterface
             }
         } catch (\Throwable $exception) {
             if (!$this->canceled) {
+                $this->error = $exception->getMessage();
+
                 throw $exception;
             }
         } finally {
             $this->finished = true;
+
+            if (!$this->canceled && null === $this->result) {
+                $this->error ??= 'The agent execution finished without producing a result.';
+            }
         }
     }
 }

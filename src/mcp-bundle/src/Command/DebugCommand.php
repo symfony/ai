@@ -11,12 +11,12 @@
 
 namespace Symfony\AI\McpBundle\Command;
 
-use Mcp\Capability\RegistryInterface;
 use Mcp\Schema\Prompt;
 use Mcp\Schema\ResourceDefinition;
 use Mcp\Schema\ResourceTemplate;
 use Mcp\Schema\Tool;
 use Mcp\Server\Builder;
+use Mcp\Server\Capability\RegistryInterface;
 use Symfony\AI\McpBundle\Client\McpClientInterface;
 use Symfony\AI\McpBundle\Client\ServerConnectionInterface;
 use Symfony\AI\McpBundle\Exception\ExceptionInterface;

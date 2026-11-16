@@ -62,7 +62,7 @@ output()->writeln('');
 output()->writeln(sprintf('Question: <comment>%s</comment>', $question));
 output()->writeln('');
 
-foreach ($retriever->retrieve($question, ['maxItems' => 5]) as $document) {
+foreach ($retriever->retrieve($question, ['limit' => 5]) as $document) {
     $metadata = $document->getMetadata();
     output()->writeln(sprintf(
         '<info>[%.4f]</info> <comment>%s</comment> (%s)',

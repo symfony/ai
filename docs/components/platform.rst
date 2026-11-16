@@ -156,13 +156,15 @@ Supported Models & Platforms
   * `OpenAI's GPT Image`_ with `OpenAI`_ as Platform (generation and editing)
   * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
   * `Mistral OCR`_ with `Mistral`_ as Platform
-  * `TypeSafe's Jev`_ with `TypeSafe`_ as Platform, see :doc:`platform/typesafe`
+  * `TypeSafe's Jev`_ with `TypeSafe`_ and `OpenRouter`_ as Platform, see :doc:`platform/typesafe`
+  * Decision models (e.g. Ollama's ``nimble``) with `Ollama`_ and `OpenRouter`_ as Platform, queried with the ``Evaluation`` of the ``Decision`` bridge
   * OCR and document parsing (invoices, resumes, identity documents) with `Eden AI`_ as Platform
   * `LM Studio Catalog`_ and `HuggingFace`_ Models  with `LM Studio`_ as Platform.
   * All models provided by `HuggingFace`_ can be listed with a command in the examples folder,
     and also filtered, e.g. ``php examples/huggingface/_model.php --provider=hf-inference --task=object-detection``
   * Fireworks' reranking models with `Fireworks`_ as Platform
   * Llama-Rank reranking models with `Together`_ as Platform (dedicated endpoint required)
+  * `Voyage's Reranking`_ with `Voyage`_ as Platform
 * **Voice Models**
   * `ElevenLabs TTS`_ with `ElevenLabs`_ as Platform
   * `ElevenLabs STT`_ with `ElevenLabs`_ as Platform
@@ -170,7 +172,9 @@ Supported Models & Platforms
   * `Cartesia STT`_ with `Cartesia`_ as Platform
   * `Deepgram TTS`_ with `Deepgram`_ as Platform
   * `Deepgram STT`_ with `Deepgram`_ as Platform
+  * `Mistral Voxtral TTS`_ with `Mistral`_ as Platform
   * Text-to-speech and speech-to-text with `Together`_ as Platform
+  * `Ollama TTS`_ with `Ollama`_ as Platform
   * `Venice TTS`_ with `Venice`_ as Platform
   * `Venice STT`_ with `Venice`_ as Platform
   * Multi-provider TTS and STT with `Eden AI`_ as Platform
@@ -227,6 +231,13 @@ Eden AI pairs its OpenAI-compatible chat and embeddings endpoints with expert mo
 document parsing, speech and images, which are addressed as ``feature/subfeature/provider``.
 See :doc:`platform/edenai` for the full setup and usage guide.
 
+Hugging Face routes chat completion and other tasks to its own inference service or to
+third-party inference providers. See :doc:`platform/huggingface` for the full setup and
+usage guide, including tool calling.
+
+Perplexity's Agent API grounds answers in real-time web search, through presets or the models of
+several providers. See :doc:`platform/perplexity` for the full setup and usage guide.
+
 Providers and Multi-Provider Platforms
 --------------------------------------
 
@@ -250,7 +261,7 @@ routes each invocation to the first provider whose catalog knows the requested m
     ]);
 
     $platform->invoke('gpt-4o', $messages);             // → OpenAI
-    $platform->invoke('claude-3-5-sonnet', $messages);  // → Anthropic
+    $platform->invoke('claude-sonnet-4-5', $messages);  // → Anthropic
 
 Provider instances also support an optional ``$name`` parameter for connection-level
 identity, useful when running several instances of the same bridge (e.g. one OpenAI
@@ -362,7 +373,9 @@ iterating providers, it wants to be a router.
 
 Provider-level events (:class:`Symfony\\AI\\Platform\\Event\\InvocationEvent` and
 :class:`Symfony\\AI\\Platform\\Event\\ResultEvent`) still fire inside the selected
-provider for per-invocation concerns.
+provider for per-invocation concerns. They name the provider serving the call through
+``getProvider()``, as the result conversion events below do. On ``ModelRoutingEvent``,
+which fires before routing, ``getProvider()`` only returns a provider pinned by a listener.
 
 Result Conversion Events
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -398,14 +411,27 @@ The third parameter of the :method:`Symfony\\AI\\Platform\\PlatformInterface::in
 method is an array of options, which basically wraps the options of the corresponding
 model and platform, like ``temperature`` or ``max_output_tokens``::
 
+    use Symfony\AI\Platform\PlatformOptions;
+
     $result = $platform->invoke('gpt-4o-mini', $input, [
         'temperature' => 0.7,
-        'max_output_tokens' => 100,
+        PlatformOptions::MAX_OUTPUT_TOKENS => 100,
     ]);
 
 .. note::
 
     For model- and platform-specific options, please refer to the respective documentation.
+
+Some options work the same way on every platform. The
+:class:`Symfony\\AI\\Platform\\PlatformOptions` class lists them as constants, and
+each bridge translates them to the field its provider expects. For example,
+``PlatformOptions::MAX_OUTPUT_TOKENS`` becomes ``max_tokens`` for Anthropic and
+``maxOutputTokens`` for Gemini. If you also pass the provider-specific option, like
+``max_tokens``, it wins over the canonical one.
+
+The Anthropic, Amazon Bedrock (Claude and Nova), Gemini, Vertex AI (Gemini), Mistral and
+generic OpenAI-compatible completions bridges translate ``max_output_tokens``. OpenAI
+uses this name natively. Other bridges do not translate it yet.
 
 Language Models and Messages
 ----------------------------
@@ -584,6 +610,8 @@ argument - without it, object variables are rejected with an exception::
     When using the AI Bundle, template rendering is automatically configured and available without manual setup,
     including the ``serializer`` service as normalizer, so object variables work out of the box.
 
+.. _platform-result-streaming:
+
 Result Streaming
 ----------------
 
@@ -634,6 +662,9 @@ The following delta types are available:
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingDelta` -- a chunk of model reasoning
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingComplete` -- signals thinking is complete, includes accumulated thinking text and optional signature
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ThinkingSignature` -- a cryptographic signature for a thinking block
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\CommentaryStart` -- signals the start of a commentary block, the model narrating what it is about to do
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\CommentaryDelta` -- a chunk of that narration
+* :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\CommentaryComplete` -- signals commentary is complete, includes the accumulated narration
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolCallStart` -- signals the start of a tool call
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolInputDelta` -- a chunk of tool call input data
 * :class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\ToolCallComplete` -- signals all tool calls are complete and ready for execution
@@ -797,6 +828,33 @@ the application is not expected to answer it::
     Like the other built-in server-side tool results, ``custom_tool_call`` items are only
     available on non-streamed responses.
 
+Commentary
+~~~~~~~~~~
+
+Newer OpenAI models (``gpt-5.4`` and later) may narrate what they are about to do before using a
+tool, in an assistant message of the ``commentary`` phase next to the final answer. The
+OpenResponses bridge reports that narration as a
+:class:`Symfony\\AI\\Platform\\Result\\CommentaryResult`, so ``asText()`` still returns the answer
+alone::
+
+    use Symfony\AI\Platform\Result\CommentaryResult;
+
+    $result = $platform->invoke($model, $messages);
+
+    echo $result->asText(); // the answer
+
+    foreach ($result->asMultiPart() as $part) {
+        if ($part instanceof CommentaryResult) {
+            // $part->getContent(), e.g. "I'll run Python to verify it."
+        }
+    }
+
+A streamed response reports it with the ``Commentary*`` deltas listed in
+:ref:`Result Streaming <platform-result-streaming>`.
+:method:`Symfony\\AI\\Platform\\Message\\Message::ofAssistant` keeps it as a
+:class:`Symfony\\AI\\Platform\\Message\\Content\\Commentary` part, which is replayed to the model with
+its phase on the next turn.
+
 Citations
 ~~~~~~~~~
 
@@ -814,10 +872,11 @@ result metadata, a deduplicated list of strings::
     The metadata is only set when the provider reports citations for the response, so
     guard against ``null``.
 
-The Perplexity bridge always reports its own ``citations`` response field this way. The
-OpenResponses bridge reports it too, extracted from ``url_citation`` annotations on the
-assistant message -- for example when a model uses a citation-grounded built-in tool such
-as xAI's ``x_search``.
+The Perplexity bridge derives it from the web search results of the run: the first URL is
+the source of the ``[1]`` (or ``[web:1]``) marker in the answer, and so on. The full results are available as
+``search_results`` metadata. The OpenResponses bridge reports it too, extracted from
+``url_citation`` annotations on the assistant message -- for example when a model uses a
+citation-grounded built-in tool such as xAI's ``x_search``.
 
 Streaming in a Symfony Controller
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -981,7 +1040,7 @@ previous invocation back into the message bag is therefore a one-liner::
 
     $result = $platform->invoke($model, $messages)->getResult();
 
-    $messages->add(Message::ofAssistant($result));
+    $messages = $messages->with(Message::ofAssistant($result));
 
 :class:`Symfony\\AI\\Platform\\Result\\MultiPartResult` is unwrapped recursively,
 so a result that contains a :class:`Symfony\\AI\\Platform\\Result\\ThinkingResult`
@@ -1003,7 +1062,7 @@ blocks with their signatures, and tool calls, in order::
         echo $delta;
     }
 
-    $messages->add(Message::ofAssistant($result));
+    $messages = $messages->with(Message::ofAssistant($result));
 
 The turn is collected while the stream is read;
 :method:`Symfony\\AI\\Platform\\Result\\StreamResult::getAssistantMessage` returns it
@@ -1036,7 +1095,7 @@ Anthropic supports `prompt caching`_, which can significantly reduce costs and
 latency for repeated prompts. Symfony AI automatically enables prompt caching
 when using the Anthropic bridge by annotating the most cacheable regions of the
 request with ``cache_control`` markers: the system prompt, the last tool
-definition, and the last user message. The system prompt is typically the
+definition, and the last two user messages. The system prompt is typically the
 largest and most stable region, making it the most effective caching target.
 
 The caching behavior is configured via the ``cacheRetention`` parameter on the
@@ -1421,10 +1480,29 @@ result exposes the generated audio as binary data, which can be written to a fil
     // Write the audio binary to a file
     file_put_contents('output.mp3', $result->asBinary());
 
+Mistral's Voxtral models use the dedicated ``/v1/audio/speech`` endpoint. Select a preset or
+saved voice with the ``voice`` option, or clone a voice for a single request by passing a
+base64-encoded MP3 or WAV clip as ``ref_audio``. The ``response_format`` option accepts ``mp3``
+(default), ``wav``, ``flac``, ``opus`` and ``pcm``::
+
+    use Symfony\AI\Platform\Bridge\Mistral\Factory;
+    use Symfony\AI\Platform\Bridge\Mistral\TextToSpeech\Format;
+
+    $platform = Factory::createPlatform($apiKey);
+
+    $result = $platform->invoke('voxtral-mini-tts-3-0', 'Welcome to Symfony AI!', [
+        'voice' => 'gb_jane_neutral',
+        'response_format' => Format::WAV,
+    ]);
+
+    file_put_contents('output.wav', $result->asBinary());
+
 Code Examples
 ~~~~~~~~~~~~~
 
 * `Audio Output with GPT`_
+* `Ollama Text-to-Speech`_
+* `Text-to-Speech with Mistral`_
 
 Speech-to-Text
 --------------
@@ -1764,6 +1842,18 @@ Snapshots are de-duplicated — the listener only emits when the parsed structur
 ``ValidatorSubscriber`` is registered, validation runs once on the final object only; partial snapshots
 are never validated, since they are by definition incomplete.
 
+A snapshot only has the properties that the model wrote so far. A typed property without a default
+value stays uninitialized until the model writes it. Give a default value to the properties that you
+read while streaming, or make them nullable::
+
+    class Recipe
+    {
+        public string $name = '';
+
+        /** @var list<string> */
+        public array $ingredients = [];
+    }
+
 Parsing Partial JSON from Streams
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1943,114 +2033,32 @@ Testing Tools
 
 The component ships more than one test double, and which one fits depends on *how much of the
 platform the test should keep running*. They cut the pipeline at different depths, from replacing
-everything down to replacing nothing but the network:
+one provider down to replacing nothing but the network:
 
-* :class:`Symfony\\AI\\Platform\\Test\\InMemoryPlatform` replaces the whole platform. Routing, model
-  catalog, contract, ``ModelClient`` and ``ResultConverter`` are all skipped, and the answer is a
-  string or closure you write. Use it to test *your* code against a given answer.
 * :class:`Symfony\\AI\\Platform\\Test\\Recording\\RecordingProvider` replaces one provider, keeping the
   real ``Platform``, routing and model catalog. The answer is a real result captured once. Use it when
   a test needs a realistic answer but does not care how the bridge produced it.
 * :class:`Symfony\\AI\\Platform\\Test\\MockPlatformFactory` keeps the real ``Platform``, ``Provider``,
-  routing and contract, and fakes only the ``ModelClient`` and ``ResultConverter``. Use it when the
-  test is about the platform itself: model routing and resolution, non-text result types, or
+  routing and contract, and fakes only the ``ModelClient`` and ``ResultConverter``. The answer is a
+  string, a map or a closure you write. Use it to test *your* code against a given answer, or when
+  the test is about the platform itself: model routing and resolution, non-text result types, or
   asserting on the payload the platform built.
 * :class:`Symfony\\AI\\Platform\\Test\\Replay\\CassetteHttpClient` replaces nothing but the network.
   Contract, ``ModelClient`` and ``ResultConverter`` all run for real, against bytes recorded from the
   provider once. Use it when the test is about a bridge's internals.
 
 The lower a tool cuts, the more of the library a test actually covers, and the more setup it needs.
-A second axis runs across that: ``InMemoryPlatform`` and ``MockPlatformFactory`` return an answer you
-wrote by hand, while the two recorders return what a provider really sent, which is what makes them
-drift-checkable.
+A second axis runs across that: ``MockPlatformFactory`` returns an answer you wrote by hand, while
+the two recorders return what a provider really sent, which is what makes them drift-checkable.
 
-For unit or integration testing, you can use the :class:`Symfony\\AI\\Platform\\Test\\InMemoryPlatform`,
-which implements :class:`Symfony\\AI\\Platform\\PlatformInterface` without calling external APIs.
+Mock Platform
+~~~~~~~~~~~~~
 
-It supports returning either:
-
-- A fixed string result
-- A callable that dynamically returns a simple string or any :class:`Symfony\\AI\\Platform\\Result\\ResultInterface` based on the model, input, and options::
-
-    use Symfony\AI\Platform\Model;
-    use Symfony\AI\Platform\Test\InMemoryPlatform;
-
-    $platform = new InMemoryPlatform('Fake result');
-
-    $result = $platform->invoke('gpt-4o-mini', 'What is the capital of France?');
-
-    echo $result->asText(); // "Fake result"
-
-Dynamic Text Results
-~~~~~~~~~~~~~~~~~~~~
-
-::
-
-    $platform = new InMemoryPlatform(
-        fn($model, $input, $options) => "Echo: {$input}"
-    );
-
-    $result = $platform->invoke('gpt-4o-mini', 'Hello AI');
-    echo $result->asText(); // "Echo: Hello AI"
-
-Vector Results
-~~~~~~~~~~~~~~
-
-::
-
-    use Symfony\AI\Platform\Result\VectorResult;
-    use Symfony\AI\Platform\Vector\Vector;
-
-    $platform = new InMemoryPlatform(
-        fn() => new VectorResult([new Vector([0.1, 0.2, 0.3, 0.4])])
-    );
-
-    $result = $platform->invoke('gpt-4o-mini', 'vectorize this text');
-    $vectors = $result->asVectors(); // Returns Vector object with [0.1, 0.2, 0.3, 0.4]
-
-Binary Results
-~~~~~~~~~~~~~~
-
-::
-
-    use Symfony\AI\Platform\Result\BinaryResult;
-
-    $platform = new InMemoryPlatform(
-        fn() => new BinaryResult('fake-pdf-content', 'application/pdf')
-    );
-
-    $result = $platform->invoke('gpt-4o-mini', 'generate PDF document');
-    $binary = $result->asBinary(); // Returns the binary data as string
-
-You can also save binary results directly to a file using
-:method:`Symfony\\AI\\Platform\\Result\\DeferredResult::asFile`::
-
-    $result = $platform->invoke('gemini-2.5-flash-image', $messages);
-    $result->asFile('/path/to/output.png'); // Saves the binary content to a file
-
-The method throws a :class:`Symfony\\AI\\Platform\\Exception\\RuntimeException` if the
-target directory does not exist or is not writable.
-
-Raw Results
-~~~~~~~~~~~
-
-The platform automatically uses the :method:`Symfony\\AI\\Platform\\Result\\ResultInterface::getRawResult` from any :class:`Symfony\\AI\\Platform\\Result\\ResultInterface` returned by closures. For string results, it creates an :class:`Symfony\\AI\\Platform\\Result\\InMemoryRawResult` to simulate real API response metadata.
-
-This allows fast and isolated testing of AI-powered features without relying on live providers or HTTP requests.
-
-.. note::
-
-    This requires `cURL` and the `ext-curl` extension to be installed.
-
-Routing-Aware Mock Provider
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-``InMemoryPlatform`` replaces the *whole* platform, so it ignores routing and returns text only.
-When a test needs to go through real model routing, coexist with real providers, return non-text
-results, or assert on exactly what was sent, use the provider-level mock from
-:class:`Symfony\\AI\\Platform\\Test\\MockPlatformFactory` instead. It registers as a regular provider and
-threads a scripted :class:`Symfony\\AI\\Platform\\Result\\ResultInterface` through unchanged, so
-every result type is supported.
+:class:`Symfony\\AI\\Platform\\Test\\MockPlatformFactory` builds a real ``Platform`` around a mock
+provider, without calling external APIs. It goes through real model routing, can coexist with real
+providers, dispatches the platform events and lets a test assert on exactly what was sent. It threads
+a scripted :class:`Symfony\\AI\\Platform\\Result\\ResultInterface` through unchanged, so every result
+type is supported. The closure receives the payload and options after the contract converted them.
 
 The scripted response can be a fixed string, a map keyed by model name, or a closure::
 
@@ -2084,6 +2092,19 @@ calls work the same way::
 
     $platform = MockPlatformFactory::createPlatform(fn () => new VectorResult([new Vector([0.1, 0.2, 0.3])]));
     $vectors = $platform->invoke('text-embedding-3-small', 'vectorize')->asVectors();
+
+With the ``stream`` option, a string answer is streamed word by word, as
+:class:`Symfony\\AI\\Platform\\Result\\Stream\\Delta\\TextDelta` objects. So a streamed call with a
+``response_format`` gets partial objects, like with a real provider. To stream tool calls, return a
+``StreamResult`` instead::
+
+    use Symfony\AI\Platform\Result\Stream\Delta\ToolCallComplete;
+    use Symfony\AI\Platform\Result\StreamResult;
+    use Symfony\AI\Platform\Result\ToolCall;
+
+    $platform = MockPlatformFactory::createPlatform(fn () => new StreamResult((function () {
+        yield new ToolCallComplete([new ToolCall('call_1', 'clock')]);
+    })()));
 
 The mock records every call, so a test can assert on the exact payload and options the platform
 built (tool option translation, merged model options, and so on). Build the provider yourself to
@@ -2120,6 +2141,27 @@ explicit models instead::
     ]));
     // $provider->supports('mock-model') === true
     // $provider->supports('gpt-4o') === false
+
+The fallback catalog gives every model all capabilities, including ``Capability::INPUT_MESSAGES``.
+In an application, the AI Bundle registers the
+:class:`Symfony\\AI\\Platform\\EventListener\\StringToMessageBagListener`, which turns a string input
+into a message bag for these models. An embedding model of the mock then gets a message bag instead
+of the text to embed. To mock an embedding model, give it its own capabilities in front of the
+fallback catalog::
+
+    use Symfony\AI\Platform\Capability;
+    use Symfony\AI\Platform\Model;
+    use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
+    use Symfony\AI\Platform\ModelCatalog\FallbackModelCatalog;
+    use Symfony\AI\Platform\Test\MockModelCatalog;
+    use Symfony\AI\Platform\Test\MockPlatformFactory;
+
+    $platform = MockPlatformFactory::createPlatform($responses, new CompositeModelCatalog([
+        new MockModelCatalog([
+            'text-embedding-3-small' => ['class' => Model::class, 'capabilities' => [Capability::INPUT_TEXT, Capability::EMBEDDINGS]],
+        ]),
+        new FallbackModelCatalog(),
+    ]), eventDispatcher: $eventDispatcher);
 
 Recording Real Provider Results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2340,6 +2382,7 @@ Code Examples
 * `Together Speech-to-Text`_
 * `Higgsfield Text-to-Image`_
 * `Higgsfield Image-to-Video`_
+* `Voyage Rerank`_
 
 .. note::
 
@@ -2370,6 +2413,7 @@ Code Examples
 .. _`LiteLLM example`: https://github.com/symfony/ai/blob/main/examples/litellm/chat.php
 .. _`Meta's Llama`: https://www.llama.com/
 .. _`Ollama`: https://ollama.com/
+.. _`Ollama TTS`: https://docs.ollama.com/capabilities/speech
 .. _`Replicate`: https://replicate.com/
 .. _`Gemini`: https://gemini.google.com/
 .. _`Vertex AI`: https://cloud.google.com/vertex-ai/generative-ai/docs
@@ -2390,6 +2434,7 @@ Code Examples
 .. _`Vertex AI Text Embeddings`: https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/text-embeddings-api
 .. _`OpenAI's Text Embeddings`: https://platform.openai.com/docs/guides/embeddings/embedding-models
 .. _`Voyage's Embeddings`: https://docs.voyageai.com/docs/embeddings
+.. _`Voyage's Reranking`: https://docs.voyageai.com/docs/reranker
 .. _`Voyage`: https://www.voyageai.com/
 .. _`TypeSafe's Jev`: https://docs.typesafe.ai/models
 .. _`TypeSafe`: https://typesafe.ai/
@@ -2397,6 +2442,7 @@ Code Examples
 .. _`OpenAI's GPT Image`: https://platform.openai.com/docs/guides/image-generation
 .. _`OpenAI's Whisper`: https://platform.openai.com/docs/guides/speech-to-text
 .. _`Mistral OCR`: https://docs.mistral.ai/api/endpoint/ocr
+.. _`Mistral Voxtral TTS`: https://docs.mistral.ai/studio/audio/text-to-speech/overview
 .. _`HuggingFace`: https://huggingface.co/
 .. _`Mercure`: https://mercure.rocks/
 .. _`Streaming Claude`: https://github.com/symfony/ai/blob/main/examples/anthropic/stream.php
@@ -2412,6 +2458,8 @@ Code Examples
 .. _`Asynchronous Text Generation with Replicate`: https://github.com/symfony/ai/blob/main/examples/replicate/chat-llama.php
 .. _`Batch Requests with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/batch.php
 .. _`Audio Output with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/audio-output.php
+.. _`Ollama Text-to-Speech`: https://github.com/symfony/ai/blob/main/examples/ollama/text-to-speech.php
+.. _`Text-to-Speech with Mistral`: https://github.com/symfony/ai/blob/main/examples/mistral/text-to-speech.php
 .. _`ElevenLabs Speech-to-Text with SRT`: https://github.com/symfony/ai/blob/main/examples/elevenlabs/speech-to-text-srt.php
 .. _`PDF Input with GPT`: https://github.com/symfony/ai/blob/main/examples/openai/pdf-input-binary.php
 .. _`PDF Input with Claude`: https://github.com/symfony/ai/blob/main/examples/anthropic/pdf-input-binary.php
@@ -2438,6 +2486,7 @@ Code Examples
 .. _`Fireworks Structured Output`: https://github.com/symfony/ai/blob/main/examples/fireworks/structured-output-math.php
 .. _`Fireworks Embeddings`: https://github.com/symfony/ai/blob/main/examples/fireworks/embeddings.php
 .. _`Fireworks Rerank`: https://github.com/symfony/ai/blob/main/examples/fireworks/rerank.php
+.. _`Voyage Rerank`: https://github.com/symfony/ai/blob/main/examples/voyage/rerank.php
 .. _`Fireworks Token Metadata`: https://github.com/symfony/ai/blob/main/examples/fireworks/token-metadata.php
 .. _`Together`: https://www.together.ai/
 .. _`Together Chat`: https://github.com/symfony/ai/blob/main/examples/together/chat.php

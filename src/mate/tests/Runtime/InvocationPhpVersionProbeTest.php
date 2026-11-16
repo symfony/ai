@@ -181,6 +181,21 @@ final class InvocationPhpVersionProbeTest extends TestCase
         $this->assertProbesThrough(['symfony', 'php8.3'], $seenCommand);
     }
 
+    public function testDoesNotDoubleUpAnInterpreterWithAnExecutableExtension()
+    {
+        $seenCommand = null;
+        $probe = new InvocationPhpVersionProbe(null, static function (array $command) use (&$seenCommand): string {
+            $seenCommand = $command;
+
+            return 'MATE_PHP_VERSION=8.3';
+        });
+
+        $probe->detect('php.exe vendor/bin/mate');
+
+        $this->assertProbesThrough(['php.exe'], $seenCommand);
+        $this->assertSame('-d', $seenCommand[1] ?? null);
+    }
+
     /**
      * @param list<string>      $expectedWrapper
      * @param list<string>|null $seenCommand

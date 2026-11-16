@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Bridge\Bedrock\RegionMapper;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 
 /**
  * @author Björn Altmann
@@ -78,6 +79,12 @@ final class ClaudeModelClient implements ModelClientInterface
         }
 
         unset($payload['model']);
+
+        // Anthropic expects "max_tokens"; an explicit one wins over the canonical option
+        if (isset($options[PlatformOptions::MAX_OUTPUT_TOKENS])) {
+            $options['max_tokens'] ??= $options[PlatformOptions::MAX_OUTPUT_TOKENS];
+            unset($options[PlatformOptions::MAX_OUTPUT_TOKENS]);
+        }
 
         if (isset($options['tools'])) {
             $options['tool_choice'] ??= ['type' => 'auto'];

@@ -21,12 +21,13 @@ final class ModelOverrideInputProcessorTest extends TestCase
 {
     public function testProcessInputWithValidModelOption()
     {
-        $input = new Input('gpt-4o-mini', new MessageBag(), ['model' => 'gpt-4o']);
+        $input = new Input('gpt-4o-mini', new MessageBag(), ['model' => 'gpt-4o', 'temperature' => 0.5]);
 
         $processor = new ModelOverrideInputProcessor();
         $processor->processInput($input);
 
         $this->assertSame('gpt-4o', $input->getModel());
+        $this->assertSame(['temperature' => 0.5], $input->getOptions());
     }
 
     public function testProcessInputWithoutModelOption()

@@ -21,6 +21,6 @@ $messages = new MessageBag(
     Message::forSystem('You are a concise, helpful assistant.'),
     Message::ofUser('What is the capital of France, in one sentence?'),
 );
-$result = $platform->invoke('kimi-k2p6', $messages);
+$result = $platform->invoke('kimi-k3', $messages);
 
 echo $result->asText().\PHP_EOL;

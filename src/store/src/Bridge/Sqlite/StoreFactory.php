@@ -24,31 +24,19 @@ final class StoreFactory
         string $tableName,
         ?DistanceStrategy $strategy = null,
     ): Store {
-        $pdo = self::createPdo($dsn);
-
         $distanceCalculator = null !== $strategy
             ? new DistanceCalculator($strategy)
             : new DistanceCalculator();
 
-        return new Store($pdo, $tableName, $distanceCalculator);
+        return new Store($dsn, $tableName, $distanceCalculator);
     }
 
     public static function createVecStore(
         string $dsn,
         string $tableName,
-        Distance $distance = Distance::Cosine,
-        int $vectorDimension = 1536,
+        Metric $metric = Metric::Cosine,
+        int $dimensions = 1536,
     ): VecStore {
-        $pdo = self::createPdo($dsn);
-
-        return new VecStore($pdo, $tableName, $distance, $vectorDimension);
-    }
-
-    private static function createPdo(string $dsn): \PDO
-    {
-        $pdo = new \PDO($dsn);
-        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-
-        return $pdo;
+        return new VecStore($dsn, $tableName, $metric, $dimensions);
     }
 }

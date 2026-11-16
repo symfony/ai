@@ -34,44 +34,65 @@ use Symfony\Component\Uid\Uuid;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    private ?\PDO $connection = null;
+    private string $dsn;
+
     /**
-     * @param string $tableName       The name of the table
-     * @param string $indexName       The name of the vector search index
-     * @param string $vectorFieldName The name of the field in the index that contains the vector
+     * @param \PDO|string $connection      A PDO instance, or a DSN to connect with on the first query
+     * @param string      $tableName       The name of the table
+     * @param string      $indexName       The name of the vector search index
+     * @param string      $vectorFieldName The name of the field in the index that contains the vector
+     * @param array{
+     *     db_username?: string,
+     *     db_password?: string,
+     *     db_connection_options?: array<int, mixed>,
+     * } $connectionOptions Used only when $connection is a DSN
      */
     public function __construct(
-        private readonly \PDO $connection,
+        #[\SensitiveParameter] \PDO|string $connection,
         private readonly string $tableName,
         private readonly string $indexName,
         private readonly string $vectorFieldName,
-        private readonly Distance $distance = Distance::Euclidean,
+        private readonly Metric $metric = Metric::Euclidean,
+        private readonly int $dimensions = 1536,
+        #[\SensitiveParameter] private readonly array $connectionOptions = [],
     ) {
+        if ($connection instanceof \PDO) {
+            if ([] !== $connectionOptions) {
+                throw new InvalidArgumentException('The connection options can only be used with a DSN, not with a PDO instance.');
+            }
+
+            $this->connection = $connection;
+        } else {
+            $this->dsn = $connection;
+        }
     }
 
-    /**
-     * @param array{dimensions?: positive-int} $options
-     */
     public function setup(array $options = []): void
     {
-        if ([] !== $options && !\array_key_exists('dimensions', $options)) {
-            throw new InvalidArgumentException('The only supported option is "dimensions".');
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
         }
 
-        $serverVersion = $this->connection->getAttribute(\PDO::ATTR_SERVER_VERSION);
+        $serverVersion = $this->getConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION);
 
         if (!str_contains((string) $serverVersion, 'MariaDB') || version_compare($serverVersion, '11.7.0') < 0) {
             throw new InvalidArgumentException('You need MariaDB >=11.7 to use this feature.');
         }
 
+        if (Metric::Distance === $this->metric && version_compare($serverVersion, '11.8') < 0) {
+            throw new InvalidArgumentException('You need MariaDB >=11.8 to use "Metric::Distance", VEC_DISTANCE() does not exist before.');
+        }
+
         // MariaDB serves a query from the vector index only if both use the same distance
-        $indexDistance = match ($this->distance) {
-            Distance::Cosine => ' DISTANCE=cosine',
-            Distance::Euclidean => ' DISTANCE=euclidean',
+        $indexDistance = match ($this->metric) {
+            Metric::Cosine => ' DISTANCE=cosine',
+            Metric::Euclidean => ' DISTANCE=euclidean',
             // VEC_DISTANCE() follows the distance of the index, the server default applies
-            Distance::Distance => '',
+            Metric::Distance => '',
         };
 
-        $this->connection->exec(
+        $this->getConnection()->exec(
             \sprintf(
                 <<<'SQL'
                     CREATE TABLE IF NOT EXISTS %1$s (
@@ -84,7 +105,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 $this->tableName,
                 $this->vectorFieldName,
                 $this->indexName,
-                $options['dimensions'] ?? 1536,
+                $this->dimensions,
                 $indexDistance,
             ),
         );
@@ -92,26 +113,26 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function drop(array $options = []): void
     {
-        $this->connection->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
+        $this->getConnection()->exec(\sprintf('DROP TABLE IF EXISTS %s', $this->tableName));
     }
 
     public function count(): int
     {
-        $statement = $this->connection->query(\sprintf('SELECT COUNT(*) FROM %s', $this->tableName));
+        $statement = $this->getConnection()->query(\sprintf('SELECT COUNT(*) FROM %s', $this->tableName));
 
         return (int) $statement->fetchColumn();
     }
 
-    public static function fromPdo(\PDO $connection, string $tableName, string $indexName = 'embedding', string $vectorFieldName = 'embedding', Distance $distance = Distance::Euclidean): self
+    public static function fromPdo(\PDO $connection, string $tableName, string $indexName = 'embedding', string $vectorFieldName = 'embedding', Metric $metric = Metric::Euclidean, int $dimensions = 1536): self
     {
-        return new self($connection, $tableName, $indexName, $vectorFieldName, $distance);
+        return new self($connection, $tableName, $indexName, $vectorFieldName, $metric, $dimensions);
     }
 
     /**
      * @throws InvalidArgumentException When DBAL connection doesn't use PDO driver
      * @throws DBALException            When DBAL operations fail (e.g., getting native connection)
      */
-    public static function fromDbal(Connection $connection, string $tableName, string $indexName = 'embedding', string $vectorFieldName = 'embedding', Distance $distance = Distance::Euclidean): self
+    public static function fromDbal(Connection $connection, string $tableName, string $indexName = 'embedding', string $vectorFieldName = 'embedding', Metric $metric = Metric::Euclidean, int $dimensions = 1536): self
     {
         $pdo = $connection->getNativeConnection();
 
@@ -119,7 +140,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new InvalidArgumentException('Only DBAL connections using PDO driver are supported.');
         }
 
-        return self::fromPdo($pdo, $tableName, $indexName, $vectorFieldName, $distance);
+        return self::fromPdo($pdo, $tableName, $indexName, $vectorFieldName, $metric, $dimensions);
     }
 
     public function add(VectorDocumentInterface|array $documents): void
@@ -128,7 +149,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $documents = [$documents];
         }
 
-        $statement = $this->connection->prepare(
+        $statement = $this->getConnection()->prepare(
             \sprintf(
                 <<<'SQL'
                     INSERT INTO %1$s (id, metadata, `%2$s`)
@@ -163,7 +184,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $placeholders = implode(', ', array_fill(0, \count($ids), '?'));
 
-        $statement = $this->connection->prepare(
+        $statement = $this->getConnection()->prepare(
             \sprintf(
                 'DELETE FROM %s WHERE id IN (%s)',
                 $this->tableName,
@@ -180,7 +201,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function clear(array $options = []): void
     {
-        $this->connection->exec(\sprintf('TRUNCATE TABLE %s', $this->tableName));
+        $this->getConnection()->exec(\sprintf('TRUNCATE TABLE %s', $this->tableName));
     }
 
     public function supports(string $queryClass): bool
@@ -207,7 +228,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $maxScore = $options['maxScore'] ?? null;
         if (null !== $maxScore) {
-            $where = \sprintf('WHERE %1$s(`%2$s`, q.query_vector) <= :maxScore', $this->distance->getComparisonFunction(), $this->vectorFieldName);
+            $where = \sprintf('WHERE %1$s(`%2$s`, q.query_vector) <= :maxScore', $this->metric->getComparisonFunction(), $this->vectorFieldName);
         }
 
         if ($options['where'] ?? false) {
@@ -219,7 +240,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         // A derived table parses the query vector once, instead of once per row
-        $statement = $this->connection->prepare(
+        $statement = $this->getConnection()->prepare(
             \sprintf(
                 <<<'SQL'
                     SELECT id, VEC_ToText(`%1$s`) embedding, metadata, %5$s(`%1$s`, q.query_vector) AS score
@@ -233,7 +254,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 $this->tableName,
                 $where ?? '',
                 $options['limit'] ?? 5,
-                $this->distance->getComparisonFunction(),
+                $this->metric->getComparisonFunction(),
             ),
         );
 
@@ -260,5 +281,21 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 score: $result['score'],
             );
         }
+    }
+
+    private function getConnection(): \PDO
+    {
+        if (null === $this->connection) {
+            $this->connection = new \PDO(
+                $this->dsn,
+                $this->connectionOptions['db_username'] ?? null,
+                $this->connectionOptions['db_password'] ?? null,
+                $this->connectionOptions['db_connection_options'] ?? [],
+            );
+            // the queries rely on PDO throwing on errors
+            $this->connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        }
+
+        return $this->connection;
     }
 }

@@ -14,6 +14,8 @@ namespace Symfony\AI\Platform\Bridge\Codex;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Platform\Bridge\Codex\Exception\CliNotFoundException;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Exception\MissingModelSupportException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -27,14 +29,6 @@ use Symfony\Component\Process\Process;
  */
 final class ModelClient implements ModelClientInterface
 {
-    /**
-     * @var array<string, string>
-     */
-    private const OPTION_FLAG_MAP = [
-        'tools' => '--allowedTools',
-        'allowed_tools' => '--allowedTools',
-    ];
-
     /**
      * @param array<string, string> $environment
      */
@@ -54,6 +48,11 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
+        // the CLI only runs its built-in tools, it cannot call tools of the application
+        if (\is_array($options['tools'] ?? null) && [] !== array_filter($options['tools'], static fn (mixed $tool): bool => !\is_string($tool))) {
+            throw MissingModelSupportException::forToolCalling($model);
+        }
+
         if (!isset($options['model'])) {
             $options['model'] = $model->getName();
         }
@@ -104,10 +103,15 @@ final class ModelClient implements ModelClientInterface
             unset($options['ask_for_approval']);
         }
 
+        if ([] !== ($options['tools'] ?? []) || [] !== ($options['allowed_tools'] ?? [])) {
+            throw new InvalidArgumentException('The "tools" and "allowed_tools" options are not supported, "codex exec" has no option to restrict its tools.');
+        }
+        unset($options['tools'], $options['allowed_tools']);
+
         $command = [$this->getCliBinary(), 'exec', '--json'];
 
         foreach ($options as $key => $value) {
-            $flag = self::OPTION_FLAG_MAP[$key] ?? '--'.str_replace('_', '-', $key);
+            $flag = '--'.str_replace('_', '-', $key);
 
             if (\is_array($value)) {
                 foreach ($value as $item) {

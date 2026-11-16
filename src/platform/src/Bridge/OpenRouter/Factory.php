@@ -12,6 +12,8 @@
 namespace Symfony\AI\Platform\Bridge\OpenRouter;
 
 use Symfony\AI\Platform\Bridge\Generic;
+use Symfony\AI\Platform\Bridge\OpenRouter\Decision\ModelClient as DecisionModelClient;
+use Symfony\AI\Platform\Bridge\OpenRouter\Decision\ResultConverter as DecisionResultConverter;
 use Symfony\AI\Platform\Bridge\OpenRouter\Rerank\ModelClient as RerankModelClient;
 use Symfony\AI\Platform\Bridge\OpenRouter\Rerank\ResultConverter as RerankResultConverter;
 use Symfony\AI\Platform\Bridge\OpenRouter\Speech\ModelClient as SpeechModelClient;
@@ -24,6 +26,7 @@ use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\Provider;
 use Symfony\AI\Platform\ProviderInterface;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -51,12 +54,14 @@ final class Factory
             new Generic\Embeddings\ModelClient($httpClient, $baseUrl, $apiKey, '/v1/embeddings'),
             new RerankModelClient($httpClient, $apiKey, $baseUrl),
             new SpeechModelClient($httpClient, $apiKey, $baseUrl),
+            new DecisionModelClient($httpClient, $apiKey, $baseUrl),
         ];
         $resultConverters = [
             new Generic\Completions\ResultConverter(),
             new Generic\Embeddings\ResultConverter(),
             new RerankResultConverter(),
             new SpeechResultConverter(),
+            new DecisionResultConverter(),
         ];
 
         return new Provider($name, $modelClients, $resultConverters, $modelCatalog, $contract, $eventDispatcher);
@@ -80,5 +85,12 @@ final class Factory
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );
+    }
+
+    public static function createModelCatalog(
+        ?HttpClientInterface $httpClient = null,
+        string $baseUrl = 'https://openrouter.ai/api',
+    ): ModelCatalogInterface {
+        return new ModelApiCatalog($httpClient ?? HttpClient::create(), $baseUrl);
     }
 }

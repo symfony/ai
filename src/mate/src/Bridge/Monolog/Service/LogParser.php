@@ -182,24 +182,22 @@ final class LogParser
         $openingChar = '}' === $closingChar ? '{' : '[';
         $depth = 0;
         $inString = false;
-        $escape = false;
         $startPos = null;
 
         for ($i = \strlen($str) - 1; $i >= 0; --$i) {
             $char = $str[$i];
 
-            if ($escape) {
-                $escape = false;
-                continue;
-            }
-
-            if ('\\' === $char && $inString) {
-                $escape = true;
-                continue;
-            }
-
+            // Read backwards, a quote is escaped when an odd number of backslashes precedes it
             if ('"' === $char) {
-                $inString = !$inString;
+                $backslashes = 0;
+                while ($backslashes < $i && '\\' === $str[$i - 1 - $backslashes]) {
+                    ++$backslashes;
+                }
+
+                if (0 === $backslashes % 2) {
+                    $inString = !$inString;
+                }
+
                 continue;
             }
 

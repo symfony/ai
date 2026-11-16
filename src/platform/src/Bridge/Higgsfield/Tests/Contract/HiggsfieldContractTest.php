@@ -27,8 +27,9 @@ final class HiggsfieldContractTest extends TestCase
         $payload = $contract->createRequestPayload(new Higgsfield('kling-video/v2.5-turbo/pro/image-to-video'), $image);
 
         $this->assertSame([
-            'type' => 'image_url',
-            'image_url' => $image->asDataUrl(),
+            'type' => 'image',
+            'mime_type' => 'image/jpeg',
+            'data' => $image->asBase64(),
         ], $payload);
     }
 }

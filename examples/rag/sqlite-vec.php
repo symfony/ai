@@ -16,7 +16,7 @@ use Symfony\AI\Fixtures\Movies;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Store\Bridge\Sqlite\Distance;
+use Symfony\AI\Store\Bridge\Sqlite\Metric;
 use Symfony\AI\Store\Bridge\Sqlite\VecStore;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
@@ -45,7 +45,7 @@ $pdo = new Pdo\Sqlite('sqlite:'.__DIR__.'/.sqlite/vec-vectors.db');
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $pdo->loadExtension($extensionPath);
 
-$store = new VecStore($pdo, 'movies', Distance::Cosine, 1536);
+$store = new VecStore($pdo, 'movies', Metric::Cosine, 1536);
 $store->setup();
 
 $documents = [];

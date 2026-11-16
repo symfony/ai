@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Tests\Mantle\Messages;
 use AsyncAws\Core\Configuration;
 use AsyncAws\Core\Credentials\CredentialProvider;
 use AsyncAws\Core\Credentials\Credentials;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Messages\ModelClient;
@@ -97,6 +98,34 @@ final class ModelClientTest extends TestCase
         ], [
             'tools' => [['name' => 'weather', 'description' => 'Weather', 'input_schema' => ['type' => 'object']]],
         ]);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    #[DataProvider('provideMaxTokensOptions')]
+    public function testItTranslatesCanonicalMaxOutputTokens(array $options, int $expectedMaxTokens)
+    {
+        $responseCallback = function (string $method, string $url, array $requestOptions) use ($expectedMaxTokens): HttpResponse {
+            $body = json_decode($requestOptions['body'], true, flags: \JSON_THROW_ON_ERROR);
+
+            $this->assertSame($expectedMaxTokens, $body['max_tokens']);
+            $this->assertArrayNotHasKey('max_output_tokens', $body);
+
+            return new MockResponse();
+        };
+
+        $modelClient = new ModelClient(new MockHttpClient($responseCallback), 'https://bedrock-mantle.us-east-1.api.aws', 'us-east-1', 'bedrock-api-key');
+        $modelClient->request(new Claude('anthropic.claude-haiku-4-5'), ['messages' => []], $options);
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, int}>
+     */
+    public static function provideMaxTokensOptions(): iterable
+    {
+        yield 'canonical only' => [['max_output_tokens' => 500], 500];
+        yield 'explicit max_tokens wins' => [['max_tokens' => 2000, 'max_output_tokens' => 500], 2000];
     }
 
     public function testItRejectsStructuredOutput()

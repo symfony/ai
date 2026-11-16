@@ -73,7 +73,7 @@ final class TwigComponent extends AbstractController
 
     public function streamContent(Request $request): EventStreamResponse
     {
-        // The chat is kept in a session-scoped cache, so load the messages while the real
+        // The conversation ID is kept in the session, so load the messages while the real
         // session is still available.
         $messages = $this->chat->loadMessages();
 

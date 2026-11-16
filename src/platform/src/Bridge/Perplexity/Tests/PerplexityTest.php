@@ -21,17 +21,17 @@ final class PerplexityTest extends TestCase
 {
     public function testItCreatesPerplexityWithDefaultSettings()
     {
-        $perplexity = new Perplexity('sonar');
+        $perplexity = new Perplexity('fast');
 
-        $this->assertSame('sonar', $perplexity->getName());
+        $this->assertSame('fast', $perplexity->getName());
         $this->assertSame([], $perplexity->getOptions());
     }
 
     public function testItCreatesPerplexityWithCustomSettings()
     {
-        $perplexity = new Perplexity('sonar-pro', options: ['temperature' => 0.5, 'max_tokens' => 1000]);
+        $perplexity = new Perplexity('perplexity/sonar', options: ['temperature' => 0.5, 'max_output_tokens' => 1000]);
 
-        $this->assertSame('sonar-pro', $perplexity->getName());
-        $this->assertSame(['temperature' => 0.5, 'max_tokens' => 1000], $perplexity->getOptions());
+        $this->assertSame('perplexity/sonar', $perplexity->getName());
+        $this->assertSame(['temperature' => 0.5, 'max_output_tokens' => 1000], $perplexity->getOptions());
     }
 }

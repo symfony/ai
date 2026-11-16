@@ -20,7 +20,7 @@ use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Platform\Vector\Vector;
-use Symfony\AI\Store\Bridge\MongoDb\Similarity;
+use Symfony\AI\Store\Bridge\MongoDb\Metric;
 use Symfony\AI\Store\Bridge\MongoDb\Store;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
@@ -283,6 +283,57 @@ final class StoreTest extends TestCase
         $this->assertCount(0, $documents);
     }
 
+    public function testQueryRaisesTheCandidatesWithTheLimit()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getCollection')
+            ->with('test-db', 'test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('aggregate')
+            ->with(
+                [
+                    [
+                        '$vectorSearch' => [
+                            'index' => 'test-index',
+                            'path' => 'vector',
+                            'queryVector' => [0.1, 0.2, 0.3],
+                            'numCandidates' => 300,
+                            'limit' => 150,
+                        ],
+                    ],
+                    [
+                        '$addFields' => [
+                            'score' => ['$meta' => 'vectorSearchScore'],
+                        ],
+                    ],
+                ],
+                ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']],
+            )
+            ->willReturnCallback(function () {
+                $cursor = $this->createMock(CursorInterface::class);
+                $cursor->method('rewind'); // void return type
+                $cursor->method('valid')->willReturn(false);
+
+                return $cursor;
+            });
+
+        $store = new Store(
+            $client,
+            'test-db',
+            'test-collection',
+            'test-index',
+        );
+
+        $documents = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 150]));
+
+        $this->assertCount(0, $documents);
+    }
+
     public function testQueryWithOptions()
     {
         $collection = $this->createMock(Collection::class);
@@ -416,20 +467,19 @@ final class StoreTest extends TestCase
             'test-db',
             'test-collection',
             'test-index',
-        );
-
-        $store->setup([
-            'fields' => [
+            indexFields: [
                 [
                     'path' => 'title',
                     'type' => 'string',
                 ],
             ],
-        ]);
+        );
+
+        $store->setup();
     }
 
-    #[DataProvider('provideSimilarities')]
-    public function testInitializeCreatesIndexWithStoreSimilarity(Similarity $similarity, string $expectedSimilarity)
+    #[DataProvider('provideMetrics')]
+    public function testInitializeCreatesIndexWithStoreMetric(Metric $metric, string $expectedSimilarity)
     {
         $collection = $this->createMock(Collection::class);
         $client = $this->createMock(Client::class);
@@ -463,21 +513,21 @@ final class StoreTest extends TestCase
             'test-db',
             'test-collection',
             'test-index',
-            embeddingsDimension: 768,
-            similarity: $similarity,
+            dimensions: 768,
+            metric: $metric,
         );
 
         $store->setup();
     }
 
     /**
-     * @return iterable<string, array{Similarity, string}>
+     * @return iterable<string, array{Metric, string}>
      */
-    public static function provideSimilarities(): iterable
+    public static function provideMetrics(): iterable
     {
-        yield 'euclidean' => [Similarity::Euclidean, 'euclidean'];
-        yield 'cosine' => [Similarity::Cosine, 'cosine'];
-        yield 'dot product' => [Similarity::DotProduct, 'dotProduct'];
+        yield 'euclidean' => [Metric::Euclidean, 'euclidean'];
+        yield 'cosine' => [Metric::Cosine, 'cosine'];
+        yield 'dot product' => [Metric::DotProduct, 'dotProduct'];
     }
 
     public function testInitializeRejectsFieldOnVectorPath()
@@ -494,13 +544,7 @@ final class StoreTest extends TestCase
             'test-collection',
             'test-index',
             'embedding',
-        );
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('The "fields" option cannot define the vector field "embedding"');
-
-        $store->setup([
-            'fields' => [
+            indexFields: [
                 [
                     'numDimensions' => 1536,
                     'path' => 'embedding',
@@ -508,7 +552,12 @@ final class StoreTest extends TestCase
                     'type' => 'vector',
                 ],
             ],
-        ]);
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The index fields cannot define the vector field "embedding"');
+
+        $store->setup();
     }
 
     public function testInitializeWithInvalidOptions()
@@ -523,9 +572,9 @@ final class StoreTest extends TestCase
         );
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('The only supported option is "fields"');
+        $this->expectExceptionMessage('No supported options.');
 
-        $store->setup(['invalid' => 'option']);
+        $store->setup(['fields' => []]);
     }
 
     public function testInitializeHandlesCommandException()

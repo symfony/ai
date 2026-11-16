@@ -125,4 +125,23 @@ final class OllamaTest extends TestCase
         $this->assertSame('[Cloud models](https://ollama.com/blog/cloud-models) are now available in Ollama...', $sources[0]->getContent());
         $this->assertSame('https://ollama.com/, https://ollama.com/models, https://github.com/ollama/ollama', $sources[0]->getReference());
     }
+
+    public function testFetchWithoutLinks()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'title' => 'Ollama',
+                'content' => 'Cloud models are now available in Ollama...',
+                'links' => null,
+            ]),
+        ]);
+
+        $ollama = new Ollama($httpClient, 'foo');
+
+        $ollama->fetchWebPage('ollama.com');
+
+        $sources = $ollama->getSourceCollection()->all();
+        $this->assertCount(1, $sources);
+        $this->assertSame('', $sources[0]->getReference());
+    }
 }

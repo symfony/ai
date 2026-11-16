@@ -15,6 +15,8 @@ use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\FinishReason\FinishReasonAwareTrait;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
@@ -31,6 +33,8 @@ use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 use Symfony\AI\Platform\Vector\Vector;
+use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -38,14 +42,19 @@ use Symfony\AI\Platform\Vector\Vector;
 final class OllamaResultConverter implements ResultConverterInterface
 {
     use FinishReasonAwareTrait;
+    use HttpStatusErrorHandlingTrait;
 
     public function supports(Model $model): bool
     {
-        return $model instanceof Ollama;
+        return $model instanceof Ollama && !$model instanceof Decision && !$model instanceof TextToSpeech;
     }
 
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
+        if ($result instanceof RawHttpResult) {
+            $this->throwOnHttpError($result->getObject());
+        }
+
         if ($options['stream'] ?? false) {
             return new StreamResult($this->convertStream($result));
         }
@@ -60,6 +69,17 @@ final class OllamaResultConverter implements ResultConverterInterface
     public function getTokenUsageExtractor(): TokenUsageExtractorInterface
     {
         return new TokenUsageExtractor();
+    }
+
+    private function extractErrorMessage(ResponseInterface $response): ?string
+    {
+        try {
+            $error = $response->toArray(false)['error'] ?? null;
+        } catch (DecodingExceptionInterface) {
+            return null;
+        }
+
+        return \is_string($error) ? $error : null;
     }
 
     /**
@@ -157,6 +177,7 @@ final class OllamaResultConverter implements ResultConverterInterface
                 yield new TokenUsage(
                     promptTokens: $data['prompt_eval_count'],
                     completionTokens: $data['eval_count'],
+                    cachedTokens: $data['prompt_eval_cached_count'] ?? null,
                     model: $data['model'] ?? null,
                 );
             }

@@ -50,8 +50,8 @@ final class Filesystem
         private readonly bool $allowWrite = true,
         private readonly bool $allowDelete = false,
         array $allowedExtensions = [],
-        array $deniedExtensions = ['php', 'phar', 'sh', 'exe', 'bat'],
-        array $deniedPatterns = ['.*', '*.env*'],
+        array $deniedExtensions = PathValidator::DEFAULT_DENIED_EXTENSIONS,
+        array $deniedPatterns = PathValidator::DEFAULT_DENIED_PATTERNS,
         private readonly int $maxReadSize = 10485760,
     ) {
         $this->pathValidator = new PathValidator($basePath, $allowedExtensions, $deniedExtensions, $deniedPatterns);

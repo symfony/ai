@@ -44,12 +44,12 @@ foreach (Movies::all() as $movie) {
 }
 
 $platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
-$vectorizer = new Vectorizer($platform, 'BAAI/bge-small-en-v1.5?task=feature-extraction', logger());
+$vectorizer = new Vectorizer($platform, 'BAAI/bge-small-en-v1.5', logger(), includeText: true);
 $indexer = new DocumentIndexer(new DocumentProcessor($vectorizer, $store, logger: logger()));
 $indexer->index($documents);
 
 $combinedStore = new CombinedStore($store, $store, rrfK: 60);
-$reranker = new Reranker($platform, 'BAAI/bge-reranker-base?task=text-ranking', logger());
+$reranker = new Reranker($platform, 'cross-encoder/ms-marco-MiniLM-L6-v2', logger());
 
 $vagueQuery = 'gangster';
 echo "Original query: \"$vagueQuery\"\n\n";
@@ -81,7 +81,9 @@ $dispatcher->addListener(PreQueryEvent::class, static function (PreQueryEvent $e
 });
 
 // Post-retrieval: rerank with cross-encoder
-$dispatcher->addListener(PostQueryEvent::class, new RerankerListener($reranker, topK: 5));
+$rerankerListener = new RerankerListener($reranker, limit: 5, overFetchFactor: 4);
+$dispatcher->addListener(PreQueryEvent::class, $rerankerListener);
+$dispatcher->addListener(PostQueryEvent::class, $rerankerListener);
 
 $expandedRetriever = new Retriever($combinedStore, $vectorizer, $dispatcher, logger: logger());
 $results = iterator_to_array($expandedRetriever->retrieve($vagueQuery));

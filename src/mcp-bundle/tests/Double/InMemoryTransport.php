@@ -11,13 +11,13 @@
 
 namespace Symfony\AI\McpBundle\Tests\Double;
 
+use Mcp\Client\Exception\ConnectionException;
 use Mcp\Client\Transport\BaseTransport;
-use Mcp\Exception\ConnectionException;
 use Mcp\Schema\JsonRpc\Error;
 use Mcp\Schema\JsonRpc\Response;
 
 /**
- * Answers every request in-process from canned results, so a real Mcp\Client — including its
+ * Answers every request in-process from canned results, so a real Mcp\Client\Client — including its
  * initialize handshake — can be exercised without a child process or an HTTP round trip.
  *
  * Each response is fed back through handleMessage() while send() is still running, which makes

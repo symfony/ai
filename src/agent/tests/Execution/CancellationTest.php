@@ -12,6 +12,7 @@
 namespace Symfony\AI\Agent\Tests\Execution;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Exception\CancellationException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Cancellation;
 use Symfony\AI\Agent\Execution\Execution;
@@ -86,6 +87,43 @@ final class CancellationTest extends TestCase
         $this->expectExceptionMessage('The agent execution was canceled.');
 
         $execution->getResult();
+    }
+
+    public function testRequestForwardsTheReasonToTheForwardedExecution()
+    {
+        $execution = new Execution(static function (): \Generator {
+            yield new ResultUpdate(new TextResult('Done'));
+        });
+
+        $cancellation = new Cancellation();
+        $cancellation->forward($execution);
+        $cancellation->request('User pressed stop.');
+
+        $this->assertSame('User pressed stop.', $cancellation->getReason());
+
+        try {
+            $execution->getResult();
+            $this->fail('Expected the execution to be canceled.');
+        } catch (CancellationException $exception) {
+            $this->assertSame('User pressed stop.', $exception->getReason());
+        }
+    }
+
+    public function testForwardPassesTheReasonWhenAlreadyRequested()
+    {
+        $cancellation = new Cancellation();
+        $cancellation->request('User pressed stop.');
+
+        $execution = $cancellation->forward(new Execution(static function (): \Generator {
+            yield new ResultUpdate(new TextResult('Done'));
+        }));
+
+        try {
+            $execution->getResult();
+            $this->fail('Expected the execution to be canceled.');
+        } catch (CancellationException $exception) {
+            $this->assertSame('User pressed stop.', $exception->getReason());
+        }
     }
 
     public function testForwardCancelsImmediatelyWhenAlreadyRequested()

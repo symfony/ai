@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -75,6 +76,12 @@ final class ModelClient implements ModelClientInterface
 
         if (isset($options['response_format']) || isset($options['output_config']['format']) || isset($payload['response_format']) || isset($payload['output_config']['format'])) {
             throw new InvalidArgumentException('Structured outputs are not supported by the Anthropic Messages API on the Bedrock Mantle endpoint.');
+        }
+
+        // Anthropic expects "max_tokens"; an explicit one wins over the canonical option
+        if (isset($options[PlatformOptions::MAX_OUTPUT_TOKENS])) {
+            $options['max_tokens'] ??= $options[PlatformOptions::MAX_OUTPUT_TOKENS];
+            unset($options[PlatformOptions::MAX_OUTPUT_TOKENS]);
         }
 
         $cacheControl = $this->getCacheControl($this->cacheRetention);

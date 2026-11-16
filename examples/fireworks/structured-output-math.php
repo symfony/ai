@@ -27,6 +27,6 @@ $messages = new MessageBag(
     Message::forSystem('You are a helpful math tutor. Guide the user through the solution step by step.'),
     Message::ofUser('how can I solve 8x + 7 = -23'),
 );
-$result = $platform->invoke('kimi-k2p6', $messages, ['response_format' => MathReasoning::class]);
+$result = $platform->invoke('kimi-k3', $messages, ['response_format' => MathReasoning::class]);
 
 dump($result->asObject());

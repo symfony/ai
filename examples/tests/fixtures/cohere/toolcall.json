@@ -4,8 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.cohere.com/v2/chat",
-                "signature": "e93d8c02625fefb357a98aaa9c2c2185",
-                "signature_v2": "c3051e2fc064d61d7829b40b6105a057",
+                "signature": "9994de014b85b2b4e9b0af384390d7ce",
+                "signature_v2": "c08ec9994b26d266d5b8637879eb8758",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -14,7 +14,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\"}}],\"messages\":[{\"role\":\"user\",\"content\":\"What time is it?\"}],\"model\":\"command-a-03-2025\"}"
+                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"parameters\":{\"type\":\"object\",\"properties\":{}}}}],\"messages\":[{\"role\":\"user\",\"content\":\"What time is it?\"}],\"model\":\"command-a-03-2025\"}"
             },
             "response": {
                 "status": 200,
@@ -79,8 +79,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.cohere.com/v2/chat",
-                "signature": "98537dbefff967de1d4984d2e980fd18",
-                "signature_v2": "29c5348de8009884391d5e097021e3e3",
+                "signature": "bbd27ea137115a91ec9a078a6ae0acd5",
+                "signature_v2": "1d59e9bc0387ee3ae1c5354456bc16ee",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -89,7 +89,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\"}}],\"messages\":[{\"role\":\"user\",\"content\":\"What time is it?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"clock_9faecp51ee56\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"content\":\"Current date is 2026-09-13 (YYYY-MM-DD) and the time is 20:42:33 (HH:MM:SS).\",\"tool_call_id\":\"clock_9faecp51ee56\"}],\"model\":\"command-a-03-2025\"}"
+                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"parameters\":{\"type\":\"object\",\"properties\":{}}}}],\"messages\":[{\"role\":\"user\",\"content\":\"What time is it?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"clock_9faecp51ee56\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"content\":\"Current date is 2026-09-13 (YYYY-MM-DD) and the time is 20:42:33 (HH:MM:SS).\",\"tool_call_id\":\"clock_9faecp51ee56\"}],\"model\":\"command-a-03-2025\"}"
             },
             "response": {
                 "status": 200,

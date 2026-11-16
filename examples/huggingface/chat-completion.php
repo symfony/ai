@@ -11,7 +11,6 @@
 
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
 use Symfony\AI\Platform\Bridge\HuggingFace\Provider;
-use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 
@@ -20,8 +19,6 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), Provider::NSCALE, http_client());
 
 $messages = new MessageBag(Message::ofUser('Hello, how are you doing today?'));
-$result = $platform->invoke('meta-llama/Llama-3.1-8B-Instruct', $messages, [
-    'task' => Task::CHAT_COMPLETION,
-]);
+$result = $platform->invoke('meta-llama/Llama-3.1-8B-Instruct', $messages);
 
 echo $result->asText().\PHP_EOL;

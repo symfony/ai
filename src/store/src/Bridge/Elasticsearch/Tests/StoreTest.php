@@ -64,29 +64,39 @@ final class StoreTest extends TestCase
         $this->assertSame(2, $httpClient->getRequestsCount());
     }
 
-    public function testStoreCanSetupWithExtraOptions()
+    public function testStoreCanSetupWithCustomConfiguration()
     {
+        $createResponse = new JsonMockResponse([
+            'acknowledged' => true,
+            'shards_acknowledged' => true,
+            'index' => 'foo',
+        ], [
+            'http_code' => 200,
+        ]);
         $httpClient = new MockHttpClient([
             new JsonMockResponse('', [
                 'http_code' => 400,
             ]),
-            new JsonMockResponse([
-                'acknowledged' => true,
-                'shards_acknowledged' => true,
-                'index' => 'foo',
-            ], [
-                'http_code' => 200,
-            ]),
+            $createResponse,
         ]);
+
+        $store = new Store($httpClient, 'foo', dimensions: 768, metric: 'dot_product');
+        $store->setup();
+
+        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertSame('{"mappings":{"properties":{"_vectors":{"type":"dense_vector","dims":768,"similarity":"dot_product"}}}}', $createResponse->getRequestOptions()['body']);
+    }
+
+    public function testStoreSetupRejectsOptions()
+    {
+        $httpClient = new MockHttpClient();
 
         $store = new Store($httpClient, 'foo');
 
-        $store->setup([
-            'dimensions' => 768,
-            'similarity' => 'dot_product',
-        ]);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No supported options.');
 
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        $store->setup(['dimensions' => 768]);
     }
 
     public function testStoreCannotDropOnUndefinedIndex()
@@ -431,7 +441,7 @@ final class StoreTest extends TestCase
      */
     public static function provideInvalidQueryOptions(): iterable
     {
-        yield 'k as string' => [['k' => '10'], 'The "k" option must be an integer.'];
+        yield 'limit as string' => [['limit' => '10'], 'The "limit" option must be an integer.'];
         yield 'num_candidates as float' => [['num_candidates' => 1.5], 'The "num_candidates" option must be an integer.'];
     }
 
@@ -492,5 +502,25 @@ final class StoreTest extends TestCase
         $this->assertInstanceOf(NullVector::class, $documents[0]->getVector());
         $this->assertSame(1.0, $documents[0]->getScore());
         $this->assertSame('bar', $documents[0]->getMetadata()['foo']);
+    }
+
+    public function testQueryReturnsAsManyHitsAsTheLimit()
+    {
+        $response = new JsonMockResponse(['hits' => ['hits' => []]]);
+        $store = new Store(new MockHttpClient($response), 'foo');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 20]));
+
+        $body = $response->getRequestOptions()['body'];
+        $this->assertIsString($body);
+        $this->assertSame([
+            'knn' => [
+                'field' => '_vectors',
+                'query_vector' => [0.1, 0.2, 0.3],
+                'k' => 20,
+                'num_candidates' => 100,
+            ],
+            'size' => 20,
+        ], json_decode($body, true));
     }
 }

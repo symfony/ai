@@ -23,15 +23,23 @@ final class ReflectionToolFactoryTest extends TestCase
     {
         $tool = $this->firstTool(ToolWithMetadata::class);
 
-        $this->assertSame(['needs_confirmation' => true, 'category' => 'admin'], $tool->getMetadata());
+        $this->assertSame(['needs_confirmation' => true, 'category' => 'admin', 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false], $tool->getMetadata());
         $this->assertTrue($tool->getMetadataValue('needs_confirmation'));
         $this->assertSame('admin', $tool->getMetadataValue('category'));
+        $this->assertTrue($tool->isReadOnly());
+        $this->assertFalse($tool->isDestructive());
+        $this->assertTrue($tool->isIdempotent());
+        $this->assertFalse($tool->isOpenWorld());
     }
 
     public function testMetadataDefaultsToEmpty()
     {
         $tool = $this->firstTool(ToolNoParams::class);
 
+        $this->assertFalse($tool->isReadOnly());
+        $this->assertTrue($tool->isDestructive());
+        $this->assertFalse($tool->isIdempotent());
+        $this->assertTrue($tool->isOpenWorld());
         $this->assertSame([], $tool->getMetadata());
         $this->assertNull($tool->getMetadataValue('needs_confirmation'));
         $this->assertTrue($tool->getMetadataValue('needs_confirmation', true));

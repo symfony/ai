@@ -17,7 +17,10 @@ use Symfony\AI\Platform\Bridge\DockerModelRunner\Embeddings;
 use Symfony\AI\Platform\Bridge\DockerModelRunner\Embeddings\ResultConverter;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Result\RawHttpResult;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class ResultConverterTest extends TestCase
@@ -94,6 +97,16 @@ class ResultConverterTest extends TestCase
 
         $this->expectException(ModelNotFoundException::class);
         $this->expectExceptionMessage($message);
+
+        (new ResultConverter())->convert(new RawHttpResult($response));
+    }
+
+    public function testItThrowsServerExceptionOnServerError()
+    {
+        $response = (new MockHttpClient(new MockResponse('{"error":{"message":"Service unavailable."}}', ['http_code' => 503])))->request('POST', 'http://localhost:12434/engines/v1/embeddings');
+
+        $this->expectException(ServerException::class);
+        $this->expectExceptionMessage('Server error (HTTP 503). Service unavailable.');
 
         (new ResultConverter())->convert(new RawHttpResult($response));
     }

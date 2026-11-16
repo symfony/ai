@@ -11,8 +11,8 @@
 
 namespace Symfony\AI\McpBundle\App;
 
-use Mcp\Capability\Registry\ElementReference;
-use Mcp\Capability\Registry\ReferenceHandlerInterface;
+use Mcp\Server\Capability\Registry\ElementReference;
+use Mcp\Server\Capability\Registry\ReferenceHandlerInterface;
 use Symfony\AI\McpBundle\Exception\LogicException;
 
 /**

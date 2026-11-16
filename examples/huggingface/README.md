@@ -32,16 +32,22 @@ You can run an example by executing the following command:
 php huggingface/object-detection.php
 ```
 
+## Tool Calling
+
+Run `php huggingface/toolcall.php` to use a Wikipedia tool through Symfony AI's Agent component.
+The example uses Nscale with `Qwen/Qwen3-32B`. Select another provider or model if it is unavailable.
+
 ## Available Models
 
-When running the examples, you might experience that some models are not available, and you encounter an error like:
+When running the examples, you might experience that some models are not available anymore, and you encounter an
+error like:
 
 ```
-Model, provider or task not found (404).
+Model "openai-community/gpt2" not found in "Symfony\AI\Platform\Bridge\HuggingFace\ModelCatalog".
 ```
 
-This can happen due to preselected models in the examples not being available anymore or not being "warmed up" on
-Hugging Face's side. You can change the model used in the examples by updating the model name in the example script.
+The model catalog of the bridge only knows models that Hugging Face Inference Providers serve. You can change the model
+used in the examples by updating the model name in the example script.
 
 To find available models for a specific task, you can check out the [Hugging Face Model Hub](https://huggingface.co/models)
 and filter by the desired task, or you can use the `huggingface/_model.php` script.

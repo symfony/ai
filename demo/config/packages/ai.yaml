@@ -10,12 +10,14 @@ ai:
         document:
             platform: 'ai.platform.mistral'
             model: 'mistral-medium-latest'
+            message_store: 'ai.message_store.session.conversations'
             # The system prompt is built dynamically in App\Document\Chat::start(), where the
             # OCR-extracted text is injected, so no static prompt is configured here.
             tools: false
         blog:
             platform: 'ai.platform.openai'
             model: 'gpt-4.1'
+            message_store: 'ai.message_store.session.conversations'
             prompt: |
                 You are an helpful assistant that knows about the latest blog content of the Symfony's framework website.
                 To search for content you use the tool 'similarity_search' for generating the answer. Only use content
@@ -33,6 +35,7 @@ ai:
         movies:
             platform: 'ai.platform.openai'
             model: 'gpt-4.1'
+            message_store: 'ai.message_store.session.conversations'
             prompt: |
                 You are a friendly movie expert helping users discover films from a curated collection.
 
@@ -43,35 +46,50 @@ ai:
                 You always answer with a structured response made of two parts:
                 - 'answer': a short, conversational reply in markdown. Introduce your picks and add helpful context,
                   but do not repeat the full plot or cast - those are shown on the movie cards.
-                - 'movies': the movies backing your answer, each referenced by the exact 'slug' returned by the tool,
+                - 'movies': the movies backing your answer, each with the exact 'id' the tool returned,
                   together with a one-sentence 'reason' why it fits. Leave this list empty when no movie is relevant
                   (e.g. small-talk or no match) and say so in the answer.
             tools:
-                - 'App\Movies\MovieSearch'
+                - service: 'app.movies.similarity_search'
+                  name: 'movie_search'
+                  description: 'Search the movie collection by meaning: a title, director, cast member, theme or mood. Returns the best matching movies, each with an "id".'
         stream:
             platform: 'ai.platform.openai'
             model: 'gpt-4.1'
+            message_store: 'ai.message_store.cache.shared_conversations'
             prompt:
                 file: '%kernel.project_dir%/prompts/stream-chat.txt'
             tools: false
         youtube:
             platform: 'ai.platform.openai'
             model: 'gpt-5-mini'
+            message_store: 'ai.message_store.session.conversations'
             tools: false
         recipe:
             platform: 'ai.platform.openai'
             model: 'gpt-5-mini'
+            message_store: 'ai.message_store.cache.shared_conversations'
             prompt:
                 text: 'You are a helpful cooking assistant. Provide detailed recipes based on user requests.'
             tools: false
         wikipedia:
             platform: 'ai.platform.openai'
-            model:
-                name: 'gpt-5-mini'
+            model: 'gpt-6-luna'
+            message_store: 'ai.message_store.cache.shared_conversations'
             prompt:
                 text: |
-                    Please answer the users question based on Wikipedia, only use information provided in the messages.
-                    If you don't know the answer, say so. Be concise and to the point. Use markdown formatting.
+                    You are a research assistant answering questions with knowledge from Wikipedia.
+
+                    Research every question with your tools, follow-up questions included: search Wikipedia, then read
+                    the most relevant articles. Earlier answers in this conversation are not a source - if a follow-up
+                    asks for something they don't cover, research it. Resolve references like "he" or "it" from the
+                    conversation and go straight to the article of that person or topic.
+
+                    Before every tool call, tell the user in one short sentence what you are about to look up and why.
+
+                    Answer only with what the articles say, stated as plain facts: don't refer to Wikipedia or the articles
+                    and don't add links, as the articles you read are listed below your answer anyway. If they don't cover
+                    the question, say so. Be concise and use markdown.
                 include_tools: true
             tools:
                 - 'Symfony\AI\Agent\Bridge\Wikipedia\Wikipedia'
@@ -79,6 +97,7 @@ ai:
         speech:
             platform: 'ai.platform.openai'
             model: 'gpt-5-mini'
+            message_store: 'ai.message_store.session.conversations'
             prompt: |
                 You are a friendly, positive and energetic voice assistant. You can engage in light discussions, ask
                 questions, and do general small-talk. If asked about the Symfony Framework or their community events,
@@ -104,6 +123,7 @@ ai:
         mcp:
             platform: 'ai.platform.openai'
             model: 'gpt-5-mini'
+            message_store: 'ai.message_store.session.conversations'
             prompt:
                 text: |
                     You are a helpful assistant that answers questions about live football, the New York City
@@ -138,6 +158,14 @@ ai:
             model: 'gpt-5-mini'
             prompt: 'You are a helpful general assistant. Assist users with any questions or tasks they may have.'
             tools: false
+    message_store:
+        session:
+            conversations:
+                identifier: 'conversations'
+        # The streamed answers and the Wikipedia worker save outside of the request's session
+        cache:
+            shared_conversations:
+                ttl: 3600
     multi_agent:
         support:
             orchestrator: 'orchestrator'
@@ -145,11 +173,15 @@ ai:
                 technical: ['bug', 'problem', 'technical', 'error', 'code', 'debug']
             fallback: 'fallback'
     store:
+        doctrine:
+            movies:
+                entity: 'App\Movies\Movie'
+                vectorizer: 'ai.vectorizer.openai'
         postgres:
-            symfony_blog:
+            blog:
                 dbal_connection: 'doctrine.dbal.default_connection'
                 table_name: 'symfony_blog'
-                distance: 'cosine'
+                metric: 'cosine'
     vectorizer:
         openai:
             platform: 'ai.platform.openai'
@@ -164,10 +196,13 @@ ai:
                 - 'Symfony\AI\Store\Document\Transformer\TextSplitTransformer'
                 - 'Symfony\AI\Store\Document\Transformer\TextTrimTransformer'
             vectorizer: 'ai.vectorizer.openai'
-            store: 'ai.store.postgres.symfony_blog'
+            store: 'ai.store.postgres.blog'
     retriever:
         blog:
-            store: 'ai.store.postgres.symfony_blog'
+            store: 'ai.store.postgres.blog'
+            vectorizer: 'ai.vectorizer.openai'
+        movies:
+            store: 'ai.store.doctrine.movies'
             vectorizer: 'ai.vectorizer.openai'
 
 services:
@@ -177,6 +212,11 @@ services:
 
     Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch:
         $retriever: '@ai.retriever.blog'
+
+    app.movies.similarity_search:
+        class: 'Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch'
+        arguments:
+            $retriever: '@ai.retriever.movies'
 
     Symfony\AI\Store\Document\Loader\RssFeedLoader: ~
     Symfony\AI\Store\Document\Transformer\TextSplitTransformer: ~

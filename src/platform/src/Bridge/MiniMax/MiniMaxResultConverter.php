@@ -70,6 +70,10 @@ final class MiniMaxResultConverter implements ResultConverterInterface
 
         $this->throwOnHttpError($response);
 
+        if (($status = $response->getStatusCode()) >= 400) {
+            throw new RuntimeException(\sprintf('MiniMax rejected the request: "%s" (HTTP %d).', $this->extractErrorMessage($response) ?? 'unknown error', $status));
+        }
+
         if ($options['stream'] ?? false) {
             return new StreamResult($this->convertStream($result));
         }

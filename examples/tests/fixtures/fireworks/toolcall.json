@@ -3,9 +3,9 @@
         {
             "request": {
                 "method": "GET",
-                "url": "https://api.fireworks.ai/v1/accounts/fireworks/models/kimi-k2p6",
-                "signature": "31cd94b2f736c17d0d00717f9c34d87d",
-                "signature_v2": "891fa0bd2bc7ff55f9dd7f30a2f8bac7",
+                "url": "https://api.fireworks.ai/v1/accounts/fireworks/models/kimi-k3",
+                "signature": "9416ce4c5cfdd9e019d4e5c76c58a252",
+                "signature_v2": "e0952f57ca0a274d991353dacac2cacf",
                 "headers": {
                     "authorization": [
                         "[redacted]"
@@ -29,15 +29,15 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\n  \"baseModelDetails\": {\n    \"checkpointFormat\": \"HUGGINGFACE\",\n    \"defaultPrecision\": \"FP8\",\n    \"huggingfaceFiles\": [\n      \".gitattributes\",\n      \"LICENSE\",\n      \"README.md\",\n      \"chat_template.jinja\",\n      \"config.json\",\n      \"configuration_deepseek.py\",\n      \"configuration_kimi_k25.py\",\n      \"generation_config.json\",\n      \"kimi_k25_processor.py\",\n      \"kimi_k25_vision_processing.py\",\n      \"media_utils.py\",\n      \"model-00001-of-000065.safetensors\",\n      \"model-00002-of-000065.safetensors\",\n      \"model-00003-of-000065.safetensors\",\n      \"model-00004-of-000065.safetensors\",\n      \"model-00005-of-000065.safetensors\",\n      \"model-00006-of-000065.safetensors\",\n      \"model-00007-of-000065.safetensors\",\n      \"model-00008-of-000065.safetensors\",\n      \"model-00009-of-000065.safetensors\",\n      \"model-00010-of-000065.safetensors\",\n      \"model-00011-of-000065.safetensors\",\n      \"model-00012-of-000065.safetensors\",\n      \"model-00013-of-000065.safetensors\",\n      \"model-00014-of-000065.safetensors\",\n      \"model-00015-of-000065.safetensors\",\n      \"model-00016-of-000065.safetensors\",\n      \"model-00017-of-000065.safetensors\",\n      \"model-00018-of-000065.safetensors\",\n      \"model-00019-of-000065.safetensors\",\n      \"model-00020-of-000065.safetensors\",\n      \"model-00021-of-000065.safetensors\",\n      \"model-00022-of-000065.safetensors\",\n      \"model-00023-of-000065.safetensors\",\n      \"model-00024-of-000065.safetensors\",\n      \"model-00025-of-000065.safetensors\",\n      \"model-00026-of-000065.safetensors\",\n      \"model-00027-of-000065.safetensors\",\n      \"model-00028-of-000065.safetensors\",\n      \"model-00029-of-000065.safetensors\",\n      \"model-00030-of-000065.safetensors\",\n      \"model-00031-of-000065.safetensors\",\n      \"model-00032-of-000065.safetensors\",\n      \"model-00033-of-000065.safetensors\",\n      \"model-00034-of-000065.safetensors\",\n      \"model-00035-of-000065.safetensors\",\n      \"model-00036-of-000065.safetensors\",\n      \"model-00037-of-000065.safetensors\",\n      \"model-00038-of-000065.safetensors\",\n      \"model-00039-of-000065.safetensors\",\n      \"model-00040-of-000065.safetensors\",\n      \"model-00041-of-000065.safetensors\",\n      \"model-00042-of-000065.safetensors\",\n      \"model-00043-of-000065.safetensors\",\n      \"model-00044-of-000065.safetensors\",\n      \"model-00045-of-000065.safetensors\",\n      \"model-00046-of-000065.safetensors\",\n      \"model-00047-of-000065.safetensors\",\n      \"model-00048-of-000065.safetensors\",\n      \"model-00049-of-000065.safetensors\",\n      \"model-00050-of-000065.safetensors\",\n      \"model-00051-of-000065.safetensors\",\n      \"model-00052-of-000065.safetensors\",\n      \"model-00053-of-000065.safetensors\",\n      \"model-00054-of-000065.safetensors\",\n      \"model-00055-of-000065.safetensors\",\n      \"model-00056-of-000065.safetensors\",\n      \"model-00057-of-000065.safetensors\",\n      \"model-00058-of-000065.safetensors\",\n      \"model-00059-of-000065.safetensors\",\n      \"model-00060-of-000065.safetensors\",\n      \"model-00061-of-000065.safetensors\",\n      \"model-00062-of-000065.safetensors\",\n      \"model-00063-of-000065.safetensors\",\n      \"model-00064-of-000065.safetensors\",\n      \"model-00065-of-000065.safetensors\",\n      \"model.safetensors.index.json\",\n      \"modeling_deepseek.py\",\n      \"modeling_kimi_k25.py\",\n      \"preprocessor_config.json\",\n      \"tiktoken.model\",\n      \"tokenization_kimi.py\",\n      \"tokenizer_config.json\",\n      \"tool_declaration_ts.py\",\n      \"vllm.patch\"\n    ],\n    \"modelType\": \"kimi_k25\",\n    \"moe\": true,\n    \"parameterCount\": \"1028542417904\",\n    \"supportsFireattention\": true,\n    \"supportsMtp\": true,\n    \"tunable\": true,\n    \"worldSize\": 1\n  },\n  \"calibrated\": false,\n  \"cluster\": \"\",\n  \"contextLength\": 262144,\n  \"conversationConfig\": {\n    \"style\": \"\",\n    \"system\": \"\",\n    \"template\": \"\"\n  },\n  \"createTime\": \"2026-04-17T19:54:54.434998Z\",\n  \"defaultDraftModel\": \"\",\n  \"defaultDraftTokenCount\": 0,\n  \"defaultSamplingParams\": {},\n  \"deployedModelRefs\": [],\n  \"deprecationDate\": null,\n  \"description\": \"Kimi K2.6 is an open-source, native multimodal agentic model that advances practical capabilities in long-horizon coding, coding-driven design, proactive autonomous execution, and swarm-based task orchestration.\",\n  \"displayName\": \"Kimi K2.6\",\n  \"enableVisionEncoderTuning\": false,\n  \"encryptionState\": \"ENCRYPTION_STATE_UNSPECIFIED\",\n  \"fineTuningJob\": \"\",\n  \"githubUrl\": \"\",\n  \"huggingFaceUrl\": \"https://huggingface.co/moonshotai/Kimi-K2.6\",\n  \"importedFrom\": \"\",\n  \"kind\": \"HF_BASE_MODEL\",\n  \"name\": \"accounts/fireworks/models/kimi-k2p6\",\n  \"peftDetails\": {\n    \"baseModel\": \"\",\n    \"baseModelType\": \"\",\n    \"mergeAddonModelName\": \"\",\n    \"r\": 0,\n    \"targetModules\": []\n  },\n  \"public\": true,\n  \"rlLoraTunable\": true,\n  \"rlTunable\": true,\n  \"serverlessModes\": [],\n  \"snapshotType\": \"FULL_SNAPSHOT\",\n  \"state\": \"READY\",\n  \"status\": {\n    \"code\": \"OK\",\n    \"message\": \"\"\n  },\n  \"supervisedLoraTunable\": true,\n  \"supportsImageInput\": true,\n  \"supportsLora\": false,\n  \"supportsServerless\": true,\n  \"supportsTools\": true,\n  \"teftDetails\": null,\n  \"trainingContextLength\": 65536,\n  \"updateTime\": \"2026-08-28T22:31:48.375402Z\",\n  \"useHfApplyChatTemplate\": true,\n  \"useTrainingV2\": true\n}"
+                "body": "{\n  \"baseModelDetails\": {\n    \"checkpointFormat\": \"HUGGINGFACE\",\n    \"defaultPrecision\": \"FP8\",\n    \"huggingfaceFiles\": [],\n    \"modelType\": \"kimi_linear\",\n    \"moe\": true,\n    \"parameterCount\": \"2780913302112\",\n    \"supportsFireattention\": true,\n    \"supportsMtp\": false,\n    \"tunable\": false,\n    \"worldSize\": 1\n  },\n  \"calibrated\": false,\n  \"cluster\": \"\",\n  \"contextLength\": 1048576,\n  \"conversationConfig\": {\n    \"style\": \"\",\n    \"system\": \"\",\n    \"template\": \"\"\n  },\n  \"createTime\": \"2026-07-19T17:50:09.542588Z\",\n  \"defaultDraftModel\": \"\",\n  \"defaultDraftTokenCount\": 0,\n  \"defaultSamplingParams\": {},\n  \"deployedModelRefs\": [],\n  \"deprecationDate\": null,\n  \"description\": \"Kimi K3 is Kimi’s most capable flagship model to date, with 2.8 trillion parameters. It is built on Kimi Delta Attention (KDA), a hybrid linear attention mechanism, and Attention Residuals, with native visual understanding and a 1M-token context window. It is the world’s first open-source model in the 3-trillion-parameter class, designed for frontier intelligence scenarios including long-horizon coding, knowledge work, and reasoning.\",\n  \"displayName\": \"Kimi K3\",\n  \"enableVisionEncoderTuning\": false,\n  \"encryptionState\": \"ENCRYPTION_STATE_PLAINTEXT\",\n  \"fineTuningJob\": \"\",\n  \"githubUrl\": \"\",\n  \"huggingFaceUrl\": \"https://huggingface.co/moonshotai/Kimi-K3\",\n  \"importedFrom\": \"\",\n  \"kind\": \"HF_BASE_MODEL\",\n  \"name\": \"accounts/fireworks/models/kimi-k3\",\n  \"peftDetails\": {\n    \"baseModel\": \"\",\n    \"baseModelType\": \"\",\n    \"mergeAddonModelName\": \"\",\n    \"r\": 0,\n    \"targetModules\": []\n  },\n  \"public\": true,\n  \"rlLoraTunable\": false,\n  \"rlTunable\": false,\n  \"serverlessModes\": [],\n  \"snapshotType\": \"FULL_SNAPSHOT\",\n  \"state\": \"READY\",\n  \"status\": {\n    \"code\": \"OK\",\n    \"message\": \"\"\n  },\n  \"supervisedLoraTunable\": true,\n  \"supportsImageInput\": true,\n  \"supportsLora\": true,\n  \"supportsServerless\": true,\n  \"supportsServerlessTraining\": false,\n  \"supportsTools\": true,\n  \"teftDetails\": null,\n  \"trainingContextLength\": 65536,\n  \"updateTime\": \"2026-08-28T22:31:48.375402Z\",\n  \"useHfApplyChatTemplate\": true,\n  \"useTrainingV2\": true\n}"
             }
         },
         {
             "request": {
                 "method": "POST",
                 "url": "https://api.fireworks.ai/inference/v1/chat/completions",
-                "signature": "116c809519da78c19257842ecdd4338c",
-                "signature_v2": "e466798ce019d1d804cdf7f8982df242",
+                "signature": "84797b02caf00a81634de3a40049c84a",
+                "signature_v2": "92fbefa047bda3055c8015e2dbb3ba55",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -46,7 +46,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\"}}],\"messages\":[{\"role\":\"user\",\"content\":\"How many days until next Christmas?\"}],\"model\":\"accounts\\/fireworks\\/models\\/kimi-k2p6\"}"
+                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"parameters\":{\"type\":\"object\",\"properties\":{}}}}],\"messages\":[{\"role\":\"user\",\"content\":\"How many days until next Christmas?\"}],\"model\":\"accounts\\/fireworks\\/models\\/kimi-k3\"}"
             },
             "response": {
                 "status": 200,
@@ -55,25 +55,19 @@
                         "application/json"
                     ],
                     "content-length": [
-                        "768"
+                        "832"
                     ],
-                    "fireworks-cached-prompt-tokens": [
-                        "47"
+                    "fireworks-backend-server-time-to-first-token": [
+                        "0.347"
                     ],
                     "fireworks-prompt-tokens": [
-                        "48"
-                    ],
-                    "fireworks-sampling-options": [
-                        "{\"max_tokens\": 32768, \"temperature\": 1.0, \"top_k\": 0, \"top_p\": 0.95, \"min_p\": 0.0, \"typical_p\": 1.0, \"frequency_penalty\": 0.0, \"presence_penalty\": 0.0, \"repetition_penalty\": 1.0, \"mirostat_target\": null, \"mirostat_lr\": 0.1, \"cycle_multiplier\": 0.0, \"cycle_base\": 0.0, \"cycle_allowed_length\": 0, \"cycle_sequence_breakers\": []}"
+                        "157"
                     ],
                     "fireworks-server-processing-time": [
-                        "1.102"
+                        "2.165"
                     ],
                     "fireworks-server-time-to-first-token": [
-                        "0.311"
-                    ],
-                    "fireworks-speculation-prompt-matched-tokens": [
-                        "0"
+                        "0.655"
                     ],
                     "server": [
                         "istio-envoy"
@@ -86,15 +80,15 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\"id\":\"chatcmpl-50b43ecaebf946ecbdaade29bd6900f2\",\"object\":\"chat.completion\",\"created\":1789866624,\"model\":\"accounts/fireworks/models/kimi-k2p6\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning_content\":\"The user is asking how many days until next Christmas. To answer this, I need to know the current date. Let me check the current date using the clock function.\",\"tool_calls\":[{\"index\":0,\"id\":\"clock_0\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"},\"name\":null}],\"tools\":null},\"finish_reason\":\"tool_calls\"}],\"usage\":{\"prompt_tokens\":48,\"total_tokens\":94,\"completion_tokens\":46,\"prompt_tokens_details\":{\"cached_tokens\":47},\"completion_tokens_details\":{\"reasoning_tokens\":34},\"output_tokens_details\":{\"reasoning_tokens\":34}}}"
+                "body": "{\"id\":\"chatcmpl-800c74f4\",\"choices\":[{\"index\":0,\"message\":{\"content\":null,\"tool_calls\":[{\"index\":0,\"id\":\"call_a51f28bede7a4469b3cc1686\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}],\"role\":\"assistant\",\"reasoning_content\":\"The user is asking how many days until next Christmas. I need to know today's date first. Let me use the clock tool to get the current date and time.\"},\"finish_reason\":\"tool_calls\",\"logprobs\":null,\"raw_output\":null}],\"created\":1792713498,\"model\":\"accounts/fireworks/models/kimi-k3\",\"service_tier\":null,\"system_fingerprint\":null,\"object\":\"chat.completion\",\"usage\":{\"prompt_tokens\":157,\"completion_tokens\":66,\"total_tokens\":223,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"accepted_prediction_tokens\":null,\"reasoning_tokens\":33,\"rejected_prediction_tokens\":null}}}"
             }
         },
         {
             "request": {
                 "method": "POST",
                 "url": "https://api.fireworks.ai/inference/v1/chat/completions",
-                "signature": "76d872905d0ede3737ff1aaae7c97fa5",
-                "signature_v2": "e8705374ee3def36d43b6e6c025eadaf",
+                "signature": "792ea81a3a1d9a04d9c69a9be189035b",
+                "signature_v2": "65b2964c418eab31f7203ad72216083d",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -103,7 +97,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\"}}],\"messages\":[{\"role\":\"user\",\"content\":\"How many days until next Christmas?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"clock_0\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"content\":\"Current date is 2026-09-20 (YYYY-MM-DD) and the time is 01:10:23 (HH:MM:SS).\",\"tool_call_id\":\"clock_0\"}],\"model\":\"accounts\\/fireworks\\/models\\/kimi-k2p6\"}"
+                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"parameters\":{\"type\":\"object\",\"properties\":{}}}}],\"messages\":[{\"role\":\"user\",\"content\":\"How many days until next Christmas?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_a51f28bede7a4469b3cc1686\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"content\":\"Current date is 2026-10-22 (YYYY-MM-DD) and the time is 23:58:17 (HH:MM:SS).\",\"tool_call_id\":\"call_a51f28bede7a4469b3cc1686\"}],\"model\":\"accounts\\/fireworks\\/models\\/kimi-k3\"}"
             },
             "response": {
                 "status": 200,
@@ -112,25 +106,19 @@
                         "application/json"
                     ],
                     "content-length": [
-                        "5454"
+                        "884"
                     ],
-                    "fireworks-cached-prompt-tokens": [
-                        "93"
+                    "fireworks-backend-server-time-to-first-token": [
+                        "0.313"
                     ],
                     "fireworks-prompt-tokens": [
-                        "107"
-                    ],
-                    "fireworks-sampling-options": [
-                        "{\"max_tokens\": 32768, \"temperature\": 1.0, \"top_k\": 0, \"top_p\": 0.95, \"min_p\": 0.0, \"typical_p\": 1.0, \"frequency_penalty\": 0.0, \"presence_penalty\": 0.0, \"repetition_penalty\": 1.0, \"mirostat_target\": null, \"mirostat_lr\": 0.1, \"cycle_multiplier\": 0.0, \"cycle_base\": 0.0, \"cycle_allowed_length\": 0, \"cycle_sequence_breakers\": []}"
+                        "250"
                     ],
                     "fireworks-server-processing-time": [
-                        "26.781"
+                        "4.442"
                     ],
                     "fireworks-server-time-to-first-token": [
-                        "0.360"
-                    ],
-                    "fireworks-speculation-prompt-matched-tokens": [
-                        "0"
+                        "0.616"
                     ],
                     "server": [
                         "istio-envoy"
@@ -143,7 +131,7 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\"id\":\"chatcmpl-cf1b10ece9d44ecf8fc72e4251267a5e\",\"object\":\"chat.completion\",\"created\":1789866625,\"model\":\"accounts/fireworks/models/kimi-k2p6\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Today is **September 20, 2026**.\\n\\nThere are **96 days** until Christmas (December 25, 2026).\",\"reasoning_content\":\"The user wants to know how many days until next Christmas.\\nCurrent date is 2026-09-20.\\nNext Christmas would be December 25, 2026.\\n\\nLet me calculate the days between September 20, 2026 and December 25, 2026.\\n\\nSeptember: 30 days total. From Sept 20 to Sept 30 = 10 days remaining in Sept (including Sept 21-30).\\nActually, if we're counting days UNTIL Christmas, we need to be careful about whether to include or exclude the current day and Christmas day.\\n\\nUsually \\\"how many days until\\\" means the number of full days between today and the target date, not including today but including the target? Or neither? Let me think.\\n\\nStandard calculation:\\n- Sept 20 to Sept 30: 10 days (Sept 21, 22, 23, 24, 25, 26, 27, 28, 29, 30)\\nWait, from Sept 20 to Sept 30 inclusive? No.\\n\\nIf today is Sept 20, then:\\n- Sept 21 = 1 day until\\n- Sept 30 = 10 days until\\n- October has 31 days\\n- November has 30 days\\n- December 1-24 = 24 days\\n- December 25 = Christmas day\\n\\nSo from Sept 20 to Dec 25:\\nDays remaining in Sept after Sept 20: 10 days (Sept 21-30)\\nOctober: 31\\nNovember: 30\\nDecember 1-25: 25\\nTotal: 10 + 31 + 30 + 25 = 96 days?\\n\\nWait, let me recount.\\n\\nIf today is September 20, 2026:\\n- September: 30 - 20 = 10 days remaining (Sept 21-30 inclusive is 10 days: 30-20=10)\\n- October: 31 days\\n- November: 30 days\\n- December 1 through 25: 25 days\\n\\nTotal: 10 + 31 + 30 + 25 = 96 days.\\n\\nBut wait, is it 96 days until Christmas, or 96 days until Christmas Eve? Let me think.\\n\\nIf Dec 25 is Christmas:\\n- Sept 20 + 1 day = Sept 21 (1 day to go)\\n...\\n- Sept 20 + 96 days = Dec 25?\\n\\nLet's check: Sept 20 + 10 days = Sept 30.\\nSept 30 + 31 days = Oct 31.\\nOct 31 + 30 days = Nov 30.\\nNov 30 + 25 days = Dec 25.\\n10 + 31 + 30 + 25 = 96.\\n\\nSo 96 days until Christmas (Dec 25, 2026).\\n\\nActually, let me verify this carefully.\\nSept 21 = 1\\nSept 22 = 2\\n...\\nSept 30 = 10\\nOct 31 = 10+31 = 41\\nNov 30 = 41+30 = 71\\nDec 25 = 71+25 = 96\\n\\nYes, 96 days.\\n\\nWait, what if they mean next Christmas as in 2027? Since we're in September 2026, the next Christmas is December 2026. If it were January 2027, the next Christmas would be Dec 2027. But since we're in Sept 2026, next Christmas is Dec 25, 2026.\\n\\nActually, wait. Is it possible they mean \\\"how many days until next Christmas\\\" from Sept 20, 2026? Yes, Dec 25, 2026 is indeed the next Christmas.\\n\\nLet me double check the date. The clock says 2026-09-20. That's September 20, 2026.\\n\\nSo the answer is 96 days.\\n\\nActually, let me be more careful.\\nCurrent date: September 20, 2026 (this is day 0)\\nSeptember has 30 days, so remaining days in September: 30 - 20 = 10 days. But wait, does Sept 20 count?\\n\\nFrom Sept 20 to Sept 21 is 1 day later.\\nSo:\\nSept 21-30: 10 days\\nOct 1-31: 31 days\\nNov 1-30: 30 days\\nDec 1-25: 25 days\\nTotal: 96 days.\\n\\nAlternatively, using ordinal dates:\\nSept 20 is day 263 (non-leap year? 2026 is not a leap year. 2026 / 4 = 506.5, not divisible by 4, so not a leap year).\\nLet me calculate day of year for Sept 20, 2026:\\nJan 31\\nFeb 28\\nMar 31\\nApr 30\\nMay 31\\nJun 30\\nJul 31\\nAug 31\\nSep 20\\n\\n31+28=59\\n59+31=90\\n90+30=120\\n120+31=151\\n151+30=181\\n181+31=212\\n212+31=243\\n243+20=263\\n\\nDay of year for Dec 25:\\n263 to end of Sept: 30-20 = 10 days remaining in Sept? No, Sept 20 is day 263, so Sept 21-30 is 10 more days to get to 273.\\nOct: 31 -> 304\\nNov: 30 -> 334\\nDec 1-25: 25 -> 359\\n\\nWait, Dec 25 is day 359 in a non-leap year?\\nJan 31 + Feb 28 + Mar 31 + Apr 30 + May 31 + Jun 30 + Jul 31 + Aug 31 + Sep 30 + Oct 31 + Nov 30 + Dec 25\\n= 31+28+31+30+31+30+31+31+30+31+30+25\\n= 31×7 + 28 + 30×4 + 25\\n= 217 + 28 + 120 + 25\\n= 390? That seems wrong.\\n\\nLet me recalculate:\\nJan: 31\\nFeb: 28 -> 59\\nMar: 31 -> 90\\nApr: 30 -> 120\\nMay: 31 -> 151\\nJun: 30 -> 181\\nJul: 31 -> 212\\nAug: 31 -> 243\\nSep: 30 -> 273\\nOct: 31 -> 304\\nNov: 30 -> 334\\nDec: 31 -> 365\\n\\nSo Dec 25 is day 334 + 25 = 359.\\nSept 20 is day 243? Let's check:\\n31+28+31+30+31+30+31+31+20 = 263. Yes.\\n\\nWait, 31+28+31+30+31+30+31+31 = 243. +20 = 263. Yes.\\n359 - 263 = 96.\\n\\nSo it's 96 days.\\n\\nBut wait, if today is Sept 20, is the difference to Dec 25:\\n- 96 days if we don't count today but do count Dec 25? \\n- Or 95 days if we don't count either?\\n\\nActually, if Sept 20 is day 0, then:\\nSept 21 = day 1\\n...\\nDec 25 = day 96.\\n\\nLet's verify with a small example. How many days from Dec 24 to Dec 25? It's 1 day. Using the formula: 359 - 358 = 1. That checks out.\\n\\nHow many days from Dec 20 to Dec 25? It's 5 days (21, 22, 23, 24, 25). 359 - 354 = 5. Checks out.\\n\\nSo Sept 20 (day 263) to Dec 25 (day 359) is 96 days.\\n\\nTherefore, the answer is 96 days.\\n\\nActually, I should also consider: is Christmas celebrated on Dec 25? Yes. Is there any ambiguity about \\\"next Christmas\\\"? Since we're in September 2026, the next Christmas is December 25, 2026.\\n\\nFinal answer: 96 days.\",\"tools\":null},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":107,\"total_tokens\":1843,\"completion_tokens\":1736,\"prompt_tokens_details\":{\"cached_tokens\":93},\"completion_tokens_details\":{\"reasoning_tokens\":1706},\"output_tokens_details\":{\"reasoning_tokens\":1706}}}"
+                "body": "{\"id\":\"chatcmpl-59f59432\",\"choices\":[{\"index\":0,\"message\":{\"content\":\"Today is October 22, 2026, and Christmas falls on December 25, 2026.\\n\\n**64 days** until Christmas! 🎄\",\"role\":\"assistant\",\"reasoning_content\":\"Current date is 2026-10-22. Next Christmas is 2026-12-25. Days until: from Oct 22 to Dec 25.\\n\\nOct 22 to Oct 31: 9 days. November: 30. Dec 25: 25. Total 9+30+25 = 64 days.\\n\\nIf including today? Standard \\\"days until\\\" = 64 days.\"},\"finish_reason\":\"stop\",\"logprobs\":null,\"raw_output\":null}],\"created\":1792713500,\"model\":\"accounts/fireworks/models/kimi-k3\",\"service_tier\":null,\"system_fingerprint\":null,\"object\":\"chat.completion\",\"usage\":{\"prompt_tokens\":250,\"completion_tokens\":129,\"total_tokens\":379,\"prompt_tokens_details\":{\"cached_tokens\":0},\"completion_tokens_details\":{\"accepted_prediction_tokens\":null,\"reasoning_tokens\":84,\"rejected_prediction_tokens\":null}}}"
             }
         }
     ]

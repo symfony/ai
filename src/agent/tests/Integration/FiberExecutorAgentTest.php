@@ -22,7 +22,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
-use Symfony\AI\Platform\Test\InMemoryPlatform;
+use Symfony\AI\Platform\Test\MockPlatformFactory;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -48,7 +48,7 @@ final class FiberExecutorAgentTest extends TestCase
         $toolbox = new Toolbox([$wikipedia]);
 
         $invocationCount = 0;
-        $platform = new InMemoryPlatform(static function ($model, $input, $options) use (&$invocationCount) {
+        $platform = MockPlatformFactory::createPlatform(static function ($model, $input, $options) use (&$invocationCount) {
             ++$invocationCount;
 
             return match ($invocationCount) {
@@ -102,7 +102,7 @@ final class FiberExecutorAgentTest extends TestCase
         $toolCallLaravel = new ToolCall('call_laravel', 'wikipedia_article', ['title' => 'Laravel']);
 
         $invocationCount = 0;
-        $platform = new InMemoryPlatform(static function ($model, $input, $options) use (&$invocationCount, $toolCallSymfony, $toolCallLaravel) {
+        $platform = MockPlatformFactory::createPlatform(static function ($model, $input, $options) use (&$invocationCount, $toolCallSymfony, $toolCallLaravel) {
             ++$invocationCount;
 
             return match ($invocationCount) {
@@ -142,7 +142,7 @@ final class FiberExecutorAgentTest extends TestCase
         $toolbox = new Toolbox([$wikipedia]);
 
         $invocationCount = 0;
-        $platform = new InMemoryPlatform(static function ($model, $input, $options) use (&$invocationCount) {
+        $platform = MockPlatformFactory::createPlatform(static function ($model, $input, $options) use (&$invocationCount) {
             ++$invocationCount;
 
             if (1 === $invocationCount) {

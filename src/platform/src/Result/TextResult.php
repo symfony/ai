@@ -19,6 +19,7 @@ final class TextResult extends BaseResult
     public function __construct(
         private readonly string $content,
         private readonly ?string $signature = null,
+        private readonly ?string $phase = null,
     ) {
     }
 
@@ -34,5 +35,13 @@ final class TextResult extends BaseResult
     public function getSignature(): ?string
     {
         return $this->signature;
+    }
+
+    /**
+     * Phase the provider tagged this text with, e.g. "final_answer" of the OpenAI Responses API.
+     */
+    public function getPhase(): ?string
+    {
+        return $this->phase;
     }
 }

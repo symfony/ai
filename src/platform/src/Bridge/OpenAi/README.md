@@ -16,6 +16,7 @@ OpenAI Documentation
  * [Responses API](https://developers.openai.com/api/reference/responses/overview)
  * [Responses streaming](https://developers.openai.com/api/reference/resources/responses/streaming-events)
  * [Tools (function calling)](https://platform.openai.com/docs/guides/tools?api-mode=responses)
+ * [Assistant message phase (commentary and final answer)](https://developers.openai.com/api/docs/guides/reasoning#phase-parameter)
  * [Embeddings](https://developers.openai.com/api/reference/resources/embeddings)
  * [Images (DALL·E)](https://developers.openai.com/api/reference/resources/images)
  * [Text-to-speech](https://developers.openai.com/api/reference/resources/audio/subresources/speech)

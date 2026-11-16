@@ -11,35 +11,32 @@
 
 namespace Symfony\AI\AiBundle\Tests\Profiler;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Agent\AgentInterface;
-use Symfony\AI\Agent\Execution\Execution;
-use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
+use Symfony\AI\Agent\MessageStore\InMemoryMessageStore;
+use Symfony\AI\Agent\MessageStore\TraceableMessageStore;
 use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Agent\Toolbox\Tool\Subagent;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\TraceableToolbox;
 use Symfony\AI\Agent\TraceableAgent;
 use Symfony\AI\AiBundle\Profiler\DataCollector;
-use Symfony\AI\Chat\Chat;
-use Symfony\AI\Chat\InMemory\Store as InMemoryStore;
-use Symfony\AI\Chat\TraceableChat;
-use Symfony\AI\Chat\TraceableMessageStore;
+use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Job\JobHandle;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Metadata\Metadata;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\JobResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
+use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
-use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -48,6 +45,7 @@ use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Result\VectorResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 use Symfony\AI\Platform\TraceablePlatform;
@@ -58,6 +56,10 @@ use Symfony\AI\Store\InMemory\Store;
 use Symfony\AI\Store\TraceableStore;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Clock\MonotonicClock;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\Uid\Uuid;
 
 class DataCollectorTest extends TestCase
@@ -74,7 +76,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => false]);
         $this->assertSame('Assistant response', $result->asText());
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -100,7 +102,7 @@ class DataCollectorTest extends TestCase
         $text = implode('', array_map(static fn ($chunk) => $chunk instanceof TextDelta ? $chunk->getText() : '', iterator_to_array($result->asStream())));
         $this->assertSame('Assistant response', $text);
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -125,7 +127,7 @@ class DataCollectorTest extends TestCase
         // Invoke but do NOT consume the stream
         $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => true]);
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -159,7 +161,7 @@ class DataCollectorTest extends TestCase
         }
         $this->assertSame('Assistant response', $text);
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(0, $dataCollector->getPlatformCalls());
@@ -178,7 +180,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => false]);
         $this->assertSame([$toolCall], $result->asToolCalls());
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -197,7 +199,7 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke('text-embedding-3-small', 'Hello world');
         $this->assertSame([$vector], $result->asVectors());
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
@@ -218,7 +220,7 @@ class DataCollectorTest extends TestCase
 
         $traceablePlatform->invoke('MiniMax-Hailuo-02', 'A cat playing the piano');
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $call = $dataCollector->getPlatformCalls()[0];
@@ -252,7 +254,7 @@ class DataCollectorTest extends TestCase
         }
 
         // lateCollect() must not re-throw, otherwise it would replace the user's response with a 500.
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $calls = $dataCollector->getPlatformCalls();
@@ -278,51 +280,91 @@ class DataCollectorTest extends TestCase
         $result = $traceablePlatform->invoke('gpt-4o', $messageBag, ['stream' => false]);
         $this->assertSame($data, $result->asObject());
 
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], []);
+        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getPlatformCalls());
         $this->assertSame('text', $dataCollector->getPlatformCalls()[0]['result_type']);
     }
 
-    public function testUnwrapsMultiPartResultIntoSerializableContent()
+    #[DataProvider('provideReasoningContent')]
+    public function testSerializesStructuredResponseWithReasoning(?string $summary, ?string $encryptedContent)
     {
-        $platform = $this->createMock(PlatformInterface::class);
-        $traceablePlatform = new TraceablePlatform($platform);
-        // Anonymous classes cannot be serialized, like the HTTP response a RawHttpResult holds
-        $rawResult = new class implements RawResultInterface {
-            public function getData(): array
-            {
-                return [];
-            }
+        $response = [
+            'id' => 'resp_1',
+            'status' => 'completed',
+            'model' => 'gpt-5-mini',
+            'output' => [
+                [
+                    'type' => 'reasoning',
+                    'id' => 'rs_1',
+                    'summary' => null === $summary ? [] : [['type' => 'summary_text', 'text' => $summary]],
+                    'encrypted_content' => $encryptedContent,
+                ],
+                [
+                    'type' => 'message',
+                    'id' => 'msg_1',
+                    'role' => 'assistant',
+                    'content' => [['type' => 'output_text', 'text' => '{"answer":"7 hours."}', 'annotations' => []]],
+                ],
+            ],
+        ];
+        $httpClient = new MockHttpClient(new MockResponse(json_encode($response, \JSON_THROW_ON_ERROR)));
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addSubscriber(new PlatformSubscriber());
+        $platform = new TraceablePlatform(Factory::createPlatform('sk-placeholder', $httpClient, eventDispatcher: $dispatcher));
 
-            public function getDataStream(): iterable
-            {
-                return [];
-            }
+        $result = $platform->invoke('gpt-5-mini', new MessageBag(Message::ofUser('What are the planned hours?')), ['response_format' => ['type' => 'json_object']]);
+        $this->assertInstanceOf(MultiPartResult::class, $result->getResult());
 
-            public function getObject(): object
-            {
-                return new \stdClass();
-            }
-        };
-        $data = (object) ['key' => 'value'];
+        $collector = new DataCollector([$platform], [], [], [], [], []);
+        $collector->lateCollect();
+
+        $restored = unserialize(serialize($collector));
+        $this->assertInstanceOf(DataCollector::class, $restored);
+        $calls = $restored->getPlatformCalls();
+        $this->assertCount(1, $calls);
+        $this->assertSame([$summary, ['answer' => '7 hours.']], $calls[0]['result']);
+        $this->assertSame('text', $calls[0]['result_type']);
+        $this->assertInstanceOf(ObjectResult::class, $result->getResult()->getContent()[1]);
+        $this->assertSame($result->getRawResult(), $result->getResult()->getContent()[1]->getRawResult());
+    }
+
+    /**
+     * @return iterable<string, array{?string, ?string}>
+     */
+    public static function provideReasoningContent(): iterable
+    {
+        yield 'summary' => ['Calculating the planned hours.', null];
+        yield 'encrypted content with empty summary' => [null, 'mock-encrypted-reasoning'];
+    }
+
+    public function testSerializesNestedResults()
+    {
+        $data = (object) ['answer' => '7 hours.'];
+        $httpClient = new EventSourceHttpClient(new MockHttpClient(new MockResponse('{}')));
+        $rawResult = new RawHttpResult($httpClient->request('POST', 'https://example.com'));
         $objectResult = new ObjectResult($data);
         $objectResult->setRawResult($rawResult);
-        $multiPart = new MultiPartResult([new ThinkingResult('reasoning'), $objectResult]);
-        $multiPart->setRawResult($rawResult);
+        $result = new ChoiceResult([
+            new MultiPartResult([new ThinkingResult('Calculating.'), $objectResult]),
+            new TextResult('Another answer.'),
+        ]);
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($result), $rawResult));
+        $traceablePlatform = new TraceablePlatform($platform);
+        $traceablePlatform->invoke('test-model', 'What are the planned hours?');
 
-        $platform->method('invoke')->willReturn(new DeferredResult(new PlainConverter($multiPart), $rawResult));
+        $collector = new DataCollector([$traceablePlatform], [], [], [], [], []);
+        $collector->lateCollect();
 
-        $traceablePlatform->invoke('gpt-5', new MessageBag(Message::ofUser('Return structured data')))->getResult();
-
-        $dataCollector = new DataCollector([$traceablePlatform], [], [], [], [], [], []);
-        $dataCollector->lateCollect();
-
-        $call = $dataCollector->getPlatformCalls()[0];
-        $this->assertSame('text', $call['result_type']);
-        $this->assertEquals(['reasoning', $data], $call['result']);
-        $this->assertIsString(serialize($dataCollector));
+        $restored = unserialize(serialize($collector));
+        $this->assertInstanceOf(DataCollector::class, $restored);
+        $calls = $restored->getPlatformCalls();
+        $this->assertSame('text', $calls[0]['result_type']);
+        $this->assertEquals([['Calculating.', $data], 'Another answer.'], $calls[0]['result']);
+        $this->assertSame($data, $objectResult->getContent());
+        $this->assertSame($rawResult, $objectResult->getRawResult());
     }
 
     public function testPropagatesMetadataForStreamingResponse()
@@ -353,12 +395,12 @@ class DataCollectorTest extends TestCase
 
     public function testCollectsDataForMessageStore()
     {
-        $traceableMessageStore = new TraceableMessageStore(new InMemoryStore(), new MonotonicClock());
+        $traceableMessageStore = new TraceableMessageStore(new InMemoryMessageStore(), new MonotonicClock());
         $traceableMessageStore->save(new MessageBag(
             Message::ofUser('Hello World'),
         ));
 
-        $dataCollector = new DataCollector([], [], [], [$traceableMessageStore], [], [], []);
+        $dataCollector = new DataCollector([], [], [], [$traceableMessageStore], [], []);
         $dataCollector->lateCollect();
 
         $calls = $dataCollector->getMessages();
@@ -370,31 +412,9 @@ class DataCollectorTest extends TestCase
         $this->assertInstanceOf(\DateTimeImmutable::class, $calls[0]['saved_at']);
     }
 
-    public function testCollectsDataForChat()
-    {
-        $agent = $this->createMock(AgentInterface::class);
-        $agent->expects($this->once())->method('call')->willReturn($this->execution(new TextResult('foo')));
-
-        $chat = new Chat($agent, new InMemoryStore());
-
-        $traceableChat = new TraceableChat($chat, new MonotonicClock());
-
-        $traceableChat->submit(Message::ofUser('Hello World'));
-
-        $dataCollector = new DataCollector([], [], [], [], [$traceableChat], [], []);
-        $dataCollector->lateCollect();
-
-        $calls = $dataCollector->getChats();
-
-        $this->assertArrayHasKey('message', $calls[0]);
-        $this->assertArrayHasKey('submitted_at', $calls[0]);
-        $this->assertInstanceOf(UserMessage::class, $calls[0]['message']);
-        $this->assertInstanceOf(\DateTimeImmutable::class, $calls[0]['submitted_at']);
-    }
-
     public function testGetNameReturnsShortName()
     {
-        $dataCollector = new DataCollector([], [], [], [], [], [], []);
+        $dataCollector = new DataCollector([], [], [], [], [], []);
 
         $name = $dataCollector->getName();
 
@@ -410,7 +430,7 @@ class DataCollectorTest extends TestCase
             yield from [];
         })();
 
-        $dataCollector = new DataCollector([], $generator, [], [], [], [], []);
+        $dataCollector = new DataCollector([], $generator, [], [], [], []);
         $dataCollector->lateCollect();
 
         $this->assertSame([], $dataCollector->getTools());
@@ -431,7 +451,7 @@ class DataCollectorTest extends TestCase
 
         $traceableAgent->call($messageBag);
 
-        $dataCollector = new DataCollector([], [], [], [], [], [$traceableAgent], []);
+        $dataCollector = new DataCollector([], [], [], [], [$traceableAgent], []);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getAgents());
@@ -448,7 +468,7 @@ class DataCollectorTest extends TestCase
         $traceableStore = new TraceableStore(new Store());
         $traceableStore->add(new VectorDocument(Uuid::v7()->toRfc4122(), new Vector([0.1, 0.2, 0.3])));
 
-        $dataCollector = new DataCollector([], [], [], [], [], [], [$traceableStore]);
+        $dataCollector = new DataCollector([], [], [], [], [], [$traceableStore]);
         $dataCollector->lateCollect();
 
         $this->assertCount(1, $dataCollector->getStores());
@@ -483,7 +503,7 @@ class DataCollectorTest extends TestCase
         $traceableToolbox1 = new TraceableToolbox($toolbox1);
         $traceableToolbox2 = new TraceableToolbox($toolbox2);
 
-        $dataCollector = new DataCollector([], [], [$traceableToolbox1, $traceableToolbox2], [], [], [], []);
+        $dataCollector = new DataCollector([], [], [$traceableToolbox1, $traceableToolbox2], [], [], []);
         $dataCollector->lateCollect();
 
         $tools = $dataCollector->getTools();
@@ -516,7 +536,7 @@ class DataCollectorTest extends TestCase
         $traceableToolbox1 = new TraceableToolbox($toolbox1);
         $traceableToolbox2 = new TraceableToolbox($toolbox2);
 
-        $dataCollector = new DataCollector([], [], [$traceableToolbox1, $traceableToolbox2], [], [], [], []);
+        $dataCollector = new DataCollector([], [], [$traceableToolbox1, $traceableToolbox2], [], [], []);
         $dataCollector->lateCollect();
 
         $tools = $dataCollector->getTools();
@@ -526,10 +546,53 @@ class DataCollectorTest extends TestCase
         $this->assertSame('writer_agent', $tools[1]->getName());
     }
 
-    private function execution(ResultInterface $result): Execution
+    public function testItCollectsConfiguredInstancesWithTheirServiceIds()
     {
-        return new Execution(static function () use ($result): \Generator {
-            yield new ResultUpdate($result);
-        });
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([]);
+
+        $dataCollector = new DataCollector(
+            ['ai.platform.openai' => new TraceablePlatform($this->createStub(PlatformInterface::class))],
+            ['ai.toolbox.default' => new TraceableToolbox($toolbox)],
+            [],
+            ['ai.message_store.default' => new TraceableMessageStore(new InMemoryMessageStore(), new MockClock())],
+            ['ai.agent.blog' => new TraceableAgent(new MockAgent()), 'ai.agent.movies' => new TraceableAgent(new MockAgent())],
+            ['ai.store.memory.main' => new TraceableStore(new Store())],
+        );
+        $dataCollector->lateCollect();
+
+        $this->assertSame(['ai.platform.openai'], $dataCollector->getConfiguredPlatforms());
+        $this->assertSame(['ai.toolbox.default'], $dataCollector->getConfiguredToolboxes());
+        $this->assertSame(['ai.message_store.default'], $dataCollector->getConfiguredMessageStores());
+        $this->assertSame(['ai.agent.blog', 'ai.agent.movies'], $dataCollector->getConfiguredAgents());
+        $this->assertSame(['ai.store.memory.main'], $dataCollector->getConfiguredStores());
+    }
+
+    public function testConfiguredInstancesAreEmptyBeforeCollecting()
+    {
+        $dataCollector = new DataCollector([new TraceablePlatform($this->createStub(PlatformInterface::class))], [], [], [], [], []);
+
+        $this->assertSame([], $dataCollector->getConfiguredPlatforms());
+        $this->assertFalse($dataCollector->hasCalls());
+    }
+
+    public function testItHasNoCallsWithoutAnyTracedCall()
+    {
+        $dataCollector = new DataCollector([new TraceablePlatform($this->createStub(PlatformInterface::class))], [], [], [], [], [new TraceableStore(new Store())]);
+        $dataCollector->lateCollect();
+
+        $this->assertFalse($dataCollector->hasCalls());
+    }
+
+    public function testItHasCallsWithoutPlatformCall()
+    {
+        $traceableStore = new TraceableStore(new Store());
+        $traceableStore->add(new VectorDocument(Uuid::v7()->toRfc4122(), new Vector([0.1, 0.2, 0.3])));
+
+        $dataCollector = new DataCollector([new TraceablePlatform($this->createStub(PlatformInterface::class))], [], [], [], [], [$traceableStore]);
+        $dataCollector->lateCollect();
+
+        $this->assertTrue($dataCollector->hasCalls());
+        $this->assertSame([], $dataCollector->getPlatformCalls());
     }
 }

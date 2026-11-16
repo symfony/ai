@@ -24,10 +24,11 @@ A managed block in ``AGENTS.md``
     ``<!-- END AI_MATE_INSTRUCTIONS -->``. Mate rewrites only what is between those markers.
     Anything else in your ``AGENTS.md`` is preserved.
 
-A managed block in ``CLAUDE.md``
+A managed block in an existing ``CLAUDE.md`` or ``.claude/CLAUDE.md``
     An ``@AGENTS.md`` import, delimited by ``<!-- BEGIN AI_MATE_AGENTS_IMPORT -->`` and
-    ``<!-- END AI_MATE_AGENTS_IMPORT -->``. Claude Code reads ``CLAUDE.md`` and would otherwise
-    never see ``AGENTS.md``.
+    ``<!-- END AI_MATE_AGENTS_IMPORT -->``. Mate never creates this file. Claude Code (2.1.277 or
+    later) reads ``AGENTS.md`` on its own while no ``CLAUDE.md`` exists. Once one exists, Claude
+    Code ignores ``AGENTS.md``, so the import keeps the instructions visible.
 
 On top of that, ``mate discover`` installs the Agent Skills of every enabled extension into
 ``.agents/skills/`` and mirrors them into ``.claude/skills/``. See :doc:`skills`.
@@ -41,8 +42,8 @@ Per-Agent Notes
 Claude Code
 ~~~~~~~~~~~
 
-Works out of the box after ``mate init``. It reads ``CLAUDE.md``, which imports ``AGENTS.md``, and
-loads skills from ``.claude/skills/``. To verify, run this from a Claude Code session:
+Works out of the box after ``mate init``. It reads ``AGENTS.md``, directly or through the import in
+your ``CLAUDE.md``, and loads skills from ``.claude/skills/``. To verify, run this from a Claude Code session:
 
 .. code-block:: terminal
 

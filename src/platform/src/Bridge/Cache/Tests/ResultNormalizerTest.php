@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Contract\Normalizer\Result\ToolCallNormalizer;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\CommentaryResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -93,6 +94,16 @@ final class ResultNormalizerTest extends TestCase
         $this->assertEquals($result, $resultNormalizer->denormalize($expectedOutput, ResultInterface::class));
     }
 
+    public function testNormalizerCanDenormalizeTextResultCachedAsArrayWithoutSignatureAndPhase()
+    {
+        $resultNormalizer = new ResultNormalizer(new ObjectNormalizer());
+
+        $this->assertEquals(new TextResult('foo'), $resultNormalizer->denormalize([
+            'class' => TextResult::class,
+            'payload' => ['content' => 'foo'],
+        ], ResultInterface::class));
+    }
+
     public static function provideResultForNormalization(): \Generator
     {
         yield BinaryResult::class => [
@@ -150,6 +161,34 @@ final class ResultNormalizerTest extends TestCase
                 'payload' => ['content' => 'reasoning summary', 'signature' => 'sig_abc'],
             ],
         ];
+        yield CommentaryResult::class => [
+            new MultiPartResult([
+                new CommentaryResult('I will look up the weather.'),
+                new ToolCallResult([new ToolCall('call-1', 'get_weather', ['city' => 'Paris'])]),
+            ]),
+            [
+                'class' => MultiPartResult::class,
+                'payload' => [
+                    [
+                        'class' => CommentaryResult::class,
+                        'payload' => 'I will look up the weather.',
+                    ],
+                    [
+                        'class' => ToolCallResult::class,
+                        'payload' => [
+                            [
+                                'id' => 'call-1',
+                                'type' => 'function',
+                                'function' => [
+                                    'name' => 'get_weather',
+                                    'arguments' => '{"city":"Paris"}',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
         yield ObjectResult::class.'-array' => [
             new ObjectResult([
                 'foo' => 'bar',
@@ -161,6 +200,20 @@ final class ResultNormalizerTest extends TestCase
                     'content' => [
                         'foo' => 'bar',
                     ],
+                    'text' => null,
+                ],
+            ],
+        ];
+        yield ObjectResult::class.'-text' => [
+            new ObjectResult(['foo' => 'bar'], '{"foo": "bar"}'),
+            [
+                'class' => ObjectResult::class,
+                'payload' => [
+                    'type' => 'array',
+                    'content' => [
+                        'foo' => 'bar',
+                    ],
+                    'text' => '{"foo": "bar"}',
                 ],
             ],
         ];
@@ -171,6 +224,7 @@ final class ResultNormalizerTest extends TestCase
                 'payload' => [
                     'type' => 'stdClass',
                     'content' => [],
+                    'text' => null,
                 ],
             ],
         ];
@@ -179,6 +233,20 @@ final class ResultNormalizerTest extends TestCase
             [
                 'class' => TextResult::class,
                 'payload' => 'foo',
+            ],
+        ];
+        yield TextResult::class.' with phase' => [
+            new TextResult('foo', phase: 'final_answer'),
+            [
+                'class' => TextResult::class,
+                'payload' => ['content' => 'foo', 'signature' => null, 'phase' => 'final_answer'],
+            ],
+        ];
+        yield TextResult::class.' with signature' => [
+            new TextResult('foo', 'sig-1'),
+            [
+                'class' => TextResult::class,
+                'payload' => ['content' => 'foo', 'signature' => 'sig-1', 'phase' => null],
             ],
         ];
         yield ToolCallResult::class => [

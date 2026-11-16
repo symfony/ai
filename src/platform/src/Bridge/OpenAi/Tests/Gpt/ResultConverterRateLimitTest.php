@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Platform\Bridge\OpenAi\Tests\Gpt;
 
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ResultConverter;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
@@ -20,6 +21,31 @@ use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class ResultConverterRateLimitTest extends TestCase
 {
+    #[TestWith(['20ms', 1])]
+    #[TestWith(['8.64s', 9])]
+    #[TestWith(['1h2m3s', 3723])]
+    #[TestWith(['2m59.56s', 180])]
+    public function testRateLimitExceededWithGoDurationResetTime(string $resetTime, int $retryAfter)
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse('{"error":{"message":"Rate limit reached for tokens","type":"rate_limit_error"}}', [
+                'http_code' => 429,
+                'response_headers' => [
+                    'x-ratelimit-reset-requests' => $resetTime,
+                ],
+            ]),
+        ]);
+
+        $httpResponse = $httpClient->request('POST', 'https://api.openai.com/v1/chat/completions');
+
+        try {
+            (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+            $this->fail('A 429 must throw.');
+        } catch (RateLimitExceededException $e) {
+            $this->assertSame($retryAfter, $e->getRetryAfter());
+        }
+    }
+
     public function testRateLimitExceededWithRequestsResetTime()
     {
         $httpClient = new MockHttpClient([

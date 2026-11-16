@@ -163,6 +163,39 @@ final class ToolNormalizerTest extends TestCase
             ],
         ];
 
+        yield 'call with nullable enum parameter' => [
+            new Tool(
+                new ExecutionReference(ToolRequiredParams::class, 'bar'),
+                'tool_nullable_enum',
+                'A tool with nullable enum parameter',
+                // @phpstan-ignore argument.type (testing array-style nullable types that get normalized)
+                [
+                    'type' => 'object',
+                    'properties' => [
+                        'mode' => [
+                            'type' => ['string', 'null'],
+                            'enum' => ['and', 'or', null],
+                        ],
+                    ],
+                    'additionalProperties' => false,
+                ],
+            ),
+            [
+                'description' => 'A tool with nullable enum parameter',
+                'name' => 'tool_nullable_enum',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'mode' => [
+                            'type' => 'string',
+                            'enum' => ['and', 'or'],
+                            'nullable' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
         yield 'call with nested nullable parameter' => [
             new Tool(
                 new ExecutionReference(ToolRequiredParams::class, 'bar'),

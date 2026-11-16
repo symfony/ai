@@ -13,12 +13,20 @@ namespace Symfony\AI\Platform\Bridge\Cache;
 
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\MessageInterface;
+use Symfony\AI\Platform\Serializer\MessageNormalizer;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
 /**
  * @author Tac Tacelosky <tacman@gmail.com>
  */
 final class MessageBagCacheKeyGenerator implements CacheKeyGenerator
 {
+    public function __construct(
+        private readonly MessageNormalizer $normalizer = new MessageNormalizer(),
+    ) {
+    }
+
     public function supports(object $input): bool
     {
         return $input instanceof MessageBag;
@@ -30,6 +38,12 @@ final class MessageBagCacheKeyGenerator implements CacheKeyGenerator
             throw new InvalidArgumentException(\sprintf('"%s" only supports "%s" inputs, "%s" given.', self::class, MessageBag::class, get_debug_type($input)));
         }
 
-        return $input->getId()->toString();
+        // ids and metadata differ between bags carrying the same conversation
+        $messages = array_map(
+            fn (MessageInterface $message): array => $this->normalizer->normalize($message, context: [AbstractNormalizer::IGNORED_ATTRIBUTES => ['id', 'metadata', 'addedAt']]),
+            $input->getMessages(),
+        );
+
+        return hash('xxh128', json_encode($messages, \JSON_THROW_ON_ERROR));
     }
 }

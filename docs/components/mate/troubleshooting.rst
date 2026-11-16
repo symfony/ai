@@ -62,13 +62,13 @@ The Agent Ignores Mate
 The most common failure. It is a discovery problem, not a technical one.
 
 1. **Confirm the instructions exist.** Run ``vendor/bin/mate discover``. Then check that
-   ``AGENTS.md`` contains the managed block and that ``CLAUDE.md`` imports it.
+   ``AGENTS.md`` contains the managed block. If you have a ``CLAUDE.md``, check that it imports it.
 
 2. **Confirm the skills are installed.** Run ``vendor/bin/mate skills:list``. A skill in state
    ``disabled`` is not installed. An empty list means no enabled extension ships skills.
 
-3. **Confirm the agent reads the file it needs.** Claude Code needs ``CLAUDE.md``, Codex needs
-   ``AGENTS.md``. If you keep your own instruction file, it has to import one of them. See
+3. **Confirm the agent reads the file it needs.** Claude Code reads ``CLAUDE.md``, and ``AGENTS.md`` only
+   when there is no ``CLAUDE.md``. Codex needs ``AGENTS.md``. If you keep your own instruction file, it has to import one of them. See
    :doc:`integration`.
 
 4. **Say it explicitly once.** Asking the agent to run ``vendor/bin/mate tools:list`` is enough to

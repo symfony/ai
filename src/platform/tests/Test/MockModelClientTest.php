@@ -67,13 +67,13 @@ final class MockModelClientTest extends TestCase
     public function testClosureReceivesModelPayloadAndOptions()
     {
         $client = new MockModelClient(static function (Model $model, array|string $payload, array $options): string {
-            return \sprintf('%s|%s|%s', $model->getName(), $payload, $options['stream'] ? 'stream' : 'sync');
+            return \sprintf('%s|%s|%s', $model->getName(), $payload, $options['temperature']);
         });
 
-        $result = $client->request(new Model('gpt'), 'hi', ['stream' => true])->getObject();
+        $result = $client->request(new Model('gpt'), 'hi', ['temperature' => 0.5])->getObject();
 
         $this->assertInstanceOf(TextResult::class, $result);
-        $this->assertSame('gpt|hi|stream', $result->getContent());
+        $this->assertSame('gpt|hi|0.5', $result->getContent());
     }
 
     public function testGetCallsRecordsEveryInvocation()

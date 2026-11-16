@@ -4,8 +4,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.deepseek.com/chat/completions",
-                "signature": "be2618c2baa519d0791da8382227065e",
-                "signature_v2": "ca56812cba81d799a96e61f195e94a1f",
+                "signature": "5c91509170048f585ae3bdabc9d5ed1f",
+                "signature_v2": "1daf3063af788b16a8e0d7b425d5ffed",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -14,7 +14,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\"}}],\"messages\":[{\"role\":\"user\",\"content\":\"How many days until next Christmas?\"}],\"model\":\"deepseek-chat\"}"
+                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"parameters\":{\"type\":\"object\",\"properties\":{}}}}],\"messages\":[{\"role\":\"user\",\"content\":\"How many days until next Christmas?\"}],\"model\":\"deepseek-chat\"}"
             },
             "response": {
                 "status": 200,
@@ -64,8 +64,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.deepseek.com/chat/completions",
-                "signature": "675c27f0b074cc5acbf54111a735fe6c",
-                "signature_v2": "0737b44940174cbcf5666a26ee0d2a90",
+                "signature": "8369943e74758faf6e177d13c4de6339",
+                "signature_v2": "d76acf2b87b074ae9855babebffc1e69",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -74,7 +74,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\"}}],\"messages\":[{\"role\":\"user\",\"content\":\"How many days until next Christmas?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_00_xsnJgJn1AbO2NiNVOxSc7255\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"content\":\"Current date is 2026-09-13 (YYYY-MM-DD) and the time is 20:59:06 (HH:MM:SS).\",\"tool_call_id\":\"call_00_xsnJgJn1AbO2NiNVOxSc7255\"}],\"model\":\"deepseek-chat\"}"
+                "body": "{\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"clock\",\"description\":\"Provides the current date and time.\",\"parameters\":{\"type\":\"object\",\"properties\":{}}}}],\"messages\":[{\"role\":\"user\",\"content\":\"How many days until next Christmas?\"},{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"call_00_xsnJgJn1AbO2NiNVOxSc7255\",\"type\":\"function\",\"function\":{\"name\":\"clock\",\"arguments\":\"{}\"}}]},{\"role\":\"tool\",\"content\":\"Current date is 2026-09-13 (YYYY-MM-DD) and the time is 20:59:06 (HH:MM:SS).\",\"tool_call_id\":\"call_00_xsnJgJn1AbO2NiNVOxSc7255\"}],\"model\":\"deepseek-chat\"}"
             },
             "response": {
                 "status": 200,

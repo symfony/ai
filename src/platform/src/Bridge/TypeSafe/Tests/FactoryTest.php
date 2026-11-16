@@ -12,11 +12,11 @@
 namespace Symfony\AI\Platform\Bridge\TypeSafe\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\TypeSafe\Answer\Answers;
-use Symfony\AI\Platform\Bridge\TypeSafe\Evaluation;
+use Symfony\AI\Platform\Bridge\Decision\Answer\Answers;
+use Symfony\AI\Platform\Bridge\Decision\Evaluation;
+use Symfony\AI\Platform\Bridge\Decision\Question\ChoiceQuestion;
+use Symfony\AI\Platform\Bridge\Decision\Question\NoulQuestion;
 use Symfony\AI\Platform\Bridge\TypeSafe\Factory;
-use Symfony\AI\Platform\Bridge\TypeSafe\Question\ChoiceQuestion;
-use Symfony\AI\Platform\Bridge\TypeSafe\Question\NoulQuestion;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;

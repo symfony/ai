@@ -39,7 +39,8 @@ final class ImageNormalizerTest extends TestCase
 
         $normalized = $normalizer->normalize(Image::fromFile(\dirname(__DIR__, 7).'/fixtures/image.jpg'));
 
-        $this->assertSame('image_url', $normalized['type']);
-        $this->assertStringStartsWith('data:image/jpeg;base64,', $normalized['image_url']);
+        $this->assertSame('image', $normalized['type']);
+        $this->assertSame('image/jpeg', $normalized['mime_type']);
+        $this->assertSame(base64_encode(file_get_contents(\dirname(__DIR__, 7).'/fixtures/image.jpg')), $normalized['data']);
     }
 }

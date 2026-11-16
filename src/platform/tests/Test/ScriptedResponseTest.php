@@ -59,13 +59,13 @@ final class ScriptedResponseTest extends TestCase
     public function testClosureScriptReceivesModelInputAndOptions()
     {
         $response = new ScriptedResponse(static function (Model $model, array|string|object $input, array $options): string {
-            return \sprintf('%s|%s|%s', $model->getName(), $input, $options['stream'] ? 'stream' : 'sync');
+            return \sprintf('%s|%s|%s', $model->getName(), $input, $options['temperature']);
         });
 
-        $result = $response->resolve(new Model('gpt'), 'hi', ['stream' => true]);
+        $result = $response->resolve(new Model('gpt'), 'hi', ['temperature' => 0.5]);
 
         $this->assertInstanceOf(TextResult::class, $result);
-        $this->assertSame('gpt|hi|stream', $result->getContent());
+        $this->assertSame('gpt|hi|0.5', $result->getContent());
     }
 
     public function testClosureScriptReturningResultInterfaceIsPassedThrough()

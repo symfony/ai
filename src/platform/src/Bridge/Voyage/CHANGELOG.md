@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.15
+----
+
+ * Add reranking support via the `/v1/rerank` endpoint, with the `rerank-3`, `rerank-3-lite`, `rerank-2.5`, `rerank-2.5-lite`, `rerank-2` and `rerank-2-lite` models and token usage from the `usage.total_tokens` field
+
 0.11
 ----
 

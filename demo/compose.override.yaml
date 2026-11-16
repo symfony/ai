@@ -16,3 +16,19 @@ services:
       ports:
           - "8432:5432"
 ###< doctrine/doctrine-bundle ###
+
+###> symfony/mercure-bundle ###
+  mercure:
+    ports:
+      - "80"
+    environment:
+      # Plain HTTP on port 80, which the Symfony CLI exposes as MERCURE_URL and MERCURE_PUBLIC_URL
+      SERVER_NAME: ':80'
+      # Replaces MERCURE_EXTRA_DIRECTIVES from docker-compose.yml, keep the other directives in sync
+      # The playground directive enables the debug UI, anonymous lets the browser subscribe without a JWT
+      # Port 9080 is the web server of the Panther E2E tests
+      MERCURE_EXTRA_DIRECTIVES: |
+        playground
+        anonymous
+        cors_origins http://127.0.0.1:8000 https://127.0.0.1:8000 http://localhost:8000 https://localhost:8000 http://127.0.0.1:9080
+###< symfony/mercure-bundle ###

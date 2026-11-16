@@ -15,13 +15,17 @@ use Symfony\AI\Agent\Exception\InvalidArgumentException;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Cancellation;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\ExecutionInterface;
 use Symfony\AI\Agent\Execution\Runner;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
+use Symfony\AI\Agent\MessageStore\MessageStoreInterface;
 use Symfony\AI\Agent\Toolbox\SequentialToolExecutor;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolExecutorInterface;
+use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\MessageInterface;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -38,8 +42,8 @@ final class Agent implements AgentInterface
      * @param InputProcessorInterface[]  $inputProcessors
      * @param OutputProcessorInterface[] $outputProcessors
      * @param non-empty-string           $model
-     * @param bool                       $excludeToolMessages keeps the messages appended during tool calling out of the caller's message bag
-     * @param bool                       $includeSources      exposes the sources collected during tool calling as `sources` result metadata
+     * @param bool                       $includeSources   exposes the sources collected during tool calling as `sources` result metadata
+     * @param MessageStoreInterface|null $messageStore     continues the conversation stored under the id of the given messages and saves its progress
      */
     public function __construct(
         PlatformInterface $platform,
@@ -50,9 +54,10 @@ final class Agent implements AgentInterface
         ?ToolboxInterface $toolbox = null,
         ?ToolExecutorInterface $toolExecutor = null,
         ?int $maxToolCalls = 50,
-        bool $excludeToolMessages = false,
         bool $includeSources = false,
         ?EventDispatcherInterface $eventDispatcher = null,
+        ToolResultConverter $toolResultConverter = new ToolResultConverter(),
+        private readonly ?MessageStoreInterface $messageStore = null,
     ) {
         if (null === $toolExecutor && $toolbox instanceof ToolboxInterface) {
             $toolExecutor = new SequentialToolExecutor($toolbox);
@@ -63,9 +68,9 @@ final class Agent implements AgentInterface
             $toolbox,
             $toolExecutor,
             $maxToolCalls,
-            $excludeToolMessages,
             $includeSources,
             $eventDispatcher,
+            $toolResultConverter,
         );
     }
 
@@ -80,7 +85,7 @@ final class Agent implements AgentInterface
     }
 
     /**
-     * Starts the agent and returns a lazy {@see Execution} that is also the result it produces.
+     * Starts the agent and returns a lazy {@see ExecutionInterface} that is also the result it produces.
      *
      * Read it eagerly with `->getContent()`/`->getResult()`, iterate it to observe every model request, tool call
      * and streamed delta as an update, or register callbacks via `->onProgress(...)`. With the "stream" option
@@ -92,11 +97,17 @@ final class Agent implements AgentInterface
      * @throws RuntimeException         When the platform returns a server error (5xx) or network failure occurs
      * @throws ExceptionInterface       When the platform converter throws an exception
      */
-    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
+    public function call(string|MessageBag|UserMessage $input, array $options = []): ExecutionInterface
     {
         $cancellation = new Cancellation();
         $factory = function () use ($input, $options, $cancellation): \Generator {
-            $request = new Input($this->getModel(), InputNormalizer::toMessageBag($input), $options);
+            $input = InputNormalizer::toMessageBag($input);
+            if (null !== $this->messageStore) {
+                $input = $this->continueStored($input, $this->messageStore);
+                $this->messageStore->save($input);
+            }
+
+            $request = new Input($this->getModel(), $input, $options);
             foreach ($this->inputProcessors as $inputProcessor) {
                 if (!$inputProcessor instanceof InputProcessorInterface) {
                     throw new InvalidArgumentException(\sprintf('Input processor "%s" must implement "%s".', $inputProcessor::class, InputProcessorInterface::class));
@@ -114,9 +125,17 @@ final class Agent implements AgentInterface
             $processedOptions = $request->getOptions();
 
             $result = null;
-            foreach ($this->runner->run($model, $messages, $processedOptions, $cancellation) as $update) {
+            $resultUpdate = null;
+            $onToolRound = null;
+            if (null !== $this->messageStore) {
+                $store = $this->messageStore;
+                $onToolRound = static fn (MessageBag $round) => $store->save($input->merge(new MessageBag(...\array_slice($round->getMessages(), \count($messages)))));
+            }
+
+            foreach ($this->runner->run($model, $messages, $processedOptions, $cancellation, $onToolRound) as $update) {
                 if ($update instanceof ResultUpdate) {
                     $result = $update->getResult();
+                    $resultUpdate = $update;
 
                     continue;
                 }
@@ -128,7 +147,7 @@ final class Agent implements AgentInterface
                 return;
             }
 
-            \assert($result instanceof ResultInterface);
+            \assert($result instanceof ResultInterface && $resultUpdate instanceof ResultUpdate);
 
             $output = new Output($model, $result, $messages, $processedOptions);
             foreach ($this->outputProcessors as $outputProcessor) {
@@ -143,9 +162,41 @@ final class Agent implements AgentInterface
                 $outputProcessor->processOutput($output);
             }
 
-            yield new ResultUpdate($output->getResult());
+            $finalResult = $output->getResult();
+            $conversation = static function () use ($resultUpdate, $messages, $input, $result, $finalResult): MessageBag {
+                $runMessages = $resultUpdate->getMessages($finalResult !== $result ? $finalResult : null);
+
+                // the runner appended to the processed request, the caller's input only gets the new messages
+                $newMessages = \array_slice($runMessages?->getMessages() ?? [], \count($messages));
+
+                return $input->merge(new MessageBag(...$newMessages));
+            };
+
+            if (null !== $this->messageStore) {
+                $conversation = $conversation();
+                $this->messageStore->save($conversation);
+            }
+
+            yield new ResultUpdate($finalResult, $conversation);
         };
 
         return new Execution($factory, true === ($options['stream'] ?? false), $cancellation);
+    }
+
+    /**
+     * The stored conversation followed by the given messages it doesn't contain yet.
+     */
+    private function continueStored(MessageBag $input, MessageStoreInterface $store): MessageBag
+    {
+        $stored = $store->load($input->getId());
+        $storedIds = array_flip(array_map(static fn (MessageInterface $message): string => $message->getId()->toRfc4122(), $stored->getMessages()));
+
+        $messages = $stored->merge(new MessageBag(...array_filter(
+            $input->getMessages(),
+            static fn (MessageInterface $message): bool => !isset($storedIds[$message->getId()->toRfc4122()]),
+        )));
+        $messages->getMetadata()->set(array_replace($stored->getMetadata()->all(), $input->getMetadata()->all()));
+
+        return $messages;
     }
 }

@@ -6,7 +6,14 @@ Perplexity platform bridge for Symfony AI.
 Perplexity Documentation
 ------------------------
 
- * [Chat completions (Sonar)](https://docs.perplexity.ai/api-reference/chat-completions-post)
+ * [Agent API](https://docs.perplexity.ai/docs/agent-api/quickstart)
+ * [Create Agent Response](https://docs.perplexity.ai/api-reference/agent-post)
+ * [Presets](https://docs.perplexity.ai/docs/agent-api/presets)
+ * [Web Search tool](https://docs.perplexity.ai/docs/agent-api/tools/web-search)
+ * [Custom functions](https://docs.perplexity.ai/docs/agent-api/tools/custom-functions)
+ * [Output control (streaming and structured outputs)](https://docs.perplexity.ai/docs/agent-api/output-control)
+ * [Image attachments](https://docs.perplexity.ai/docs/agent-api/image-attachments)
+ * [Migrate from Sonar to the Agent API](https://docs.perplexity.ai/docs/agent-api/migrate-from-sonar/how-to)
 
 Resources
 ---------

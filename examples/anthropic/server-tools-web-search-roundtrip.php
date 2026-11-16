@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\WebSearch;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\Role;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -29,7 +30,7 @@ $messages = new MessageBag(
 );
 
 $execution = $agent->call($messages, ['server_tools' => $serverTools]);
-$messages->add($assistant = Message::ofAssistant($execution->getResult()));
+$assistant = $execution->getMessages()->latestAs(Role::Assistant);
 
 output()->writeln('<info>====== Turn 1 ======</info>');
 
@@ -51,6 +52,5 @@ echo \PHP_EOL;
 // call and its `web_search_tool_result`, and rejects either one on its own. Turn 2 can name the
 // source because the assistant turn replayed both.
 output()->writeln('<info>====== Turn 2 ======</info>');
-$messages->add(Message::ofUser('Which website did you take that from? Answer with the domain only.'));
-$execution = $agent->call($messages, ['server_tools' => $serverTools]);
+$execution = $agent->call($execution->getMessages()->with(Message::ofUser('Which website did you take that from? Answer with the domain only.')), ['server_tools' => $serverTools]);
 output()->writeln('<comment>Assistant:</comment> '.$execution->asText());

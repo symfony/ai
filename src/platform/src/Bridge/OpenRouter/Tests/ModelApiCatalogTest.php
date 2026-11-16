@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\OpenRouter\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
+use Symfony\AI\Platform\Bridge\OpenRouter\DecisionModel;
 use Symfony\AI\Platform\Bridge\OpenRouter\ModelApiCatalog;
 use Symfony\AI\Platform\Capability;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -41,6 +42,9 @@ final class ModelApiCatalogTest extends TestCase
             new JsonMockResponse([
                 'data' => [],
             ]),
+            new JsonMockResponse([
+                'data' => [],
+            ]),
         ]);
 
         $catalog = new ModelApiCatalog($httpClient);
@@ -50,7 +54,7 @@ final class ModelApiCatalogTest extends TestCase
         $this->assertContains(Capability::INPUT_TEXT, $model->getCapabilities());
         $this->assertContains(Capability::INPUT_IMAGE, $model->getCapabilities());
         $this->assertContains(Capability::OUTPUT_TEXT, $model->getCapabilities());
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertSame(3, $httpClient->getRequestsCount());
     }
 
     public function testGetModelsLoadsFromApi()
@@ -81,6 +85,9 @@ final class ModelApiCatalogTest extends TestCase
                     ],
                 ],
             ]),
+            new JsonMockResponse([
+                'data' => [],
+            ]),
         ]);
 
         $catalog = new ModelApiCatalog($httpClient);
@@ -98,7 +105,7 @@ final class ModelApiCatalogTest extends TestCase
         $this->assertSame(CompletionsModel::class, $models['google/gemini-pro-vision']['class']);
         $this->assertSame(EmbeddingsModel::class, $models['openai/text-embedding-ada-002']['class']);
 
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertSame(3, $httpClient->getRequestsCount());
     }
 
     public function testModelsAreOnlyLoadedOnce()
@@ -118,6 +125,9 @@ final class ModelApiCatalogTest extends TestCase
             new JsonMockResponse([
                 'data' => [],
             ]),
+            new JsonMockResponse([
+                'data' => [],
+            ]),
         ]);
 
         $catalog = new ModelApiCatalog($httpClient);
@@ -126,8 +136,8 @@ final class ModelApiCatalogTest extends TestCase
         $catalog->getModels();
         $catalog->getModels();
 
-        // Should only make 2 API calls total (models + embeddings), not 4
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        // Should only make 3 API calls total (models + embeddings + decisions), not 6
+        $this->assertSame(3, $httpClient->getRequestsCount());
     }
 
     public function testGetModelWithAudioInputModality()
@@ -143,6 +153,9 @@ final class ModelApiCatalogTest extends TestCase
                         ],
                     ],
                 ],
+            ]),
+            new JsonMockResponse([
+                'data' => [],
             ]),
             new JsonMockResponse([
                 'data' => [],
@@ -169,6 +182,9 @@ final class ModelApiCatalogTest extends TestCase
                         ],
                     ],
                 ],
+            ]),
+            new JsonMockResponse([
+                'data' => [],
             ]),
             new JsonMockResponse([
                 'data' => [],
@@ -200,6 +216,9 @@ final class ModelApiCatalogTest extends TestCase
             new JsonMockResponse([
                 'data' => [],
             ]),
+            new JsonMockResponse([
+                'data' => [],
+            ]),
         ]);
 
         $catalog = new ModelApiCatalog($httpClient);
@@ -227,6 +246,9 @@ final class ModelApiCatalogTest extends TestCase
             new JsonMockResponse([
                 'data' => [],
             ]),
+            new JsonMockResponse([
+                'data' => [],
+            ]),
         ]);
 
         $catalog = new ModelApiCatalog($httpClient);
@@ -239,6 +261,9 @@ final class ModelApiCatalogTest extends TestCase
     public function testPresetModelStillWorksWithApiCatalog()
     {
         $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'data' => [],
+            ]),
             new JsonMockResponse([
                 'data' => [],
             ]),
@@ -270,20 +295,27 @@ final class ModelApiCatalogTest extends TestCase
         $embeddingsResponse = new JsonMockResponse([
             'data' => [],
         ]);
+        $decisionsResponse = new JsonMockResponse([
+            'data' => [],
+        ]);
 
-        $httpClient = new MockHttpClient([$modelsResponse, $embeddingsResponse]);
+        $httpClient = new MockHttpClient([$modelsResponse, $embeddingsResponse, $decisionsResponse]);
 
         $catalog = new ModelApiCatalog($httpClient, 'https://gateway.internal/api/');
         $catalog->getModels();
 
-        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertSame(3, $httpClient->getRequestsCount());
         $this->assertSame('https://gateway.internal/api/v1/models', $modelsResponse->getRequestUrl());
         $this->assertSame('https://gateway.internal/api/v1/embeddings/models', $embeddingsResponse->getRequestUrl());
+        $this->assertSame('https://gateway.internal/api/v1/models?output_modalities=decisions', $decisionsResponse->getRequestUrl());
     }
 
     public function testAutoRouterModelStillWorksWithApiCatalog()
     {
         $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'data' => [],
+            ]),
             new JsonMockResponse([
                 'data' => [],
             ]),
@@ -297,5 +329,35 @@ final class ModelApiCatalogTest extends TestCase
 
         $this->assertSame('openrouter/auto', $model->getName());
         $this->assertSame(Capability::cases(), $model->getCapabilities());
+    }
+
+    public function testGetModelLoadsDecisionModelsFromApi()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'data' => [],
+            ]),
+            new JsonMockResponse([
+                'data' => [],
+            ]),
+            new JsonMockResponse([
+                'data' => [
+                    [
+                        'id' => 'typesafe/jev-1.13',
+                        'architecture' => [
+                            'input_modalities' => ['text', 'image'],
+                            'output_modalities' => ['decisions'],
+                        ],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $catalog = new ModelApiCatalog($httpClient);
+        $model = $catalog->getModel('typesafe/jev-1.13');
+
+        $this->assertInstanceOf(DecisionModel::class, $model);
+        $this->assertSame('typesafe/jev-1.13', $model->getName());
+        $this->assertSame([Capability::INPUT_TEXT], $model->getCapabilities());
     }
 }

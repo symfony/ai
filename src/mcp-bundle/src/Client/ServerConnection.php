@@ -11,11 +11,11 @@
 
 namespace Symfony\AI\McpBundle\Client;
 
-use Mcp\Client;
+use Mcp\Client\Client;
 use Mcp\Client\Transport\TransportInterface;
-use Mcp\Exception\ExceptionInterface as McpExceptionInterface;
 use Mcp\Schema\Enum\LoggingLevel;
 use Mcp\Schema\Enum\ProtocolVersion;
+use Mcp\Schema\Exception\ExceptionInterface as McpExceptionInterface;
 use Mcp\Schema\Implementation;
 use Mcp\Schema\PromptReference;
 use Mcp\Schema\ResourceReference;

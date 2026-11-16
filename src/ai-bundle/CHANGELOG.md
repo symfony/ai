@@ -1,13 +1,45 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Register `ModelOverrideInputProcessor` for every agent, so the `model` option of `AgentInterface::call()` selects the model of that call
+ * Reuse parameter constraints from MCP SDK `#[Schema]` attributes for agent tools when the SDK is installed, with Symfony schema attributes taking precedence
+ * [BC BREAK] Rename the `top_k` option of the `pinecone` and `s3vectors` stores to `limit`
+ * [BC BREAK] Replace the `client` option of the `pinecone` store by the required `api_key` and the `http_client` options
+ * Add the `model_catalog` platform option with `service`, `models`, `api` and `cache` options to use a custom catalog, add models, fetch the models from the provider API and cache the model lookups; a string is short for `service`
+ * [BC BREAK] Replace the `setup_options` of the `mariadb`, `mongodb`, `pinecone`, `postgres`, `redis` and `s3vectors` stores by store keys: `dimensions`, `metric`, `cloud`, `region`, `vector_type`, `index_method`, `index_opclass` and `index_fields`
+ * [BC BREAK] Remove the `setup_options.force_database_creation` option of the `surrealdb` store, use `ai:store:setup --option forceDatabaseCreation=true` instead
+ * [BC BREAK] Rename the `similarity` (`elasticsearch`, `manticoresearch`, `mongodb`), `metric_type` (`milvus`), `space_type` (`opensearch`), `strategy` (`surrealdb`) and `distance` (`mariadb`, `neo4j`, `postgres`, `qdrant`, `redis`, `sqlite`) store keys to `metric`, and the `vector_dimension` key of the `sqlite` and `supabase` stores to `dimensions`
+ * [BC BREAK] Require store and message store names to be unique across all types, and `failover` platform names to differ from other platform names
+ * [BC BREAK] Remove the type-prefixed `StoreInterface` and `MessageStoreInterface` aliases, e.g. `StoreInterface $chromadbDocuments`
+ * Add a `doctrine` store, keeping vectors in an `#[Embedding]` field of a Doctrine entity, and embedding the entity on flush and through `ai:store:index` when a `vectorizer` is configured
+ * [BC BREAK] Name stores by their configured name in the `ai:store:setup`, `ai:store:drop` and `ai:store:clear` commands instead of their service id
+ * [BC BREAK] Remove the root-level `ai.model` option in favor of the `models` option of the platform's `model_catalog`
+ * [BC BREAK] Remove the `ai.platform.model_catalog.amazeeai` service
+ * [BC BREAK] Remove the unused `ai.platform.model_catalog.aimlapi`, `ai.platform.model_catalog.meta` and `ai.platform.model_catalog.replicate` services
+ * [BC BREAK] Remove the `api_catalog` option of the `huggingface` platform in favor of the `api` option of its `model_catalog`
+ * Add the `message_store` agent option, continuing and saving the conversations of the agent by their ID
+ * [BC BREAK] Configured message stores are the stores of the Agent component, implementing `Symfony\AI\Agent\MessageStore\MessageStoreInterface`
+ * [BC BREAK] Remove the `chat` option and the chats of the profiler together with the Chat component, use the `message_store` agent option instead
+ * [BC BREAK] Remove the `identifier` option of the `memory` message store
+ * [BC BREAK] Remove the `exclude_tool_messages` agent option, tool messages never reach the caller's `MessageBag`
+ * Add the `mirror_to` option to the `doctrine` store, mirroring the entity into another store and registering an entity retriever
+ * Show the configured platforms, toolboxes, agents, message stores and stores, their service ids and collected calls in the profiler panel
+
 0.15
 ----
 
  * Tag the MCP toolboxes of `mcp_server` tool entries with `kernel.reset`, so long-running workers refresh the tool list of a remote MCP server between requests and messages
  * Add `setup_options` configuration for Redis store to set the `vector_size` used by `ai:store:setup`
+ * Add `setup_options` configuration for S3 Vectors store to set the `dimension` and `distance_metric` used by `ai:store:setup`
  * Register a `#[Target]` alias for every configured platform, including the failover instance name
  * Add `dimensions` and `similarity` configuration for MongoDB store, used by `ai:store:setup` to create the vector index
+ * Add `setup_options` configuration for Pinecone store to set the `dimension`, `metric`, `cloud` and `region` used by `ai:store:setup`
+ * Add `setup_options.force_database_creation` configuration for SurrealDB store to create the namespace and database in `ai:store:setup`
+ * Add `api_catalog` option to the `huggingface` platform to resolve models through the Hugging Face Hub API
+ * [BC BREAK] Change the default `provider` of the `huggingface` platform to `null`, letting Hugging Face pick the provider for chat completion
 
 0.14
 ----

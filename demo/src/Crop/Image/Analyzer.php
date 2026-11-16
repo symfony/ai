@@ -13,7 +13,6 @@ namespace App\Crop\Image;
 
 use Symfony\AI\Platform\Bridge\HuggingFace\Output\DetectedObject;
 use Symfony\AI\Platform\Bridge\HuggingFace\Output\ObjectDetectionResult;
-use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -37,9 +36,7 @@ final readonly class Analyzer
 
     public function getRelevantArea(string $imageData): RelevantArea
     {
-        $result = $this->platform->invoke('facebook/detr-resnet-50', Image::fromDataUrl($imageData), [
-            'task' => Task::OBJECT_DETECTION,
-        ])->asObject();
+        $result = $this->platform->invoke('facebook/detr-resnet-50', Image::fromDataUrl($imageData))->asObject();
 
         \assert($result instanceof ObjectDetectionResult);
 

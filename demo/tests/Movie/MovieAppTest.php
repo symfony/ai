@@ -13,7 +13,6 @@ namespace App\Tests\Movie;
 
 use App\Movies\Movie;
 use App\Movies\MovieApp;
-use App\Movies\MovieRepository;
 use App\Movies\MovieSearch;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(MovieApp::class)]
 final class MovieAppTest extends TestCase
 {
-    private const FIXTURES_DIR = __DIR__.'/../../../fixtures/movies';
+    use MovieCollectionTrait;
 
     public function testRenderReturnsAllMoviesForEmptyQuery()
     {
@@ -75,8 +74,8 @@ final class MovieAppTest extends TestCase
 
     private function app(): MovieApp
     {
-        $repository = new MovieRepository(self::FIXTURES_DIR);
+        $repository = $this->repository();
 
-        return new MovieApp(new MovieSearch($repository), $repository);
+        return new MovieApp(new MovieSearch($repository, $this->retriever($repository)), $repository);
     }
 }

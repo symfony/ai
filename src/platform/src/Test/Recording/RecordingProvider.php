@@ -94,8 +94,7 @@ final class RecordingProvider implements ProviderInterface
     }
 
     /**
-     * Reconstructs a {@see DeferredResult} from a finished result, mirroring
-     * {@see \Symfony\AI\Platform\Test\InMemoryPlatform}.
+     * Reconstructs a {@see DeferredResult} from a finished result.
      *
      * @param array<string, mixed> $options
      */

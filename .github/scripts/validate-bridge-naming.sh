@@ -36,6 +36,12 @@ for composer_file in ${BRIDGE_PATH}/composer.json; do
     bridge_dir=$(dirname "$composer_file")
     bridge_name=$(basename "$bridge_dir")
 
+    # A component can hold bridges of several types, like the tools and message stores of the agent component
+    bridge_type=$(jq -r '.type // empty' "${bridge_dir%/}/composer.json" 2>/dev/null || true)
+    if [[ "$bridge_type" == symfony-ai-* && "$bridge_type" != "symfony-ai-${BRIDGE_TYPE}" ]]; then
+        continue
+    fi
+
     # Get the package name from composer.json
     package_name=$(jq -r '.name' "$composer_file")
 

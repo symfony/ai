@@ -11,21 +11,25 @@
 
 namespace App\Speech;
 
+use App\Conversation\ConversationIds;
 use Symfony\AI\Agent\AgentInterface;
+use Symfony\AI\Agent\MessageStore\MessageStoreInterface;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 final class Chat
 {
-    private const SESSION_KEY = 'audio-chat';
+    private const CHAT = 'speech';
 
     public function __construct(
-        private readonly RequestStack $requestStack,
+        private readonly ConversationIds $conversationIds,
+        #[Autowire(service: 'ai.message_store.session.conversations')]
+        private readonly MessageStoreInterface $messageStore,
         #[Autowire(service: 'ai.agent.speech')]
         private readonly AgentInterface $agent,
         private readonly Filesystem $filesystem,
@@ -38,34 +42,29 @@ final class Chat
         $path = $this->filesystem->tempnam(sys_get_temp_dir(), 'audio-', '.wav');
         $this->filesystem->dumpFile($path, base64_decode($base64audio));
 
-        $messages = $this->loadMessages();
-        $messages->add(Message::ofUser(Audio::fromFile($path)));
+        $messages = MessageBag::forId($this->conversationIds->get(self::CHAT), Message::ofUser(Audio::fromFile($path)));
 
-        $result = $this->agent->call($messages)->getResult();
+        $execution = $this->agent->call($messages);
+        $result = $execution->getResult();
 
-        $text = $result->getMetadata()->get('text');
-        $assistantMessage = Message::ofAssistant($text);
-        $messages->add($assistantMessage);
-
-        if ($result instanceof BinaryResult) {
-            $assistantMessage->getMetadata()->add('speech', $result->toDataUri('audio/mpeg'));
+        if (!$result instanceof BinaryResult) {
+            return;
         }
 
-        $this->saveMessages($messages);
+        $messages = $execution->getMessages();
+        $messages->latestAs(Role::Assistant)->getMetadata()->add('speech', $result->toDataUri('audio/mpeg'));
+
+        $this->messageStore->save($messages);
     }
 
     public function loadMessages(): MessageBag
     {
-        return $this->requestStack->getSession()->get(self::SESSION_KEY, new MessageBag());
+        return $this->messageStore->load($this->conversationIds->get(self::CHAT));
     }
 
     public function reset(): void
     {
-        $this->requestStack->getSession()->remove(self::SESSION_KEY);
-    }
-
-    private function saveMessages(MessageBag $messages): void
-    {
-        $this->requestStack->getSession()->set(self::SESSION_KEY, $messages);
+        $this->messageStore->delete($this->conversationIds->get(self::CHAT));
+        $this->conversationIds->reset(self::CHAT);
     }
 }

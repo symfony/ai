@@ -11,10 +11,10 @@
 
 namespace Symfony\AI\Agent\Bridge\Mcp;
 
-use Mcp\Client;
+use Mcp\Client\Client;
+use Mcp\Client\Exception\ConnectionException as McpConnectionException;
 use Mcp\Client\Transport\TransportInterface;
-use Mcp\Exception\ConnectionException as McpConnectionException;
-use Mcp\Exception\ExceptionInterface as McpSdkExceptionInterface;
+use Mcp\Schema\Exception\ExceptionInterface as McpSdkExceptionInterface;
 use Mcp\Schema\Result\CallToolResult;
 use Symfony\AI\Agent\Bridge\Mcp\Exception\ConnectionException;
 use Symfony\AI\Agent\Bridge\Mcp\Exception\ToolCallException;

@@ -32,7 +32,7 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
             endpoint: 'http://127.0.0.1:3000',
             table: 'documents',
             vectorFieldName: 'embedding',
-            vectorDimension: 3,
+            dimensions: 3,
             functionName: 'match_documents',
         );
     }

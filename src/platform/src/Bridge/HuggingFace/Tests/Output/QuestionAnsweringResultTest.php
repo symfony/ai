@@ -50,42 +50,6 @@ final class QuestionAnsweringResultTest extends TestCase
         $this->assertSame($score, $result->getScore());
     }
 
-    #[TestDox('fromArray creates instance from array data')]
-    public function testFromArray()
-    {
-        $data = [
-            'answer' => 'Machine learning',
-            'start' => 25,
-            'end' => 40,
-            'score' => 0.87,
-        ];
-
-        $result = QuestionAnsweringResult::fromArray($data);
-
-        $this->assertSame('Machine learning', $result->getAnswer());
-        $this->assertSame(25, $result->getStartIndex());
-        $this->assertSame(40, $result->getEndIndex());
-        $this->assertSame(0.87, $result->getScore());
-    }
-
-    /**
-     * @param array{answer: string, start: int, end: int, score: float} $data
-     */
-    #[TestDox('fromArray handles various data formats')]
-    #[TestWith([['answer' => 'Yes', 'start' => 0, 'end' => 3, 'score' => 1.0]])]
-    #[TestWith([['answer' => 'No answer found', 'start' => -1, 'end' => -1, 'score' => 0.0]])]
-    #[TestWith([['answer' => '2023', 'start' => 100, 'end' => 104, 'score' => 0.95]])]
-    #[TestWith([['answer' => 'The quick brown fox', 'start' => 0, 'end' => 19, 'score' => 0.88]])]
-    public function testFromArrayWithVariousData(array $data)
-    {
-        $result = QuestionAnsweringResult::fromArray($data);
-
-        $this->assertSame($data['answer'], $result->getAnswer());
-        $this->assertSame($data['start'], $result->getStartIndex());
-        $this->assertSame($data['end'], $result->getEndIndex());
-        $this->assertSame($data['score'], $result->getScore());
-    }
-
     #[TestDox('Special index and score values are handled correctly')]
     #[TestWith(['answer', 0, 0, 0.123456789])]
     #[TestWith(['answer', 1000, 2000, -0.5])]

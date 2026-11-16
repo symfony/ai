@@ -38,10 +38,20 @@ final class TwigComponent
         return $this->wikipedia->loadMessages()->withoutSystemMessage()->withoutToolMessages()->getMessages();
     }
 
+    public function getTopic(): string
+    {
+        return $this->wikipedia->getTopic();
+    }
+
+    public function isResearching(): bool
+    {
+        return $this->wikipedia->isResearching();
+    }
+
     #[LiveAction]
     public function submit(): void
     {
-        if (null === $this->message || '' === trim($this->message)) {
+        if (null === $this->message || '' === trim($this->message) || $this->wikipedia->isResearching()) {
             return;
         }
 

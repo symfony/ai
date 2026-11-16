@@ -10,6 +10,8 @@ Mistral Documentation
  * [Chat completions](https://docs.mistral.ai/api/endpoint/chat)
  * [OCR](https://docs.mistral.ai/api/endpoint/ocr)
  * [Speech to Text (Voxtral)](https://docs.mistral.ai/api/endpoint/audio_transcriptions)
+ * [Text to Speech (Voxtral)](https://docs.mistral.ai/studio/audio/text-to-speech/overview)
+ * [Speech endpoint](https://docs.mistral.ai/api/endpoint/audio/speech)
 
 
 Test Fixtures

@@ -1,0 +1,73 @@
+{# Turbo Streams the worker publishes via Mercure while it researches, see App\Wikipedia\ResearchHandler #}
+
+{% block step_added %}
+    {% import _self as research %}
+    <turbo-stream action="append" target="research-steps"><template>{{ research.step(step, index) }}</template></turbo-stream>
+{% endblock %}
+
+{% block step_updated %}
+    {% import _self as research %}
+    <turbo-stream action="replace" target="research-step-{{ index }}"><template>{{ research.step(step, index) }}</template></turbo-stream>
+{% endblock %}
+
+{% block answer_updated %}
+    <turbo-stream action="replace" target="research-answer"><template>
+        <div id="research-answer" class="bot-message">{{ answer|markdown_to_html }}</div>
+    </template></turbo-stream>
+{% endblock %}
+
+{% block finished %}
+    {% import _self as research %}
+    <turbo-stream action="replace" target="research"><template>{{ research.answer(message) }}</template></turbo-stream>
+{% endblock %}
+
+{% macro researching() %}
+    <div id="research" class="message message-bot">
+        <span class="bot avatar">{{ ux_icon('bot') }}</span>
+        <div class="research">
+            <ol id="research-steps" class="research-steps"></ol>
+            <div id="research-answer" class="bot-message loading">
+                <span class="typing" aria-hidden="true"><span></span><span></span><span></span></span>
+                <i>The Wikipedia Bot is doing some research ...</i>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% macro answer(message) %}
+    {% import _self as research %}
+    {% set steps = message.metadata.get('steps', []) %}
+    {% set lookups = steps|filter(step => 'tool' == step.type)|length %}
+    {# The id matches the answer Turbo inserted, which the next live render would otherwise keep as a duplicate #}
+    <div id="message-{{ message.id }}" class="research-message">
+    <div class="message message-bot">
+        <span class="bot avatar">{{ ux_icon('bot') }}</span>
+        <div class="research">
+            {% if lookups > 0 %}
+                <details class="research-log">
+                    <summary>Researched in {{ lookups }} step{{ lookups > 1 ? 's' }}</summary>
+                    <ol class="research-steps">
+                        {% for step in steps %}{{ research.step(step) }}{% endfor %}
+                    </ol>
+                </details>
+            {% endif %}
+            <div class="bot-message">{{ message.asText|markdown_to_html }}</div>
+        </div>
+    </div>
+    {% if message.metadata.get('sources', [])|length > 0 %}
+        <div class="message-sources">
+            <span class="message-sources-label">Sources</span>
+            {% for source in message.metadata.get('sources') %}
+                <a class="source-pill" href="{{ source.reference }}" target="_blank" rel="noopener">{{ ux_icon('wikipedia') }}{{ source.name }}</a>
+            {% endfor %}
+        </div>
+    {% endif %}
+    </div>
+{% endmacro %}
+
+{% macro step(step, index = null) %}
+    <li{% if index is not null %} id="research-step-{{ index }}"{% endif %} class="research-step research-step-{{ step.type }}">
+        {% if 'tool' == step.type %}{{ ux_icon('wikipedia') }}{% endif %}
+        <span>{{ step.text }}</span>
+    </li>
+{% endmacro %}

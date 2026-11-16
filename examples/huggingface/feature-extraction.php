@@ -10,14 +10,11 @@
  */
 
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
-use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
 
-$result = $platform->invoke('BAAI/bge-large-en-v1.5', 'Today is a sunny day and I will get some ice cream.', [
-    'task' => Task::FEATURE_EXTRACTION,
-]);
+$result = $platform->invoke('BAAI/bge-large-en-v1.5', 'Today is a sunny day and I will get some ice cream.');
 
 print_vectors($result);

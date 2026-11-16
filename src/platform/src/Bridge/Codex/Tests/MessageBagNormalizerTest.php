@@ -79,16 +79,43 @@ final class MessageBagNormalizerTest extends TestCase
         $this->assertArrayNotHasKey('system_prompt', $result);
     }
 
-    public function testNormalizeUsesLastUserMessage()
+    public function testNormalizeJoinsUserMessagesAfterLastAssistantMessage()
     {
         $messageBag = new MessageBag(
-            Message::ofUser('First question'),
-            Message::ofUser('Second question'),
+            Message::ofUser('Earlier question'),
+            Message::ofAssistant('Earlier answer'),
+            Message::ofUser('The task: FIRST'),
+            Message::ofUser('The diff: SECOND'),
         );
 
         $result = $this->normalize($messageBag);
 
-        $this->assertSame('Second question', $result['prompt']);
+        $this->assertSame("The task: FIRST\n\nThe diff: SECOND", $result['prompt']);
+    }
+
+    public function testNormalizeJoinsTextBlocksOfUserMessage()
+    {
+        $messageBag = new MessageBag(
+            Message::ofUser('The task: FIRST', 'The diff: SECOND'),
+        );
+
+        $result = $this->normalize($messageBag);
+
+        $this->assertSame("The task: FIRST\n\nThe diff: SECOND", $result['prompt']);
+    }
+
+    public function testNormalizeUsesLastUserMessageWhenBagEndsWithAssistantMessage()
+    {
+        $messageBag = new MessageBag(
+            Message::ofUser('Earlier question'),
+            Message::ofAssistant('Earlier answer'),
+            Message::ofUser('The task: FIRST', 'The diff: SECOND'),
+            Message::ofAssistant('Answer'),
+        );
+
+        $result = $this->normalize($messageBag);
+
+        $this->assertSame("The task: FIRST\n\nThe diff: SECOND", $result['prompt']);
     }
 
     /**

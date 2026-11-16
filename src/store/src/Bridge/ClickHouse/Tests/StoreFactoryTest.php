@@ -39,9 +39,11 @@ final class StoreFactoryTest extends TestCase
     {
         $requestedUrl = null;
         $requestedQuery = null;
-        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requestedUrl, &$requestedQuery): JsonMockResponse {
+        $requestedAuthorization = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requestedUrl, &$requestedQuery, &$requestedAuthorization): JsonMockResponse {
             $requestedUrl = $url;
             $requestedQuery = $options['query'];
+            $requestedAuthorization = $options['normalized_headers']['authorization'][0] ?? null;
 
             return new JsonMockResponse(['data' => [['cnt' => '3']]]);
         });
@@ -49,7 +51,12 @@ final class StoreFactoryTest extends TestCase
         $store = StoreFactory::create('my_db', 'my_table', 'http://symfony:secret@127.0.0.1:8123', $httpClient);
 
         $this->assertSame(3, $store->count());
-        $this->assertStringStartsWith('http://symfony:secret@127.0.0.1:8123/?', $requestedUrl);
+        // newer symfony/http-client sends the user info as Authorization header
+        $this->assertTrue(
+            str_starts_with($requestedUrl, 'http://symfony:secret@127.0.0.1:8123/?')
+            || ('Authorization: Basic '.base64_encode('symfony:secret') === $requestedAuthorization && str_starts_with($requestedUrl, 'http://127.0.0.1:8123/?')),
+            'Credentials did not reach the request.'
+        );
         $this->assertSame('my_db', $requestedQuery['database']);
         $this->assertSame('SELECT count() AS cnt FROM my_table', $requestedQuery['query']);
         $this->assertSame(1, $httpClient->getRequestsCount());

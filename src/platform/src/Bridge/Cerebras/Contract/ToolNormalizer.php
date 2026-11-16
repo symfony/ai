@@ -22,7 +22,9 @@ class ToolNormalizer extends BaseToolNormalizer
     {
         $array = parent::normalize($data, $format, $context);
 
-        $array['function']['parameters'] ??= ['type' => 'object'];
+        if (null === $data->getParameters()) {
+            $array['function']['parameters'] = ['type' => 'object'];
+        }
 
         return $array;
     }

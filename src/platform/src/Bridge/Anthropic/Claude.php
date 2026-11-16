@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Anthropic;
 
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -35,8 +36,9 @@ class Claude extends Model
      */
     public function __construct(string $name, array $capabilities = [], array $options = [])
     {
-        if (!isset($options['max_tokens'])) {
-            $options['max_tokens'] = 1000;
+        // Anthropic requires an output limit; a canonical default lets call-time options override it
+        if (!isset($options['max_tokens']) && !isset($options[PlatformOptions::MAX_OUTPUT_TOKENS])) {
+            $options[PlatformOptions::MAX_OUTPUT_TOKENS] = 1000;
         }
 
         parent::__construct($name, $capabilities, $options);

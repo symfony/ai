@@ -1,3 +1,549 @@
+UPGRADE FROM 0.15 to 1.0
+========================
+
+Agent
+-----
+
+ * `Bridge\SimilaritySearch\SimilaritySearch::getUsedDocuments()` is removed. The retrieved documents are added as
+   `Bridge\SimilaritySearch\DocumentSource` sources of the tool instead, enable `includeSources` on the agent to read
+   them from the result metadata:
+
+   ```diff
+   -$documents = $similaritySearch->getUsedDocuments();
+   +$documents = [];
+   +foreach ($result->getMetadata()->get('sources', []) as $source) {
+   +    if ($source instanceof DocumentSource) {
+   +        $documents[] = $source->getDocument();
+   +    }
+   +}
+   ```
+
+ * `Bridge\SimilaritySearch\SimilaritySearch` returns a `Bridge\SimilaritySearch\SimilaritySearchResult` instead of a
+   string, and its `$promptTemplate` argument is removed. The model gets a JSON list of the documents with their id, or
+   `[]` without results. To change what the model gets, register a normalizer for `SimilaritySearchResult`:
+
+   ```diff
+   -$similaritySearch = new SimilaritySearch($retriever, 'Here are the relevant results:');
+   +$similaritySearch = new SimilaritySearch($retriever);
+   ```
+
+ * The return type of `AgentInterface::call()` changed from `Execution` to the new `Execution\ExecutionInterface`.
+   `Execution` stays the implementation. Implementers of `AgentInterface` and code type-hinting `Execution` for the
+   result of `call()` must change it:
+
+   ```diff
+   -use Symfony\AI\Agent\Execution\Execution;
+   +use Symfony\AI\Agent\Execution\ExecutionInterface;
+
+   -public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
+   +public function call(string|MessageBag|UserMessage $input, array $options = []): ExecutionInterface
+   ```
+
+ * The agent no longer changes the `MessageBag` it is called with. The system prompt, memory and the messages of
+   the tool loop stay out of it, so add the answer to your own bag:
+
+   ```diff
+    $execution = $agent->call($messages);
+   -$messages->add(Message::ofAssistant($execution->getResult()));
+   +$messages = $messages->with(Message::ofAssistant($execution->getResult()));
+   ```
+
+ * Input processors must replace the `MessageBag` instead of changing it:
+
+   ```diff
+   -$input->getMessageBag()->add($message);
+   +$input->setMessageBag($input->getMessageBag()->with($message));
+   ```
+
+ * The `excludeToolMessages` argument of `Agent` has been removed, tool messages never reach the caller's
+   `MessageBag` anymore. The arguments after `maxToolCalls` move up by one, so pass them by name:
+
+   ```diff
+   -new Agent($platform, 'gpt-5', [], [], 'agent', $toolbox, null, 50, false, true);
+   +new Agent($platform, 'gpt-5', toolbox: $toolbox, includeSources: true);
+   ```
+
+AI Bundle
+---------
+
+ * The `client` option of the `pinecone` store is removed, the store uses the `http_client` option and the new required
+   `api_key` option instead:
+
+   ```diff
+    ai:
+        store:
+            pinecone:
+                my_store:
+   -                client: 'Probots\Pinecone\Client'
+   +                api_key: '%env(PINECONE_API_KEY)%'
+                    index_name: 'my-index'
+   ```
+
+ * The `top_k` option of the `pinecone` and `s3vectors` stores is renamed to `limit`:
+
+   ```diff
+    ai:
+        store:
+            pinecone:
+                my_store:
+   -                top_k: 3
+   +                limit: 3
+   ```
+
+ * The `setup_options` key of the `mariadb`, `mongodb`, `pinecone`, `postgres`, `redis`, `s3vectors` and
+   `surrealdb` stores is removed. Its values are store keys, some of them renamed:
+
+   ```diff
+    ai:
+        store:
+            postgres:
+                default:
+                    dsn: '%env(DATABASE_URL)%'
+   -                setup_options:
+   -                    vector_size: 1024
+   -                    vector_type: halfvec
+   +                dimensions: 1024
+   +                vector_type: halfvec
+   ```
+
+   | Store       | Before                                     | After                         |
+   |-------------|--------------------------------------------|-------------------------------|
+   | `mariadb`   | `setup_options.dimensions`                 | `dimensions`                  |
+   | `mongodb`   | `setup_options.fields`                     | `index_fields`                |
+   | `pinecone`  | `setup_options.dimension`, `.metric`       | `dimensions`, `metric`        |
+   | `pinecone`  | `setup_options.cloud`, `.region`           | `cloud`, `region`             |
+   | `postgres`  | `setup_options.vector_size`                | `dimensions`                  |
+   | `postgres`  | `setup_options.vector_type`, `.index_method`, `.index_opclass` | `vector_type`, `index_method`, `index_opclass` |
+   | `redis`     | `setup_options.vector_size`                | `dimensions`                  |
+   | `s3vectors` | `setup_options.dimension`, `.distance_metric` | `dimensions`, `metric`     |
+
+ * The `redis` store creates an index with 1536 dimensions by default instead of 3072. Set `dimensions: 3072`
+   to keep the previous size, documents with a different number of dimensions are not indexed. The `pinecone`
+   and `s3vectors` stores no longer require the dimensions, they default to 1536 as well.
+
+ * The `setup_options.force_database_creation` key of the `surrealdb` store is removed, pass the option to
+   the command instead:
+
+   ```diff
+   -$ php bin/console ai:store:setup ai.store.surrealdb.default
+   +$ php bin/console ai:store:setup default --option forceDatabaseCreation=true
+   ```
+
+ * The store keys for the vector metric and the number of dimensions are renamed to `metric` and
+   `dimensions`:
+
+   | Store             | Before             | After        |
+   |-------------------|--------------------|--------------|
+   | `elasticsearch`   | `similarity`       | `metric`     |
+   | `manticoresearch` | `similarity`       | `metric`     |
+   | `mariadb`         | `distance`         | `metric`     |
+   | `milvus`          | `metric_type`      | `metric`     |
+   | `mongodb`         | `similarity`       | `metric`     |
+   | `neo4j`           | `distance`         | `metric`     |
+   | `opensearch`      | `space_type`       | `metric`     |
+   | `postgres`        | `distance`         | `metric`     |
+   | `qdrant`          | `distance`         | `metric`     |
+   | `redis`           | `distance`         | `metric`     |
+   | `sqlite`          | `distance`         | `metric`     |
+   | `sqlite`          | `vector_dimension` | `dimensions` |
+   | `supabase`        | `vector_dimension` | `dimensions` |
+   | `surrealdb`       | `strategy`         | `metric`     |
+
+ * Store and message store names must be unique across all types, and names like `blog_store` and `blogStore`
+   count as the same. Before, the `StoreInterface $blogStore` and `MessageStoreInterface $blogStore` aliases
+   pointed to the store defined last. Rename one of the stores:
+
+   ```diff
+    ai:
+        store:
+            memory:
+                main: ~
+            chromadb:
+   -            main:
+   +            documents:
+                    collection: 'documents'
+   ```
+
+ * The type-prefixed `StoreInterface` and `MessageStoreInterface` aliases are removed, use the alias named after
+   the store instead:
+
+   ```diff
+    public function __construct(
+   -    private StoreInterface $chromadbDocuments,
+   +    private StoreInterface $documents,
+    ) {
+    }
+   ```
+
+ * The name of a `failover` platform must not match the name of another platform, like `anthropic`. Before, the
+   `PlatformInterface $anthropic` alias and the `ai:platform:invoke` command used the platform defined last.
+   Names like `azure.main` and `azure_main` count as the same. Rename the failover platform:
+
+   ```diff
+    ai:
+        platform:
+            anthropic:
+                api_key: '%env(ANTHROPIC_API_KEY)%'
+            failover:
+   -            anthropic:
+   +            main:
+                    platforms: ['ai.platform.anthropic', 'ai.platform.openai']
+                    rate_limiter: 'limiter.failover_platform'
+   ```
+
+ * The `ai:store:setup`, `ai:store:drop` and `ai:store:clear` commands take the configured name of the store
+   instead of its service id, like the `ai:store:index` and `ai:store:retrieve` commands:
+
+   ```diff
+   -$ php bin/console ai:store:drop ai.store.chromadb.default --force
+   +$ php bin/console ai:store:drop default --force
+   ```
+
+ * The root-level `ai.model` option has been removed. Add the models to the `models` option of the
+   platform's `model_catalog` instead:
+
+   ```diff
+    ai:
+        platform:
+            lmstudio:
+                host_url: '%env(LMSTUDIO_HOST_URL)%'
+   -    model:
+   -        lmstudio:
+   -            qwen3-coder-next:
+   -                class: 'Symfony\AI\Platform\Bridge\Generic\CompletionsModel'
+   -                capabilities: ['input-messages', 'output-text']
+   +            model_catalog:
+   +                models:
+   +                    qwen3-coder-next:
+   +                        class: 'Symfony\AI\Platform\Bridge\Generic\CompletionsModel'
+   +                        capabilities: ['input-messages', 'output-text']
+   ```
+
+ * The `ai.platform.model_catalog.amazeeai` service has been removed. The amazee.ai platform always
+   uses the catalog that fetches its models from the API. To use your own catalog, set the
+   `model_catalog` option of the platform.
+
+ * The `ai.platform.model_catalog.aimlapi`, `ai.platform.model_catalog.meta` and
+   `ai.platform.model_catalog.replicate` services have been removed, no platform of the bundle uses
+   them. If you reference one of them, e.g. as `model_catalog` of a `generic` platform, register the
+   catalog class as your own service.
+
+ * The `api_catalog` option of the `huggingface` platform has been removed. Use the `api` option of the
+   platform's `model_catalog` instead:
+
+   ```diff
+    ai:
+        platform:
+            huggingface:
+                api_key: '%env(HUGGINGFACE_API_KEY)%'
+   -            api_catalog: true
+   +            model_catalog:
+   +                api: true
+   ```
+
+ * The `exclude_tool_messages` agent option has been removed, tool messages never reach the caller's `MessageBag`
+   anymore.
+
+ * The `ai.chat.message_bag.normalizer` service has been renamed to `ai.platform.message_normalizer`.
+
+ * The configured message stores are the stores of the Agent component and implement
+   `Symfony\AI\Agent\MessageStore\MessageStoreInterface`:
+
+   ```diff
+   -public function __construct(private \Symfony\AI\Chat\MessageStoreInterface $messageStore)
+   +public function __construct(private \Symfony\AI\Agent\MessageStore\MessageStoreInterface $messageStore)
+   ```
+
+ * The `chat` option has been removed together with the Chat component, as well as the `ai.chat.*` services, the
+   `ChatInterface` aliases and the chats of the profiler. Use the `message_store` option of the agent instead:
+
+   ```diff
+    ai:
+        agent:
+            youtube:
+                model: 'gpt-5-mini'
+   +            message_store: 'ai.message_store.cache.youtube'
+   -    chat:
+   -        youtube:
+   -            agent: 'ai.agent.youtube'
+   -            message_store: 'ai.message_store.cache.youtube'
+   ```
+
+ * The `identifier` option of the `memory` message store is removed, the store keeps each conversation by its ID:
+
+   ```diff
+    ai:
+        message_store:
+            memory:
+   -            default:
+   -                identifier: chat
+   +            default: ~
+   ```
+
+Chat
+----
+
+ * The Chat component has been removed. Pass a message store to the agent instead, it continues and saves the
+   conversation of a `MessageBag` by its ID:
+
+   ```diff
+   -$chat = new Chat($agent, new MessageStore($redis, 'chat'));
+   -$chat->initiate(new MessageBag(Message::forSystem('You are a helpful assistant.')));
+   -$answer = $chat->submit(Message::ofUser('Hello'));
+   +$agent = new Agent($platform, 'gpt-5-mini', [
+   +    new SystemPromptInputProcessor('You are a helpful assistant.'),
+   +], messageStore: new MessageStore($redis, 'chat'));
+   +$answer = $agent->call(MessageBag::forId($conversationId, Message::ofUser('Hello')));
+   ```
+
+ * `Symfony\AI\Chat\MessageNormalizer` has been removed. Use `Symfony\AI\Platform\Serializer\MessageNormalizer` instead, which no longer
+   needs the `ToolCallNormalizer` next to it. It still reads messages persisted with the old format, but writes all
+   content as `parts`, and no longer adds `addedAt` to the metadata of denormalized messages:
+
+   ```diff
+   -use Symfony\AI\Chat\MessageNormalizer;
+   +use Symfony\AI\Platform\Serializer\MessageNormalizer;
+
+    $serializer = new Serializer([
+        new ArrayDenormalizer(),
+   -    new ToolCallNormalizer(),
+        new MessageNormalizer(),
+    ], [new JsonEncoder()]);
+   ```
+
+ * The message store bridges have moved to the Agent component. Their packages keep their names, the classes move to
+   the `Symfony\AI\Agent\Bridge` namespace and implement `Symfony\AI\Agent\MessageStore\MessageStoreInterface`,
+   which keeps each conversation by the ID of its `MessageBag`:
+
+   ```diff
+   -use Symfony\AI\Chat\Bridge\Redis\MessageStore;
+   +use Symfony\AI\Agent\Bridge\Redis\MessageStore;
+   ```
+
+ * `Command\SetupStoreCommand`, `Command\DropStoreCommand` and `TraceableMessageStore` have moved to the Agent
+   component, use `Symfony\AI\Agent\Command\SetupMessageStoreCommand`, `Symfony\AI\Agent\Command\DropMessageStoreCommand`
+   and `Symfony\AI\Agent\MessageStore\TraceableMessageStore` instead.
+
+ * The message store bridges store the conversation as one serialized `MessageBag`, and don't read the messages
+   stored by the previous version. A custom serializer passed to a store must (de)normalize a `MessageBag`, e.g. with
+   `Symfony\AI\Platform\Serializer\MessageBagNormalizer`. The table of `DoctrineDbalMessageStore` has the columns
+   `id`, `version`, `messages` and `updated_at`. `setup()` keeps an existing table, so remove the old table first
+   (its name defaults to the name of the message store) and set up the store again:
+
+   ```bash
+   $ php bin/console dbal:run-sql 'DROP TABLE main'
+   $ php bin/console ai:message-store:setup ai.message_store.doctrine.dbal.main
+   ```
+
+ * The `Cache`, `Pogocache` and `Session` message stores no longer implement `ManagedMessageStoreInterface`, they have
+   nothing to set up. Their `drop()` method has been removed, use `delete()` to remove a single conversation.
+
+ * The message stores keep the type of objects in the message metadata. Their default serializer throws a
+   `NotNormalizableValueException` for an object it has no normalizer for, e.g. a `DateTimeImmutable`. Pass a
+   serializer with a normalizer for it:
+
+   ```php
+   use Symfony\AI\Agent\Bridge\Redis\MessageStore;
+   use Symfony\AI\Agent\Toolbox\Source\SourceCollectionNormalizer;
+   use Symfony\AI\Platform\Serializer\MessageBagNormalizer;
+   use Symfony\Component\Serializer\Encoder\JsonEncoder;
+   use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
+   use Symfony\Component\Serializer\Serializer;
+
+   $store = new MessageStore($redis, 'chat', new Serializer([
+       new MessageBagNormalizer(),
+       new SourceCollectionNormalizer(),
+       new DateTimeNormalizer(),
+   ], [new JsonEncoder()]));
+   ```
+
+MCP Bundle
+----------
+
+ * The bundle and `symfony/ai-mcp-tool` require `mcp/sdk` 0.10. It contains BC breaks that reach code written against
+   the SDK directly, see its [changelog](https://github.com/modelcontextprotocol/php-sdk/blob/v0.10.0/CHANGELOG.md).
+
+ * A handshake-era session only serves the user that opened it, identified by `getUserIdentifier()` of the authenticated
+   user or by the `mcp.principal` request attribute. The server answers other users, and sessions opened before the
+   upgrade, with HTTP `404`, and clients have to open a new session. The authenticated user takes precedence over the
+   principal of an SDK access token.
+
+Platform
+--------
+
+ * `MessageBag` is immutable. `add()`, `prepend()` and `removeSystemMessage()` have been removed, use the methods
+   returning a copy instead, and `replace()` returns a copy as well:
+
+   ```diff
+   -$messages->add(Message::ofUser('Hello'));
+   -$messages->prepend(Message::forSystem('You are a pirate.'));
+   +$messages = $messages->with(Message::ofUser('Hello'));
+   +$messages = $messages->withSystemMessage(Message::forSystem('You are a pirate.'));
+   ```
+
+ * `CachePlatform` keys message bags by their content and includes the options in the key, so results cached
+   before the upgrade are not used anymore.
+
+ * `MessageBag::latestAs()` only returns the built-in message class of the role, like `UserMessage` for `Role::User`.
+   Custom `MessageInterface` implementations are skipped, so iterate the bag to find them instead:
+
+   ```diff
+   -$message = $messages->latestAs(Role::User);
+   +$message = null;
+   +foreach ($messages as $candidate) {
+   +    if (Role::User === $candidate->getRole()) {
+   +        $message = $candidate;
+   +    }
+   +}
+   ```
+
+ * The ClaudeCode and Codex bridges no longer return the tools the CLI ran itself as `ToolCallResult` parts, so an
+   agent no longer tries to run them. MCP tool calls come back as `McpCallResult` parts, other tools as
+   `CustomToolCallResult` parts. The ClaudeCode stream no longer emits `ToolCallComplete` for them, it still
+   reports them with `ToolCallStart` and `ToolInputDelta`. Read the calls from the parts of a `MultiPartResult`:
+
+   ```diff
+   -$toolCalls = $result->asToolCallResult()?->getContent() ?? [];
+   +$toolCalls = array_filter(
+   +    $result->getContent(),
+   +    static fn (ResultInterface $part): bool => $part instanceof McpCallResult || $part instanceof CustomToolCallResult,
+   +);
+   ```
+
+ * The Claude Code and Codex bridges throw a `MissingModelSupportException` when the `tools` option holds tool
+   definitions, for example from an agent with a toolbox. The CLIs only run their own tools and cannot call the tools
+   of the application. Before, Claude Code got `--tools Array` and ran without any built-in tool, and `codex exec`
+   rejected the call. Use these platforms with an agent without a toolbox.
+
+ * The Codex bridge throws an `InvalidArgumentException` for the `tools` and `allowed_tools` options. They were passed
+   as `--allowedTools`, which `codex exec` rejects. Remove them:
+
+   ```diff
+   -$platform->invoke('gpt-5.4', $messages, ['allowed_tools' => ['Bash']]);
+   +$platform->invoke('gpt-5.4', $messages);
+   ```
+
+Store
+-----
+
+ * The Pinecone store no longer uses `probots-io/pinecone-php`, which pulls in the vulnerable `saloonphp/saloon` 3.x.
+   `Bridge\Pinecone\Store` takes an `HttpClientInterface` and the API key instead of a `Probots\Pinecone\Client`.
+   The index host is looked up through the Pinecone control plane. Use the `indexHost` and `controlPlaneUrl` arguments
+   to skip the lookup or to use Pinecone Local. The `filter` is no longer sent when removing documents, since Pinecone
+   rejects a filter combined with ids. `Bridge\Pinecone\DescribeIndexStats` is removed:
+
+   ```diff
+   -use Probots\Pinecone\Pinecone;
+   +use Symfony\Component\HttpClient\HttpClient;
+
+   -$store = new Store(Pinecone::client($apiKey, $indexHost), 'my-index');
+   +$store = new Store(HttpClient::create(), $apiKey, 'my-index', indexHost: $indexHost);
+   ```
+
+ * `Document\EmbeddableDocumentInterface` is renamed to `Document\DocumentInterface`:
+
+   ```diff
+   -use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
+   +use Symfony\AI\Store\Document\DocumentInterface;
+
+   -final class ArticleDocument implements EmbeddableDocumentInterface
+   +final class ArticleDocument implements DocumentInterface
+   ```
+
+ * All stores read the `limit` option for the number of documents returned by `query()`. The options the stores
+   read before are removed: `maxItems` (`InMemory\Store`, Cache, Sqlite), `max_items` (Supabase), `k`
+   (Elasticsearch, ManticoreSearch, Typesense, Vektor), `size` (OpenSearch) and `topK` (Pinecone, S3Vectors).
+   On OpenSearch, `k` stays as the number of neighbors searched per shard and defaults to `limit`. The `topK` argument
+   of the Pinecone and S3Vectors stores and the `maxItems` argument of `Distance\DistanceCalculator::calculate()` are
+   renamed to `limit` as well.
+   `EventListener\RerankerListener` reads `limit` instead of `topK` as well, and the `topK` arguments of its constructor
+   and of `Reranker\RerankerInterface::rerank()` are renamed to `limit`. To rerank more documents than the `limit`, pass
+   its `overFetchFactor` argument and register it on `PreQueryEvent` too:
+
+   ```diff
+   -$store->query($query, ['maxItems' => 10]);
+   +$store->query($query, ['limit' => 10]);
+
+   -$dispatcher->addListener(PostQueryEvent::class, new RerankerListener($reranker));
+   -$retriever->retrieve($query, ['maxItems' => 20, 'topK' => 5]);
+   +$rerankerListener = new RerankerListener($reranker, overFetchFactor: 4);
+   +$dispatcher->addListener(PreQueryEvent::class, $rerankerListener);
+   +$dispatcher->addListener(PostQueryEvent::class, $rerankerListener);
+   +$retriever->retrieve($query, ['limit' => 5]);
+   ```
+
+ * `Command\SetupStoreCommand` no longer accepts the setup options of the stores as second constructor
+   argument. Pass runtime options with `--option name=value` instead.
+
+ * The Elasticsearch, MariaDB, MongoDB, OpenSearch, Pinecone, Postgres, Redis and S3 Vectors stores take
+   the definition of their index as constructor arguments, and their `setup()` throws an
+   `InvalidArgumentException` when it receives options:
+
+   ```diff
+   -$store = new Store($pdo, 'documents');
+   -$store->setup(['vector_size' => 1024, 'vector_type' => 'halfvec']);
+   +$store = new Store($pdo, 'documents', dimensions: 1024, vectorType: 'halfvec');
+   +$store->setup();
+   ```
+
+   | Store         | `setup()` option                                     | Constructor argument                       |
+   |---------------|------------------------------------------------------|--------------------------------------------|
+   | Elasticsearch | `dimensions`, `similarity`                           | `dimensions`, `metric`                     |
+   | MariaDB       | `dimensions`                                         | `dimensions`                               |
+   | MongoDB       | `fields`                                             | `indexFields`                              |
+   | OpenSearch    | `dimensions`, `space_type`                           | `dimensions`, `metric`                     |
+   | Pinecone      | `dimension`, `metric`, `cloud`, `region`             | `dimensions`, `metric`, `cloud`, `region` |
+   | Postgres      | `vector_size`, `vector_type`, `index_method`, `index_opclass` | `dimensions`, `vectorType`, `indexMethod`, `indexOpclass` |
+   | Redis         | `vector_size`, `index_method`, `extra_schema`        | `dimensions`, `indexMethod`, `extraSchema` |
+   | S3 Vectors    | `dimension`, `distanceMetric`, `dataType`, `metadata`, `encryption.kmsKeyId`, `tags` | `dimensions`, `metric`, `dataType`, `metadataConfiguration`, `kmsKeyId`, `tags` |
+
+   The Pinecone and S3 Vectors stores no longer require a dimension, it defaults to 1536.
+
+ * The Redis `Store::setup()` creates an index with 1536 dimensions instead of 3072. Pass `dimensions: 3072`
+   to keep the previous size, for example for Gemini embeddings. Existing indexes are kept.
+
+ * The constructor and factory arguments for the vector metric and the number of dimensions are renamed to
+   `metric` and `dimensions`. Update calls that use named arguments:
+
+   ```diff
+    $store = new Store(
+        // ...
+   -    embeddingsDimension: 768,
+   -    embeddingsDistance: 'Cosine',
+   +    dimensions: 768,
+   +    metric: 'Cosine',
+    );
+   ```
+
+   | Store           | Before                                       | After                     |
+   |-----------------|----------------------------------------------|---------------------------|
+   | Elasticsearch   | `similarity`                                 | `metric`                  |
+   | ManticoreSearch | `similarity`                                 | `metric`                  |
+   | MariaDB         | `distance`                                   | `metric`                  |
+   | Meilisearch     | `embeddingsDimension`                        | `dimensions`              |
+   | Milvus          | `metricType`                                 | `metric`                  |
+   | MongoDB         | `embeddingsDimension`, `similarity`          | `dimensions`, `metric`    |
+   | Neo4j           | `embeddingsDimension`, `embeddingsDistance`  | `dimensions`, `metric`    |
+   | OpenSearch      | `spaceType`                                  | `metric`                  |
+   | Postgres        | `distance`                                   | `metric`                  |
+   | Qdrant          | `embeddingsDimension`, `embeddingsDistance`  | `dimensions`, `metric`    |
+   | Redis           | `distance`                                   | `metric`                  |
+   | SQLite          | `vectorDimension`, `distance` (`VecStore`)   | `dimensions`, `metric`    |
+   | Supabase        | `vectorDimension`                            | `dimensions`              |
+   | SurrealDB       | `embeddingsDimension`, `strategy`            | `dimensions`, `metric`    |
+   | Typesense       | `embeddingsDimension`                        | `dimensions`              |
+
+ * The `Distance` enums of the MariaDB, Postgres, Redis and SQLite stores and the `Similarity` enum of the MongoDB
+   store are renamed to `Metric`, with the same cases:
+
+   ```diff
+   -use Symfony\AI\Store\Bridge\Postgres\Distance;
+   +use Symfony\AI\Store\Bridge\Postgres\Metric;
+
+   -$store = new Store($pdo, 'documents', distance: Distance::Cosine);
+   +$store = new Store($pdo, 'documents', metric: Metric::Cosine);
+   ```
+
 UPGRADE FROM 0.14 to 0.15
 =========================
 
@@ -44,6 +590,44 @@ MCP Bundle
 Platform
 --------
 
+ * `Test\InMemoryPlatform` has been removed. Use `Test\MockPlatformFactory::createPlatform()` instead.
+   It returns a real `Platform`, so the closure receives the payload and options after the contract
+   converted them (for example tools as arrays instead of `Tool` objects). Platform events are dispatched
+   when an event dispatcher is passed.
+
+   ```diff
+   -use Symfony\AI\Platform\Test\InMemoryPlatform;
+   +use Symfony\AI\Platform\Test\MockPlatformFactory;
+
+   -$platform = new InMemoryPlatform('Fake result');
+   +$platform = MockPlatformFactory::createPlatform('Fake result');
+   ```
+
+ * [BC BREAK] The `Evaluation`, `Question\*`, `Answer\*` and `TokenUsageExtractor` classes of the TypeSafe bridge moved
+   to the new Decision bridge (`symfony/ai-decision-platform`, required by the TypeSafe bridge), so that other bridges can share them.
+   The old names are gone, without aliases; update the imports:
+
+   | Before (`Symfony\AI\Platform\Bridge\TypeSafe\`) | After (`Symfony\AI\Platform\Bridge\Decision\`) |
+   | --- | --- |
+   | `Evaluation` | `Evaluation` |
+   | `TokenUsageExtractor` | `TokenUsageExtractor` |
+   | `Question\QuestionInterface` | `Question\QuestionInterface` |
+   | `Question\NoulQuestion` | `Question\NoulQuestion` |
+   | `Question\ChoiceQuestion` | `Question\ChoiceQuestion` |
+   | `Question\ScoreQuestion` | `Question\ScoreQuestion` |
+   | `Answer\AnswerInterface` | `Answer\AnswerInterface` |
+   | `Answer\Answers` | `Answer\Answers` |
+   | `Answer\NoulAnswer` | `Answer\NoulAnswer` |
+   | `Answer\ChoiceAnswer` | `Answer\ChoiceAnswer` |
+   | `Answer\ScoreAnswer` | `Answer\ScoreAnswer` |
+
+   ```diff
+   -use Symfony\AI\Platform\Bridge\TypeSafe\Evaluation;
+   -use Symfony\AI\Platform\Bridge\TypeSafe\Question\NoulQuestion;
+   +use Symfony\AI\Platform\Bridge\Decision\Evaluation;
+   +use Symfony\AI\Platform\Bridge\Decision\Question\NoulQuestion;
+   ```
+
  * The Albert bridge no longer exposes environmental impacts under the `carbon` result metadata.
  * They are now available under `impacts`, with the energy consumption reported directly by Albert:
 
@@ -82,6 +666,89 @@ Platform
    streamed path already did. Tool results are addressed by the call id, so the second call could
    never be answered separately.
 
+ * The Perplexity bridge talks to the Agent API (`POST /v1/agent`) instead of Sonar Chat Completions
+   (`POST /chat/completions`), whose support ended on September 27, 2026. Invoke a preset (`fast`, `low`,
+   `medium`, `high`, `xhigh`) or the `perplexity/sonar` model. The Sonar model names are deprecated and
+   sent as the preset Perplexity recommends in their place:
+
+   | Sonar model                              | Preset |
+   |------------------------------------------|--------|
+   | `sonar`, `sonar-pro`                     | `fast` |
+   | `sonar-reasoning`, `sonar-reasoning-pro` | `low`  |
+   | `sonar-deep-research`                    | `high` |
+
+   The Agent API rejects the Sonar-only options with a `BadRequestException`. The search filters
+   (`search_domain_filter`, `search_recency_filter`, `search_*_date_filter`, `last_updated_*_filter`) move
+   into the `filters` of the `web_search` tool, which a model needs to search the web:
+
+   ```diff
+   -$result = $platform->invoke('sonar', $messages, [
+   -    'search_domain_filter' => ['wikipedia.org'],
+   -    'search_recency_filter' => 'month',
+   -]);
+   +$result = $platform->invoke('perplexity/sonar', $messages, [
+   +    'tools' => [[
+   +        'type' => 'web_search',
+   +        'filters' => [
+   +            'search_domain_filter' => ['wikipedia.org'],
+   +            'search_recency_filter' => 'month',
+   +        ],
+   +    ]],
+   +]);
+   ```
+
+   `web_search_options.search_context_size`, `web_search_options.user_location` and `num_search_results`
+   become the `search_context_size`, `user_location` and `max_results` settings of the tool. Replace
+   `disable_search` with a model invoked without the `web_search` tool. `search_mode`,
+   `enable_search_classifier`, `search_language_filter`, `return_images` and `return_related_questions`
+   have no equivalent.
+
+   The `citations` metadata is derived from the web search results, the first URL being the source of the
+   `[1]` marker (`[web:1]` with the `low`, `medium` and `high` presets), and each `search_results` entry
+   carries an `id` matching its marker. A system message
+   replaces the system prompt of a preset. Document inputs are no longer supported:
+   `Contract\FileUrlNormalizer` is removed and no model has the `input-pdf` capability anymore.
+   `FinishReasonMapper` is removed as well, the finish reason being mapped by the OpenResponses bridge
+   that the Perplexity classes now extend.
+
+ * The HuggingFace bridge no longer accepts the `task` option, and the `Task` interface has been removed.
+   The model catalog resolves the task of a model and returns a model class per task, e.g. `Completions`,
+   `Embeddings` or `Classification`. Remove the option and the `?task=` suffix of model names:
+
+   ```diff
+   -$result = $platform->invoke('facebook/bart-large-cnn', $text, [
+   -    'task' => Task::SUMMARIZATION,
+   -]);
+   +$result = $platform->invoke('facebook/bart-large-cnn', $text);
+   ```
+
+   The default `ModelCatalog` of the bridge lists the chat models of the inference providers and the most
+   downloaded models of each task. It throws `ModelNotFoundException` for any other model. Pass the models
+   you use as `$additionalModels`, or resolve models through the Hugging Face Hub API with `ModelApiCatalog`:
+
+   ```diff
+   +use Symfony\AI\Platform\Bridge\HuggingFace\ApiClient;
+   +use Symfony\AI\Platform\Bridge\HuggingFace\ModelApiCatalog;
+
+   -$platform = Factory::createPlatform($apiKey, Provider::NSCALE, $httpClient);
+   +$modelCatalog = new ModelApiCatalog(new ApiClient($httpClient, $apiKey), Provider::NSCALE);
+   +$platform = Factory::createPlatform($apiKey, Provider::NSCALE, $httpClient, $modelCatalog);
+   ```
+
+ * The `$provider` argument of the HuggingFace `Factory` defaults to `null` and only applies to chat completion,
+   which Hugging Face routes to a provider of its choice when `null`. All other tasks run on `hf-inference`.
+ * The HuggingFace bridge runs sentence similarity models as `Embeddings` and returns vectors. The
+   `Output\SentenceSimilarityResult` class has been removed.
+ * The HuggingFace bridge only reranks with models of the `text-ranking` task, e.g. `cross-encoder/ms-marco-MiniLM-L6-v2`.
+   Cross-encoders of the `text-classification` task, e.g. `BAAI/bge-reranker-base`, return a classification.
+ * The HuggingFace bridge no longer supports the `text-generation`, `image-to-text` and `audio-classification` tasks,
+   which are not served by Hugging Face Inference Providers. Use chat completion instead of text generation.
+ * The `ModelClient`, `ResultConverter` and `Contract\MessageBagNormalizer` classes of the HuggingFace bridge have
+   been removed. Chat completion uses `Completions\ModelClient` with the result converter of the Generic bridge,
+   and every other task uses `Pipeline\ModelClient` with a result converter per model class.
+ * The `fromArray()` methods of the HuggingFace `Output` result classes, e.g. `Output\ClassificationResult::fromArray()`,
+   have been removed. Use the constructors, or get the result object from `$result->asObject()`.
+
 AI Bundle
 ---------
 
@@ -96,6 +763,9 @@ AI Bundle
    -$name = $definition->getTag('ai.platform')[0]['name']; // 'failover'
    +$name = $definition->getTag('ai.platform')[0]['name']; // 'main'
    ```
+
+ * The `provider` option of the `huggingface` platform defaults to `null` instead of `hf-inference` and only applies
+   to chat completion. Hugging Face then picks the provider of each chat request; set the option to always use the same one.
 
 Store
 -----
@@ -119,6 +789,17 @@ Store
 
  * `Bridge\AzureSearch\SearchStore::query()` runs an approximate vector query by default; pass the
    `exhaustive` option to get the previous exact search back.
+
+ * The SurrealDB `Store::setup()` creates an `HNSW` index instead of an `MTREE` one, which SurrealDB 3
+   removed, and `Store::query()` searches with the `<|k,EF|>` operator of HNSW indexes. On SurrealDB 2,
+   a query against an existing `MTREE` index returns no results and no error. To recreate the index,
+   keeping the stored documents (shown with the default `table`, `vectorFieldName`, `embeddingsDimension`
+   and `strategy`, replace them with your own values):
+
+   ```sql
+   REMOVE INDEX vectors_vectors ON vectors;
+   DEFINE INDEX vectors_vectors ON vectors FIELDS _vectors HNSW DIMENSION 1536 DIST cosine TYPE F32;
+   ```
 
 UPGRADE FROM 0.13 to 0.14
 =========================

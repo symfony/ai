@@ -303,6 +303,45 @@ final class StreamResultTest extends TestCase
         $this->assertFalse($listener->completed);
     }
 
+    public function testAListenerThatFailsToCompleteDoesNotKeepTheOthersFromCompleting()
+    {
+        $exception = new \RuntimeException('Cannot json decode the streamed content.');
+
+        $failing = new class($exception) extends AbstractStreamListener {
+            public function __construct(private \RuntimeException $exception)
+            {
+            }
+
+            public function onComplete(CompleteEvent $event): void
+            {
+                throw $this->exception;
+            }
+        };
+        $next = new class extends AbstractStreamListener {
+            public bool $completed = false;
+
+            public function onComplete(CompleteEvent $event): void
+            {
+                $this->completed = true;
+            }
+        };
+        $result = new StreamResult((static function (): \Generator {
+            yield new TextDelta('{"name":');
+        })(), [$failing, $next]);
+
+        $caught = null;
+        try {
+            iterator_to_array($result->getContent(), false);
+        } catch (\RuntimeException $e) {
+            $caught = $e;
+        }
+
+        $this->assertSame($exception, $caught);
+        $this->assertTrue($next->completed);
+        $this->assertSame([], iterator_to_array($result->getContent(), false));
+        $this->assertSame('{"name":', $result->getAssistantMessage()->asText());
+    }
+
     public function testErrorListenerReadsMetadataMergedBeforeTheThrow()
     {
         $result = new StreamResult((static function (): \Generator {

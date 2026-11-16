@@ -193,7 +193,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store($httpClient, 'test', embeddingsDimension: 3);
+        $store = new Store($httpClient, 'test', dimensions: 3);
 
         $vectors = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
@@ -228,7 +228,7 @@ final class StoreTest extends TestCase
             ]),
         ], 'http://127.0.0.1:7700');
 
-        $store = new Store($httpClient, 'test', embeddingsDimension: 3);
+        $store = new Store($httpClient, 'test', dimensions: 3);
 
         $vectors = iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
         $expected = [
@@ -578,5 +578,15 @@ final class StoreTest extends TestCase
         );
 
         $this->assertSame(42, $store->count());
+    }
+
+    public function testQueryPassesTheLimit()
+    {
+        $response = new JsonMockResponse(['hits' => []]);
+        $store = new Store(new MockHttpClient($response), 'test');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 30]));
+
+        $this->assertSame(30, json_decode($response->getRequestOptions()['body'], true)['limit']);
     }
 }

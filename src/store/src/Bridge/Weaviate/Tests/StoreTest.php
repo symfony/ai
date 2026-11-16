@@ -369,4 +369,30 @@ final class StoreTest extends TestCase
         $this->assertSame(42, $store->count());
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testStoreSendsIntegrationHeader()
+    {
+        $headers = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$headers) {
+            $headers = $options['normalized_headers']['x-weaviate-client-integration'] ?? [];
+
+            return new JsonMockResponse(['classes' => []]);
+        }, 'http://127.0.0.1:8080');
+
+        $store = new Store($httpClient, 'test');
+        $store->drop();
+
+        $this->assertCount(1, $headers);
+        $this->assertMatchesRegularExpression('#^X-Weaviate-Client-Integration: symfony-ai/\S+$#', $headers[0]);
+    }
+
+    public function testQueryPassesTheLimit()
+    {
+        $response = new JsonMockResponse(['data' => ['Get' => ['test' => []]]]);
+        $store = new Store(new MockHttpClient($response), 'test');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 20]));
+
+        $this->assertStringContainsString('limit: 20', json_decode($response->getRequestOptions()['body'], true)['query']);
+    }
 }

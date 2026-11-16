@@ -24,7 +24,7 @@ final class ClaudeTest extends TestCase
         $claude = new Claude('claude-3-5-sonnet-latest');
 
         $this->assertSame('claude-3-5-sonnet-latest', $claude->getName());
-        $this->assertSame(['max_tokens' => 1000], $claude->getOptions());
+        $this->assertSame(['max_output_tokens' => 1000], $claude->getOptions());
     }
 
     public function testItCreatesClaudeWithCustomSettingsIncludingMaxTokens()
@@ -40,6 +40,13 @@ final class ClaudeTest extends TestCase
         $claude = new Claude('claude-3-5-sonnet-latest', [], ['temperature' => 0.5]);
 
         $this->assertSame('claude-3-5-sonnet-latest', $claude->getName());
-        $this->assertSame(['temperature' => 0.5, 'max_tokens' => 1000], $claude->getOptions());
+        $this->assertSame(['temperature' => 0.5, 'max_output_tokens' => 1000], $claude->getOptions());
+    }
+
+    public function testItKeepsACustomCanonicalMaxOutputTokens()
+    {
+        $claude = new Claude('claude-3-5-sonnet-latest', [], ['max_output_tokens' => 2000]);
+
+        $this->assertSame(['max_output_tokens' => 2000], $claude->getOptions());
     }
 }

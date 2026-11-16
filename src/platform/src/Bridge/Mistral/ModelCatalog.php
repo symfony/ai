@@ -465,12 +465,31 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
-            'voxtral-mini-tts-latest' => [
-                'class' => Mistral::class,
+            'voxtral-mini-tts-2603' => [
+                'class' => TextToSpeech::class,
                 'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_AUDIO,
+                ],
+            ],
+            'voxtral-mini-tts-3' => [
+                'class' => TextToSpeech::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_AUDIO,
+                ],
+            ],
+            'voxtral-mini-tts-3-0' => [
+                'class' => TextToSpeech::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_AUDIO,
+                ],
+            ],
+            'voxtral-mini-tts-latest' => [
+                'class' => TextToSpeech::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
                     Capability::OUTPUT_AUDIO,
                 ],
             ],
@@ -515,6 +534,19 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                     Capability::OUTPUT_STRUCTURED,
                     Capability::THINKING,
+                ],
+            ],
+            'zai-glm-5-3-flash' => [
+                'class' => Mistral::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::TOOL_CALLING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::THINKING,
+                    Capability::INPUT_IMAGE,
+                    Capability::INPUT_PDF,
                 ],
             ],
         ];

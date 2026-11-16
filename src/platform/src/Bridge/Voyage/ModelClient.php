@@ -40,6 +40,9 @@ final class ModelClient implements ModelClientInterface
         return $model instanceof Voyage;
     }
 
+    /**
+     * @param array{input_type?: 'query'|'document'|null, truncation?: bool, dimensions?: int, encoding?: string} $options
+     */
     public function request(Model $model, object|string|array $payload, array $options = []): RawHttpResult
     {
         [$inputKey, $endpoint] = $model->supports(Capability::INPUT_MULTIMODAL)

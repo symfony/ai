@@ -15,7 +15,6 @@ use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\ResultInterface;
-use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\Component\Stopwatch\Stopwatch;
 use Symfony\Contracts\Service\ResetInterface;
@@ -65,19 +64,23 @@ final class TraceablePlatform implements PlatformInterface, ResetInterface
             $input = $input::class.': '.$input->getFormat();
         }
 
-        if ($options['stream'] ?? false) {
-            $deferredResult = new DeferredResult(new PlainConverter($this->createTraceableStreamResult($deferredResult, $stopEvent)), $deferredResult->getRawResult(), $options);
-        } else {
-            // The request is only resolved on conversion, so the event spans until the result is available
-            $deferredResult->onConvert(static function (ResultInterface $result) use ($stopEvent): ResultInterface {
-                $stopEvent();
+        // Keep writing to the cache the stream started with, as reset() may swap it mid-stream
+        $resultCache = $this->resultCache;
 
-                return $result;
-            });
-            $deferredResult->onError(static function () use ($stopEvent): void {
+        // The request is only resolved on conversion, so the event spans until the result is available,
+        // or until a stream is consumed, which keeps its own listeners
+        $deferredResult->onConvert(static function (ResultInterface $result) use ($stopEvent, $resultCache): ResultInterface {
+            if ($result instanceof StreamResult) {
+                $result->addListener(new TraceableStreamListener($resultCache, $stopEvent));
+            } else {
                 $stopEvent();
-            });
-        }
+            }
+
+            return $result;
+        });
+        $deferredResult->onError(static function () use ($stopEvent): void {
+            $stopEvent();
+        });
 
         $this->calls[] = [
             'model' => $modelName,
@@ -114,33 +117,6 @@ final class TraceablePlatform implements PlatformInterface, ResetInterface
     {
         $this->calls = [];
         $this->resultCache = new \WeakMap();
-    }
-
-    /**
-     * @param \Closure(): void $stopEvent
-     */
-    private function createTraceableStreamResult(DeferredResult $originalStream, \Closure $stopEvent): StreamResult
-    {
-        // Keep writing to the cache the stream started with, as reset() may swap it mid-stream
-        $resultCache = $this->resultCache;
-
-        return $result = new StreamResult((static function () use (&$result, $originalStream, $stopEvent, $resultCache) {
-            try {
-                $resultCache[$result] = '';
-                foreach ($originalStream->asStream() as $chunk) {
-                    yield $chunk;
-                    if ($chunk instanceof TextDelta) {
-                        $resultCache[$result] .= $chunk->getText();
-                    }
-                }
-
-                foreach ($originalStream->getResult()->getMetadata() as $key => $value) {
-                    $result->getMetadata()->add($key, $value);
-                }
-            } finally {
-                $stopEvent();
-            }
-        })());
     }
 
     /**

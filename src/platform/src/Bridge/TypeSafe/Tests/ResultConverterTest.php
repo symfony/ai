@@ -12,10 +12,10 @@
 namespace Symfony\AI\Platform\Bridge\TypeSafe\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\TypeSafe\Answer\Answers;
+use Symfony\AI\Platform\Bridge\Decision\Answer\Answers;
+use Symfony\AI\Platform\Bridge\Decision\TokenUsageExtractor;
 use Symfony\AI\Platform\Bridge\TypeSafe\Jev;
 use Symfony\AI\Platform\Bridge\TypeSafe\ResultConverter;
-use Symfony\AI\Platform\Bridge\TypeSafe\TokenUsageExtractor;
 use Symfony\AI\Platform\Exception\AuthenticationException;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;

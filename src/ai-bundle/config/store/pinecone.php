@@ -11,16 +11,15 @@
 
 namespace Symfony\Component\Config\Definition\Configurator;
 
-use Probots\Pinecone\Client as PineconeClient;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 return (new ArrayNodeDefinition('pinecone'))
     ->useAttributeAsKey('name')
     ->arrayPrototype()
         ->children()
-            ->stringNode('client')
-                ->cannotBeEmpty()
-                ->defaultValue(PineconeClient::class)
+            ->stringNode('api_key')->isRequired()->cannotBeEmpty()->end()
+            ->stringNode('http_client')
+                ->defaultValue('http_client')
             ->end()
             ->stringNode('index_name')->isRequired()->end()
             ->stringNode('namespace')->end()
@@ -29,6 +28,20 @@ return (new ArrayNodeDefinition('pinecone'))
                     ->defaultValue([])
                 ->end()
             ->end()
-            ->integerNode('top_k')->end()
+            ->integerNode('limit')->end()
+            ->integerNode('dimensions')
+                ->info('Number of dimensions of the index created by "ai:store:setup"')
+                ->min(1)
+            ->end()
+            ->enumNode('metric')
+                ->info('Distance metric of the index created by "ai:store:setup"')
+                ->values(['cosine', 'euclidean', 'dotproduct'])
+            ->end()
+            ->stringNode('cloud')
+                ->info('Cloud of the serverless index created by "ai:store:setup"')
+            ->end()
+            ->stringNode('region')
+                ->info('Region of the serverless index created by "ai:store:setup"')
+            ->end()
         ->end()
     ->end();

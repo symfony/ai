@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\OpenResponses\Contract\Message\AssistantMessageNo
 use Symfony\AI\Platform\Bridge\OpenResponses\Contract\ToolCallNormalizer;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Message\AssistantMessage;
+use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Message;
@@ -180,13 +181,63 @@ class AssistantMessageNormalizerTest extends TestCase
             ],
         ];
 
-        yield 'an assistant turn with nothing replayable keeps the empty message' => [
+        yield 'commentary is replayed as a message of its own phase' => [
+            new AssistantMessage(new Commentary('I will run code.'), new Text('425')),
+            [
+                ['role' => 'assistant', 'type' => 'message', 'content' => 'I will run code.', 'phase' => 'commentary'],
+                ['role' => 'assistant', 'type' => 'message', 'content' => '425'],
+            ],
+        ];
+
+        yield 'the phase of a text is replayed' => [
+            new AssistantMessage(new Commentary('I will run code.'), new Text('425', null, 'final_answer')),
+            [
+                ['role' => 'assistant', 'type' => 'message', 'content' => 'I will run code.', 'phase' => 'commentary'],
+                ['role' => 'assistant', 'type' => 'message', 'content' => '425', 'phase' => 'final_answer'],
+            ],
+        ];
+
+        yield 'texts of different phases are replayed as messages of their own' => [
+            new AssistantMessage(new Text('One.', null, 'final_answer'), new Text('Two.'), new Text('Three.')),
+            [
+                ['role' => 'assistant', 'type' => 'message', 'content' => 'One.', 'phase' => 'final_answer'],
+                ['role' => 'assistant', 'type' => 'message', 'content' => 'Two.Three.'],
+            ],
+        ];
+
+        yield 'empty commentary is not replayed' => [
+            new AssistantMessage(new Commentary(''), new Text('425')),
+            [['role' => 'assistant', 'type' => 'message', 'content' => '425']],
+        ];
+
+        yield 'an assistant turn with nothing replayable is omitted' => [
             Message::ofAssistant(new Thinking('Pondering.')),
-            [[
-                'role' => 'assistant',
-                'type' => 'message',
-                'content' => null,
-            ]],
+            [],
+        ];
+
+        yield 'an assistant without parts is omitted' => [new AssistantMessage(), []];
+
+        $emptyContent = [['type' => 'output_text', 'text' => '', 'annotations' => []]];
+        yield 'explicit empty text is replayable' => [
+            new AssistantMessage(new Text('')),
+            [['role' => 'assistant', 'type' => 'message', 'content' => $emptyContent]],
+        ];
+
+        yield 'empty text retains its phase and position around tools' => [
+            new AssistantMessage(new Text('', null, 'commentary'), $toolCall, new Text('', null, 'final_answer')),
+            [
+                ['role' => 'assistant', 'type' => 'message', 'content' => $emptyContent, 'phase' => 'commentary'],
+                ['arguments' => json_encode($toolCall->getArguments()), 'call_id' => $toolCall->getId(), 'name' => $toolCall->getName(), 'type' => 'function_call'],
+                ['role' => 'assistant', 'type' => 'message', 'content' => $emptyContent, 'phase' => 'final_answer'],
+            ],
+        ];
+
+        yield 'empty text without phase precedes phased text' => [
+            new AssistantMessage(new Text(''), new Text('Answer', null, 'final_answer')),
+            [
+                ['role' => 'assistant', 'type' => 'message', 'content' => $emptyContent],
+                ['role' => 'assistant', 'type' => 'message', 'content' => 'Answer', 'phase' => 'final_answer'],
+            ],
         ];
     }
 

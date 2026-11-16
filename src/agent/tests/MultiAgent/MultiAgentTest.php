@@ -26,6 +26,7 @@ use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\Handoff\Decision;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\Tests\Fixtures\SuspendingConverter;
+use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -120,6 +121,28 @@ class MultiAgentTest extends TestCase
         $result = $multiAgent->call($messages)->getResult();
 
         $this->assertSame($expectedResult, $result);
+    }
+
+    public function testGetMessagesAppendsTheAnswerOfTheSelectedAgentToTheInput()
+    {
+        $orchestratorResult = $this->createMock(ResultInterface::class);
+        $orchestratorResult->method('getContent')->willReturn(new Decision('technical', 'This is a technical question'));
+        $orchestrator = $this->createMock(AgentInterface::class);
+        $orchestrator->method('getName')->willReturn('orchestrator');
+        $orchestrator->method('call')->willReturn($this->execution($orchestratorResult));
+
+        $technicalAgent = new MockAgent(['How do I implement a function?' => 'Technical response'], 'technical');
+        $multiAgent = new MultiAgent($orchestrator, [new Handoff($technicalAgent, ['technical'])], new MockAgent(name: 'fallback'));
+        $input = new MessageBag(Message::forSystem('Be precise.'), Message::ofUser('How do I implement a function?'));
+
+        $messages = $multiAgent->call($input)->getMessages();
+
+        $this->assertTrue($input->getId()->equals($messages->getId()));
+        $this->assertCount(3, $messages);
+        $this->assertSame($input->getMessages(), \array_slice($messages->getMessages(), 0, 2));
+        $answer = $messages->getMessages()[2];
+        $this->assertInstanceOf(AssistantMessage::class, $answer);
+        $this->assertSame('Technical response', $answer->asText());
     }
 
     public function testCallUsesOrchestratorWhenDecisionIsNotReturned()

@@ -63,8 +63,8 @@ final class HiggsfieldClient implements ModelClientInterface
         }
 
         // Image content normalized by the ImageNormalizer, e.g. for image-to-video generation.
-        if (isset($payload['type'], $payload['image_url']) && 'image_url' === $payload['type']) {
-            return ['image_url' => $payload['image_url'], ...$options];
+        if (isset($payload['type'], $payload['mime_type'], $payload['data']) && 'image' === $payload['type']) {
+            return ['image_url' => $this->uploadFile($payload['mime_type'], base64_decode($payload['data'])), ...$options];
         }
 
         // Text content normalized to ['text' => '...'] by the default contract.
@@ -73,5 +73,22 @@ final class HiggsfieldClient implements ModelClientInterface
         }
 
         return [...$payload, ...$options];
+    }
+
+    /**
+     * The API accepts input media only as HTTP(S) URLs, so files go to a pre-signed upload URL first.
+     */
+    private function uploadFile(string $contentType, string $content): string
+    {
+        $upload = $this->httpClient->request('POST', '/files/generate-upload-url', [
+            'json' => ['content_type' => $contentType],
+        ])->toArray();
+
+        $this->httpClient->request('PUT', $upload['upload_url'], [
+            'body' => $content,
+            'headers' => $upload['upload_headers'] ?? ['Content-Type' => $contentType],
+        ])->getContent();
+
+        return $upload['public_url'];
     }
 }

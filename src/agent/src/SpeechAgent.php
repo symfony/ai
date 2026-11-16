@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\AI\Agent\Execution\Cancellation;
 use Symfony\AI\Agent\Execution\Execution;
+use Symfony\AI\Agent\Execution\ExecutionInterface;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
@@ -40,7 +41,7 @@ final class SpeechAgent implements AgentInterface
     ) {
     }
 
-    public function call(string|MessageBag|UserMessage $input, array $options = []): Execution
+    public function call(string|MessageBag|UserMessage $input, array $options = []): ExecutionInterface
     {
         $cancellation = new Cancellation();
 
@@ -52,9 +53,11 @@ final class SpeechAgent implements AgentInterface
             }
 
             $result = null;
+            $agentMessages = null;
             foreach ($cancellation->forward($this->agent->call($messages, $options)) as $update) {
                 if ($update instanceof ResultUpdate) {
                     $result = $update->getResult();
+                    $agentMessages = $update->getMessages(...);
 
                     continue;
                 }
@@ -73,7 +76,7 @@ final class SpeechAgent implements AgentInterface
             }
 
             if (!$this->textToSpeechPlatform instanceof PlatformInterface || !$this->configuration->supportsTextToSpeech()) {
-                yield new ResultUpdate($result);
+                yield new ResultUpdate($result, $agentMessages);
 
                 return;
             }
@@ -90,7 +93,8 @@ final class SpeechAgent implements AgentInterface
 
             $speechResult->getMetadata()->add('text', $text);
 
-            yield new ResultUpdate($speechResult->getResult());
+            // the messages keep the answer as text
+            yield new ResultUpdate($speechResult->getResult(), $agentMessages);
         }, cancellation: $cancellation);
     }
 
@@ -107,10 +111,6 @@ final class SpeechAgent implements AgentInterface
         try {
             $latestUserMessage = $messages->latestAs(Role::User);
         } catch (InvalidArgumentException) {
-            return $messages;
-        }
-
-        if (!$latestUserMessage instanceof UserMessage) {
             return $messages;
         }
 
@@ -131,8 +131,7 @@ final class SpeechAgent implements AgentInterface
         $cancellation->activate($result->getRawResult());
 
         $text = new Text($result->asText());
-        $messages->replace($latestUserMessage->getId(), Message::ofUser($text));
 
-        return $messages;
+        return $messages->replace($latestUserMessage->getId(), Message::ofUser($text));
     }
 }

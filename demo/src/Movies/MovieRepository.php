@@ -11,50 +11,20 @@
 
 namespace App\Movies;
 
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Finder\Finder;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
+ *
+ * @extends ServiceEntityRepository<Movie>
+ *
+ * @method Movie|null findOneBySlug(string $slug)
  */
-final class MovieRepository
+class MovieRepository extends ServiceEntityRepository
 {
-    public function __construct(
-        #[Autowire('%movies_dir%')]
-        private readonly string $directory,
-    ) {
-    }
-
-    /**
-     * @return list<Movie>
-     */
-    public function findAll(): array
+    public function __construct(ManagerRegistry $registry)
     {
-        $finder = (new Finder())
-            ->files()
-            ->in($this->directory)
-            ->name('*.md')
-            ->sortByName();
-
-        $movies = [];
-        foreach ($finder as $file) {
-            $movies[] = Movie::fromFile($file->getRealPath());
-        }
-
-        return $movies;
-    }
-
-    public function findOne(string $slug): ?Movie
-    {
-        if ('' === $slug || str_contains($slug, '/') || str_contains($slug, '..')) {
-            return null;
-        }
-
-        $path = $this->directory.\DIRECTORY_SEPARATOR.$slug.'.md';
-        if (!is_file($path)) {
-            return null;
-        }
-
-        return Movie::fromFile($path);
+        parent::__construct($registry, Movie::class);
     }
 }

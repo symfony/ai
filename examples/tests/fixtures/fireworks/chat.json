@@ -3,9 +3,9 @@
         {
             "request": {
                 "method": "GET",
-                "url": "https://api.fireworks.ai/v1/accounts/fireworks/models/kimi-k2p6",
-                "signature": "31cd94b2f736c17d0d00717f9c34d87d",
-                "signature_v2": "891fa0bd2bc7ff55f9dd7f30a2f8bac7",
+                "url": "https://api.fireworks.ai/v1/accounts/fireworks/models/kimi-k3",
+                "signature": "9416ce4c5cfdd9e019d4e5c76c58a252",
+                "signature_v2": "e0952f57ca0a274d991353dacac2cacf",
                 "headers": {
                     "authorization": [
                         "[redacted]"
@@ -29,15 +29,15 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\n  \"baseModelDetails\": {\n    \"checkpointFormat\": \"HUGGINGFACE\",\n    \"defaultPrecision\": \"FP8\",\n    \"huggingfaceFiles\": [\n      \".gitattributes\",\n      \"LICENSE\",\n      \"README.md\",\n      \"chat_template.jinja\",\n      \"config.json\",\n      \"configuration_deepseek.py\",\n      \"configuration_kimi_k25.py\",\n      \"generation_config.json\",\n      \"kimi_k25_processor.py\",\n      \"kimi_k25_vision_processing.py\",\n      \"media_utils.py\",\n      \"model-00001-of-000065.safetensors\",\n      \"model-00002-of-000065.safetensors\",\n      \"model-00003-of-000065.safetensors\",\n      \"model-00004-of-000065.safetensors\",\n      \"model-00005-of-000065.safetensors\",\n      \"model-00006-of-000065.safetensors\",\n      \"model-00007-of-000065.safetensors\",\n      \"model-00008-of-000065.safetensors\",\n      \"model-00009-of-000065.safetensors\",\n      \"model-00010-of-000065.safetensors\",\n      \"model-00011-of-000065.safetensors\",\n      \"model-00012-of-000065.safetensors\",\n      \"model-00013-of-000065.safetensors\",\n      \"model-00014-of-000065.safetensors\",\n      \"model-00015-of-000065.safetensors\",\n      \"model-00016-of-000065.safetensors\",\n      \"model-00017-of-000065.safetensors\",\n      \"model-00018-of-000065.safetensors\",\n      \"model-00019-of-000065.safetensors\",\n      \"model-00020-of-000065.safetensors\",\n      \"model-00021-of-000065.safetensors\",\n      \"model-00022-of-000065.safetensors\",\n      \"model-00023-of-000065.safetensors\",\n      \"model-00024-of-000065.safetensors\",\n      \"model-00025-of-000065.safetensors\",\n      \"model-00026-of-000065.safetensors\",\n      \"model-00027-of-000065.safetensors\",\n      \"model-00028-of-000065.safetensors\",\n      \"model-00029-of-000065.safetensors\",\n      \"model-00030-of-000065.safetensors\",\n      \"model-00031-of-000065.safetensors\",\n      \"model-00032-of-000065.safetensors\",\n      \"model-00033-of-000065.safetensors\",\n      \"model-00034-of-000065.safetensors\",\n      \"model-00035-of-000065.safetensors\",\n      \"model-00036-of-000065.safetensors\",\n      \"model-00037-of-000065.safetensors\",\n      \"model-00038-of-000065.safetensors\",\n      \"model-00039-of-000065.safetensors\",\n      \"model-00040-of-000065.safetensors\",\n      \"model-00041-of-000065.safetensors\",\n      \"model-00042-of-000065.safetensors\",\n      \"model-00043-of-000065.safetensors\",\n      \"model-00044-of-000065.safetensors\",\n      \"model-00045-of-000065.safetensors\",\n      \"model-00046-of-000065.safetensors\",\n      \"model-00047-of-000065.safetensors\",\n      \"model-00048-of-000065.safetensors\",\n      \"model-00049-of-000065.safetensors\",\n      \"model-00050-of-000065.safetensors\",\n      \"model-00051-of-000065.safetensors\",\n      \"model-00052-of-000065.safetensors\",\n      \"model-00053-of-000065.safetensors\",\n      \"model-00054-of-000065.safetensors\",\n      \"model-00055-of-000065.safetensors\",\n      \"model-00056-of-000065.safetensors\",\n      \"model-00057-of-000065.safetensors\",\n      \"model-00058-of-000065.safetensors\",\n      \"model-00059-of-000065.safetensors\",\n      \"model-00060-of-000065.safetensors\",\n      \"model-00061-of-000065.safetensors\",\n      \"model-00062-of-000065.safetensors\",\n      \"model-00063-of-000065.safetensors\",\n      \"model-00064-of-000065.safetensors\",\n      \"model-00065-of-000065.safetensors\",\n      \"model.safetensors.index.json\",\n      \"modeling_deepseek.py\",\n      \"modeling_kimi_k25.py\",\n      \"preprocessor_config.json\",\n      \"tiktoken.model\",\n      \"tokenization_kimi.py\",\n      \"tokenizer_config.json\",\n      \"tool_declaration_ts.py\",\n      \"vllm.patch\"\n    ],\n    \"modelType\": \"kimi_k25\",\n    \"moe\": true,\n    \"parameterCount\": \"1028542417904\",\n    \"supportsFireattention\": true,\n    \"supportsMtp\": true,\n    \"tunable\": true,\n    \"worldSize\": 1\n  },\n  \"calibrated\": false,\n  \"cluster\": \"\",\n  \"contextLength\": 262144,\n  \"conversationConfig\": {\n    \"style\": \"\",\n    \"system\": \"\",\n    \"template\": \"\"\n  },\n  \"createTime\": \"2026-04-17T19:54:54.434998Z\",\n  \"defaultDraftModel\": \"\",\n  \"defaultDraftTokenCount\": 0,\n  \"defaultSamplingParams\": {},\n  \"deployedModelRefs\": [],\n  \"deprecationDate\": null,\n  \"description\": \"Kimi K2.6 is an open-source, native multimodal agentic model that advances practical capabilities in long-horizon coding, coding-driven design, proactive autonomous execution, and swarm-based task orchestration.\",\n  \"displayName\": \"Kimi K2.6\",\n  \"enableVisionEncoderTuning\": false,\n  \"encryptionState\": \"ENCRYPTION_STATE_UNSPECIFIED\",\n  \"fineTuningJob\": \"\",\n  \"githubUrl\": \"\",\n  \"huggingFaceUrl\": \"https://huggingface.co/moonshotai/Kimi-K2.6\",\n  \"importedFrom\": \"\",\n  \"kind\": \"HF_BASE_MODEL\",\n  \"name\": \"accounts/fireworks/models/kimi-k2p6\",\n  \"peftDetails\": {\n    \"baseModel\": \"\",\n    \"baseModelType\": \"\",\n    \"mergeAddonModelName\": \"\",\n    \"r\": 0,\n    \"targetModules\": []\n  },\n  \"public\": true,\n  \"rlLoraTunable\": true,\n  \"rlTunable\": true,\n  \"serverlessModes\": [],\n  \"snapshotType\": \"FULL_SNAPSHOT\",\n  \"state\": \"READY\",\n  \"status\": {\n    \"code\": \"OK\",\n    \"message\": \"\"\n  },\n  \"supervisedLoraTunable\": true,\n  \"supportsImageInput\": true,\n  \"supportsLora\": false,\n  \"supportsServerless\": true,\n  \"supportsTools\": true,\n  \"teftDetails\": null,\n  \"trainingContextLength\": 65536,\n  \"updateTime\": \"2026-08-28T22:31:48.375402Z\",\n  \"useHfApplyChatTemplate\": true,\n  \"useTrainingV2\": true\n}"
+                "body": "{\n  \"baseModelDetails\": {\n    \"checkpointFormat\": \"HUGGINGFACE\",\n    \"defaultPrecision\": \"FP8\",\n    \"huggingfaceFiles\": [],\n    \"modelType\": \"kimi_linear\",\n    \"moe\": true,\n    \"parameterCount\": \"2780913302112\",\n    \"supportsFireattention\": true,\n    \"supportsMtp\": false,\n    \"tunable\": false,\n    \"worldSize\": 1\n  },\n  \"calibrated\": false,\n  \"cluster\": \"\",\n  \"contextLength\": 1048576,\n  \"conversationConfig\": {\n    \"style\": \"\",\n    \"system\": \"\",\n    \"template\": \"\"\n  },\n  \"createTime\": \"2026-07-19T17:50:09.542588Z\",\n  \"defaultDraftModel\": \"\",\n  \"defaultDraftTokenCount\": 0,\n  \"defaultSamplingParams\": {},\n  \"deployedModelRefs\": [],\n  \"deprecationDate\": null,\n  \"description\": \"Kimi K3 is Kimi’s most capable flagship model to date, with 2.8 trillion parameters. It is built on Kimi Delta Attention (KDA), a hybrid linear attention mechanism, and Attention Residuals, with native visual understanding and a 1M-token context window. It is the world’s first open-source model in the 3-trillion-parameter class, designed for frontier intelligence scenarios including long-horizon coding, knowledge work, and reasoning.\",\n  \"displayName\": \"Kimi K3\",\n  \"enableVisionEncoderTuning\": false,\n  \"encryptionState\": \"ENCRYPTION_STATE_PLAINTEXT\",\n  \"fineTuningJob\": \"\",\n  \"githubUrl\": \"\",\n  \"huggingFaceUrl\": \"https://huggingface.co/moonshotai/Kimi-K3\",\n  \"importedFrom\": \"\",\n  \"kind\": \"HF_BASE_MODEL\",\n  \"name\": \"accounts/fireworks/models/kimi-k3\",\n  \"peftDetails\": {\n    \"baseModel\": \"\",\n    \"baseModelType\": \"\",\n    \"mergeAddonModelName\": \"\",\n    \"r\": 0,\n    \"targetModules\": []\n  },\n  \"public\": true,\n  \"rlLoraTunable\": false,\n  \"rlTunable\": false,\n  \"serverlessModes\": [],\n  \"snapshotType\": \"FULL_SNAPSHOT\",\n  \"state\": \"READY\",\n  \"status\": {\n    \"code\": \"OK\",\n    \"message\": \"\"\n  },\n  \"supervisedLoraTunable\": true,\n  \"supportsImageInput\": true,\n  \"supportsLora\": true,\n  \"supportsServerless\": true,\n  \"supportsServerlessTraining\": false,\n  \"supportsTools\": true,\n  \"teftDetails\": null,\n  \"trainingContextLength\": 65536,\n  \"updateTime\": \"2026-08-28T22:31:48.375402Z\",\n  \"useHfApplyChatTemplate\": true,\n  \"useTrainingV2\": true\n}"
             }
         },
         {
             "request": {
                 "method": "POST",
                 "url": "https://api.fireworks.ai/inference/v1/chat/completions",
-                "signature": "a94cd3624d868822e21f280f71fa5e57",
-                "signature_v2": "5481ad312b2fadc60430eed8ae69db64",
+                "signature": "f9727de53ced95de2ea05fd9f7bae520",
+                "signature_v2": "ba87c18162f5344e7a8313e2243fb9f9",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -46,7 +46,7 @@
                         "[redacted]"
                     ]
                 },
-                "body": "{\"messages\":[{\"role\":\"system\",\"content\":\"You are a concise, helpful assistant.\"},{\"role\":\"user\",\"content\":\"What is the capital of France, in one sentence?\"}],\"model\":\"accounts\\/fireworks\\/models\\/kimi-k2p6\"}"
+                "body": "{\"messages\":[{\"role\":\"system\",\"content\":\"You are a concise, helpful assistant.\"},{\"role\":\"user\",\"content\":\"What is the capital of France, in one sentence?\"}],\"model\":\"accounts\\/fireworks\\/models\\/kimi-k3\"}"
             },
             "response": {
                 "status": 200,
@@ -55,25 +55,19 @@
                         "application/json"
                     ],
                     "content-length": [
-                        "701"
+                        "797"
                     ],
-                    "fireworks-cached-prompt-tokens": [
-                        "30"
+                    "fireworks-backend-server-time-to-first-token": [
+                        "0.343"
                     ],
                     "fireworks-prompt-tokens": [
-                        "31"
-                    ],
-                    "fireworks-sampling-options": [
-                        "{\"max_tokens\": 32768, \"temperature\": 1.0, \"top_k\": 0, \"top_p\": 0.95, \"min_p\": 0.0, \"typical_p\": 1.0, \"frequency_penalty\": 0.0, \"presence_penalty\": 0.0, \"repetition_penalty\": 1.0, \"mirostat_target\": null, \"mirostat_lr\": 0.1, \"cycle_multiplier\": 0.0, \"cycle_base\": 0.0, \"cycle_allowed_length\": 0, \"cycle_sequence_breakers\": []}"
+                        "118"
                     ],
                     "fireworks-server-processing-time": [
-                        "0.530"
+                        "2.624"
                     ],
                     "fireworks-server-time-to-first-token": [
-                        "0.099"
-                    ],
-                    "fireworks-speculation-prompt-matched-tokens": [
-                        "0"
+                        "0.730"
                     ],
                     "server": [
                         "istio-envoy"
@@ -86,7 +80,7 @@
                     ]
                 },
                 "body_format": "json",
-                "body": "{\"id\":\"chatcmpl-6a0107af2b6345189ef49f8508bd07bc\",\"object\":\"chat.completion\",\"created\":1789866624,\"model\":\"accounts/fireworks/models/kimi-k2p6\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"The capital of France is Paris.\",\"reasoning_content\":\"The user wants to know the capital of France, and specifically asks for the answer in one sentence.\\n\\nThe capital of France is Paris.\\n\\nI should provide this in one concise sentence.\",\"tools\":null},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":31,\"total_tokens\":76,\"completion_tokens\":45,\"prompt_tokens_details\":{\"cached_tokens\":30},\"completion_tokens_details\":{\"reasoning_tokens\":36},\"output_tokens_details\":{\"reasoning_tokens\":36}}}"
+                "body": "{\"id\":\"chatcmpl-35cabbad\",\"choices\":[{\"index\":0,\"message\":{\"content\":\"The capital of France is Paris.\",\"role\":\"assistant\",\"reasoning_content\":\"The user is asking a simple factual question: what is the capital of France, in one sentence?\\n\\nThe answer is Paris. They want it in one sentence.\\n\\nI should be concise as per my system prompt. One sentence answer.\"},\"finish_reason\":\"stop\",\"logprobs\":null,\"raw_output\":null}],\"created\":1792713498,\"model\":\"accounts/fireworks/models/kimi-k3\",\"service_tier\":null,\"system_fingerprint\":null,\"object\":\"chat.completion\",\"usage\":{\"prompt_tokens\":118,\"completion_tokens\":66,\"total_tokens\":184,\"prompt_tokens_details\":{\"cached_tokens\":117},\"completion_tokens_details\":{\"accepted_prediction_tokens\":null,\"reasoning_tokens\":46,\"rejected_prediction_tokens\":null}}}"
             }
         }
     ]

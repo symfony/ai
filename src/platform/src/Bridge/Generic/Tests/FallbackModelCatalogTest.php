@@ -15,8 +15,14 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
+use Symfony\AI\Platform\Bridge\Generic\Factory;
 use Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\Event\InvocationEvent;
+use Symfony\AI\Platform\EventListener\StringToMessageBagListener;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
 /**
  * @author Fabien Potencier <fabien@symfony.com>
@@ -47,6 +53,30 @@ final class FallbackModelCatalogTest extends TestCase
 
         $this->assertInstanceOf(EmbeddingsModel::class, $model);
         $this->assertSame($modelName, $model->getName());
+    }
+
+    public function testEmbeddingsModelTakesTextsOnly()
+    {
+        $model = (new FallbackModelCatalog())->getModel('text-embedding-3-small');
+
+        $this->assertTrue($model->supports(Capability::INPUT_TEXT));
+        $this->assertTrue($model->supports(Capability::EMBEDDINGS));
+        $this->assertFalse($model->supports(Capability::INPUT_MESSAGES));
+    }
+
+    public function testATextToEmbedIsNotTurnedIntoMessages()
+    {
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(InvocationEvent::class, new StringToMessageBagListener());
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame('{"model":"nomic-embed-text","input":"A text to embed"}', $options['body']);
+
+            return new JsonMockResponse(['data' => [['embedding' => [0.1, 0.2]]]]);
+        });
+
+        $platform = Factory::createPlatform('http://localhost:11434', httpClient: $httpClient, eventDispatcher: $dispatcher);
+
+        $this->assertCount(1, $platform->invoke('nomic-embed-text', 'A text to embed')->asVectors());
     }
 
     public function testAllCapabilitiesArePresent()

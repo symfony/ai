@@ -31,20 +31,4 @@ final class FillMaskResult
     {
         return $this->fills;
     }
-
-    /**
-     * @param array<array{token: int, token_str: string, sequence: string, score: float}> $data
-     */
-    public static function fromArray(array $data): self
-    {
-        return new self(array_map(
-            static fn (array $item) => new MaskFill(
-                $item['token'],
-                $item['token_str'],
-                $item['sequence'],
-                $item['score'],
-            ),
-            $data,
-        ));
-    }
 }

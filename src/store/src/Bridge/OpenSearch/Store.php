@@ -38,12 +38,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly string $indexName,
         private readonly string $vectorsField = '_vectors',
         private readonly int $dimensions = 1536,
-        private readonly string $spaceType = 'l2',
+        private readonly string $metric = 'l2',
     ) {
     }
 
     public function setup(array $options = []): void
     {
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
+        }
+
         $indexExistResponse = $this->httpClient->request('HEAD', $this->indexName);
 
         if (200 === $indexExistResponse->getStatusCode()) {
@@ -58,8 +62,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 'properties' => [
                     $this->vectorsField => [
                         'type' => 'knn_vector',
-                        'dimension' => $options['dimensions'] ?? $this->dimensions,
-                        'space_type' => $options['space_type'] ?? $this->spaceType,
+                        'dimension' => $this->dimensions,
+                        'space_type' => $this->metric,
                     ],
                 ],
             ],
@@ -156,20 +160,28 @@ final class Store implements ManagedStoreInterface, StoreInterface
         return VectorQuery::class === $queryClass;
     }
 
+    /**
+     * @param array{
+     *     limit?: positive-int,
+     *     k?: positive-int,
+     * } $options The "k" option sets the number of neighbors searched per shard and defaults to "limit"
+     */
     public function query(QueryInterface $query, array $options = []): iterable
     {
         if (!$query instanceof VectorQuery) {
             throw new UnsupportedQueryTypeException($query::class, $this);
         }
 
+        $limit = $options['limit'] ?? 100;
+
         $vector = $query->getVector();
         $documents = $this->request('POST', \sprintf('%s/_search', $this->indexName), [
-            'size' => $options['size'] ?? 100,
+            'size' => $limit,
             'query' => [
                 'knn' => [
                     $this->vectorsField => [
                         'vector' => $vector->getData(),
-                        'k' => $options['k'] ?? 100,
+                        'k' => $options['k'] ?? $limit,
                     ],
                 ],
             ],

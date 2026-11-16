@@ -30,7 +30,7 @@ interface VectorDocumentInterface
     public function getMetadata(): Metadata;
 
     /**
-     * The distance to the queried vector, if this document was returned by a similarity query.
+     * Set by a store or reranker when returning this document as a query result, null otherwise.
      */
     public function getScore(): ?float;
 

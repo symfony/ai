@@ -31,14 +31,4 @@ final class ClassificationResult
     {
         return $this->classifications;
     }
-
-    /**
-     * @param array<array{label: string, score: float}> $data
-     */
-    public static function fromArray(array $data): self
-    {
-        return new self(
-            array_map(static fn (array $item) => new Classification($item['label'], $item['score']), $data)
-        );
-    }
 }

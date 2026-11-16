@@ -34,6 +34,7 @@ $store = Store::fromDbal(
     connection: DriverManager::getConnection((new DsnParser())->parse('pdo-mysql://root@127.0.0.1:3309/my_database')),
     tableName: 'my_table_gemini',
     indexName: 'my_index',
+    dimensions: 768,
 );
 
 // create embeddings and documents
@@ -47,7 +48,7 @@ foreach (Movies::all() as $i => $movie) {
 }
 
 // initialize the table
-$store->setup(['dimensions' => 768]);
+$store->setup();
 
 // create embeddings for documents
 $platform = Factory::createPlatform(env('GEMINI_API_KEY'), http_client());

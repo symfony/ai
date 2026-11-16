@@ -12,6 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Voyage\Tests;
 
 use Symfony\AI\Platform\Bridge\Voyage\ModelCatalog;
+use Symfony\AI\Platform\Bridge\Voyage\Reranker;
 use Symfony\AI\Platform\Bridge\Voyage\Voyage;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
@@ -21,6 +22,12 @@ final class ModelCatalogTest extends ModelCatalogTestCase
 {
     public static function modelsProvider(): iterable
     {
+        yield 'rerank-3' => ['rerank-3', Reranker::class, [Capability::INPUT_MULTIPLE, Capability::RERANKING]];
+        yield 'rerank-3-lite' => ['rerank-3-lite', Reranker::class, [Capability::INPUT_MULTIPLE, Capability::RERANKING]];
+        yield 'rerank-2' => ['rerank-2', Reranker::class, [Capability::INPUT_MULTIPLE, Capability::RERANKING]];
+        yield 'rerank-2-lite' => ['rerank-2-lite', Reranker::class, [Capability::INPUT_MULTIPLE, Capability::RERANKING]];
+        yield 'rerank-2.5' => ['rerank-2.5', Reranker::class, [Capability::INPUT_MULTIPLE, Capability::RERANKING]];
+        yield 'rerank-2.5-lite' => ['rerank-2.5-lite', Reranker::class, [Capability::INPUT_MULTIPLE, Capability::RERANKING]];
         yield 'voyage-3.5' => ['voyage-3.5', Voyage::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
         yield 'voyage-3.5-lite' => ['voyage-3.5-lite', Voyage::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
         yield 'voyage-3' => ['voyage-3', Voyage::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];

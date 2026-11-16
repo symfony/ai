@@ -29,7 +29,7 @@ final class IntegrationTest extends AbstractStoreIntegrationTestCase
             'test_index',
             'http://127.0.0.1:7700',
             'changeMe',
-            embeddingsDimension: 3,
+            dimensions: 3,
         );
     }
 

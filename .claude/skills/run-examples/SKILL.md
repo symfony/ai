@@ -73,12 +73,12 @@ Common shortcuts that hold:
 
 - `src/platform/src/Bridge/<Vendor>/` → `examples/<vendor>/*.php` plus any
   `examples/rag/`, `examples/store/`, `examples/indexer/`, `examples/retriever/`,
-  `examples/chat/`, `examples/memory/` script that uses that vendor for
+  `examples/agent/`, `examples/memory/` script that uses that vendor for
   embeddings or chat.
 - `src/store/src/Bridge/<Backend>/` → `examples/store/<backend>.php`,
   `examples/rag/<backend>.php` (and variants like `<backend>-openai.php`),
   plus indexer/retriever/memory scripts that import the bridge.
-- `src/chat/src/Bridge/<Backend>/` → `examples/chat/persistent-chat-<backend>.php`.
+- `src/agent/src/Bridge/<Backend>/` (message stores) → `examples/agent/message-store-<backend>.php`.
 - `src/agent/src/Bridge/<Tool>/` → `examples/toolbox/<tool>.php` and any
   example that uses that tool.
 
@@ -94,7 +94,7 @@ Use `./runner --filter=<pattern>` when you want a name-based subset
 per-script enumeration for when the candidates are scattered across
 directories or you genuinely want only a handful from a much larger set.
 
-### 2b. Component-level changes (Platform, Agent, Store, Chat core)
+### 2b. Component-level changes (Platform, Agent, Store core)
 
 Changes outside any Bridge folder (e.g. `src/platform/src/Result/`,
 `src/agent/src/Toolbox/`, `src/store/src/Document/`) tend to affect many
@@ -108,8 +108,8 @@ examples. Don't enumerate hundreds of scripts. Instead:
   maintainer can always ask to broaden; reining in is harder.
 - **Prefer Docker-free examples.** Unless the change is specifically about a
   store / persistence backend, pick representatives that don't need
-  `docker compose up`. Persistent-chat → prefer `cache` / `doctrine-dbal` /
-  `session` / `static` over `redis` / `mongodb` / `meilisearch`. RAG → prefer
+  `docker compose up`. Message stores → prefer `cache` / `doctrine` /
+  `session` over `redis` / `mongodb` / `meilisearch`. RAG → prefer
   `in-memory.php` over `postgres.php`. Skip the Docker spin-up cost when it
   doesn't add coverage for the diff.
 - If the change is broad and uncontroversial (refactor, type tightening,

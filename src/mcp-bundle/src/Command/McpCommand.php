@@ -11,7 +11,7 @@
 
 namespace Symfony\AI\McpBundle\Command;
 
-use Mcp\Server;
+use Mcp\Server\Server;
 use Mcp\Server\Transport\StdioTransport;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\Argument;

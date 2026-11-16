@@ -10,7 +10,6 @@
  */
 
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
-use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 use Symfony\AI\Platform\Message\Content\Image;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -18,8 +17,6 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
 
 $image = Image::fromFile(dirname(__DIR__, 2).'/fixtures/accordion.jpg');
-$result = $platform->invoke('facebook/detr-resnet-50', $image, [
-    'task' => Task::OBJECT_DETECTION,
-]);
+$result = $platform->invoke('facebook/detr-resnet-50', $image);
 
 dump($result->asObject());

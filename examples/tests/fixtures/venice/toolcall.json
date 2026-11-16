@@ -75,8 +75,8 @@
             "request": {
                 "method": "POST",
                 "url": "https://api.venice.ai/api/v1/chat/completions",
-                "signature": "d7430d263e514b51b6f4e0356ef4997f",
-                "signature_v2": "517d9c27e42f6eb48148662746e56011",
+                "signature": "2558b2a9780d47bc406ba1f651e0a95e",
+                "signature_v2": "5db7aeca37d0ed4f1b365a5eb5f0c9cc",
                 "headers": {
                     "authorization": [
                         "[redacted]"
@@ -88,7 +88,11 @@
                             "type": "function",
                             "function": {
                                 "name": "clock",
-                                "description": "Provides the current date and time."
+                                "description": "Provides the current date and time.",
+                                "parameters": {
+                                    "type": "object",
+                                    "properties": {}
+                                }
                             }
                         }
                     ],

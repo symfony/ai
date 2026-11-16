@@ -40,19 +40,29 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly string $database,
         private readonly string $table = 'vectors',
         private readonly string $vectorFieldName = '_vectors',
-        private readonly string $strategy = 'cosine',
-        private readonly int $embeddingsDimension = 1536,
+        private readonly string $metric = 'cosine',
+        private readonly int $dimensions = 1536,
         private readonly bool $isNamespacedUser = false,
     ) {
     }
 
+    /**
+     * @param array{
+     *     forceDatabaseCreation?: bool,
+     * } $options
+     */
     public function setup(array $options = []): void
     {
-        $this->authenticate();
+        if (\array_key_exists('forceDatabaseCreation', $options) && $options['forceDatabaseCreation']) {
+            $this->request('POST', 'sql', \sprintf(
+                'DEFINE NAMESPACE IF NOT EXISTS %s; DEFINE DATABASE IF NOT EXISTS %s;',
+                $this->escapeIdentifier($this->namespace), $this->escapeIdentifier($this->database),
+            ));
+        }
 
         $this->request('POST', 'sql', \sprintf(
-            'DEFINE INDEX %s_vectors ON %s FIELDS %s MTREE DIMENSION %d DIST %s TYPE F32',
-            $this->table, $this->table, $this->vectorFieldName, $this->embeddingsDimension, $this->strategy
+            'DEFINE INDEX %s_vectors ON %s FIELDS %s HNSW DIMENSION %d DIST %s TYPE F32',
+            $this->table, $this->table, $this->vectorFieldName, $this->dimensions, $this->metric
         ));
     }
 
@@ -77,14 +87,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
             return;
         }
 
-        $recordIds = array_map(fn (string $id) => \sprintf('type::thing(%s, %s)', $this->escapeString($this->table), $this->escapeString($id)), $ids);
+        $recordIds = array_map(fn (string $id) => \sprintf('%s:%s', $this->table, $this->escapeIdentifier($id)), $ids);
         $this->request('POST', 'sql', \sprintf('DELETE %s;', implode(', ', $recordIds)));
     }
 
+    /**
+     * Fails with a transaction conflict while SurrealDB still compacts recent writes into the HNSW index.
+     *
+     * @throws RuntimeException
+     */
     public function clear(array $options = []): void
     {
-        $this->authenticate();
-
         $this->request('POST', 'sql', \sprintf('DELETE %s;', $this->table));
     }
 
@@ -94,7 +107,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * @param array{limit?: positive-int} $options
+     * @param array{limit?: positive-int, ef?: positive-int} $options
      */
     public function query(QueryInterface $query, array $options = []): iterable
     {
@@ -104,10 +117,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $vector = $query->getVector();
         $vectors = json_encode($vector->getData());
+        $limit = $options['limit'] ?? 5;
+
+        // SurrealDB 2 returns at most EF results, whatever the limit
+        $ef = max($options['ef'] ?? 40, $limit);
 
         $results = $this->request('POST', 'sql', \sprintf(
-            'SELECT id, %s, _metadata, vector::distance::knn() AS distance FROM %s WHERE %s <|%d|> %s ORDER BY distance;',
-            $this->vectorFieldName, $this->table, $this->vectorFieldName, $options['limit'] ?? 5, $vectors,
+            'SELECT id, %s, _metadata, vector::distance::knn() AS distance FROM %s WHERE %s <|%d,%d|> %s ORDER BY distance;',
+            $this->vectorFieldName, $this->table, $this->vectorFieldName, $limit, $ef, $vectors,
         ));
 
         $statement = $results[0] ?? null;
@@ -131,15 +148,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function drop(array $options = []): void
     {
-        $this->authenticate();
-
         $this->request('POST', 'sql', \sprintf('REMOVE TABLE IF EXISTS %s;', $this->table));
     }
 
     public function count(): int
     {
-        $this->authenticate();
-
         $results = $this->request('POST', 'sql', \sprintf('SELECT count() FROM %s GROUP ALL;', $this->table));
 
         $statement = $results[0] ?? null;
@@ -166,12 +179,12 @@ final class Store implements ManagedStoreInterface, StoreInterface
     }
 
     /**
-     * Escapes a value as a single-quoted SurrealQL string literal so it cannot
-     * break out of its context, even when sourced from untrusted input.
+     * Escapes a value as a backtick-quoted SurrealQL identifier or record key so it
+     * cannot break out of its context, even when sourced from untrusted input.
      */
-    private function escapeString(string $value): string
+    private function escapeIdentifier(string $value): string
     {
-        return "'".str_replace(['\\', "'"], ['\\\\', "\\'"], $value)."'";
+        return '`'.str_replace(['\\', '`'], ['\\\\', '\\`'], $value).'`';
     }
 
     /**
@@ -181,6 +194,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
      */
     private function request(string $method, string $endpoint, array|string $payload): array
     {
+        $this->authenticate();
+
         $finalPayload = [];
 
         if (\is_array($payload) && [] !== $payload) {

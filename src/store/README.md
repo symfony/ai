@@ -25,6 +25,7 @@ To use a specific vector store, install the corresponding bridge package:
 | ChromaDB             | `symfony/ai-chroma-db-store`        |
 | ClickHouse           | `symfony/ai-click-house-store`      |
 | Cloudflare Vectorize | `symfony/ai-cloudflare-store`       |
+| Doctrine ORM         | `symfony/ai-doctrine-store`         |
 | Elasticsearch        | `symfony/ai-elasticsearch-store`    |
 | ManticoreSearch      | `symfony/ai-manticore-search-store` |
 | MariaDB              | `symfony/ai-maria-db-store`         |

@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Store\Bridge\SurrealDb\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\SurrealDb\Store;
@@ -77,7 +78,7 @@ final class StoreTest extends TestCase
             ]),
             new JsonMockResponse([
                 [
-                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors MTREE DIMENSION 1275 DIST cosine TYPE F32',
+                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors HNSW DIMENSION 1275 DIST cosine TYPE F32',
                     'status' => 'OK',
                     'time' => '263.208µs',
                 ],
@@ -91,6 +92,49 @@ final class StoreTest extends TestCase
         $store->setup();
 
         $this->assertSame(2, $httpClient->getRequestsCount());
+    }
+
+    public function testStoreSetupDefinesAnHnswIndex()
+    {
+        $requests = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requests): JsonMockResponse {
+            $requests[] = $options['body'] ?? null;
+
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]);
+            }
+
+            return new JsonMockResponse([['result' => null, 'status' => 'OK']], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies', dimensions: 3);
+
+        $store->setup();
+
+        $this->assertCount(2, $requests);
+        $this->assertSame('DEFINE INDEX movies_vectors ON movies FIELDS _vectors HNSW DIMENSION 3 DIST cosine TYPE F32', $requests[1]);
+    }
+
+    public function testStoreSetupCreatesNamespaceAndDatabaseWhenForced()
+    {
+        $requests = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requests): JsonMockResponse {
+            $requests[] = $options['body'] ?? null;
+
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]);
+            }
+
+            return new JsonMockResponse([['result' => null, 'status' => 'OK']], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'test', 'test', 'my_namespace', 'my_database', 'movies', dimensions: 3);
+
+        $store->setup(['forceDatabaseCreation' => true]);
+
+        $this->assertCount(3, $requests);
+        $this->assertSame('DEFINE NAMESPACE IF NOT EXISTS `my_namespace`; DEFINE DATABASE IF NOT EXISTS `my_database`;', $requests[1]);
+        $this->assertSame('DEFINE INDEX movies_vectors ON movies FIELDS _vectors HNSW DIMENSION 3 DIST cosine TYPE F32', $requests[2]);
     }
 
     public function testStoreNormalizesTrailingSlashOnEndpoint()
@@ -189,7 +233,7 @@ final class StoreTest extends TestCase
             ]),
             new JsonMockResponse([
                 [
-                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors MTREE DIMENSION 1275 DIST cosine TYPE F32',
+                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors HNSW DIMENSION 1275 DIST cosine TYPE F32',
                     'status' => 'OK',
                     'time' => '263.208µs',
                 ],
@@ -222,7 +266,7 @@ final class StoreTest extends TestCase
             ]),
             new JsonMockResponse([
                 [
-                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors MTREE DIMENSION 1275 DIST cosine TYPE F32',
+                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors HNSW DIMENSION 1275 DIST cosine TYPE F32',
                     'status' => 'OK',
                     'time' => '263.208µs',
                 ],
@@ -255,7 +299,7 @@ final class StoreTest extends TestCase
             ]),
             new JsonMockResponse([
                 [
-                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors MTREE DIMENSION 1275 DIST cosine TYPE F32',
+                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors HNSW DIMENSION 1275 DIST cosine TYPE F32',
                     'status' => 'OK',
                     'time' => '263.208µs',
                 ],
@@ -308,7 +352,7 @@ final class StoreTest extends TestCase
             ]),
             new JsonMockResponse([
                 [
-                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors MTREE DIMENSION 1275 DIST cosine TYPE F32',
+                    'result' => 'DEFINE INDEX test_vectors ON movies FIELDS _vectors HNSW DIMENSION 1275 DIST cosine TYPE F32',
                     'status' => 'OK',
                     'time' => '263.208µs',
                 ],
@@ -392,13 +436,6 @@ final class StoreTest extends TestCase
                 'http_code' => 200,
             ]),
             new JsonMockResponse([
-                'code' => 200,
-                'details' => 'Authentication succeeded.',
-                'token' => 'bar',
-            ], [
-                'http_code' => 200,
-            ]),
-            new JsonMockResponse([
                 [
                     'result' => [
                         [
@@ -441,14 +478,18 @@ final class StoreTest extends TestCase
         $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
             $body = $options['body'] ?? null;
 
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]);
+            }
+
             return new JsonMockResponse([['result' => [], 'status' => 'OK']], ['http_code' => 200]);
         }, 'http://127.0.0.1:8000');
 
-        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies', strategy: 'euclidean');
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies', metric: 'euclidean');
 
         iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
 
-        $this->assertSame('SELECT id, _vectors, _metadata, vector::distance::knn() AS distance FROM movies WHERE _vectors <|5|> [0.1,0.2,0.3] ORDER BY distance;', $body);
+        $this->assertSame('SELECT id, _vectors, _metadata, vector::distance::knn() AS distance FROM movies WHERE _vectors <|5,40|> [0.1,0.2,0.3] ORDER BY distance;', $body);
     }
 
     public function testStoreQueriesWithTheGivenLimit()
@@ -457,6 +498,10 @@ final class StoreTest extends TestCase
         $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
             $body = $options['body'] ?? null;
 
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]);
+            }
+
             return new JsonMockResponse([['result' => [], 'status' => 'OK']], ['http_code' => 200]);
         }, 'http://127.0.0.1:8000');
 
@@ -464,12 +509,111 @@ final class StoreTest extends TestCase
 
         iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 10]));
 
-        $this->assertSame('SELECT id, _vectors, _metadata, vector::distance::knn() AS distance FROM movies WHERE _vectors <|10|> [0.1,0.2,0.3] ORDER BY distance;', $body);
+        $this->assertSame('SELECT id, _vectors, _metadata, vector::distance::knn() AS distance FROM movies WHERE _vectors <|10,40|> [0.1,0.2,0.3] ORDER BY distance;', $body);
+    }
+
+    public function testStoreQueriesWithAnEfOfAtLeastTheLimit()
+    {
+        $body = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
+            $body = $options['body'] ?? null;
+
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]);
+            }
+
+            return new JsonMockResponse([['result' => [], 'status' => 'OK']], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 50]));
+
+        $this->assertSame('SELECT id, _vectors, _metadata, vector::distance::knn() AS distance FROM movies WHERE _vectors <|50,50|> [0.1,0.2,0.3] ORDER BY distance;', $body);
+    }
+
+    public function testStoreQueriesWithAnExplicitEfOfAtLeastTheLimit()
+    {
+        $body = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
+            $body = $options['body'] ?? null;
+
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]);
+            }
+
+            return new JsonMockResponse([['result' => [], 'status' => 'OK']], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 10, 'ef' => 2]));
+
+        $this->assertSame('SELECT id, _vectors, _metadata, vector::distance::knn() AS distance FROM movies WHERE _vectors <|10,10|> [0.1,0.2,0.3] ORDER BY distance;', $body);
+    }
+
+    public function testStoreQueriesWithTheGivenEf()
+    {
+        $body = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
+            $body = $options['body'] ?? null;
+
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]);
+            }
+
+            return new JsonMockResponse([['result' => [], 'status' => 'OK']], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 10, 'ef' => 100]));
+
+        $this->assertSame('SELECT id, _vectors, _metadata, vector::distance::knn() AS distance FROM movies WHERE _vectors <|10,100|> [0.1,0.2,0.3] ORDER BY distance;', $body);
+    }
+
+    /**
+     * @param \Closure(Store): mixed $operation
+     */
+    #[DataProvider('provideOperationsOnAFreshStore')]
+    public function testStoreAuthenticatesBeforeTheFirstRequest(\Closure $operation, string $expectedUrl)
+    {
+        $requests = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requests): JsonMockResponse {
+            $requests[] = ['url' => $url, 'headers' => $options['headers']];
+
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]);
+            }
+
+            return new JsonMockResponse([['result' => [], 'status' => 'OK']], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies', dimensions: 3);
+
+        $operation($store);
+
+        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertSame('http://127.0.0.1:8000/signin', $requests[0]['url']);
+        $this->assertSame($expectedUrl, $requests[1]['url']);
+        $this->assertIsArray($requests[1]['headers']);
+        $this->assertContains('Authorization: Bearer bar', $requests[1]['headers']);
+    }
+
+    /**
+     * @return iterable<string, array{\Closure(Store): mixed, string}>
+     */
+    public static function provideOperationsOnAFreshStore(): iterable
+    {
+        yield 'add' => [static fn (Store $store) => $store->add(new VectorDocument('a1', new Vector([0.1, 0.2, 0.3]))), 'http://127.0.0.1:8000/key/movies'];
+        yield 'query' => [static fn (Store $store) => iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])))), 'http://127.0.0.1:8000/sql'];
+        yield 'remove' => [static fn (Store $store) => $store->remove('a1'), 'http://127.0.0.1:8000/sql'];
     }
 
     public function testStoreReturnsTheDistanceAsScore()
     {
         $httpClient = new MockHttpClient([
+            new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]),
             new JsonMockResponse([
                 [
                     'result' => [
@@ -511,13 +655,36 @@ final class StoreTest extends TestCase
         $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
             $body = $options['body'] ?? null;
 
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]);
+            }
+
             return new JsonMockResponse([], ['http_code' => 200]);
         }, 'http://127.0.0.1:8000');
 
         $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test');
         $store->remove('123e4567-e89b-12d3-a456-426614174000');
 
-        $this->assertSame("DELETE type::thing('vectors', '123e4567-e89b-12d3-a456-426614174000');", $body);
+        $this->assertSame('DELETE vectors:`123e4567-e89b-12d3-a456-426614174000`;', $body);
+    }
+
+    public function testStoreCanRemoveMultipleIds()
+    {
+        $body = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
+            $body = $options['body'] ?? null;
+
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]);
+            }
+
+            return new JsonMockResponse([], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test');
+        $store->remove(['first', 'second']);
+
+        $this->assertSame('DELETE vectors:`first`, vectors:`second`;', $body);
     }
 
     public function testStoreRemoveNeutralizesInjectedId()
@@ -526,15 +693,18 @@ final class StoreTest extends TestCase
         $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
             $body = $options['body'] ?? null;
 
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]);
+            }
+
             return new JsonMockResponse([], ['http_code' => 200]);
         }, 'http://127.0.0.1:8000');
 
         $store = new Store($httpClient, 'http://127.0.0.1:8000', 'test', 'test', 'test');
-        $store->remove("a'); DELETE vectors; --");
+        $store->remove('a\\`; DELETE vectors; --');
 
-        // The crafted id stays inside a single-quoted string literal (the quote is escaped),
-        // so the appended statements cannot break out and execute.
-        $this->assertSame("DELETE type::thing('vectors', 'a\\'); DELETE vectors; --');", $body);
+        // backslash and backtick are escaped, so the id cannot close the record key
+        $this->assertSame('DELETE vectors:`a\\\\\\`; DELETE vectors; --`;', $body);
     }
 
     public function testStoreCanClear()

@@ -29,7 +29,7 @@ pipeline: filter → transform → vectorize → store.
 
 There are three indexer implementations to choose from:
 
-**DocumentIndexer** accepts documents directly (as :class:`Symfony\\AI\\Store\\Document\\EmbeddableDocumentInterface` instances)::
+**DocumentIndexer** accepts documents directly (as :class:`Symfony\\AI\\Store\\Document\\DocumentInterface` instances)::
 
     use Symfony\AI\Store\Document\TextDocument;
     use Symfony\AI\Store\Document\Vectorizer;
@@ -86,15 +86,51 @@ The retriever accepts optional parameters to customize the retrieval:
 
 * ``$options``: An array of options to pass to the underlying store query (e.g., limit, filters)
 
+All stores read the ``limit`` option, which sets the maximum number of returned documents::
+
+    $documents = $retriever->retrieve('What is the capital of France?', ['limit' => 5]);
+
+Reranking
+~~~~~~~~~
+
+The :class:`Symfony\\AI\\Store\\EventListener\\RerankerListener` sorts the retrieved documents again with a
+cross-encoder model and keeps the ``limit`` best ones. Without a ``limit`` option, it keeps the number given
+to its ``limit`` argument.
+
+The reranker gives better results when it can choose from more documents than it keeps. Set the
+``overFetchFactor`` argument and register the listener on both events. Then the store returns ``limit``
+times ``overFetchFactor`` documents, and the reranker keeps the ``limit`` best ones::
+
+    use Symfony\AI\Store\Event\PostQueryEvent;
+    use Symfony\AI\Store\Event\PreQueryEvent;
+    use Symfony\AI\Store\EventListener\RerankerListener;
+
+    $rerankerListener = new RerankerListener($reranker, limit: 5, overFetchFactor: 4);
+    $dispatcher->addListener(PreQueryEvent::class, $rerankerListener);
+    $dispatcher->addListener(PostQueryEvent::class, $rerankerListener);
+
+    $retriever = new Retriever($store, $vectorizer, $dispatcher);
+
+    // the store returns 20 documents, the reranker keeps the 5 best ones
+    $documents = $retriever->retrieve('What is the capital of France?', ['limit' => 5]);
+
+.. note::
+
+    When the listener is only registered on ``PostQueryEvent``, the ``overFetchFactor`` has no effect.
+    The over-fetched ``limit`` must stay within the limits of the store, for example 50 for Cloudflare
+    Vectorize or 250 for Typesense.
+
 Example Usage
 ~~~~~~~~~~~~~
 
 * `Basic Retriever Example`_
+* `Hybrid Retrieval with Reranking Example`_
 
 Similarity Search Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * `Similarity Search with Cloudflare (RAG)`_
+* `Similarity Search with Doctrine (RAG)`_
 * `Similarity Search with Manticore Search (RAG)`_
 * `Similarity Search with MariaDB (RAG)`_
 * `Similarity Search with Meilisearch (RAG)`_
@@ -128,6 +164,7 @@ See :doc:`store/bridges` for installation and configuration details for all supp
 * `ChromaDB`_ (requires ``codewithkyrian/chromadb-php``)
 * `ClickHouse`_
 * `Cloudflare Vectorize`_
+* `Doctrine`_ (requires ``doctrine/orm``)
 * `Elasticsearch`_
 * InMemory & Symfony Cache (for development and testing)
 * `ManticoreSearch`_
@@ -137,7 +174,7 @@ See :doc:`store/bridges` for installation and configuration details for all supp
 * `MongoDB Atlas`_ (requires ``mongodb/mongodb``)
 * `Neo4j`_
 * `OpenSearch`_
-* `Pinecone`_ (requires ``probots-io/pinecone-php``)
+* `Pinecone`_
 * `Postgres`_ with pgvector (requires ``ext-pdo``)
 * `Qdrant`_
 * `Redis Stack`_ (requires ``ext-redis``)
@@ -205,6 +242,54 @@ that defines the method to load a document from a source. This leads to a loader
         }
     }
 
+Document Transformer
+--------------------
+
+Transformers change documents after loading and before vectorizing, for example to split them into smaller
+chunks. Pass them to the :class:`Symfony\\AI\\Store\\Indexer\\DocumentProcessor`, which runs them in the given order.
+The transformers of the Store component live in the ``Symfony\AI\Store\Document\Transformer`` namespace.
+
+Splitting Documents by Section
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :class:`Symfony\\AI\\Store\\Document\\Transformer\\TextSplitTransformer` cuts a document into chunks of a
+fixed size, so a chunk can start in the middle of one section and end in the next one. To keep sections apart,
+run the :class:`Symfony\\AI\\Store\\Document\\Transformer\\RegexSplitTransformer` first. It splits the content
+on each match of a regular expression, for example on Markdown headings::
+
+    use Symfony\AI\Store\Document\Transformer\RegexSplitTransformer;
+    use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
+    use Symfony\AI\Store\Indexer\DocumentProcessor;
+
+    $processor = new DocumentProcessor($vectorizer, $store, transformers: [
+        // starts a new section at each Markdown heading
+        new RegexSplitTransformer('/^#{1,6}[ \t]+.+$/m'),
+        // splits sections longer than 1000 characters
+        new TextSplitTransformer(chunkSize: 1000, overlap: 200),
+    ]);
+
+Each section becomes its own document. Its metadata holds the ID of the original document in ``_parent_id``
+and the section text in ``_text``. If the matched text is a Markdown heading, the metadata also holds the
+heading text without the ``#`` markers in ``_title`` and the heading level in ``_depth``. Content before the
+first match becomes its own section. A section without a heading of its own keeps the ``_title`` and ``_depth``
+of the original document.
+
+If the ``TextSplitTransformer`` splits a long section into chunks, the ``_parent_id`` of these chunks holds the ID
+of the section. The section itself is not stored, so this ID doesn't point to a document in the store.
+
+By default, each section keeps the matched text at its start. Pass ``keepDelimiter: false`` to remove it.
+To use both transformers as one, wrap them in a
+:class:`Symfony\\AI\\Store\\Document\\Transformer\\ChainTransformer`.
+
+.. note::
+
+    The ``strip_formatting`` option of the :class:`Symfony\\AI\\Store\\Document\\Loader\\MarkdownLoader`
+    removes the ``#`` markers of all headings, so a pattern for Markdown headings finds nothing to split on. Don't use
+    this option if you split the content on headings.
+
+    The heading pattern above also matches ``#`` lines inside fenced code blocks, for example a comment in a
+    shell script. Such a line starts a new section and becomes its title.
+
 Commands
 --------
 
@@ -228,9 +313,9 @@ To remove all documents from a store without dropping it, use ``bin/console ai:s
 
 .. code-block:: terminal
 
-    $ php bin/console ai:store:setup ai.store.chromadb.symfonycon
-    $ php bin/console ai:store:clear ai.store.chromadb.symfonycon --force
-    $ php bin/console ai:store:drop ai.store.chromadb.symfonycon --force
+    $ php bin/console ai:store:setup symfonycon
+    $ php bin/console ai:store:clear symfonycon --force
+    $ php bin/console ai:store:drop symfonycon --force
 
 
 Implementing a Bridge
@@ -376,7 +461,9 @@ does not include documents added moments ago::
 
 .. _`Retrieval Augmented Generation`: https://en.wikipedia.org/wiki/Retrieval-augmented_generation
 .. _`Basic Retriever Example`: https://github.com/symfony/ai/blob/main/examples/retriever/basic.php
+.. _`Hybrid Retrieval with Reranking Example`: https://github.com/symfony/ai/blob/main/examples/retriever/hybrid-rrf-reranking.php
 .. _`Similarity Search with Cloudflare (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/cloudflare.php
+.. _`Similarity Search with Doctrine (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/doctrine-orm.php
 .. _`Similarity Search with Manticore Search (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/manticore.php
 .. _`Similarity Search with MariaDB (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/mariadb-gemini.php
 .. _`Similarity Search with Meilisearch (RAG)`: https://github.com/symfony/ai/blob/main/examples/rag/meilisearch.php
@@ -398,6 +485,7 @@ does not include documents added moments ago::
 .. _`ChromaDB`: https://www.trychroma.com/
 .. _`ClickHouse`: https://clickhouse.com/
 .. _`Cloudflare Vectorize`: https://developers.cloudflare.com/vectorize/
+.. _`Doctrine`: https://www.doctrine-project.org/projects/orm.html
 .. _`Elasticsearch`: https://www.elastic.co/elasticsearch
 .. _`ManticoreSearch`: https://manticoresearch.com/
 .. _`MariaDB`: https://mariadb.org/projects/mariadb-vector/

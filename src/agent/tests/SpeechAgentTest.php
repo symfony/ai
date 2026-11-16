@@ -18,10 +18,12 @@ use Symfony\AI\Agent\Exception\RuntimeException as AgentRuntimeException;
 use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
+use Symfony\AI\Agent\MockAgent;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
 use Symfony\AI\Agent\SpeechAgent;
 use Symfony\AI\Agent\Tests\Fixtures\SuspendingConverter;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
@@ -145,6 +147,21 @@ final class SpeechAgentTest extends TestCase
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('audio-binary', $result->getContent());
         $this->assertSame('hello', $result->getMetadata()->get('text'));
+    }
+
+    public function testGetMessagesKeepTheSpokenAnswerAsText()
+    {
+        $ttsResult = new DeferredResult(new PlainConverter(new BinaryResult('audio-binary')), new InMemoryRawResult());
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->method('invoke')->willReturn($ttsResult);
+
+        $agent = new SpeechAgent(new MockAgent(['Say hello' => 'hello']), new SpeechConfiguration(ttsModel: 'tts-1'), $platform, $platform);
+        $execution = $agent->call(new MessageBag(Message::ofUser('Say hello')));
+
+        $this->assertInstanceOf(BinaryResult::class, $execution->getResult());
+        $answer = $execution->getMessages()->getMessages()[1];
+        $this->assertInstanceOf(AssistantMessage::class, $answer);
+        $this->assertSame('hello', $answer->asText());
     }
 
     public function testCallSpeaksOnlyTextPartsOfMultiPartResult()

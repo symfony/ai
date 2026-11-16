@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Agent\Toolbox\Attribute;
 
+use Symfony\AI\Platform\Tool\ToolEffectHints;
+
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
@@ -26,6 +28,7 @@ final class AsTool
         public readonly string $description,
         public readonly string $method = '__invoke',
         public readonly array $metadata = [],
+        public readonly ToolEffectHints $effectHints = new ToolEffectHints(),
     ) {
     }
 }

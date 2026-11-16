@@ -38,8 +38,8 @@ $store = StoreFactory::create(
     table: 'movies',
 );
 
-// initialize the table
-$store->setup();
+// initialize the namespace, database and table
+$store->setup(['forceDatabaseCreation' => true]);
 
 // create embeddings and documents
 $documents = [];

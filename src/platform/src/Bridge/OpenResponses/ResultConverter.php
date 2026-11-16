@@ -25,6 +25,7 @@ use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
+use Symfony\AI\Platform\Result\CommentaryResult;
 use Symfony\AI\Platform\Result\ComputerCallResult;
 use Symfony\AI\Platform\Result\CustomToolCallResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
@@ -37,6 +38,9 @@ use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryComplete;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\CommentaryStart;
 use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
@@ -59,7 +63,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  *
- * @phpstan-type OutputMessage array{content: array<Refusal|OutputText>, id: string, role: string, type: 'message'}
+ * @phpstan-type OutputMessage array{content: array<Refusal|OutputText>, id: string, role: string, type: 'message', phase?: string|null}
  * @phpstan-type OutputText array{type: 'output_text', text: string, annotations?: Annotation[]}
  * @phpstan-type Annotation UrlCitation|array{type: string}
  * @phpstan-type UrlCitation array{type: 'url_citation', url: string, title?: string, start_index?: int, end_index?: int}
@@ -84,6 +88,9 @@ class ResultConverter implements ResultConverterInterface
     private const KEY_OUTPUT = 'output';
     private const MAX_OUTPUT_TOKENS_MESSAGE = 'Responses API truncated the response after reaching the output token limit. Raise the output token budget (max_output_tokens) or reduce the request scope.';
 
+    // Phase of an assistant message narrating the next step instead of answering
+    private const PHASE_COMMENTARY = 'commentary';
+
     public function supports(Model $model): bool
     {
         return $model instanceof ResponsesModel;
@@ -94,15 +101,14 @@ class ResultConverter implements ResultConverterInterface
         $response = $result->getObject();
 
         if (401 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'];
-            throw new AuthenticationException($errorMessage);
+            throw new AuthenticationException($this->extractErrorMessage($response) ?? 'Authentication failed (HTTP 401).');
         }
 
         if (400 === $response->getStatusCode()) {
-            $error = json_decode($response->getContent(false), true)['error'] ?? [];
-            $errorMessage = $error['message'] ?? 'Bad Request';
+            $errorCode = json_decode($response->getContent(false), true)['error']['code'] ?? null;
+            $errorMessage = $this->extractErrorMessage($response) ?? 'Bad Request';
 
-            if ('context_length_exceeded' === ($error['code'] ?? null)
+            if ('context_length_exceeded' === $errorCode
                 || str_contains($errorMessage, 'exceeds the context window')
                 || str_contains($errorMessage, 'max_model_len')
             ) {
@@ -113,13 +119,11 @@ class ResultConverter implements ResultConverterInterface
         }
 
         if (429 === $response->getStatusCode()) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? null;
-            throw new RateLimitExceededException($this->extractRateLimitReset($response), $errorMessage);
+            throw new RateLimitExceededException($this->extractRateLimitReset($response), $this->extractErrorMessage($response));
         }
 
         if (($code = $response->getStatusCode()) >= 500) {
-            $errorMessage = json_decode($response->getContent(false), true)['error']['message'] ?? null;
-            throw new ServerException($code, $errorMessage);
+            throw new ServerException($code, $this->extractErrorMessage($response));
         }
 
         if ($options['stream'] ?? false) {
@@ -159,7 +163,11 @@ class ResultConverter implements ResultConverterInterface
             $incompleteReason = self::normalizeIncompleteReason($data['incomplete_details']['reason'] ?? null);
         }
 
-        $lastItemType = $data[self::KEY_OUTPUT][array_key_last($data[self::KEY_OUTPUT])]['type'] ?? null;
+        $lastItemType = null;
+        if ([] !== $data[self::KEY_OUTPUT]) {
+            $lastItemType = $data[self::KEY_OUTPUT][array_key_last($data[self::KEY_OUTPUT])]['type'] ?? null;
+        }
+
         if ('max_output_tokens' === $incompleteReason && \in_array($lastItemType, ['function_call', 'custom_tool_call'], true)) {
             throw new MaxOutputTokensException(self::MAX_OUTPUT_TOKENS_MESSAGE);
         }
@@ -197,6 +205,15 @@ class ResultConverter implements ResultConverterInterface
     protected function extractRateLimitReset(ResponseInterface $response): ?int
     {
         return null;
+    }
+
+    private function extractErrorMessage(ResponseInterface $response): ?string
+    {
+        $data = json_decode($response->getContent(false), true);
+        // Non-conforming gateways (e.g. FastAPI-based) report the reason under "detail".
+        $errorMessage = $data['error']['message'] ?? $data['detail'] ?? null;
+
+        return \is_string($errorMessage) && '' !== $errorMessage ? $errorMessage : null;
     }
 
     /**
@@ -248,6 +265,10 @@ class ResultConverter implements ResultConverterInterface
     private function containsContent(array $results): bool
     {
         foreach ($results as $result) {
+            if ($result instanceof CommentaryResult) {
+                continue;
+            }
+
             if (!$result instanceof ThinkingResult || null !== $result->getContent()) {
                 return true;
             }
@@ -494,6 +515,11 @@ class ResultConverter implements ResultConverterInterface
         // Decoded at response.completed, after a response.incomplete cut would have thrown
         /** @var list<FunctionCall> $functionCallItems */
         $functionCallItems = [];
+        $currentCommentary = null;
+        /** @var array<string, true> $commentaryItems */
+        $commentaryItems = [];
+        /** @var array<string, string> $textPhases */
+        $textPhases = [];
         // Announced function calls, keyed by output item id, so the argument deltas of an item
         // can be attributed to the call id that ToolCallStart was emitted with
         /** @var array<string, array{id: string, name: string}> $announcedToolCalls */
@@ -551,8 +577,44 @@ class ResultConverter implements ResultConverterInterface
                 yield $this->getTokenUsageExtractor()->fromDataArray($event['response']);
             }
 
+            // Deltas only carry the item id, so the phase is taken from the announcing item
+            if ('response.output_item.added' === $type
+                && 'message' === ($event['item']['type'] ?? null)
+                && self::PHASE_COMMENTARY === ($event['item']['phase'] ?? null)
+                && isset($event['item']['id'])
+            ) {
+                $commentaryItems[$event['item']['id']] = true;
+            }
+
+            if ('response.output_item.added' === $type
+                && 'message' === ($event['item']['type'] ?? null)
+                && \is_string($event['item']['phase'] ?? null)
+                && self::PHASE_COMMENTARY !== $event['item']['phase']
+                && isset($event['item']['id'])
+            ) {
+                $textPhases[$event['item']['id']] = $event['item']['phase'];
+            }
+
             if (str_contains($type, 'output_text') && isset($event['delta'])) {
-                yield new TextDelta($event['delta']);
+                if (isset($commentaryItems[$event['item_id'] ?? ''])) {
+                    if (null === $currentCommentary) {
+                        $currentCommentary = '';
+                        yield new CommentaryStart();
+                    }
+                    $currentCommentary .= $event['delta'];
+                    yield new CommentaryDelta($event['delta']);
+                } else {
+                    yield new TextDelta($event['delta'], $textPhases[$event['item_id'] ?? ''] ?? null);
+                }
+            }
+
+            if ('response.output_item.done' === $type && isset($commentaryItems[$event['item']['id'] ?? ''])) {
+                unset($commentaryItems[$event['item']['id']]);
+
+                if (null !== $currentCommentary) {
+                    yield new CommentaryComplete($currentCommentary);
+                    $currentCommentary = null;
+                }
             }
 
             if ('response.reasoning_summary_text.delta' === $type && isset($event['delta'])) {
@@ -665,7 +727,7 @@ class ResultConverter implements ResultConverterInterface
     /**
      * @param OutputMessage $output
      *
-     * @return \Generator<TextResult>
+     * @return \Generator<TextResult|CommentaryResult>
      */
     private function convertOutputMessage(array $output): \Generator
     {
@@ -681,7 +743,14 @@ class ResultConverter implements ResultConverterInterface
             return;
         }
 
-        $result = new TextResult($content['text']);
+        // Narration and answer are both plain output text, only the phase tells them apart
+        if (self::PHASE_COMMENTARY === ($output['phase'] ?? null)) {
+            yield new CommentaryResult($content['text']);
+
+            return;
+        }
+
+        $result = new TextResult($content['text'], null, $output['phase'] ?? null);
 
         $citations = $this->extractCitations($content['annotations'] ?? []);
         if ([] !== $citations) {

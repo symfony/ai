@@ -12,7 +12,7 @@
 namespace Symfony\AI\Store\Tests\Document\Loader;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Store\Document\EmbeddableDocumentInterface;
+use Symfony\AI\Store\Document\DocumentInterface;
 use Symfony\AI\Store\Document\Loader\DirectoryLoader;
 use Symfony\AI\Store\Document\Loader\MarkdownLoader;
 use Symfony\AI\Store\Document\Loader\TextFileLoader;
@@ -61,7 +61,7 @@ final class DirectoryLoaderTest extends TestCase
         $titles = $this->titlesOf($documents);
         $this->assertSame(['Alpha', 'Beta', 'Gamma', 'Upper'], $titles);
 
-        $contents = array_map(static fn (EmbeddableDocumentInterface $d) => $d->getContent(), $documents);
+        $contents = array_map(static fn (DocumentInterface $d) => $d->getContent(), $documents);
         $this->assertContains('Plain text notes.', $contents);
     }
 
@@ -83,7 +83,7 @@ final class DirectoryLoaderTest extends TestCase
 
         // Only markdown files are handled; the .txt and .csv are skipped.
         $this->assertCount(4, $documents);
-        $contents = array_map(static fn (EmbeddableDocumentInterface $d) => $d->getContent(), $documents);
+        $contents = array_map(static fn (DocumentInterface $d) => $d->getContent(), $documents);
         $this->assertNotContains('Plain text notes.', $contents);
     }
 
@@ -171,7 +171,7 @@ final class DirectoryLoaderTest extends TestCase
     }
 
     /**
-     * @param list<EmbeddableDocumentInterface> $documents
+     * @param list<DocumentInterface> $documents
      *
      * @return list<string>
      */

@@ -10,16 +10,11 @@
  */
 
 use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
-use Symfony\AI\Platform\Bridge\HuggingFace\Task;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
 
-$result = $platform->invoke('facebook/mbart-large-50-many-to-many-mmt', 'Меня зовут Вольфганг и я живу в Берлине', [
-    'task' => Task::TRANSLATION,
-    'src_lang' => 'ru_RU',
-    'tgt_lang' => 'en_XX',
-]);
+$result = $platform->invoke('Helsinki-NLP/opus-mt-ru-en', 'Меня зовут Вольфганг и я живу в Берлине');
 
 echo $result->asText().\PHP_EOL;

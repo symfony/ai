@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add the `limit` option to `Store::query()`
+
+0.15
+----
+
+ * Add the `X-Weaviate-Client-Integration` header to every request to identify Symfony AI to Weaviate
+
 0.14
 ----
 

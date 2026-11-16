@@ -12,109 +12,153 @@
 namespace Symfony\AI\Agent\Bridge\SimilaritySearch\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Agent\Bridge\SimilaritySearch\DocumentSource;
 use Symfony\AI\Agent\Bridge\SimilaritySearch\SimilaritySearch;
+use Symfony\AI\Agent\Toolbox\FiberToolExecutor;
+use Symfony\AI\Agent\Toolbox\Source\Source;
+use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
+use Symfony\AI\Agent\Toolbox\Toolbox;
+use Symfony\AI\Agent\Toolbox\ToolResult;
+use Symfony\AI\Agent\Toolbox\ToolResultConverter;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
+use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\RetrieverInterface;
-use Symfony\Component\Uid\Uuid;
 
 final class SimilaritySearchTest extends TestCase
 {
-    public function testSearchWithResults()
+    public function testReturnsTheRetrievedDocuments()
     {
-        $searchTerm = 'find similar documents';
-        $vector = new Vector([0.1, 0.2, 0.3]);
-
-        $document1 = new VectorDocument(
-            Uuid::v4(),
-            $vector,
-            new Metadata(['title' => 'Document 1', 'content' => 'First document content']),
-        );
-        $document2 = new VectorDocument(
-            Uuid::v4(),
-            $vector,
-            new Metadata(['title' => 'Document 2', 'content' => 'Second document content']),
-        );
+        $document1 = new VectorDocument('doc-1', new Vector([0.1]), new Metadata(['title' => 'Document 1']));
+        $document2 = new VectorDocument('doc-2', new Vector([0.2]), new Metadata(['title' => 'Document 2']));
 
         $retriever = $this->createMock(RetrieverInterface::class);
         $retriever->expects($this->once())
             ->method('retrieve')
-            ->with($searchTerm)
+            ->with('find similar documents')
             ->willReturn([$document1, $document2]);
 
-        $similaritySearch = new SimilaritySearch($retriever);
+        $result = (new SimilaritySearch($retriever))('find similar documents');
 
-        $result = $similaritySearch($searchTerm);
-
-        $this->assertSame('Found documents with the following information:'.\PHP_EOL.'{"title":"Document 1","content":"First document content"}{"title":"Document 2","content":"Second document content"}', $result);
-        $this->assertSame([$document1, $document2], $similaritySearch->getUsedDocuments());
+        $this->assertSame([$document1, $document2], $result->getDocuments());
     }
 
-    public function testSearchWithoutResults()
+    public function testHandsTheDocumentsToTheModelAsJsonWithTheirId()
     {
-        $searchTerm = 'find nothing';
-
-        $retriever = $this->createMock(RetrieverInterface::class);
-        $retriever->expects($this->once())
-            ->method('retrieve')
-            ->with($searchTerm)
-            ->willReturn([]);
-
-        $similaritySearch = new SimilaritySearch($retriever);
-
-        $result = $similaritySearch($searchTerm);
-
-        $this->assertSame('No results found', $result);
-        $this->assertSame([], $similaritySearch->getUsedDocuments());
-    }
-
-    public function testSearchWithSingleResult()
-    {
-        $searchTerm = 'specific query';
-        $vector = new Vector([0.5, 0.6, 0.7]);
-
-        $document = new VectorDocument(
-            Uuid::v4(),
-            $vector,
-            new Metadata(['title' => 'Single Document', 'description' => 'Only one match']),
+        $result = $this->convert(
+            new VectorDocument('doc-1', new Vector([0.1]), new Metadata(['title' => 'Document 1', 'content' => 'First document content'])),
+            new VectorDocument('doc-2', new Vector([0.2]), new Metadata(['title' => 'Document 2'])),
         );
 
-        $retriever = $this->createMock(RetrieverInterface::class);
-        $retriever->expects($this->once())
-            ->method('retrieve')
-            ->with($searchTerm)
-            ->willReturn([$document]);
-
-        $similaritySearch = new SimilaritySearch($retriever);
-
-        $result = $similaritySearch($searchTerm);
-
-        $this->assertSame('Found documents with the following information:'.\PHP_EOL.'{"title":"Single Document","description":"Only one match"}', $result);
-        $this->assertSame([$document], $similaritySearch->getUsedDocuments());
+        $this->assertSame('[{"id":"doc-1","title":"Document 1","content":"First document content"},{"id":"doc-2","title":"Document 2"}]', $result);
     }
 
-    public function testSearchWithCustomPromptTemplate()
+    public function testHandsAnEmptyListToTheModelWithoutResults()
     {
-        $searchTerm = 'custom template query';
-        $vector = new Vector([0.1, 0.2, 0.3]);
+        $this->assertSame('[]', $this->convert());
+    }
 
-        $document = new VectorDocument(
-            Uuid::v4(),
-            $vector,
-            new Metadata(['title' => 'Document 1']),
+    public function testPassesTheDocumentIdOverAnIdInTheMetadata()
+    {
+        $result = $this->convert(new VectorDocument('doc-5', new Vector([0.5]), new Metadata(['id' => 42, 'title' => 'Movie'])));
+
+        $this->assertSame('[{"id":"doc-5","title":"Movie"}]', $result);
+    }
+
+    public function testAddsTheDocumentsAsSources()
+    {
+        $document = new VectorDocument('doc-1', new Vector([0.1]), new Metadata([
+            Metadata::KEY_TITLE => 'Cats',
+            Metadata::KEY_SOURCE => 'https://example.com/cats',
+            Metadata::KEY_TEXT => 'All about cats',
+        ]));
+
+        $sources = $this->sourcesOf($document);
+
+        $this->assertCount(1, $sources);
+        $this->assertInstanceOf(DocumentSource::class, $sources[0]);
+        $this->assertSame($document, $sources[0]->getDocument());
+        $this->assertSame(['Cats', 'https://example.com/cats', 'All about cats'], [$sources[0]->getName(), $sources[0]->getReference(), $sources[0]->getContent()]);
+    }
+
+    public function testReferencesTheIdOfADocumentWithoutSource()
+    {
+        $sources = $this->sourcesOf(new VectorDocument(42, new Vector([0.1]), new Metadata([Metadata::KEY_TITLE => 'Cats'])));
+
+        $this->assertSame(['Cats', '42', ''], [$sources[0]->getName(), $sources[0]->getReference(), $sources[0]->getContent()]);
+    }
+
+    public function testNamesADocumentWithoutTitleByItsReference()
+    {
+        $sources = $this->sourcesOf(new VectorDocument('doc-2', new Vector([0.2]), new Metadata(['genre' => 'drama'])));
+
+        $this->assertSame(['doc-2', 'doc-2', ''], [$sources[0]->getName(), $sources[0]->getReference(), $sources[0]->getContent()]);
+    }
+
+    public function testCollectsTheSourcesOfEachCallInTheGivenCollection()
+    {
+        $retriever = $this->createStub(RetrieverInterface::class);
+        $retriever->method('retrieve')->willReturnOnConsecutiveCalls(
+            [new VectorDocument('doc-1', new Vector([0.1]))],
+            [new VectorDocument('doc-2', new Vector([0.2]))],
         );
+        $similaritySearch = new SimilaritySearch($retriever);
 
-        $retriever = $this->createMock(RetrieverInterface::class);
-        $retriever->expects($this->once())
-            ->method('retrieve')
-            ->with($searchTerm)
-            ->willReturn([$document]);
+        $similaritySearch->setSourceCollection($first = new SourceCollection());
+        $similaritySearch('cats');
+        $similaritySearch->setSourceCollection($second = new SourceCollection());
+        $similaritySearch('dogs');
 
-        $similaritySearch = new SimilaritySearch($retriever, 'Here are the relevant results:');
+        $this->assertSame(['doc-1'], array_map(static fn (Source $source): string => $source->getReference(), $first->all()));
+        $this->assertSame(['doc-2'], array_map(static fn (Source $source): string => $source->getReference(), $second->all()));
+    }
 
-        $result = $similaritySearch($searchTerm);
+    public function testKeepsTheSourcesOfParallelCallsApartWhenTheRetrieverSuspends()
+    {
+        $retriever = $this->createStub(RetrieverInterface::class);
+        $retriever->method('retrieve')->willReturnCallback(static function (string $query): array {
+            \Fiber::suspend();
 
-        $this->assertSame('Here are the relevant results:'.\PHP_EOL.'{"title":"Document 1"}', $result);
+            return [new VectorDocument('doc-'.$query, new Vector([0.1]))];
+        });
+        $executor = new FiberToolExecutor(new Toolbox([new SimilaritySearch($retriever)]));
+
+        $execution = $executor->execute([
+            new ToolCall('call_1', 'similarity_search', ['searchTerm' => 'cats']),
+            new ToolCall('call_2', 'similarity_search', ['searchTerm' => 'dogs']),
+        ]);
+        iterator_to_array($execution);
+
+        $references = array_map(
+            static fn (ToolResult $result): array => array_map(static fn (Source $source): string => $source->getReference(), $result->getSources()?->all() ?? []),
+            $execution->getReturn(),
+        );
+        $this->assertSame([['doc-cats'], ['doc-dogs']], $references);
+    }
+
+    private function convert(VectorDocumentInterface ...$documents): ?string
+    {
+        $retriever = $this->createStub(RetrieverInterface::class);
+        $retriever->method('retrieve')->willReturn($documents);
+
+        $result = (new SimilaritySearch($retriever))('query');
+
+        return (new ToolResultConverter())->convert(new ToolResult(new ToolCall('call_1', 'similarity_search'), $result));
+    }
+
+    /**
+     * @return Source[]
+     */
+    private function sourcesOf(VectorDocumentInterface $document): array
+    {
+        $retriever = $this->createStub(RetrieverInterface::class);
+        $retriever->method('retrieve')->willReturn([$document]);
+        $similaritySearch = new SimilaritySearch($retriever);
+
+        $similaritySearch('cats');
+
+        return $similaritySearch->getSourceCollection()->all();
     }
 }

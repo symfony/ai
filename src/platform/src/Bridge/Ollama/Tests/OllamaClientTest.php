@@ -12,10 +12,12 @@
 namespace Symfony\AI\Platform\Bridge\Ollama\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Ollama\Decision;
 use Symfony\AI\Platform\Bridge\Ollama\Factory;
 use Symfony\AI\Platform\Bridge\Ollama\Ollama;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaClient;
 use Symfony\AI\Platform\Bridge\Ollama\OllamaResultConverter;
+use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -34,6 +36,16 @@ final class OllamaClientTest extends TestCase
 
         $this->assertTrue($client->supports(new Ollama('llama3.2')));
         $this->assertFalse($client->supports(new Model('any-model')));
+    }
+
+    public function testDoesNotSupportDecisionModels()
+    {
+        $this->assertFalse((new OllamaClient(new MockHttpClient()))->supports(new Decision('nimble')));
+    }
+
+    public function testDoesNotSupportTextToSpeechModels()
+    {
+        $this->assertFalse((new OllamaClient(new MockHttpClient()))->supports(new TextToSpeech('phonon')));
     }
 
     public function testOutputStructureIsSupported()

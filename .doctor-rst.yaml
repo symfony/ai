@@ -96,3 +96,4 @@ whitelist:
         - '/MCP Apps/'         # proper noun: the "MCP Apps" extension (modelcontextprotocol/ext-apps)
         - '/Interactive apps/' # section heading for that extension's interactive tools
         - '/apps[.:]/'         # the `mcp.apps.*` configuration key
+        - '/"args": \["[^"]*bin\/console"/' # JSON client config: "php" is the separate "command" entry

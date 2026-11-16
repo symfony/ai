@@ -44,8 +44,8 @@ final class Factory
 
         return new Provider(
             $name,
-            [new ModelClient($httpClient, $apiKey, $baseUrl)],
-            [new ResultConverter()],
+            [new ModelClient($httpClient, $apiKey, $baseUrl), new Reranker\ModelClient($httpClient, $apiKey, $baseUrl)],
+            [new ResultConverter(), new Reranker\ResultConverter()],
             $modelCatalog,
             $contract ?? VoyageContract::create(),
             $eventDispatcher,

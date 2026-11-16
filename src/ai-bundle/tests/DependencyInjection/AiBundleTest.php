@@ -16,11 +16,9 @@ use AsyncAws\S3Vectors\S3VectorsClient;
 use Codewithkyrian\ChromaDB\Client;
 use MongoDB\Client as MongoDbClient;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\TestDox;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
-use Probots\Pinecone\Client as PineconeClient;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Agent;
@@ -29,6 +27,9 @@ use Symfony\AI\Agent\Bridge\Mcp\McpToolbox;
 use Symfony\AI\Agent\Input;
 use Symfony\AI\Agent\Memory\MemoryInputProcessor;
 use Symfony\AI\Agent\Memory\StaticMemoryProvider;
+use Symfony\AI\Agent\MessageStore\InMemoryMessageStore;
+use Symfony\AI\Agent\MessageStore\ManagedMessageStoreInterface;
+use Symfony\AI\Agent\MessageStore\MessageStoreInterface;
 use Symfony\AI\Agent\MultiAgent\Handoff;
 use Symfony\AI\Agent\MultiAgent\MultiAgent;
 use Symfony\AI\Agent\Speech\SpeechConfiguration;
@@ -37,12 +38,11 @@ use Symfony\AI\Agent\Toolbox\FiberToolExecutor;
 use Symfony\AI\AiBundle\AiBundle;
 use Symfony\AI\AiBundle\DependencyInjection\DebugCompilerPass;
 use Symfony\AI\AiBundle\DependencyInjection\FilePromptTemplateFactory;
+use Symfony\AI\AiBundle\DependencyInjection\ProcessorCompilerPass;
 use Symfony\AI\AiBundle\Exception\InvalidArgumentException;
 use Symfony\AI\AiBundle\Mcp\ConnectionToolset;
 use Symfony\AI\AiBundle\Profiler\DeferredToolbox;
-use Symfony\AI\Chat\ChatInterface;
-use Symfony\AI\Chat\ManagedStoreInterface as ManagedMessageStoreInterface;
-use Symfony\AI\Chat\MessageStoreInterface;
+use Symfony\AI\Platform\Bridge\AmazeeAi\Factory as AmazeeAiFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Factory as BedrockFactory;
 use Symfony\AI\Platform\Bridge\Bedrock\Mantle\Factory as BedrockMantleFactory;
 use Symfony\AI\Platform\Bridge\Cache\CachePlatform;
@@ -53,10 +53,14 @@ use Symfony\AI\Platform\Bridge\EdenAi\Factory as EdenAiFactory;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Factory as ElevenLabsFactory;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatform;
 use Symfony\AI\Platform\Bridge\Failover\FailoverPlatformFactory;
+use Symfony\AI\Platform\Bridge\Fireworks\Factory as FireworksFactory;
 use Symfony\AI\Platform\Bridge\Higgsfield\Factory as HiggsfieldFactory;
+use Symfony\AI\Platform\Bridge\HuggingFace\Factory as HuggingFaceFactory;
 use Symfony\AI\Platform\Bridge\MiniMax\Factory as MiniMaxFactory;
 use Symfony\AI\Platform\Bridge\Ollama\Factory as OllamaFactory;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory as OpenAiFactory;
+use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+use Symfony\AI\Platform\Bridge\Together\Factory as TogetherFactory;
 use Symfony\AI\Platform\Bridge\Venice\Factory as VeniceFactory;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Event\InvocationEvent;
@@ -70,6 +74,9 @@ use Symfony\AI\Platform\Message\TemplateRenderer\ExpressionLanguageTemplateRende
 use Symfony\AI\Platform\Message\TemplateRenderer\StringTemplateRenderer;
 use Symfony\AI\Platform\Message\TemplateRenderer\TemplateRendererRegistry;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\ModelCatalog\CachedModelCatalog;
+use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
+use Symfony\AI\Platform\ModelCatalog\InMemoryModelCatalog;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureStore;
 use Symfony\AI\Store\Bridge\AzureSearch\StoreFactory as AzureSearchStoreFactory;
@@ -81,32 +88,38 @@ use Symfony\AI\Store\Bridge\ClickHouse\Store as ClickhouseStore;
 use Symfony\AI\Store\Bridge\ClickHouse\StoreFactory as ClickHouseStoreFactory;
 use Symfony\AI\Store\Bridge\Cloudflare\Store as CloudflareStore;
 use Symfony\AI\Store\Bridge\Cloudflare\StoreFactory as CloudflareStoreFactory;
+use Symfony\AI\Store\Bridge\Doctrine\Dbal\Types\VectorType;
+use Symfony\AI\Store\Bridge\Doctrine\EmbeddingListener;
+use Symfony\AI\Store\Bridge\Doctrine\EntityEmbedder;
+use Symfony\AI\Store\Bridge\Doctrine\EntityIndexer;
+use Symfony\AI\Store\Bridge\Doctrine\Mirror\EntityRetriever;
+use Symfony\AI\Store\Bridge\Doctrine\Mirror\MirrorListener;
 use Symfony\AI\Store\Bridge\Elasticsearch\Store as ElasticsearchStore;
 use Symfony\AI\Store\Bridge\Elasticsearch\StoreFactory as ElasticsearchStoreFactory;
 use Symfony\AI\Store\Bridge\ManticoreSearch\Store as ManticoreSearchStore;
 use Symfony\AI\Store\Bridge\ManticoreSearch\StoreFactory as ManticoreSearchStoreFactory;
-use Symfony\AI\Store\Bridge\MariaDb\Distance as MariaDbDistance;
+use Symfony\AI\Store\Bridge\MariaDb\Metric as MariaDbMetric;
 use Symfony\AI\Store\Bridge\MariaDb\Store as MariaDbStore;
 use Symfony\AI\Store\Bridge\Meilisearch\Store as MeilisearchStore;
 use Symfony\AI\Store\Bridge\Meilisearch\StoreFactory as MeilisearchStoreFactory;
 use Symfony\AI\Store\Bridge\Milvus\Store as MilvusStore;
 use Symfony\AI\Store\Bridge\Milvus\StoreFactory as MilvusStoreFactory;
-use Symfony\AI\Store\Bridge\MongoDb\Similarity as MongoDbSimilarity;
+use Symfony\AI\Store\Bridge\MongoDb\Metric as MongoDbMetric;
 use Symfony\AI\Store\Bridge\MongoDb\Store as MongoDbStore;
 use Symfony\AI\Store\Bridge\Neo4j\Store as Neo4jStore;
 use Symfony\AI\Store\Bridge\Neo4j\StoreFactory as Neo4jStoreFactory;
 use Symfony\AI\Store\Bridge\OpenSearch\Store as OpenSearchStore;
 use Symfony\AI\Store\Bridge\OpenSearch\StoreFactory as OpenSearchStoreFactory;
 use Symfony\AI\Store\Bridge\Pinecone\Store as PineconeStore;
-use Symfony\AI\Store\Bridge\Postgres\Distance as PostgresDistance;
+use Symfony\AI\Store\Bridge\Postgres\Metric as PostgresMetric;
 use Symfony\AI\Store\Bridge\Postgres\Store as PostgresStore;
 use Symfony\AI\Store\Bridge\Postgres\StoreFactory as PostgresStoreFactory;
 use Symfony\AI\Store\Bridge\Qdrant\Store as QdrantStore;
 use Symfony\AI\Store\Bridge\Qdrant\StoreFactory as QdrantStoreFactory;
-use Symfony\AI\Store\Bridge\Redis\Distance as RedisDistance;
+use Symfony\AI\Store\Bridge\Redis\Metric as RedisMetric;
 use Symfony\AI\Store\Bridge\Redis\Store as RedisStore;
 use Symfony\AI\Store\Bridge\S3Vectors\Store as S3VectorsStore;
-use Symfony\AI\Store\Bridge\Sqlite\Distance as SqliteDistance;
+use Symfony\AI\Store\Bridge\Sqlite\Metric as SqliteMetric;
 use Symfony\AI\Store\Bridge\Sqlite\Store as SqliteStore;
 use Symfony\AI\Store\Bridge\Sqlite\StoreFactory as SqliteStoreFactory;
 use Symfony\AI\Store\Bridge\Sqlite\VecStore as SqliteVecStore;
@@ -136,7 +149,11 @@ use Symfony\AI\Store\RetrieverInterface;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Clock\MonotonicClock;
+use Symfony\Component\Config\Definition\ArrayNode;
+use Symfony\Component\Config\Definition\Configuration;
+use Symfony\Component\Config\Definition\Dumper\JsonSchemaDumper;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\Config\Definition\PrototypedArrayNode;
 use Symfony\Component\DependencyInjection\Argument\IteratorArgument;
 use Symfony\Component\DependencyInjection\Argument\TaggedIteratorArgument;
 use Symfony\Component\DependencyInjection\ChildDefinition;
@@ -144,6 +161,8 @@ use Symfony\Component\DependencyInjection\Compiler\ResolveChildDefinitionsPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpClient\NativeHttpClient;
@@ -279,16 +298,7 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasDefinition('ai.command.setup_store'));
 
         $setupStoreCommandDefinition = $container->getDefinition('ai.command.setup_store');
-        $this->assertCount(2, $setupStoreCommandDefinition->getArguments());
-        $this->assertSame([
-            'ai.store.mariadb.my_mariadb_store' => ['dimensions' => 1024],
-            'ai.store.mongodb.my_mongo_store' => ['fields' => [['path' => 'metadata.store_code', 'type' => 'filter']]],
-            'ai.store.postgres.my_postgres_store' => ['vector_type' => 'vector', 'vector_size' => 1536, 'index_method' => 'hnsw', 'index_opclass' => 'vector_l2_ops'],
-            'ai.store.redis.my_redis_store' => ['vector_size' => 1536],
-            'ai.store.redis.my_redis_store_with_custom_client' => [],
-            'ai.store.redis.my_redis_store_with_custom_key_prefix' => [],
-            'ai.store.redis.my_redis_store_with_custom_distance' => [],
-        ], $setupStoreCommandDefinition->getArgument(1));
+        $this->assertCount(1, $setupStoreCommandDefinition->getArguments());
         $this->assertArrayHasKey('console.command', $setupStoreCommandDefinition->getTags());
 
         $this->assertTrue($container->hasDefinition('ai.command.drop_store'));
@@ -325,7 +335,41 @@ class AiBundleTest extends TestCase
     {
         $container = $this->buildContainer($this->getFullConfig());
 
-        $this->assertTrue($container->hasDefinition('ai.chat.message_bag.normalizer'));
+        $this->assertTrue($container->hasDefinition('ai.platform.message_normalizer'));
+        $this->assertTrue($container->hasDefinition('ai.platform.message_bag_normalizer'));
+        $this->assertTrue($container->hasDefinition('ai.agent.source_collection_normalizer'));
+    }
+
+    public function testModelOverrideInputProcessorIsAppliedToEveryAgent()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'dispatcher' => ['model' => 'gpt-4o-mini'],
+                    'technical' => ['model' => 'gpt-4'],
+                    'general' => ['model' => 'gpt-4'],
+                ],
+                'multi_agent' => [
+                    'support' => [
+                        'orchestrator' => 'dispatcher',
+                        'fallback' => 'general',
+                        'handoffs' => [
+                            'technical' => ['code', 'debug'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        (new ProcessorCompilerPass())->process($container);
+
+        $this->assertArrayNotHasKey('$inputProcessors', $container->getDefinition('ai.multi_agent.support')->getArguments());
+
+        foreach (['ai.agent.dispatcher', 'ai.agent.technical', 'ai.agent.general'] as $agentId) {
+            $inputProcessors = array_map('strval', $container->getDefinition($agentId)->getArgument('$inputProcessors'));
+
+            $this->assertContains('ai.agent.model_override_input_processor', $inputProcessors);
+        }
     }
 
     public function testResponseFormatFactoryServiceIsRegistered()
@@ -365,7 +409,7 @@ class AiBundleTest extends TestCase
                         ],
                     ],
                     'weaviate' => [
-                        'main' => [
+                        'secondary' => [
                             'endpoint' => 'http://localhost:8080',
                             'api_key' => 'bar',
                             'collection' => 'my_weaviate_collection',
@@ -375,11 +419,12 @@ class AiBundleTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $main'));
+        $this->assertSame('ai.store.memory.main', (string) $container->getAlias(StoreInterface::class.' $main'));
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $secondary_with_custom_strategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $secondaryWithCustomStrategy'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $weaviate_main'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $weaviateMain'));
+        $this->assertSame('ai.store.weaviate.secondary', (string) $container->getAlias(StoreInterface::class.' $secondary'));
+        $this->assertFalse($container->hasAlias(StoreInterface::class.' $memoryMain'));
+        $this->assertFalse($container->hasAlias(StoreInterface::class.' $weaviateSecondary'));
     }
 
     public function testInjectionMessageStoreAliasIsRegistered()
@@ -388,9 +433,7 @@ class AiBundleTest extends TestCase
             'ai' => [
                 'message_store' => [
                     'memory' => [
-                        'main' => [
-                            'identifier' => '_memory',
-                        ],
+                        'main' => [],
                     ],
                     'session' => [
                         'session' => [
@@ -402,44 +445,32 @@ class AiBundleTest extends TestCase
         ]);
 
         $this->assertTrue($container->hasAlias(MessageStoreInterface::class.' $main'));
-        $this->assertTrue($container->hasAlias('.'.MessageStoreInterface::class.' $memory_main'));
         $this->assertTrue($container->hasAlias(MessageStoreInterface::class.' $session'));
-        $this->assertTrue($container->hasAlias('.'.MessageStoreInterface::class.' $session_session'));
+        $this->assertFalse($container->hasAlias(MessageStoreInterface::class.' $memoryMain'));
     }
 
-    public function testInjectionChatAliasIsRegistered()
+    public function testAgentContinuesConversationsInItsMessageStore()
     {
         $container = $this->buildContainer([
             'ai' => [
                 'agent' => [
                     'my_agent' => [
                         'model' => 'gpt-4',
+                        'message_store' => 'ai.message_store.memory.main',
                     ],
                 ],
                 'message_store' => [
                     'memory' => [
-                        'main' => [
-                            'identifier' => '_memory',
-                        ],
-                    ],
-                ],
-                'chat' => [
-                    'main' => [
-                        'agent' => 'ai.agent.my_agent',
-                        'message_store' => 'ai.message_store.memory.main',
+                        'main' => [],
                     ],
                 ],
             ],
         ]);
 
-        $this->assertCount(1, $container->findTaggedServiceIds('ai.chat'));
-
-        $this->assertTrue($container->hasAlias(ChatInterface::class.' $main'));
-
-        $chatDefinition = $container->getDefinition('ai.chat.main');
-        $this->assertCount(2, $chatDefinition->getArguments());
-        $this->assertInstanceOf(Reference::class, $chatDefinition->getArgument(0));
-        $this->assertInstanceOf(Reference::class, $chatDefinition->getArgument(1));
+        $messageStore = $container->getDefinition('ai.agent.my_agent')->getArgument('$messageStore');
+        $this->assertInstanceOf(Reference::class, $messageStore);
+        $this->assertSame('ai.message_store.memory.main', (string) $messageStore);
+        $this->assertSame(InMemoryMessageStore::class, $container->getDefinition('ai.message_store.memory.main')->getClass());
     }
 
     public function testAgentHasTag()
@@ -684,6 +715,25 @@ class AiBundleTest extends TestCase
         $this->assertSame('ai.tool', $tools->getTag());
     }
 
+    public function testTheJsonSchemaAcceptsAListOfTools()
+    {
+        if (!class_exists(JsonSchemaDumper::class)) {
+            $this->markTestSkipped('The JSON schema of the configuration needs symfony/config 8.2 or higher.');
+        }
+
+        $tree = (new Configuration(new AiBundle(), new ContainerBuilder(), 'ai'))->getConfigTreeBuilder()->buildTree();
+        $this->assertInstanceOf(ArrayNode::class, $tree);
+        $agents = $tree->getChildren()['agent'];
+        $this->assertInstanceOf(PrototypedArrayNode::class, $agents);
+        $agent = $agents->getPrototype();
+        $this->assertInstanceOf(ArrayNode::class, $agent);
+
+        $schema = (new JsonSchemaDumper())->dumpNode($agent->getChildren()['tools']);
+
+        $lists = array_filter($schema['anyOf'] ?? [], static fn (array $alternative): bool => str_starts_with($alternative['$ref'] ?? '', '#/$defs/types/array'));
+        $this->assertCount(1, $lists, json_encode($schema));
+    }
+
     public function testMcpToolboxesSitNextToAnExplicitToolList()
     {
         $container = $this->buildContainer([
@@ -766,7 +816,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_azuresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myAzuresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $azuresearchMyAzuresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom vector field
@@ -808,7 +857,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_azuresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myAzuresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $azuresearchMyAzuresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Scoped HttpClient
@@ -846,7 +894,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_azuresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myAzuresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $azuresearchMyAzuresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -887,7 +934,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cache_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom cache key
@@ -925,9 +971,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $cache_my_cache_store_with_custom_key'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStoreWithCustomKey'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStoreWithCustomKey'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom strategy
@@ -965,9 +1009,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $cache_my_cache_store_with_custom_strategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStoreWithCustomStrategy'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStoreWithCustomStrategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom cache key and strategy
@@ -1006,9 +1048,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $cache_my_cache_store_with_custom_strategy_and_custom_key'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCacheStoreWithCustomStrategyAndCustomKey'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cacheMyCacheStoreWithCustomStrategyAndCustomKey'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1046,9 +1086,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $chromadb_my_chromadb_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myChromadbStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $chromadbMyChromadbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom client
@@ -1085,9 +1123,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $chromadb_my_chromadb_store_with_custom_client'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myChromadbStoreWithCustomClient'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $chromadbMyChromadbStoreWithCustomClient'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Empty collection name
@@ -1121,9 +1157,7 @@ class AiBundleTest extends TestCase
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.store'));
 
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $chromadb_my_chromadb_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myChromadbStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $chromadbMyChromadbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1207,7 +1241,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_clickhouse_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myClickhouseStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $clickhouseMyClickhouseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1250,7 +1283,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_clickhouse_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myClickhouseStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $clickhouseMyClickhouseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1359,7 +1391,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cloudflare_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom index
@@ -1402,7 +1433,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cloudflare_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom dimensions
@@ -1445,7 +1475,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cloudflare_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom endpoint
@@ -1491,7 +1520,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cloudflare_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom HttpClient
@@ -1530,7 +1558,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_cloudflare_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myCloudflareStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $cloudflareMyCloudflareStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1573,8 +1600,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_elasticsearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myElasticsearchStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $elasticsearch_my_elasticsearch_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $elasticsearchMyElasticsearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1589,7 +1614,7 @@ class AiBundleTest extends TestCase
                             'index_name' => 'foo',
                             'vectors_field' => 'embedding',
                             'dimensions' => 768,
-                            'similarity' => 'dot_product',
+                            'metric' => 'dot_product',
                         ],
                     ],
                 ],
@@ -1672,7 +1697,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1717,7 +1741,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1762,7 +1785,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1807,7 +1829,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1821,7 +1842,7 @@ class AiBundleTest extends TestCase
                             'endpoint' => 'http://127.0.0.1:9306',
                             'field' => 'foo_vector',
                             'type' => 'hnsw',
-                            'similarity' => 'cosine',
+                            'metric' => 'cosine',
                             'dimensions' => 768,
                             'quantization' => '1bit',
                         ],
@@ -1857,7 +1878,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_manticoresearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myManticoresearchStore'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $manticoresearchMyManticoresearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1895,9 +1915,7 @@ class AiBundleTest extends TestCase
                             'connection' => 'default',
                             'index_name' => 'vector_idx',
                             'vector_field_name' => 'vector',
-                            'setup_options' => [
-                                'dimensions' => 1024,
-                            ],
+                            'dimensions' => 1024,
                         ],
                     ],
                 ],
@@ -1910,13 +1928,14 @@ class AiBundleTest extends TestCase
         $this->assertSame(MariaDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('doctrine.dbal.default_connection', (string) $definition->getArgument(0));
         $this->assertSame('my_mariadb_store', $definition->getArgument(1));
         $this->assertSame('vector_idx', $definition->getArgument(2));
         $this->assertSame('vector', $definition->getArgument(3));
-        $this->assertSame(MariaDbDistance::Euclidean, $definition->getArgument(4));
+        $this->assertSame(MariaDbMetric::Euclidean, $definition->getArgument(4));
+        $this->assertSame(1024, $definition->getArgument('$dimensions'));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -1926,8 +1945,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mariadb_store'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mariadb_my_mariadb_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mariadbMyMariadbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -1942,10 +1959,8 @@ class AiBundleTest extends TestCase
                             'table_name' => 'vector_table',
                             'index_name' => 'vector_idx',
                             'vector_field_name' => 'vector',
-                            'setup_options' => [
-                                'dimensions' => 1024,
-                            ],
-                            'distance' => 'cosine',
+                            'dimensions' => 1024,
+                            'metric' => 'cosine',
                         ],
                     ],
                 ],
@@ -1958,13 +1973,14 @@ class AiBundleTest extends TestCase
         $this->assertSame(MariaDbStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('doctrine.dbal.default_connection', (string) $definition->getArgument(0));
         $this->assertSame('vector_table', $definition->getArgument(1));
         $this->assertSame('vector_idx', $definition->getArgument(2));
         $this->assertSame('vector', $definition->getArgument(3));
-        $this->assertSame(MariaDbDistance::Cosine, $definition->getArgument(4));
+        $this->assertSame(MariaDbMetric::Cosine, $definition->getArgument(4));
+        $this->assertSame(1024, $definition->getArgument('$dimensions'));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -1974,8 +1990,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mariadb_store'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mariadb_my_mariadb_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mariadbMyMariadbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2021,8 +2035,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $custom'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $meilisearch_custom'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $meilisearchCustom'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -2066,8 +2078,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $custom'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $meilisearch_custom'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $meilisearchCustom'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom semantic ratio
@@ -2113,8 +2123,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $custom'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $meilisearch_custom'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $meilisearchCustom'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom HttpClient
@@ -2154,8 +2162,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $custom'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $meilisearch_custom'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $meilisearchCustom'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2187,8 +2193,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_memory_store_with_custom_strategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMemoryStoreWithCustomStrategy'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $memory_my_memory_store_with_custom_strategy'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $memoryMyMemoryStoreWithCustomStrategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2223,8 +2227,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_memory_store_with_custom_strategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMemoryStoreWithCustomStrategy'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $memory_my_memory_store_with_custom_strategy'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $memoryMyMemoryStoreWithCustomStrategy'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2271,8 +2273,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_milvus_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMilvusStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $milvus_my_milvus_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $milvusMyMilvusStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2320,8 +2320,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_milvus_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMilvusStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $milvus_my_milvus_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $milvusMyMilvusStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2335,7 +2333,7 @@ class AiBundleTest extends TestCase
                             'endpoint' => 'http://127.0.0.1:19530',
                             'api_key' => 'foo',
                             'collection' => 'default',
-                            'metric_type' => 'COSINE',
+                            'metric' => 'COSINE',
                         ],
                     ],
                 ],
@@ -2369,8 +2367,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_milvus_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMilvusStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $milvus_my_milvus_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $milvusMyMilvusStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2440,8 +2436,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2485,8 +2479,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2530,8 +2522,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2575,8 +2565,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2621,8 +2609,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_mongo_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myMongoStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $mongodb_my_mongo_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $mongodbMyMongoStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2636,7 +2622,7 @@ class AiBundleTest extends TestCase
                             'database' => 'my_db',
                             'index_name' => 'vector_index',
                             'dimensions' => 768,
-                            'similarity' => 'cosine',
+                            'metric' => 'cosine',
                         ],
                     ],
                 ],
@@ -2645,8 +2631,8 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.mongodb.my_mongo_store');
 
-        $this->assertSame(768, $definition->getArgument('$embeddingsDimension'));
-        $this->assertSame(MongoDbSimilarity::Cosine, $definition->getArgument('$similarity'));
+        $this->assertSame(768, $definition->getArgument('$dimensions'));
+        $this->assertSame(MongoDbMetric::Cosine, $definition->getArgument('$metric'));
     }
 
     public function testNeo4jStoreCanBeConfigured()
@@ -2696,8 +2682,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_neo4j_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myNeo4jStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $neo4j_my_neo4j_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $neo4jMyNeo4jStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2749,8 +2733,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_neo4j_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myNeo4jStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $neo4j_my_neo4j_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $neo4jMyNeo4jStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2769,7 +2751,7 @@ class AiBundleTest extends TestCase
                             'node_name' => 'foo',
                             'vector_field' => '_vectors',
                             'dimensions' => 768,
-                            'distance' => 'cosine',
+                            'metric' => 'cosine',
                             'quantization' => true,
                         ],
                     ],
@@ -2807,8 +2789,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_neo4j_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myNeo4jStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $neo4j_my_neo4j_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $neo4jMyNeo4jStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2880,8 +2860,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2925,8 +2903,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -2970,8 +2946,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3015,8 +2989,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3028,7 +3000,7 @@ class AiBundleTest extends TestCase
                     'opensearch' => [
                         'my_opensearch_store' => [
                             'endpoint' => 'http://127.0.0.1:9200',
-                            'space_type' => 'l1',
+                            'metric' => 'l1',
                         ],
                     ],
                 ],
@@ -3060,8 +3032,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3129,8 +3099,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_opensearch_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myOpensearchStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $opensearch_my_opensearch_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $opensearchMyOpensearchStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3141,6 +3109,7 @@ class AiBundleTest extends TestCase
                 'store' => [
                     'pinecone' => [
                         'my_pinecone_store' => [
+                            'api_key' => 'pckey',
                             'index_name' => 'my_index',
                         ],
                     ],
@@ -3154,12 +3123,13 @@ class AiBundleTest extends TestCase
         $this->assertSame(PineconeStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame(PineconeClient::class, (string) $definition->getArgument(0));
-        $this->assertSame('my_index', $definition->getArgument(1));
-        $this->assertSame('my_pinecone_store', $definition->getArgument(2));
-        $this->assertSame([], $definition->getArgument(3));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('pckey', $definition->getArgument(1));
+        $this->assertSame('my_index', $definition->getArgument(2));
+        $this->assertSame('my_pinecone_store', $definition->getArgument(3));
+        $this->assertSame([], $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => StoreInterface::class], ['interface' => ManagedStoreInterface::class]], $definition->getTag('proxy'));
@@ -3167,9 +3137,59 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_pinecone_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myPineconeStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $pinecone_my_pinecone_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $pineconeMyPineconeStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
+    }
+
+    public function testPineconeStoreWithIndexConfigurationCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'pinecone' => [
+                        'my_pinecone_store' => [
+                            'api_key' => 'pckey',
+                            'index_name' => 'my-index',
+                            'dimensions' => 1536,
+                            'metric' => 'cosine',
+                            'cloud' => 'aws',
+                            'region' => 'us-east-1',
+                        ],
+                        'my_pinecone_store_without_index_configuration' => [
+                            'api_key' => 'pckey',
+                            'index_name' => 'my-other-index',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.store.pinecone.my_pinecone_store');
+        $this->assertSame(1536, $definition->getArgument('$dimensions'));
+        $this->assertSame('cosine', $definition->getArgument('$metric'));
+        $this->assertSame('aws', $definition->getArgument('$cloud'));
+        $this->assertSame('us-east-1', $definition->getArgument('$region'));
+
+        $this->assertCount(5, $container->getDefinition('ai.store.pinecone.my_pinecone_store_without_index_configuration')->getArguments());
+    }
+
+    public function testPineconeStoreRejectsUnknownDistance()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The value "dot_product" is not allowed for path "ai.store.pinecone.my_pinecone_store.metric".');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'pinecone' => [
+                        'my_pinecone_store' => [
+                            'api_key' => 'pckey',
+                            'index_name' => 'my-index',
+                            'metric' => 'dot_product',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
     }
 
     public function testPineconeStoreWithCustomIndexNameCanBeConfigured()
@@ -3179,6 +3199,7 @@ class AiBundleTest extends TestCase
                 'store' => [
                     'pinecone' => [
                         'my_pinecone_store' => [
+                            'api_key' => 'pckey',
                             'index_name' => 'custom_index',
                             'namespace' => 'my_namespace',
                         ],
@@ -3193,12 +3214,13 @@ class AiBundleTest extends TestCase
         $this->assertSame(PineconeStore::class, $definition->getClass());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(4, $definition->getArguments());
+        $this->assertCount(5, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
-        $this->assertSame(PineconeClient::class, (string) $definition->getArgument(0));
-        $this->assertSame('custom_index', $definition->getArgument(1));
-        $this->assertSame('my_namespace', $definition->getArgument(2));
-        $this->assertSame([], $definition->getArgument(3));
+        $this->assertSame('http_client', (string) $definition->getArgument(0));
+        $this->assertSame('pckey', $definition->getArgument(1));
+        $this->assertSame('custom_index', $definition->getArgument(2));
+        $this->assertSame('my_namespace', $definition->getArgument(3));
+        $this->assertSame([], $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([['interface' => StoreInterface::class], ['interface' => ManagedStoreInterface::class]], $definition->getTag('proxy'));
@@ -3206,8 +3228,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_pinecone_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myPineconeStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $pinecone_my_pinecone_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $pineconeMyPineconeStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3229,15 +3249,15 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.postgres.db');
         $this->assertSame(PostgresStore::class, $definition->getClass());
-        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromPdo'], $definition->getFactory());
+        $this->assertNull($definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
-        $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
-        $this->assertSame(\PDO::class, $definition->getArgument(0)->getClass());
+        $this->assertCount(10, $definition->getArguments());
+        $this->assertSame('pgsql:host=localhost;port=5432;dbname=testdb;user=app;password=mypass', $definition->getArgument(0));
+        $this->assertSame([], $definition->getArgument(9));
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('embedding', $definition->getArgument(2));
-        $this->assertSame(PostgresDistance::L2, $definition->getArgument(3));
+        $this->assertSame(PostgresMetric::L2, $definition->getArgument(3));
         $this->assertSame('english', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
@@ -3248,8 +3268,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3271,16 +3289,15 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.postgres.db');
         $this->assertSame(PostgresStore::class, $definition->getClass());
-        $this->assertSame([PostgresStoreFactory::class, 'createStoreFromPdo'], $definition->getFactory());
+        $this->assertNull($definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
-        $this->assertInstanceOf(Definition::class, $definition->getArgument(0));
-        $this->assertSame(\PDO::class, $definition->getArgument(0)->getClass());
-        $this->assertSame(['pgsql:host=localhost;port=5432;dbname=testdb', 'foo', 'bar'], $definition->getArgument(0)->getArguments());
+        $this->assertCount(10, $definition->getArguments());
+        $this->assertSame('pgsql:host=localhost;port=5432;dbname=testdb', $definition->getArgument(0));
+        $this->assertSame(['db_username' => 'foo', 'db_password' => 'bar'], $definition->getArgument(9));
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
-        $this->assertSame(PostgresDistance::L2, $definition->getArgument(3));
+        $this->assertSame(PostgresMetric::L2, $definition->getArgument(3));
         $this->assertSame('english', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
@@ -3291,8 +3308,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3313,12 +3328,12 @@ class AiBundleTest extends TestCase
         $this->assertSame([PostgresStoreFactory::class, 'createStoreFromDbal'], $definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(9, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('my_connection', (string) $definition->getArgument(0));
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
-        $this->assertSame(PostgresDistance::L2, $definition->getArgument(3));
+        $this->assertSame(PostgresMetric::L2, $definition->getArgument(3));
         $this->assertSame('english', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
@@ -3329,8 +3344,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3340,7 +3353,7 @@ class AiBundleTest extends TestCase
                         'db' => [
                             'dbal_connection' => 'my_connection',
                             'vector_field' => 'foo',
-                            'distance' => PostgresDistance::L1->value,
+                            'metric' => PostgresMetric::L1->value,
                         ],
                     ],
                 ],
@@ -3352,12 +3365,12 @@ class AiBundleTest extends TestCase
         $this->assertSame([PostgresStoreFactory::class, 'createStoreFromDbal'], $definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(9, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('my_connection', (string) $definition->getArgument(0));
         $this->assertSame('db', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
-        $this->assertSame(PostgresDistance::L1, $definition->getArgument(3));
+        $this->assertSame(PostgresMetric::L1, $definition->getArgument(3));
         $this->assertSame('english', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
@@ -3368,8 +3381,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3380,7 +3391,7 @@ class AiBundleTest extends TestCase
                             'dbal_connection' => 'my_connection',
                             'table_name' => 'foo',
                             'vector_field' => 'foo',
-                            'distance' => PostgresDistance::L1->value,
+                            'metric' => PostgresMetric::L1->value,
                         ],
                     ],
                 ],
@@ -3392,12 +3403,12 @@ class AiBundleTest extends TestCase
         $this->assertSame([PostgresStoreFactory::class, 'createStoreFromDbal'], $definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(9, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('my_connection', (string) $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
-        $this->assertSame(PostgresDistance::L1, $definition->getArgument(3));
+        $this->assertSame(PostgresMetric::L1, $definition->getArgument(3));
         $this->assertSame('english', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
@@ -3408,8 +3419,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Custom lang
@@ -3421,7 +3430,7 @@ class AiBundleTest extends TestCase
                             'dbal_connection' => 'my_connection',
                             'table_name' => 'foo',
                             'vector_field' => 'foo',
-                            'distance' => PostgresDistance::L1->value,
+                            'metric' => PostgresMetric::L1->value,
                             'lang' => 'french',
                         ],
                     ],
@@ -3434,12 +3443,12 @@ class AiBundleTest extends TestCase
         $this->assertSame([PostgresStoreFactory::class, 'createStoreFromDbal'], $definition->getFactory());
 
         $this->assertTrue($definition->isLazy());
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(9, $definition->getArguments());
         $this->assertInstanceOf(Reference::class, $definition->getArgument(0));
         $this->assertSame('my_connection', (string) $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertSame('foo', $definition->getArgument(2));
-        $this->assertSame(PostgresDistance::L1, $definition->getArgument(3));
+        $this->assertSame(PostgresMetric::L1, $definition->getArgument(3));
         $this->assertSame('french', $definition->getArgument(4));
 
         $this->assertTrue($definition->hasTag('proxy'));
@@ -3450,12 +3459,10 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $db'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $postgres_db'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $postgresDb'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
-    public function testPostgresStoreSetupOptionsLetTheStoreChooseTheIndex()
+    public function testPostgresStoreWithVectorColumnConfigurationCanBeConfigured()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -3463,20 +3470,45 @@ class AiBundleTest extends TestCase
                     'postgres' => [
                         'db' => [
                             'dbal_connection' => 'my_connection',
-                            'distance' => PostgresDistance::Cosine->value,
-                            'setup_options' => [
-                                'vector_size' => 1024,
-                            ],
+                            'metric' => PostgresMetric::Cosine->value,
+                            'dimensions' => 1024,
+                            'vector_type' => 'halfvec',
+                            'index_method' => 'ivfflat',
+                            'index_opclass' => 'halfvec_cosine_ops',
+                        ],
+                        'db_without_vector_column_configuration' => [
+                            'dbal_connection' => 'my_connection',
+                        ],
+                        'db_from_dsn' => [
+                            'dsn' => 'pgsql:host=localhost;port=5432;dbname=testdb',
+                            'dimensions' => 1024,
+                            'vector_type' => 'halfvec',
+                            'index_method' => 'ivfflat',
+                            'index_opclass' => 'halfvec_cosine_ops',
+                        ],
+                        'db_from_dsn_without_vector_column_configuration' => [
+                            'dsn' => 'pgsql:host=localhost;port=5432;dbname=testdb',
                         ],
                     ],
                 ],
             ],
         ]);
 
-        $this->assertSame(
-            ['ai.store.postgres.db' => ['vector_size' => 1024, 'vector_type' => 'vector']],
-            $container->getDefinition('ai.command.setup_store')->getArgument(1),
-        );
+        foreach (['db', 'db_from_dsn'] as $name) {
+            $definition = $container->getDefinition('ai.store.postgres.'.$name);
+            $this->assertSame(1024, $definition->getArgument(5));
+            $this->assertSame('halfvec', $definition->getArgument(6));
+            $this->assertSame('ivfflat', $definition->getArgument(7));
+            $this->assertSame('halfvec_cosine_ops', $definition->getArgument(8));
+        }
+
+        foreach (['db_without_vector_column_configuration', 'db_from_dsn_without_vector_column_configuration'] as $name) {
+            $definition = $container->getDefinition('ai.store.postgres.'.$name);
+            $this->assertSame(1536, $definition->getArgument(5));
+            $this->assertSame('vector', $definition->getArgument(6));
+            $this->assertSame('hnsw', $definition->getArgument(7));
+            $this->assertNull($definition->getArgument(8));
+        }
     }
 
     public function testQdrantStoreCanBeConfigured()
@@ -3520,8 +3552,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3564,8 +3594,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3609,8 +3637,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3655,8 +3681,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -3698,8 +3722,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_qdrant_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myQdrantStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $qdrant_my_qdrant_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $qdrantMyQdrantStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3731,7 +3753,7 @@ class AiBundleTest extends TestCase
         $this->assertSame(\Redis::class, $definition->getArgument(0)->getClass());
         $this->assertSame('my_redis_store', $definition->getArgument(1));
         $this->assertSame('vector:', $definition->getArgument(2));
-        $this->assertSame(RedisDistance::Cosine, $definition->getArgument(3));
+        $this->assertSame(RedisMetric::Cosine, $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -3742,9 +3764,47 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
+    }
+
+    public function testS3VectorsStoreWithIndexConfigurationCanBeConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    's3vectors' => [
+                        'my_s3vectors_store' => [
+                            'vector_bucket_name' => 'my-bucket',
+                            'dimensions' => 1536,
+                            'metric' => 'euclidean',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.store.s3vectors.my_s3vectors_store');
+        $this->assertSame(1536, $definition->getArgument('$dimensions'));
+        $this->assertSame('euclidean', $definition->getArgument('$metric'));
+    }
+
+    public function testS3VectorsStoreRejectsUnknownDistance()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The value "cosin" is not allowed for path "ai.store.s3vectors.my_s3vectors_store.metric".');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    's3vectors' => [
+                        'my_s3vectors_store' => [
+                            'vector_bucket_name' => 'my-bucket',
+                            'metric' => 'cosin',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
     }
 
     public function testS3VectorsStoreCanBeConfiguredWithClientConfigurationAndFilter()
@@ -3812,7 +3872,7 @@ class AiBundleTest extends TestCase
         $this->assertSame(\Redis::class, $definition->getArgument(0)->getClass());
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertSame('vector:', $definition->getArgument(2));
-        $this->assertSame(RedisDistance::Cosine, $definition->getArgument(3));
+        $this->assertSame(RedisMetric::Cosine, $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -3823,8 +3883,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3854,7 +3912,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('foo', (string) $definition->getArgument(0));
         $this->assertSame('my_vector_index', $definition->getArgument(1));
         $this->assertSame('vector:', $definition->getArgument(2));
-        $this->assertSame(RedisDistance::Cosine, $definition->getArgument(3));
+        $this->assertSame(RedisMetric::Cosine, $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -3865,8 +3923,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3897,7 +3953,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('foo', (string) $definition->getArgument(0));
         $this->assertSame('my_vector_index', $definition->getArgument(1));
         $this->assertSame('foo:', $definition->getArgument(2));
-        $this->assertSame(RedisDistance::Cosine, $definition->getArgument(3));
+        $this->assertSame(RedisMetric::Cosine, $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -3908,8 +3964,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -3922,7 +3976,7 @@ class AiBundleTest extends TestCase
                         'my_redis_store' => [
                             'client' => 'foo',
                             'index_name' => 'my_vector_index',
-                            'distance' => RedisDistance::L2->value,
+                            'metric' => RedisMetric::L2->value,
                         ],
                     ],
                 ],
@@ -3940,7 +3994,7 @@ class AiBundleTest extends TestCase
         $this->assertSame('foo', (string) $definition->getArgument(0));
         $this->assertSame('my_vector_index', $definition->getArgument(1));
         $this->assertSame('vector:', $definition->getArgument(2));
-        $this->assertSame(RedisDistance::L2, $definition->getArgument(3));
+        $this->assertSame(RedisMetric::L2, $definition->getArgument(3));
 
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
@@ -3951,12 +4005,10 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_redis_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myRedisStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $redis_my_redis_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $redisMyRedisStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
-    public function testRedisStoreWithSetupOptionsCanBeConfigured()
+    public function testRedisStoreWithDimensionsCanBeConfigured()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -3965,23 +4017,14 @@ class AiBundleTest extends TestCase
                         'my_redis_store' => [
                             'client' => 'foo',
                             'index_name' => 'my_vector_index',
-                            'setup_options' => [
-                                'vector_size' => 1536,
-                            ],
-                        ],
-                        'my_redis_store_without_setup_options' => [
-                            'client' => 'foo',
-                            'index_name' => 'my_other_vector_index',
+                            'dimensions' => 768,
                         ],
                     ],
                 ],
             ],
         ]);
 
-        $this->assertSame([
-            'ai.store.redis.my_redis_store' => ['vector_size' => 1536],
-            'ai.store.redis.my_redis_store_without_setup_options' => [],
-        ], $container->getDefinition('ai.command.setup_store')->getArgument(1));
+        $this->assertSame(768, $container->getDefinition('ai.store.redis.my_redis_store')->getArgument('$dimensions'));
     }
 
     public function testSqliteStoreCanBeConfigured()
@@ -4010,8 +4053,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_sqlite_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySqliteStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $sqlite_my_sqlite_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $sqliteMySqliteStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         // Store with DBAL connection uses fromDbal factory
@@ -4100,7 +4141,7 @@ class AiBundleTest extends TestCase
 
         $arguments = $definition->getArguments();
         $this->assertSame('sqlite:/tmp/test.db', $arguments[0]);
-        $this->assertEquals(SqliteDistance::Cosine, $arguments[2]);
+        $this->assertEquals(SqliteMetric::Cosine, $arguments[2]);
         $this->assertSame(1536, $arguments[3]);
 
         // VecStore with DBAL connection uses fromDbal factory
@@ -4134,7 +4175,7 @@ class AiBundleTest extends TestCase
                         'my_sqlite_vec_store' => [
                             'dsn' => 'sqlite:/tmp/test.db',
                             'vec' => true,
-                            'distance' => 'L2',
+                            'metric' => 'L2',
                         ],
                     ],
                 ],
@@ -4143,7 +4184,7 @@ class AiBundleTest extends TestCase
 
         $definition = $container->getDefinition('ai.store.sqlite.my_sqlite_vec_store');
         $arguments = $definition->getArguments();
-        $this->assertEquals(SqliteDistance::L2, $arguments[2]);
+        $this->assertEquals(SqliteMetric::L2, $arguments[2]);
 
         // VecStore with custom vector dimension
         $container = $this->buildContainer([
@@ -4153,7 +4194,7 @@ class AiBundleTest extends TestCase
                         'my_sqlite_vec_store' => [
                             'dsn' => 'sqlite:/tmp/test.db',
                             'vec' => true,
-                            'vector_dimension' => 768,
+                            'dimensions' => 768,
                         ],
                     ],
                 ],
@@ -4203,8 +4244,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_supabase_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySupabaseStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $supabase_my_supabase_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $supabaseMySupabaseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4247,8 +4286,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_supabase_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySupabaseStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $supabase_my_supabase_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $supabaseMySupabaseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4291,8 +4328,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_supabase_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySupabaseStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $supabase_my_supabase_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $supabaseMySupabaseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4359,8 +4394,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_supabase_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySupabaseStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $supabase_my_supabase_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $supabaseMySupabaseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4411,8 +4444,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_surrealdb_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySurrealdbStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $surrealdb_my_surrealdb_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $surrealdbMySurrealdbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4464,8 +4495,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_surrealdb_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySurrealdbStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $surrealdb_my_surrealdb_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $surrealdbMySurrealdbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4483,7 +4512,7 @@ class AiBundleTest extends TestCase
                             'database' => 'bar',
                             'table' => 'bar',
                             'vector_field' => '_vectors',
-                            'strategy' => 'cosine',
+                            'metric' => 'cosine',
                             'dimensions' => 768,
                             'namespaced_user' => true,
                         ],
@@ -4522,8 +4551,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_surrealdb_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySurrealdbStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $surrealdb_my_surrealdb_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $surrealdbMySurrealdbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4573,8 +4600,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_surrealdb_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $mySurrealdbStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $surrealdb_my_surrealdb_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $surrealdbMySurrealdbStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4618,8 +4643,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_typesense_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myTypesenseStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $typesense_my_typesense_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $typesenseMyTypesenseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4664,8 +4687,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_typesense_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myTypesenseStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $typesense_my_typesense_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $typesenseMyTypesenseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4710,8 +4731,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_typesense_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myTypesenseStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $typesense_my_typesense_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $typesenseMyTypesenseStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4753,8 +4772,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_weaviate_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myWeaviateStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $weaviate_my_weaviate_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $weaviateMyWeaviateStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -4794,8 +4811,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_weaviate_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myWeaviateStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $weaviate_my_weaviate_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $weaviateMyWeaviateStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
 
         $container = $this->buildContainer([
@@ -4836,8 +4851,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $my_weaviate_store'));
         $this->assertTrue($container->hasAlias(StoreInterface::class.' $myWeaviateStore'));
-        $this->assertTrue($container->hasAlias('.'.StoreInterface::class.' $weaviate_my_weaviate_store'));
-        $this->assertTrue($container->hasAlias(StoreInterface::class.' $weaviateMyWeaviateStore'));
         $this->assertTrue($container->hasAlias(StoreInterface::class));
     }
 
@@ -4873,8 +4886,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $main'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $vektor_main'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $vektorMain'));
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
 
         $container = $this->buildContainer([
@@ -4909,8 +4920,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $main'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $vektor_main'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $vektorMain'));
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
 
         $container = $this->buildContainer([
@@ -4945,8 +4954,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.store'));
 
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $main'));
-        $this->assertTrue($container->hasAlias('.Symfony\AI\Store\StoreInterface $vektor_main'));
-        $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface $vektorMain'));
         $this->assertTrue($container->hasAlias('Symfony\AI\Store\StoreInterface'));
     }
 
@@ -5209,8 +5216,7 @@ class AiBundleTest extends TestCase
         $this->assertNull($definition->getArgument(3));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(4));
         $this->assertSame('http_client', (string) $definition->getArgument(4));
-        // No explicit catalog: the factory picks the one belonging to the route.
-        $this->assertNull($definition->getArgument(5));
+        $this->assertSame('ai.platform.model_catalog.bedrock.completions', (string) $definition->getArgument(5));
         $this->assertNull($definition->getArgument(6));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(7));
         $this->assertSame('event_dispatcher', (string) $definition->getArgument(7));
@@ -5382,7 +5388,8 @@ class AiBundleTest extends TestCase
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame([OllamaFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
         $this->assertSame('http://127.0.0.1:11434', $definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -5413,7 +5420,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('https://ollama.com', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -5443,7 +5450,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([OllamaFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertNull($definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -5566,7 +5573,7 @@ class AiBundleTest extends TestCase
         $this->assertCount(3, array_filter($secondSystemPrompt->getArguments()));
     }
 
-    public function testExcludeToolMessagesDefaultsToFalse()
+    public function testToolResultConverterIsPassedToAgent()
     {
         $container = $this->buildContainer([
             'ai' => [
@@ -5581,36 +5588,7 @@ class AiBundleTest extends TestCase
 
         $agentDefinition = $container->getDefinition('ai.agent.test_agent');
 
-        $this->assertFalse($agentDefinition->getArgument('$excludeToolMessages'));
-    }
-
-    /**
-     * @return iterable<string, array{bool}>
-     */
-    public static function provideExcludeToolMessages(): iterable
-    {
-        yield 'excluded' => [true];
-        yield 'preserved' => [false];
-    }
-
-    #[DataProvider('provideExcludeToolMessages')]
-    public function testExcludeToolMessagesIsPassedToAgent(bool $excludeToolMessages)
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'agent' => [
-                    'test_agent' => [
-                        'model' => 'gpt-4',
-                        'tools' => true,
-                        'exclude_tool_messages' => $excludeToolMessages,
-                    ],
-                ],
-            ],
-        ]);
-
-        $agentDefinition = $container->getDefinition('ai.agent.test_agent');
-
-        $this->assertSame($excludeToolMessages, $agentDefinition->getArgument('$excludeToolMessages'));
+        $this->assertEquals(new Reference('ai.tool_result_converter'), $agentDefinition->getArgument('$toolResultConverter'));
     }
 
     public function testMaxToolCallsDefaultsToFifty()
@@ -5990,7 +5968,8 @@ class AiBundleTest extends TestCase
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame([ElevenLabsFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
         $this->assertSame('https://api.elevenlabs.io/v1/', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6026,7 +6005,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('https://api.elevenlabs.io/v2/', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6062,7 +6041,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('https://api.elevenlabs.io/v1/', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6097,7 +6076,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([ElevenLabsFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('https://api.elevenlabs.io/v1/', $definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6134,7 +6113,8 @@ class AiBundleTest extends TestCase
         $this->assertSame([DeepgramFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame([DeepgramFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
         $this->assertSame('https://api.deepgram.com/v1/', $definition->getArgument(0));
         $this->assertSame('foo', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6184,7 +6164,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([DeepgramFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('https://api.deepgram.com/v1/', $definition->getArgument(0));
         $this->assertNull($definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -6486,7 +6466,8 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.platform.fireworks');
         $arguments = $definition->getArguments();
 
-        $this->assertCount(4, $arguments);
+        $this->assertCount(5, $arguments);
+        $this->assertSame([FireworksFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
         $this->assertSame('fw-test-key', $arguments[0]);
         $this->assertInstanceOf(Reference::class, $arguments[1]);
         $this->assertSame('http_client', (string) $arguments[1]);
@@ -6542,11 +6523,57 @@ class AiBundleTest extends TestCase
         $this->assertNull($arguments[2]);
         $this->assertInstanceOf(Reference::class, $arguments[3]);
         $this->assertSame('http_client', (string) $arguments[3]);
-        $this->assertNull($arguments[4]);
+        $this->assertSame([HiggsfieldFactory::class, 'createModelCatalog'], $arguments[4]->getFactory());
         $this->assertInstanceOf(Reference::class, $arguments[5]);
         $this->assertSame('ai.platform.contract.higgsfield', (string) $arguments[5]);
         $this->assertInstanceOf(Reference::class, $arguments[6]);
         $this->assertSame('event_dispatcher', (string) $arguments[6]);
+    }
+
+    public function testHuggingFacePlatformUsesTheStaticModelCatalogByDefault()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'huggingface' => [
+                        'api_key' => 'hf-test-key',
+                    ],
+                ],
+            ],
+        ]);
+
+        $arguments = $container->getDefinition('ai.platform.huggingface')->getArguments();
+
+        $this->assertSame('hf-test-key', $arguments[0]);
+        $this->assertNull($arguments[1]);
+        $this->assertInstanceOf(Reference::class, $arguments[3]);
+        $this->assertSame('ai.platform.model_catalog.huggingface', (string) $arguments[3]);
+    }
+
+    public function testHuggingFacePlatformResolvesModelsThroughTheHubApiWhenConfigured()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'huggingface' => [
+                        'api_key' => 'hf-test-key',
+                        'provider' => 'nscale',
+                        'model_catalog' => ['api' => true],
+                    ],
+                ],
+            ],
+        ]);
+
+        $arguments = $container->getDefinition('ai.platform.huggingface')->getArguments();
+        $this->assertSame('nscale', $arguments[1]);
+
+        $catalog = $arguments[3];
+        $this->assertInstanceOf(Definition::class, $catalog);
+        $this->assertSame([HuggingFaceFactory::class, 'createModelCatalog'], $catalog->getFactory());
+        $this->assertSame(['hf-test-key', 'nscale', 'http_client'], array_map(
+            static fn (mixed $argument): mixed => $argument instanceof Reference ? (string) $argument : $argument,
+            $catalog->getArguments(),
+        ));
     }
 
     #[TestDox('Higgsfield platform uses a custom model catalog service when configured')]
@@ -6613,7 +6640,8 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.platform.together');
         $arguments = $definition->getArguments();
 
-        $this->assertCount(5, $arguments);
+        $this->assertCount(6, $arguments);
+        $this->assertSame([TogetherFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
         $this->assertNull($arguments[0]);
         $this->assertSame('together-test-key', $arguments[1]);
         $this->assertInstanceOf(Reference::class, $arguments[2]);
@@ -7734,6 +7762,244 @@ class AiBundleTest extends TestCase
         $this->assertTrue($container->hasAlias(VectorizerInterface::class.' $another'));
     }
 
+    public function testDoctrineStoreWithVectorizerEmbedsAndIndexesTheEntity()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'movies' => [
+                            'entity' => 'App\\Entity\\Movie',
+                            'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasAlias(StoreInterface::class.' $movies'));
+        $this->assertFalse($container->hasAlias(StoreInterface::class.' $doctrineMovies'));
+
+        $embedder = $container->getDefinition('ai.store.doctrine.movies.embedder');
+        $this->assertSame(EntityEmbedder::class, $embedder->getClass());
+        $this->assertSame('ai.vectorizer.my_vectorizer', (string) $embedder->getArgument(0));
+
+        $listener = $container->getDefinition('ai.store.doctrine.movies.embedding_listener');
+        $this->assertSame(EmbeddingListener::class, $listener->getClass());
+        $this->assertSame('ai.store.doctrine.movies.embedder', (string) $listener->getArgument(0));
+        $this->assertSame('App\\Entity\\Movie', $listener->getArgument(1));
+        $this->assertSame([['event' => 'onFlush']], $listener->getTag('doctrine.event_listener'));
+
+        $entityIndexer = $container->getDefinition('ai.store.doctrine.movies.entity_indexer');
+        $this->assertSame(EntityIndexer::class, $entityIndexer->getClass());
+        $this->assertSame('doctrine.orm.entity_manager', (string) $entityIndexer->getArgument(0));
+
+        $indexer = $container->getDefinition('ai.indexer.movies');
+        $this->assertSame(ConfiguredSourceIndexer::class, $indexer->getClass());
+        $this->assertSame('ai.store.doctrine.movies.entity_indexer', (string) $indexer->getArgument(0));
+        $this->assertSame('App\\Entity\\Movie', $indexer->getArgument(1));
+        $this->assertSame([['name' => 'movies']], $indexer->getTag('ai.indexer'));
+    }
+
+    public function testDoctrineStoreIndexerIsTheDefaultIndexerWhenItIsTheOnlyOne()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'movies' => [
+                            'entity' => 'App\\Entity\\Movie',
+                            'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame('ai.indexer.movies', (string) $container->getAlias(IndexerInterface::class));
+    }
+
+    public function testDoctrineStoreIndexerIsNoDefaultNextToAConfiguredIndexer()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'movies' => [
+                            'entity' => 'App\\Entity\\Movie',
+                            'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                        ],
+                    ],
+                ],
+                'indexer' => [
+                    'documents' => [
+                        'loader' => InMemoryLoader::class,
+                        'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                        'store' => 'ai.store.doctrine.movies',
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($container->hasAlias(IndexerInterface::class));
+    }
+
+    public function testDoctrineStoreWithoutVectorizerLeavesTheEmbeddingToTheApplication()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'movies' => ['entity' => 'App\\Entity\\Movie'],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.doctrine.movies'));
+        $this->assertFalse($container->hasDefinition('ai.store.doctrine.movies.embedding_listener'));
+        $this->assertFalse($container->hasDefinition('ai.indexer.movies'));
+    }
+
+    public function testDoctrineStoreMirrorsTheEntityIntoAnotherStore()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'products' => [
+                            'entity' => 'App\\Entity\\Product',
+                            'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                            'mirror_to' => 'ai.store.memory.catalog',
+                        ],
+                    ],
+                    'memory' => [
+                        'catalog' => [],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertFalse($container->hasDefinition('ai.store.doctrine.products'));
+        $this->assertFalse($container->hasDefinition('ai.store.doctrine.products.embedding_listener'));
+
+        $listener = $container->getDefinition('ai.store.doctrine.products.mirror_listener');
+        $this->assertSame(MirrorListener::class, $listener->getClass());
+        $this->assertSame('ai.store.doctrine.products.embedder', (string) $listener->getArgument(0));
+        $this->assertSame('ai.store.memory.catalog', (string) $listener->getArgument(1));
+        $this->assertSame('App\\Entity\\Product', $listener->getArgument(2));
+        $this->assertSame([['event' => 'onFlush'], ['event' => 'postFlush']], $listener->getTag('doctrine.event_listener'));
+
+        $entityIndexer = $container->getDefinition('ai.store.doctrine.products.entity_indexer');
+        $this->assertSame('ai.store.doctrine.products.mirror_listener', (string) $entityIndexer->getArgument('$mirror'));
+        $this->assertTrue($container->hasDefinition('ai.indexer.products'));
+
+        $retriever = $container->getDefinition('ai.retriever.products');
+        $this->assertSame(EntityRetriever::class, $retriever->getClass());
+        $this->assertSame('doctrine.orm.entity_manager', (string) $retriever->getArgument(1));
+        $this->assertSame([['name' => 'products']], $retriever->getTag('ai.retriever'));
+
+        $innerRetriever = $container->getDefinition('ai.store.doctrine.products.retriever');
+        $this->assertSame('ai.store.memory.catalog', (string) $innerRetriever->getArgument(0));
+        $this->assertSame('ai.vectorizer.my_vectorizer', (string) $innerRetriever->getArgument(1));
+    }
+
+    public function testDoctrineStoreMirrorNeedsAVectorizer()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The Doctrine store "products" needs a "vectorizer"');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'products' => [
+                            'entity' => 'App\\Entity\\Product',
+                            'mirror_to' => 'ai.store.memory.catalog',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testRetrieverMustNotShareTheNameOfAMirroringDoctrineStore()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Retriever "products" is already defined by the doctrine store of the same name');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'products' => [
+                            'entity' => 'App\\Entity\\Product',
+                            'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                            'mirror_to' => 'ai.store.memory.catalog',
+                        ],
+                    ],
+                ],
+                'retriever' => [
+                    'products' => [
+                        'store' => 'ai.store.memory.catalog',
+                        'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testIndexerMustNotShareTheNameOfADoctrineStore()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Indexer "movies" is already defined by the doctrine store of the same name');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'movies' => [
+                            'entity' => 'App\\Entity\\Movie',
+                            'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                        ],
+                    ],
+                ],
+                'indexer' => [
+                    'movies' => [
+                        'loader' => InMemoryLoader::class,
+                        'vectorizer' => 'ai.vectorizer.my_vectorizer',
+                        'store' => 'ai.store.doctrine.movies',
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testDoctrineStoreRegistersTheVectorTypeWithDoctrine()
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.environment', 'test');
+        $container->setParameter('kernel.build_dir', 'test');
+        $container->registerExtension(new class extends Extension {
+            public function load(array $configs, ContainerBuilder $container): void
+            {
+            }
+
+            public function getAlias(): string
+            {
+                return 'doctrine';
+            }
+        });
+        $extension = (new AiBundle())->getContainerExtension();
+        $this->assertInstanceOf(PrependExtensionInterface::class, $extension);
+        $container->registerExtension($extension);
+        $container->loadFromExtension('ai', ['store' => ['doctrine' => ['movies' => ['entity' => 'App\\Entity\\Movie']]]]);
+
+        $extension->prepend($container);
+
+        $this->assertSame([['dbal' => ['types' => ['vector' => VectorType::class]]]], $container->getExtensionConfig('doctrine'));
+    }
+
     public function testIndexerWithConfiguredVectorizer()
     {
         $container = $this->buildContainer([
@@ -8745,6 +9011,211 @@ class AiBundleTest extends TestCase
     }
 
     #[TestDox('Comprehensive multi-agent configuration with all features works correctly')]
+    public function testStoreNameConflictAcrossTypesThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The stores "cache.default", "memory.default" have conflicting names, store names must be unique across all store types.');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'cache' => [
+                        'default' => [],
+                        'blog' => [],
+                    ],
+                    'memory' => [
+                        'default' => [],
+                        'docs' => [],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testMessageStoreNameConflictAcrossTypesThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The message stores "cache.chat", "memory.chat", "session.chat" have conflicting names, message store names must be unique across all message store types.');
+
+        $this->buildContainer([
+            'ai' => [
+                'message_store' => [
+                    'cache' => [
+                        'chat' => [],
+                    ],
+                    'memory' => [
+                        'chat' => [],
+                        'support' => [],
+                    ],
+                    'session' => [
+                        'chat' => [],
+                        'support' => [],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testStoreNamesConflictingAsArgumentNameThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The stores "cache.blog_store", "memory.blogStore" have conflicting names, store names must be unique across all store types.');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'cache' => [
+                        'blog_store' => [],
+                    ],
+                    'memory' => [
+                        'blogStore' => [],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testStoreNamesConflictingInCaseOfFirstLetterThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The stores "cache.Main", "memory.main" have conflicting names, store names must be unique across all store types.');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'cache' => [
+                        'Main' => [],
+                    ],
+                    'memory' => [
+                        'main' => [],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testDoctrineStoreNameConflictThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The stores "doctrine.movies", "memory.movies" have conflicting names, store names must be unique across all store types.');
+
+        $this->buildContainer([
+            'ai' => [
+                'store' => [
+                    'doctrine' => [
+                        'movies' => [
+                            'entity' => 'App\\Entity\\Movie',
+                        ],
+                    ],
+                    'memory' => [
+                        'movies' => [],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testDoctrineMessageStoreNameConflictThrowsException()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The message stores "doctrine.dbal.chat", "memory.chat" have conflicting names, message store names must be unique across all message store types.');
+
+        $this->buildContainer([
+            'ai' => [
+                'message_store' => [
+                    'doctrine' => [
+                        'dbal' => [
+                            'chat' => [
+                                'connection' => 'default',
+                            ],
+                        ],
+                    ],
+                    'memory' => [
+                        'chat' => [],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testDoctrineMessageStoreNamesAreNotConfusedWithDriver()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'message_store' => [
+                    'doctrine' => [
+                        'dbal' => [
+                            'chat' => [
+                                'connection' => 'default',
+                            ],
+                        ],
+                    ],
+                    'memory' => [
+                        'dbal' => [],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.message_store.doctrine.dbal.chat'));
+        $this->assertTrue($container->hasDefinition('ai.message_store.memory.dbal'));
+    }
+
+    public function testFailoverPlatformNameConflictWithPlatformThrowsException()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The platforms "ai.platform.anthropic" and "ai.platform.failover.anthropic" have conflicting names, platform names must be unique.');
+
+        $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'anthropic' => [
+                        'api_key' => 'sk-test',
+                    ],
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                    ],
+                    'failover' => [
+                        'anthropic' => [
+                            'platforms' => ['ai.platform.openai', 'ai.platform.anthropic'],
+                            'rate_limiter' => 'limiter.failover_platform',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testFailoverPlatformNameConflictingAsArgumentNameThrowsException()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The platforms "ai.platform.azure.main" and "ai.platform.failover.azure_main" have conflicting names, platform names must be unique.');
+
+        $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'azure' => [
+                        'main' => [
+                            'api_key' => 'azure_key',
+                            'base_url' => 'myazure.openai.azure.com/',
+                            'deployment' => 'gpt-35-turbo',
+                            'api_version' => '2024-02-15-preview',
+                        ],
+                    ],
+                    'openai' => [
+                        'api_key' => 'sk-openai_key_full',
+                    ],
+                    'failover' => [
+                        'azure_main' => [
+                            'platforms' => ['ai.platform.openai', 'ai.platform.azure.main'],
+                            'rate_limiter' => 'limiter.failover_platform',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
     public function testComprehensiveMultiAgentHappyPath()
     {
         $container = $this->buildContainer([
@@ -9171,7 +9642,6 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('proxy'));
         $this->assertSame([
             ['interface' => MessageStoreInterface::class],
-            ['interface' => ManagedMessageStoreInterface::class],
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
     }
@@ -9202,7 +9672,6 @@ class AiBundleTest extends TestCase
 
         $this->assertSame([
             ['interface' => MessageStoreInterface::class],
-            ['interface' => ManagedMessageStoreInterface::class],
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
     }
@@ -9308,6 +9777,8 @@ class AiBundleTest extends TestCase
             ['interface' => ManagedMessageStoreInterface::class],
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
+
+        $this->assertSame('ai.message_store.doctrine.dbal.default', (string) $container->getAlias(MessageStoreInterface::class.' $default'));
     }
 
     public function testDoctrineDbalMessageStoreWithCustomTableNameCanBeConfiguredWithCustomKey()
@@ -9342,15 +9813,13 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.message_store'));
     }
 
-    public function testMemoryMessageStoreCanBeConfiguredWithCustomKey()
+    public function testMemoryMessageStoreCanBeConfigured()
     {
         $container = $this->buildContainer([
             'ai' => [
                 'message_store' => [
                     'memory' => [
-                        'custom' => [
-                            'identifier' => 'foo',
-                        ],
+                        'custom' => [],
                     ],
                 ],
             ],
@@ -9359,7 +9828,8 @@ class AiBundleTest extends TestCase
         $definition = $container->getDefinition('ai.message_store.memory.custom');
 
         $this->assertFalse($definition->isLazy());
-        $this->assertSame('foo', $definition->getArgument(0));
+        $this->assertSame(InMemoryMessageStore::class, $definition->getClass());
+        $this->assertSame([], $definition->getArguments());
 
         $this->assertFalse($definition->hasTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
@@ -9397,6 +9867,9 @@ class AiBundleTest extends TestCase
             ['interface' => ManagedMessageStoreInterface::class],
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
+        $this->assertTrue($container->hasAlias(MessageStoreInterface::class.' $custom'));
+        $this->assertFalse($container->hasAlias(StoreInterface::class.' $custom'));
+        $this->assertFalse($container->hasAlias('.'.StoreInterface::class.' $mongodb_custom'));
     }
 
     public function testMongoDbMessageStoreIsConfiguredWithCustomClient()
@@ -9463,7 +9936,6 @@ class AiBundleTest extends TestCase
 
         $this->assertSame([
             ['interface' => MessageStoreInterface::class],
-            ['interface' => ManagedMessageStoreInterface::class],
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
     }
@@ -9557,7 +10029,6 @@ class AiBundleTest extends TestCase
 
         $this->assertSame([
             ['interface' => MessageStoreInterface::class],
-            ['interface' => ManagedMessageStoreInterface::class],
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
     }
@@ -9600,6 +10071,9 @@ class AiBundleTest extends TestCase
             ['interface' => ManagedMessageStoreInterface::class],
         ], $definition->getTag('proxy'));
         $this->assertTrue($definition->hasTag('ai.message_store'));
+        $this->assertTrue($container->hasAlias(MessageStoreInterface::class.' $custom'));
+        $this->assertFalse($container->hasAlias(StoreInterface::class.' $custom'));
+        $this->assertFalse($container->hasAlias('.'.StoreInterface::class.' $surrealdb_custom'));
     }
 
     public function testSurrealDbMessageStoreIsConfiguredWithCustomTable()
@@ -9685,87 +10159,366 @@ class AiBundleTest extends TestCase
         $this->assertTrue($definition->hasTag('ai.message_store'));
     }
 
-    #[TestDox('Model configuration defaults class to Model::class')]
-    #[DoesNotPerformAssertions]
-    public function testModelConfigurationDefaultsClassToModel()
-    {
-        // Should not throw - class defaults to Model::class
-        $this->buildContainer([
-            'ai' => [
-                'model' => [
-                    'openai' => [
-                        'my-custom-model' => [
-                            'capabilities' => ['input-text', 'output-text'],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-    }
-
-    #[TestDox('Model configuration throws exception when class does not exist')]
-    public function testModelConfigurationThrowsExceptionWhenClassDoesNotExist()
-    {
-        $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('does not exist');
-
-        $this->buildContainer([
-            'ai' => [
-                'model' => [
-                    'openai' => [
-                        'my-custom-model' => [
-                            'class' => 'NonExistentModelClass',
-                            'capabilities' => ['input-text', 'output-text'],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-    }
-
-    #[TestDox('Model configuration throws exception when class does not extend Model')]
-    public function testModelConfigurationThrowsExceptionWhenClassDoesNotExtendModel()
-    {
-        $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('must extend');
-
-        $this->buildContainer([
-            'ai' => [
-                'model' => [
-                    'openai' => [
-                        'my-custom-model' => [
-                            'class' => \stdClass::class,
-                            'capabilities' => ['input-text', 'output-text'],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-    }
-
-    #[TestDox('Model configuration is passed to ModelCatalog services')]
-    public function testModelConfigurationIsPassedToModelCatalogServices()
+    public function testModelCatalogStringIsShortForService()
     {
         $container = $this->buildContainer([
             'ai' => [
-                'model' => [
+                'platform' => [
                     'openai' => [
-                        'my-custom-model' => [
-                            'class' => Model::class,
-                            'capabilities' => ['input-text', 'output-text'],
+                        'api_key' => 'sk-test',
+                        'model_catalog' => 'my_model_catalog',
+                    ],
+                ],
+            ],
+        ]);
+
+        $modelCatalog = $container->getDefinition('ai.platform.openai')->getArgument(2);
+
+        $this->assertInstanceOf(Reference::class, $modelCatalog);
+        $this->assertSame('my_model_catalog', (string) $modelCatalog);
+    }
+
+    public function testModelCatalogUsesBundledCatalogByDefault()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => ['api_key' => 'sk-test'],
+                ],
+            ],
+        ]);
+
+        $this->assertSame('ai.platform.model_catalog.openai', (string) $container->getDefinition('ai.platform.openai')->getArgument(2));
+    }
+
+    public function testModelCatalogModelsTakePrecedenceOverBundledCatalog()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                        'model_catalog' => [
+                            'models' => [
+                                'my-custom-model' => [
+                                    'class' => Gpt::class,
+                                    'capabilities' => ['input-text', 'output-text'],
+                                ],
+                            ],
                         ],
                     ],
                 ],
             ],
         ]);
 
-        $definition = $container->getDefinition('ai.platform.model_catalog.openai');
-        $arguments = $definition->getArguments();
+        [$configuredCatalog, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.openai')->getArgument(2));
 
-        $this->assertCount(1, $arguments);
-        $this->assertArrayHasKey('my-custom-model', $arguments[0]);
-        $this->assertSame(Model::class, $arguments[0]['my-custom-model']['class']);
-        $this->assertEquals([Capability::INPUT_TEXT, Capability::OUTPUT_TEXT], $arguments[0]['my-custom-model']['capabilities']);
+        $this->assertSame(InMemoryModelCatalog::class, $configuredCatalog->getClass());
+        $this->assertEquals([
+            'my-custom-model' => [
+                'class' => Gpt::class,
+                'capabilities' => [Capability::INPUT_TEXT, Capability::OUTPUT_TEXT],
+            ],
+        ], $configuredCatalog->getArgument(0));
+        $this->assertSame('ai.platform.model_catalog.openai', (string) $modelCatalog);
+    }
+
+    public function testModelCatalogModelsDefaultClassToModel()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'vertexai' => [
+                        'api_key' => 'test',
+                        'model_catalog' => [
+                            'models' => [
+                                'my-custom-model' => ['capabilities' => ['input-text']],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        [$configuredCatalog, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.vertexai')->getArgument(4));
+
+        $this->assertSame(Model::class, $configuredCatalog->getArgument(0)['my-custom-model']['class']);
+        $this->assertSame('ai.platform.model_catalog.vertexai.gemini', (string) $modelCatalog);
+    }
+
+    public function testModelCatalogModelsAreConfiguredPerPlatformInstance()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'azure' => [
+                        'with_models' => [
+                            'api_key' => 'key',
+                            'base_url' => 'my.azure.com',
+                            'deployment' => 'gpt',
+                            'api_version' => '2024-08-01',
+                            'model_catalog' => [
+                                'models' => [
+                                    'my-custom-model' => ['capabilities' => ['input-text']],
+                                ],
+                            ],
+                        ],
+                        'without_models' => [
+                            'api_key' => 'key',
+                            'base_url' => 'my.azure.com',
+                            'deployment' => 'gpt',
+                            'api_version' => '2024-08-01',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        [, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.azure.with_models')->getArgument(5));
+
+        $this->assertSame('ai.platform.model_catalog.azure.openai', (string) $modelCatalog);
+        $this->assertSame('ai.platform.model_catalog.azure.openai', (string) $container->getDefinition('ai.platform.azure.without_models')->getArgument(5));
+    }
+
+    public function testModelCatalogModelsCombineWithCustomService()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                        'model_catalog' => [
+                            'service' => 'my_model_catalog',
+                            'models' => [
+                                'my-custom-model' => ['capabilities' => ['input-text']],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        [, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.openai')->getArgument(2));
+
+        $this->assertSame('my_model_catalog', (string) $modelCatalog);
+    }
+
+    public function testModelCatalogModelsCombineWithApiCatalog()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'endpoint' => 'http://127.0.0.1:11434',
+                        'model_catalog' => [
+                            'models' => [
+                                'my-custom-model' => ['capabilities' => ['input-text']],
+                            ],
+                        ],
+                    ],
+                    'edenai' => [
+                        'api_key' => 'test',
+                        'model_catalog' => [
+                            'api' => true,
+                            'models' => [
+                                'my-custom-model' => ['capabilities' => ['input-text']],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        [, $ollamaCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.ollama')->getArgument('$modelCatalog'));
+        [, $edenAiCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.edenai')->getArgument(2));
+
+        $this->assertSame([OllamaFactory::class, 'createModelCatalog'], $ollamaCatalog->getFactory());
+        $this->assertSame([EdenAiFactory::class, 'createModelCatalog'], $edenAiCatalog->getFactory());
+    }
+
+    public function testModelCatalogModelsAreNotCached()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'model_catalog' => [
+                            'cache' => true,
+                            'models' => [
+                                'my-custom-model' => ['capabilities' => ['input-text']],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        [$configuredCatalog, $modelCatalog] = $this->getCompositeModelCatalogs($container->getDefinition('ai.platform.ollama')->getArgument('$modelCatalog'));
+
+        $this->assertSame(InMemoryModelCatalog::class, $configuredCatalog->getClass());
+        $this->assertSame(CachedModelCatalog::class, $modelCatalog->getClass());
+    }
+
+    #[TestWith(['NonExistentModelClass', 'does not exist'])]
+    #[TestWith([\stdClass::class, 'must extend'])]
+    public function testModelCatalogModelsRejectInvalidClass(string $class, string $message)
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage($message);
+
+        $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                        'model_catalog' => [
+                            'models' => [
+                                'my-custom-model' => [
+                                    'class' => $class,
+                                    'capabilities' => ['input-text'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testModelCatalogServiceCanBeCached()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openai' => [
+                        'api_key' => 'sk-test',
+                        'model_catalog' => [
+                            'service' => 'my_model_catalog',
+                            'cache' => true,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $modelCatalog = $container->getDefinition('ai.platform.openai')->getArgument(2);
+
+        $this->assertInstanceOf(Definition::class, $modelCatalog);
+        $this->assertSame(CachedModelCatalog::class, $modelCatalog->getClass());
+        $this->assertSame('my_model_catalog', (string) $modelCatalog->getArgument(0));
+        $this->assertSame('cache.app', (string) $modelCatalog->getArgument(1));
+        $this->assertSame(3600, $modelCatalog->getArgument(2));
+        $this->assertSame('ai.platform.openai', $modelCatalog->getArgument(3));
+    }
+
+    public function testModelCatalogCacheServiceAndTtlAreConfigurable()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'ollama' => [
+                        'endpoint' => 'http://127.0.0.1:11434',
+                        'model_catalog' => [
+                            'cache' => [
+                                'service' => 'cache.model_catalog',
+                                'ttl' => 60,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $modelCatalog = $container->getDefinition('ai.platform.ollama')->getArgument('$modelCatalog');
+
+        $this->assertSame(CachedModelCatalog::class, $modelCatalog->getClass());
+        $this->assertSame([OllamaFactory::class, 'createModelCatalog'], $modelCatalog->getArgument(0)->getFactory());
+        $this->assertSame(['http://127.0.0.1:11434', null, 'http_client'], array_map(
+            static fn (mixed $argument): mixed => $argument instanceof Reference ? (string) $argument : $argument,
+            $modelCatalog->getArgument(0)->getArguments(),
+        ));
+        $this->assertSame('cache.model_catalog', (string) $modelCatalog->getArgument(1));
+        $this->assertSame(60, $modelCatalog->getArgument(2));
+        $this->assertSame('ai.platform.ollama', $modelCatalog->getArgument(3));
+    }
+
+    public function testModelCatalogApiIsOptIn()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'openrouter' => ['api_key' => 'sk-test'],
+                    'edenai' => [
+                        'api_key' => 'test',
+                        'model_catalog' => ['api' => true],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame('ai.platform.model_catalog.openrouter', (string) $container->getDefinition('ai.platform.openrouter')->getArgument(2));
+        $this->assertSame([EdenAiFactory::class, 'createModelCatalog'], $container->getDefinition('ai.platform.edenai')->getArgument(2)->getFactory());
+    }
+
+    public function testModelCatalogOfAmazeeAiIsApiBased()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'amazeeai' => [
+                        'base_url' => 'https://llm.us104.amazee.ai',
+                        'api_key' => 'test',
+                    ],
+                ],
+            ],
+        ]);
+
+        $modelCatalog = $container->getDefinition('ai.platform.amazeeai')->getArgument(3);
+
+        $this->assertSame([AmazeeAiFactory::class, 'createModelCatalog'], $modelCatalog->getFactory());
+        $this->assertSame(['https://llm.us104.amazee.ai', 'test', 'http_client'], array_map(
+            static fn (mixed $argument): mixed => $argument instanceof Reference ? (string) $argument : $argument,
+            $modelCatalog->getArguments(),
+        ));
+    }
+
+    /**
+     * @param array<string, mixed> $platform
+     */
+    #[DataProvider('provideInvalidModelCatalogConfigurations')]
+    public function testModelCatalogRejectsInvalidConfiguration(array $platform, string $message)
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage($message);
+
+        $this->buildContainer(['ai' => ['platform' => $platform]]);
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, string}>
+     */
+    public static function provideInvalidModelCatalogConfigurations(): iterable
+    {
+        yield 'cache on the bundled list' => [
+            ['openai' => ['api_key' => 'sk-test', 'model_catalog' => ['cache' => true]]],
+            'Caching the model catalog requires a custom "service", the bundled list needs no cache.',
+        ];
+        yield 'cache on the bundled list of a bridge with an API catalog' => [
+            ['openrouter' => ['api_key' => 'sk-test', 'model_catalog' => ['cache' => true]]],
+            'Caching the model catalog requires a custom "service" or "api: true", the bundled list needs no cache.',
+        ];
+        yield 'cache on the catalog of a bridge accepting any model' => [
+            ['generic' => ['main' => ['base_url' => 'http://localhost', 'model_catalog' => ['cache' => true]]]],
+            'Caching the model catalog requires a custom "service", the bundled list needs no cache.',
+        ];
+        yield 'service combined with api' => [
+            ['edenai' => ['api_key' => 'test', 'model_catalog' => ['service' => 'my_model_catalog', 'api' => true]]],
+            'The "service" and "api" options of the model catalog cannot be combined.',
+        ];
+        yield 'api on a bridge without API catalog' => [
+            ['openai' => ['api_key' => 'sk-test', 'model_catalog' => ['api' => true]]],
+            'Unrecognized option "api" under "ai.platform.openai.model_catalog"',
+        ];
     }
 
     public function testVenicePlatformCanBeConfigured()
@@ -9787,7 +10540,8 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
+        $this->assertSame([VeniceFactory::class, 'createModelCatalog'], $definition->getArgument('$modelCatalog')->getFactory());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -9823,7 +10577,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v2/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -9859,7 +10613,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -9895,7 +10649,7 @@ class AiBundleTest extends TestCase
         $this->assertSame([VeniceFactory::class, 'createPlatform'], $definition->getFactory());
         $this->assertTrue($definition->isLazy());
 
-        $this->assertCount(5, $definition->getArguments());
+        $this->assertCount(6, $definition->getArguments());
         $this->assertSame('foo', $definition->getArgument(0));
         $this->assertSame('https://api.venice.ai/api/v1/', $definition->getArgument(1));
         $this->assertInstanceOf(Reference::class, $definition->getArgument(2));
@@ -9912,29 +10666,6 @@ class AiBundleTest extends TestCase
 
         $this->assertTrue($container->hasAlias(PlatformInterface::class));
         $this->assertTrue($container->hasAlias(PlatformInterface::class.' $venice'));
-    }
-
-    #[TestDox('Model configuration for vertexai uses correct catalog service id')]
-    public function testModelConfigurationForVertexAiUsesCorrectCatalogServiceId()
-    {
-        $container = $this->buildContainer([
-            'ai' => [
-                'model' => [
-                    'vertexai' => [
-                        'my-custom-vertex-model' => [
-                            'class' => Model::class,
-                            'capabilities' => ['input-text', 'output-text'],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $definition = $container->getDefinition('ai.platform.model_catalog.vertexai.gemini');
-        $arguments = $definition->getArguments();
-
-        $this->assertCount(1, $arguments);
-        $this->assertArrayHasKey('my-custom-vertex-model', $arguments[0]);
     }
 
     #[TestDox('VertexAI platform uses custom http_client when configured')]
@@ -9995,28 +10726,6 @@ class AiBundleTest extends TestCase
 
         // For global endpoint, http client should be a plain Reference, not a bearer-token-wrapping Definition
         $this->assertInstanceOf(Reference::class, $arguments[3]);
-    }
-
-    #[TestDox('Model configuration is ignored for unknown platform')]
-    public function testModelConfigurationIsIgnoredForUnknownPlatform()
-    {
-        // Should not throw - unknown platforms are silently ignored
-        $container = $this->buildContainer([
-            'ai' => [
-                'model' => [
-                    'unknown_platform' => [
-                        'my-custom-model' => [
-                            'class' => Model::class,
-                            'capabilities' => ['input-text', 'output-text'],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        // The model catalog for openai should not have been modified
-        $definition = $container->getDefinition('ai.platform.model_catalog.openai');
-        $this->assertSame([], $definition->getArguments());
     }
 
     public function testTemplateRendererServicesAreRegistered()
@@ -10122,15 +10831,7 @@ class AiBundleTest extends TestCase
                 ],
                 'message_store' => [
                     'memory' => [
-                        'main' => [
-                            'identifier' => '_memory',
-                        ],
-                    ],
-                ],
-                'chat' => [
-                    'main' => [
-                        'agent' => 'ai.agent.my_agent',
-                        'message_store' => 'ai.message_store.memory.main',
+                        'main' => [],
                     ],
                 ],
             ],
@@ -10141,7 +10842,6 @@ class AiBundleTest extends TestCase
             'ai.traceable_toolbox.my_agent',
             'ai.fault_tolerant_toolbox.my_agent',
             'ai.traceable_message_store.main',
-            'ai.traceable_chat.main',
         ];
 
         foreach ($decorators as $decorator) {
@@ -10202,8 +10902,8 @@ class AiBundleTest extends TestCase
         $this->assertSame('generic-test-key', $arguments[1]);
         $this->assertInstanceOf(Reference::class, $arguments[2]);
         $this->assertSame('http_client', (string) $arguments[2]);
-        $this->assertInstanceOf(Definition::class, $arguments[3], 'Model catalog should default to a FallbackModelCatalog Definition when not configured');
-        $this->assertSame(\Symfony\AI\Platform\Bridge\Generic\FallbackModelCatalog::class, $arguments[3]->getClass());
+        $this->assertInstanceOf(Reference::class, $arguments[3]);
+        $this->assertSame('ai.platform.model_catalog.generic', (string) $arguments[3]);
         $this->assertNull($arguments[4], 'Contract should be null');
         $this->assertInstanceOf(Reference::class, $arguments[5]);
         $this->assertSame('event_dispatcher', (string) $arguments[5]);
@@ -10828,7 +11528,7 @@ class AiBundleTest extends TestCase
                             'table' => 'test',
                             'field' => 'foo_vector',
                             'type' => 'hnsw',
-                            'similarity' => 'cosine',
+                            'metric' => 'cosine',
                             'dimensions' => 768,
                         ],
                         'my_manticoresearch_store_with_quantization' => [
@@ -10836,7 +11536,7 @@ class AiBundleTest extends TestCase
                             'table' => 'test',
                             'field' => 'foo_vector',
                             'type' => 'hnsw',
-                            'similarity' => 'cosine',
+                            'metric' => 'cosine',
                             'dimensions' => 768,
                             'quantization' => '1bit',
                         ],
@@ -10847,9 +11547,7 @@ class AiBundleTest extends TestCase
                             'table_name' => 'vector_table',
                             'index_name' => 'vector_idx',
                             'vector_field_name' => 'vector',
-                            'setup_options' => [
-                                'dimensions' => 1024,
-                            ],
+                            'dimensions' => 1024,
                         ],
                     ],
                     'meilisearch' => [
@@ -10884,7 +11582,7 @@ class AiBundleTest extends TestCase
                             'collection' => 'default',
                             'vector_field' => '_vectors',
                             'dimensions' => 768,
-                            'metric_type' => 'COSINE',
+                            'metric' => 'COSINE',
                         ],
                     ],
                     'mongodb' => [
@@ -10894,10 +11592,8 @@ class AiBundleTest extends TestCase
                             'index_name' => 'vector_index',
                             'vector_field' => 'embedding',
                             'bulk_write' => true,
-                            'setup_options' => [
-                                'fields' => [
-                                    ['path' => 'metadata.store_code', 'type' => 'filter'],
-                                ],
+                            'index_fields' => [
+                                ['path' => 'metadata.store_code', 'type' => 'filter'],
                             ],
                         ],
                     ],
@@ -10911,7 +11607,7 @@ class AiBundleTest extends TestCase
                             'node_name' => 'foo',
                             'vector_field' => '_vectors',
                             'dimensions' => 768,
-                            'distance' => 'cosine',
+                            'metric' => 'cosine',
                             'quantization' => true,
                         ],
                     ],
@@ -10929,7 +11625,7 @@ class AiBundleTest extends TestCase
                         ],
                         'my_opensearch_store_with_custom_space_type' => [
                             'endpoint' => 'http://127.0.0.1:9200',
-                            'space_type' => 'l1',
+                            'metric' => 'l1',
                         ],
                         'my_opensearch_store_with_custom_http_client' => [
                             'endpoint' => 'http://127.0.0.1:9200',
@@ -10938,21 +11634,24 @@ class AiBundleTest extends TestCase
                     ],
                     'pinecone' => [
                         'my_pinecone_store' => [
+                            'api_key' => 'pckey',
                             'index_name' => 'my_index',
                             'namespace' => 'my_namespace',
                             'filter' => ['category' => 'books'],
-                            'top_k' => 10,
+                            'limit' => 10,
                         ],
                         'my_pinecone_store_with_filter' => [
+                            'api_key' => 'pckey',
                             'index_name' => 'my_index',
                             'namespace' => 'my_namespace',
                             'filter' => ['category' => 'books'],
                         ],
-                        'my_pinecone_store_with_top_k' => [
+                        'my_pinecone_store_with_limit' => [
+                            'api_key' => 'pckey',
                             'index_name' => 'my_index',
                             'namespace' => 'my_namespace',
                             'filter' => ['category' => 'books'],
-                            'top_k' => 10,
+                            'limit' => 10,
                         ],
                     ],
                     'postgres' => [
@@ -10962,12 +11661,10 @@ class AiBundleTest extends TestCase
                             'password' => 'pass',
                             'table_name' => 'my_table',
                             'vector_field' => 'my_embedding',
-                            'setup_options' => [
-                                'vector_type' => 'vector',
-                                'vector_size' => 1536,
-                                'index_method' => 'hnsw',
-                                'index_opclass' => 'vector_l2_ops',
-                            ],
+                            'dimensions' => 1536,
+                            'vector_type' => 'vector',
+                            'index_method' => 'hnsw',
+                            'index_opclass' => 'vector_l2_ops',
                         ],
                     ],
                     'qdrant' => [
@@ -10976,7 +11673,7 @@ class AiBundleTest extends TestCase
                             'api_key' => 'test',
                             'collection_name' => 'foo',
                             'dimensions' => 768,
-                            'distance' => 'Cosine',
+                            'metric' => 'Cosine',
                             'async' => false,
                         ],
                         'my_custom_dimensions_qdrant_store' => [
@@ -10984,21 +11681,21 @@ class AiBundleTest extends TestCase
                             'api_key' => 'test',
                             'collection_name' => 'foo',
                             'dimensions' => 768,
-                            'distance' => 'Cosine',
+                            'metric' => 'Cosine',
                         ],
                         'my_custom_distance_qdrant_store' => [
                             'endpoint' => 'http://127.0.0.1:8000',
                             'api_key' => 'test',
                             'collection_name' => 'foo',
                             'dimensions' => 768,
-                            'distance' => 'Cosine',
+                            'metric' => 'Cosine',
                         ],
                         'my_async_qdrant_store' => [
                             'endpoint' => 'http://127.0.0.1:8000',
                             'api_key' => 'test',
                             'collection_name' => 'foo',
                             'dimensions' => 768,
-                            'distance' => 'Cosine',
+                            'metric' => 'Cosine',
                             'async' => false,
                         ],
                     ],
@@ -11014,9 +11711,7 @@ class AiBundleTest extends TestCase
                                 'port' => 6379,
                             ],
                             'index_name' => 'my_vector_index',
-                            'setup_options' => [
-                                'vector_size' => 1536,
-                            ],
+                            'dimensions' => 1536,
                         ],
                         'my_redis_store_with_custom_client' => [
                             'client' => 'foo',
@@ -11030,7 +11725,7 @@ class AiBundleTest extends TestCase
                         'my_redis_store_with_custom_distance' => [
                             'client' => 'foo',
                             'index_name' => 'my_vector_index',
-                            'distance' => RedisDistance::L2->value,
+                            'metric' => RedisMetric::L2->value,
                         ],
                     ],
                     'supabase' => [
@@ -11039,7 +11734,7 @@ class AiBundleTest extends TestCase
                             'api_key' => 'supabase_test_key',
                             'table' => 'my_supabase_table',
                             'vector_field' => 'my_embedding',
-                            'vector_dimension' => 1024,
+                            'dimensions' => 1024,
                             'function_name' => 'my_match_function',
                         ],
                         'my_supabase_store_with_custom_http_client' => [
@@ -11048,14 +11743,14 @@ class AiBundleTest extends TestCase
                             'api_key' => 'supabase_test_key',
                             'table' => 'my_supabase_table',
                             'vector_field' => 'my_embedding',
-                            'vector_dimension' => 1024,
+                            'dimensions' => 1024,
                         ],
                         'my_supabase_store_with_custom_function' => [
                             'url' => 'https://test.supabase.co',
                             'api_key' => 'supabase_test_key',
                             'table' => 'my_supabase_table',
                             'vector_field' => 'my_embedding',
-                            'vector_dimension' => 1024,
+                            'dimensions' => 1024,
                             'function_name' => 'foo',
                         ],
                     ],
@@ -11068,7 +11763,7 @@ class AiBundleTest extends TestCase
                             'database' => 'bar',
                             'table' => 'bar',
                             'vector_field' => '_vectors',
-                            'strategy' => 'cosine',
+                            'metric' => 'cosine',
                             'dimensions' => 768,
                             'namespaced_user' => true,
                         ],
@@ -11131,9 +11826,7 @@ class AiBundleTest extends TestCase
                         ],
                     ],
                     'memory' => [
-                        'my_memory_message_store' => [
-                            'identifier' => '_memory',
-                        ],
+                        'my_memory_message_store' => [],
                     ],
                     'meilisearch' => [
                         'my_meilisearch_store' => [
@@ -11194,12 +11887,6 @@ class AiBundleTest extends TestCase
                         ],
                     ],
                 ],
-                'chat' => [
-                    'main' => [
-                        'agent' => 'my_chat_agent',
-                        'message_store' => 'cache',
-                    ],
-                ],
                 'vectorizer' => [
                     'test_vectorizer' => [
                         'platform' => 'mistral_platform_service_id',
@@ -11218,5 +11905,19 @@ class AiBundleTest extends TestCase
                 ],
             ],
         ];
+    }
+
+    /**
+     * @return array{Definition, Reference|Definition}
+     */
+    private function getCompositeModelCatalogs(mixed $modelCatalog): array
+    {
+        $this->assertInstanceOf(Definition::class, $modelCatalog);
+        $this->assertSame(CompositeModelCatalog::class, $modelCatalog->getClass());
+
+        $catalogs = $modelCatalog->getArgument(0);
+        $this->assertCount(2, $catalogs);
+
+        return $catalogs;
     }
 }

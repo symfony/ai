@@ -1,11 +1,29 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add the serving provider to `InvocationEvent` and `ResultEvent`, as `ResultConvertedEvent` and `ResultErrorEvent` already have it, so a listener can attribute these events to the provider serving the call
+ * Stream the string answers of `Test\MockPlatformFactory` word by word when the invocation has the `stream` option
+ * Add a `$phase` argument and `getPhase()` to `Message\Content\Text`, `Result\TextResult` and `Result\Stream\Delta\TextDelta`, so the phase a provider tagged a text with survives into the next turn
+ * Add `Serializer\MessageNormalizer` and `Serializer\MessageBagNormalizer` for persisting messages and message bags losslessly, including ids, metadata and all content types; objects in the metadata keep their type, the platform's token usage and finish reason are handled directly and other objects are handed to the serializer; `addedAt` is derived from the message id instead of the time of normalization
+ * Add `MessageBag::forId()`, taking strings as user messages, and `MessageBag::withId()`
+ * [BC BREAK] Add a conditional return type to `MessageBag::latestAs()`, letting static analysis infer the message class from the given role; custom `MessageInterface` implementations are not returned anymore
+ * Add `Result\CommentaryResult`, `Message\Content\Commentary` and the `Result\Stream\Delta\CommentaryStart`, `CommentaryDelta` and `CommentaryComplete` deltas for narration a model emits next to its answer
+ * Add `ObjectResult::getText()` holding the JSON the model answered with, which `Message::ofAssistant()` maps to text
+ * [BC BREAK] Make `MessageBag` immutable: remove `add()`, `prepend()` and `removeSystemMessage()` in favor of `with()`, `withSystemMessage()` and `withoutSystemMessage()`, `replace()` returns a copy, and copies no longer share their metadata
+ * Add `CachedModelCatalog` decorator that caches the lookups of any `ModelCatalogInterface`, so API-based catalogs (e.g. the Ollama bridge) can persist resolutions across requests
+ * Add `InMemoryModelCatalog` holding a fixed list of models, e.g. to put configured models in front of another catalog with `CompositeModelCatalog`
+ * Add read-only, destructive, idempotent and open-world hints to tool definitions
+
 0.15
 ----
 
+ * Remove `Test\InMemoryPlatform` in favor of `Test\MockPlatformFactory::createPlatform()`
  * Add an optional class argument to `DeferredResult::asObject()`, asserting the structured output is an instance of that class and letting static analysis infer it as the return type
  * Add `Exception\RetryableExceptionInterface`, implemented by `ServerException` and `RateLimitExceededException`, so a consumer wiring platform calls into a queue with a retry policy can tell a transient failure from a permanent one without enumerating every exception class itself
+ * Add `PlatformOptions::MAX_OUTPUT_TOKENS`, a canonical output token limit that the Anthropic, Bedrock (Claude and Nova), Gemini, Vertex AI, Mistral and generic completions bridges translate to their own field; an explicit provider-specific limit like `max_tokens` still wins, and `Claude` now sets its default of 1000 tokens through the canonical option
 
 0.14
 ----

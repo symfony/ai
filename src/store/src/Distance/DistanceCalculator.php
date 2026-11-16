@@ -20,7 +20,7 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 final class DistanceCalculator
 {
     /**
-     * @param positive-int $batchSize when set alongside $maxItems in {@see self::calculate()}, documents are scored in chunks of this size
+     * @param positive-int $batchSize when set alongside $limit in {@see self::calculate()}, documents are scored in chunks of this size
      */
     public function __construct(
         private readonly DistanceStrategy $strategy = DistanceStrategy::COSINE_DISTANCE,
@@ -30,17 +30,17 @@ final class DistanceCalculator
 
     /**
      * @param VectorDocumentInterface[] $documents
-     * @param ?int                      $maxItems  If maxItems is provided, only the top N results will be returned
+     * @param ?int                      $limit     If limit is provided, only the top N results will be returned
      *
      * @return VectorDocumentInterface[]
      */
-    public function calculate(array $documents, VectorInterface $vector, ?int $maxItems = null): array
+    public function calculate(array $documents, VectorInterface $vector, ?int $limit = null): array
     {
-        if (null !== $maxItems && $this->batchSize <= \count($documents)) {
-            return $this->calculateBatched($documents, $vector, $maxItems);
+        if (null !== $limit && $this->batchSize <= \count($documents)) {
+            return $this->calculateBatched($documents, $vector, $limit);
         }
 
-        return $this->calculateAgainstAll($documents, $vector, $maxItems);
+        return $this->calculateAgainstAll($documents, $vector, $limit);
     }
 
     /**
@@ -48,7 +48,7 @@ final class DistanceCalculator
      *
      * @return VectorDocumentInterface[]
      */
-    private function calculateAgainstAll(array $documents, VectorInterface $vector, ?int $maxItems): array
+    private function calculateAgainstAll(array $documents, VectorInterface $vector, ?int $limit): array
     {
         $strategy = $this->resolveStrategy();
 
@@ -65,8 +65,8 @@ final class DistanceCalculator
             static fn (array $embedding, array $nextEmbedding): int => $embedding['distance'] <=> $nextEmbedding['distance'],
         );
 
-        if (null !== $maxItems && $maxItems < \count($currentEmbeddings)) {
-            $currentEmbeddings = \array_slice($currentEmbeddings, 0, $maxItems);
+        if (null !== $limit && $limit < \count($currentEmbeddings)) {
+            $currentEmbeddings = \array_slice($currentEmbeddings, 0, $limit);
         }
 
         return array_map(
@@ -76,14 +76,14 @@ final class DistanceCalculator
     }
 
     /**
-     * Processes documents in chunks of {@see self::$batchSize}, keeping only the top $maxItems candidates after each chunk.
+     * Processes documents in chunks of {@see self::$batchSize}, keeping only the top $limit candidates after each chunk.
      *
      * @param VectorDocumentInterface[] $documents
-     * @param positive-int              $maxItems
+     * @param positive-int              $limit
      *
      * @return VectorDocumentInterface[]
      */
-    private function calculateBatched(array $documents, VectorInterface $vector, int $maxItems): array
+    private function calculateBatched(array $documents, VectorInterface $vector, int $limit): array
     {
         $strategy = $this->resolveStrategy();
 
@@ -109,8 +109,8 @@ final class DistanceCalculator
                 static fn (array $a, array $b): int => $a['distance'] <=> $b['distance'],
             );
 
-            if (\count($candidates) > $maxItems) {
-                $candidates = \array_slice($candidates, 0, $maxItems);
+            if (\count($candidates) > $limit) {
+                $candidates = \array_slice($candidates, 0, $limit);
             }
         }
 

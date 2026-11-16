@@ -6,19 +6,19 @@ with related terms, and PostQueryEvent to rerank with a cross-encoder.
 Original query: "gangster"
 
 --- Without Query Expansion ---
-  1. Reservoir Dogs (Score: 0.016393)
-  2. Kill Bill: Vol. 1 (Score: 0.016129)
-  3. The Godfather (Score: 0.015873)
-  4. Pulp Fiction (Score: 0.015625)
+  1. Pulp Fiction (Score: 0.028446)
+  2. Reservoir Dogs (Score: 0.016393)
+  3. Kill Bill: Vol. 1 (Score: 0.016129)
+  4. The Godfather (Score: 0.015873)
   5. The Matrix (Score: 0.015385)
 
 --- With Query Expansion + Reranking ---
 Enhanced query: "gangster crime family mafia organized crime"
-  1. The Godfather (Relevance: 0.1163)
-  2. Reservoir Dogs (Relevance: 0.1163)
-  3. Kill Bill: Vol. 1 (Relevance: 0.1163)
-  4. Pulp Fiction (Relevance: 0.1163)
-  5. The Matrix (Relevance: 0.1163)
+  1. The Godfather (Relevance: -6.1284)
+  2. Pulp Fiction (Relevance: -9.7124)
+  3. Reservoir Dogs (Relevance: -11.1529)
+  4. Jurassic Park (Relevance: -11.1840)
+  5. Interstellar (Relevance: -11.1901)
 
 === Summary ===
 - PreQueryEvent allows modifying the query before vectorization and store lookup

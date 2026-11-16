@@ -232,7 +232,8 @@ $tags = git('git tag --sort=-v:refname');
 $latestMinor = null;
 foreach ($tags as $tag) {
     $tuple = minorTuple($tag);
-    if (null !== $tuple) {
+    // "1.0.0-BETA1" sorts below "1.0.0", so it does not release the section "1.0"
+    if (null !== $tuple && version_compare(ltrim($tag, 'v'), $tuple[0].'.'.$tuple[1].'.0', '>=')) {
         $latestMinor = $tuple;
         break;
     }
@@ -244,6 +245,22 @@ foreach ($tags as $tag) {
 // exactly the PR's changes and stays correct even when the branch is behind base.
 $diffRange = '' !== $baseSha ? escapeshellarg($baseSha).' '.escapeshellarg($headSha) : escapeshellarg($headSha);
 $changedFiles = git('git diff --name-only '.$diffRange);
+$deletedFiles = git('git diff --name-only --diff-filter=D '.$diffRange);
+$addedFiles = git('git diff --name-only --diff-filter=A '.$diffRange);
+
+// A bridge moving to another component deletes its CHANGELOG.md and adds it again, keyed by bridge name.
+$addedBridgeChangelogs = [];
+foreach ($addedFiles as $file) {
+    if (1 === preg_match('#^src/[^/]+/src/Bridge/([^/]+)/CHANGELOG\.md$#', $file, $m)) {
+        $addedBridgeChangelogs[$m[1]] = true;
+    }
+}
+$movedChangelogs = [];
+foreach ($deletedFiles as $file) {
+    if (1 === preg_match('#^src/[^/]+/src/Bridge/([^/]+)/CHANGELOG\.md$#', $file, $m) && isset($addedBridgeChangelogs[$m[1]])) {
+        $movedChangelogs[$m[1]] = $file;
+    }
+}
 
 // --- Analyse CHANGELOG.md / UPGRADE.md changes ------------------------------
 
@@ -273,7 +290,17 @@ foreach ($changedFiles as $file) {
     $anyMdChanged = true;
     $kind = $isChangelog ? 'changelog' : 'upgrade';
 
-    $baseSections = parseSections(fileAtRevision('' !== $baseSha ? $baseSha : 'HEAD~1', $file), $kind);
+    // A moved bridge is checked at its new place, a removed package takes its history with it
+    if (\in_array($file, $movedChangelogs, true) || \in_array(\dirname($file).'/composer.json', $deletedFiles, true)) {
+        continue;
+    }
+
+    $basePath = $file;
+    if (1 === preg_match('#^src/[^/]+/src/Bridge/([^/]+)/CHANGELOG\.md$#', $file, $m) && isset($movedChangelogs[$m[1]])) {
+        $basePath = $movedChangelogs[$m[1]];
+    }
+
+    $baseSections = parseSections(fileAtRevision('' !== $baseSha ? $baseSha : 'HEAD~1', $basePath), $kind);
     $headSections = parseSections(fileAtRevision($headSha, $file), $kind);
 
     $versions = array_unique(array_merge(array_keys($baseSections), array_keys($headSections)));

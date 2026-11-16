@@ -3,9 +3,9 @@
         {
             "request": {
                 "method": "POST",
-                "url": "https://router.huggingface.co/hf-inference/models/BAAI/bge-small-en-v1.5",
-                "signature": "76f7046a72f3a754c099464a6cfe6ab6",
-                "signature_v2": "80a674005b8db3f098a7dd92d8b74f53",
+                "url": "https://router.huggingface.co/hf-inference/models/BAAI/bge-small-en-v1.5/pipeline/feature-extraction",
+                "signature": "f7ae708308cf8f489b7da22e9e3cfd23",
+                "signature_v2": "31d8d71a5f9e8f93c1e54a00ec8d0859",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -56,28 +56,28 @@
                         "uvicorn"
                     ],
                     "x-inference-id": [
-                        "7d72fa3f-9d89-45bf-954a-f2f19a15dcf7"
+                        "a7e63567-26a9-47e9-9d09-deaf9a228db4"
                     ],
                     "x-proxied-host": [
-                        "http://10.109.22.22"
+                        "http://10.109.10.35"
                     ],
                     "x-proxied-path": [
-                        "/"
+                        "/pipeline/feature-extraction"
                     ],
                     "x-proxied-replica": [
-                        "4sr9relv-fl6nq"
+                        "4sr9relv-hccsh"
                     ],
                     "x-cache": [
                         "Miss from cloudfront"
                     ],
                     "via": [
-                        "1.1 617d9ac564690b8a0957acb72f09c07a.cloudfront.net (CloudFront)"
+                        "1.1 ee13f760742dff149869edf4eaefde7e.cloudfront.net (CloudFront)"
                     ],
                     "x-amz-cf-pop": [
                         "TXL52-P3"
                     ],
                     "x-amz-cf-id": [
-                        "7pPN7jzWi7UzuDlixU-jkD2R3j2331RXGRPr6KHhlDg6zO56TaWQHQ=="
+                        "094yakzUro4JuImhCiKkv8uv82m5CFQRpErtO3RKOLL6Vwkb-F00qw=="
                     ],
                     "strict-transport-security": [
                         "max-age=31536000"
@@ -90,9 +90,9 @@
         {
             "request": {
                 "method": "POST",
-                "url": "https://router.huggingface.co/hf-inference/models/BAAI/bge-small-en-v1.5",
-                "signature": "016e0335e80f4a1bdec45f899af50aa9",
-                "signature_v2": "5aa9fc64e5714b3a1cd9c2015729ecbf",
+                "url": "https://router.huggingface.co/hf-inference/models/BAAI/bge-small-en-v1.5/pipeline/feature-extraction",
+                "signature": "b464a00d23816e2499de349bd600daa8",
+                "signature_v2": "6093c00deed9cb22603eeabcbb93f0e3",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -143,28 +143,28 @@
                         "uvicorn"
                     ],
                     "x-inference-id": [
-                        "e9cffe7d-05cf-4af5-b1c4-7a0e903aae78"
+                        "2fea41b5-7509-40b2-a5cb-149fee80faba"
                     ],
                     "x-proxied-host": [
-                        "http://10.109.22.22"
+                        "http://10.109.10.35"
                     ],
                     "x-proxied-path": [
-                        "/"
+                        "/pipeline/feature-extraction"
                     ],
                     "x-proxied-replica": [
-                        "4sr9relv-fl6nq"
+                        "4sr9relv-hccsh"
                     ],
                     "x-cache": [
                         "Miss from cloudfront"
                     ],
                     "via": [
-                        "1.1 617d9ac564690b8a0957acb72f09c07a.cloudfront.net (CloudFront)"
+                        "1.1 ee13f760742dff149869edf4eaefde7e.cloudfront.net (CloudFront)"
                     ],
                     "x-amz-cf-pop": [
                         "TXL52-P3"
                     ],
                     "x-amz-cf-id": [
-                        "NQXDTet35kdaK0RXgxBvCuHnQJqMmioisblalk8vEiNT9nuBspcNjg=="
+                        "-XnUapzoyfBNxelVsnWVIIk0rY63SYrrKTr5hGd5jupvbBMaNmxJCQ=="
                     ],
                     "strict-transport-security": [
                         "max-age=31536000"
@@ -177,9 +177,9 @@
         {
             "request": {
                 "method": "POST",
-                "url": "https://router.huggingface.co/hf-inference/models/BAAI/bge-small-en-v1.5",
-                "signature": "016e0335e80f4a1bdec45f899af50aa9",
-                "signature_v2": "5aa9fc64e5714b3a1cd9c2015729ecbf",
+                "url": "https://router.huggingface.co/hf-inference/models/BAAI/bge-small-en-v1.5/pipeline/feature-extraction",
+                "signature": "b464a00d23816e2499de349bd600daa8",
+                "signature_v2": "6093c00deed9cb22603eeabcbb93f0e3",
                 "headers": {
                     "content-type": [
                         "application/json"
@@ -230,28 +230,28 @@
                         "uvicorn"
                     ],
                     "x-inference-id": [
-                        "fc419a16-ffc5-4cb8-90b4-aa06e50b4992"
+                        "09e70d0e-b270-476b-bd54-ba53394ddd99"
                     ],
                     "x-proxied-host": [
-                        "http://10.109.22.22"
+                        "http://10.109.10.35"
                     ],
                     "x-proxied-path": [
-                        "/"
+                        "/pipeline/feature-extraction"
                     ],
                     "x-proxied-replica": [
-                        "4sr9relv-fl6nq"
+                        "4sr9relv-hccsh"
                     ],
                     "x-cache": [
                         "Miss from cloudfront"
                     ],
                     "via": [
-                        "1.1 617d9ac564690b8a0957acb72f09c07a.cloudfront.net (CloudFront)"
+                        "1.1 ee13f760742dff149869edf4eaefde7e.cloudfront.net (CloudFront)"
                     ],
                     "x-amz-cf-pop": [
                         "TXL52-P3"
                     ],
                     "x-amz-cf-id": [
-                        "tc-8zNk1H1VT32ZGGyMdxf7SjjQSDtocOPL6YmkhXIayuRK9zTbfbA=="
+                        "lX8VARKSFyxEYHwLfDu3v5Hec9FlbCi5V6jmfRdOET2fU02F469djQ=="
                     ],
                     "strict-transport-security": [
                         "max-age=31536000"

@@ -1,12 +1,12 @@
-+------------------------- Token Usage -------------------------+
-| Model                   | accounts/fireworks/models/kimi-k2p6 |
-| Prompt tokens           | 33                                  |
-| Completion tokens       | 298                                 |
-| Thinking tokens         | 226                                 |
-| Tool tokens             | n/a                                 |
-| Cached tokens           | 32                                  |
-| Remaining tokens minute | n/a                                 |
-| Remaining tokens month  | n/a                                 |
-| Remaining tokens        | n/a                                 |
-| Total tokens            | 331                                 |
-+-------------------------+-------------------------------------+
++------------------------ Token Usage ------------------------+
+| Model                   | accounts/fireworks/models/kimi-k3 |
+| Prompt tokens           | 120                               |
+| Completion tokens       | 318                               |
+| Thinking tokens         | 194                               |
+| Tool tokens             | n/a                               |
+| Cached tokens           | 0                                 |
+| Remaining tokens minute | n/a                               |
+| Remaining tokens month  | n/a                               |
+| Remaining tokens        | n/a                               |
+| Total tokens            | 438                               |
++-------------------------+-----------------------------------+

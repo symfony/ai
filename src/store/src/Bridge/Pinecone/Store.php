@@ -11,60 +11,75 @@
 
 namespace Symfony\AI\Store\Bridge\Pinecone;
 
-use Probots\Pinecone\Client;
-use Probots\Pinecone\Resources\Data\VectorResource;
 use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    private const API_VERSION = '2026-07';
+
+    private ?string $resolvedIndexHost = null;
+
     /**
-     * @param array<string, mixed> $filter
+     * @param array<string, mixed>                   $filter
+     * @param 'cosine'|'euclidean'|'dotproduct'|null $metric
+     * @param string|null                            $indexHost       URL of the index, looked up through the control plane when null
+     * @param string                                 $controlPlaneUrl URL of the Pinecone control plane
      */
     public function __construct(
-        private readonly Client $pinecone,
+        private readonly HttpClientInterface $httpClient,
+        #[\SensitiveParameter] private readonly string $apiKey,
         private readonly string $indexName,
         private readonly ?string $namespace = null,
         private readonly array $filter = [],
-        private readonly int $topK = 3,
+        private readonly int $limit = 3,
+        private readonly int $dimensions = 1536,
+        private readonly ?string $metric = null,
+        private readonly ?string $cloud = null,
+        private readonly ?string $region = null,
+        private readonly ?string $indexHost = null,
+        private readonly string $controlPlaneUrl = 'https://api.pinecone.io',
     ) {
     }
 
-    /**
-     * @param array{
-     *     dimension?: int,
-     *     metric?: string,
-     *     cloud?: string,
-     *     region?: string,
-     * } $options
-     */
     public function setup(array $options = []): void
     {
-        if (false === isset($options['dimension'])) {
-            throw new InvalidArgumentException('The "dimension" option is required.');
+        if ([] !== $options) {
+            throw new InvalidArgumentException('No supported options.');
         }
 
-        $this->pinecone
-            ->control()
-            ->index($this->indexName)
-            ->createServerless(
-                $options['dimension'],
-                $options['metric'] ?? null,
-                $options['cloud'] ?? null,
-                $options['region'] ?? null,
-            );
+        $this->request('POST', $this->controlPlaneUrl().'/indexes', [
+            'name' => $this->indexName,
+            'deployment' => [
+                'deployment_type' => 'managed',
+                'cloud' => $this->cloud ?? 'aws',
+                'region' => $this->region ?? 'us-west-2',
+            ],
+            // A schema with only the "_values" field creates a vector index, served by the "/vectors" endpoints
+            'schema' => [
+                'fields' => [
+                    '_values' => [
+                        'type' => 'dense_vector',
+                        'dimension' => $this->dimensions,
+                        'metric' => $this->metric ?? 'cosine',
+                    ],
+                ],
+            ],
+        ]);
     }
 
     public function add(VectorDocumentInterface|array $documents): void
@@ -75,18 +90,29 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $vectors = [];
         foreach ($documents as $document) {
-            $vectors[] = [
+            $vector = [
                 'id' => (string) $document->getId(),
                 'values' => $document->getVector()->getData(),
-                'metadata' => $document->getMetadata()->getArrayCopy(),
             ];
+
+            $metadata = $document->getMetadata()->getArrayCopy();
+            if ([] !== $metadata) {
+                $vector['metadata'] = $metadata;
+            }
+
+            $vectors[] = $vector;
         }
 
         if ([] === $vectors) {
             return;
         }
 
-        $this->getVectors()->upsert($vectors, $this->namespace);
+        $payload = ['vectors' => $vectors];
+        if (null !== $namespace = $this->namespace()) {
+            $payload['namespace'] = $namespace;
+        }
+
+        $this->request('POST', $this->indexUrl().'/vectors/upsert', $payload);
     }
 
     /**
@@ -100,33 +126,21 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $ids = [$ids];
         }
 
+        if ($options['deleteAll'] ?? false) {
+            $this->deleteVectors(['deleteAll' => true]);
+
+            return;
+        }
+
         // The API allows a maximum of 1000 ids per request
-        $chunksIds = array_chunk($ids, 1000);
-
-        $vectorResource = $this->pinecone
-            ->data()
-            ->vectors();
-
-        foreach ($chunksIds as $chunkIds) {
-            $vectorResource->delete(
-                $chunkIds,
-                $this->namespace,
-                $options['deleteAll'] ?? false,
-                $this->filter,
-            );
+        foreach (array_chunk($ids, 1000) as $chunkIds) {
+            $this->deleteVectors(['ids' => $chunkIds]);
         }
     }
 
     public function clear(array $options = []): void
     {
-        $this->pinecone
-            ->data()
-            ->vectors()
-            ->delete(
-                [],
-                $this->namespace,
-                true,
-            );
+        $this->deleteVectors(['deleteAll' => true]);
     }
 
     public function supports(string $queryClass): bool
@@ -140,16 +154,26 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new UnsupportedQueryTypeException($query::class, $this);
         }
 
-        $result = $this->getVectors()->query(
-            vector: $query->getVector()->getData(),
-            namespace: $options['namespace'] ?? $this->namespace,
-            filter: $options['filter'] ?? $this->filter,
-            topK: $options['topK'] ?? $this->topK,
-            includeMetadata: $options['includeMetadata'] ?? true,
-            includeValues: $options['includeValues'] ?? false,
-        );
+        $payload = [
+            'vector' => $query->getVector()->getData(),
+            'topK' => $options['limit'] ?? $this->limit,
+            'includeMetadata' => $options['includeMetadata'] ?? true,
+            'includeValues' => $options['includeValues'] ?? false,
+        ];
 
-        foreach ($result->json()['matches'] as $match) {
+        $namespace = $options['namespace'] ?? $this->namespace;
+        if (null !== $namespace && '' !== $namespace) {
+            $payload['namespace'] = $namespace;
+        }
+
+        $filter = $options['filter'] ?? $this->filter;
+        if ([] !== $filter) {
+            $payload['filter'] = $filter;
+        }
+
+        $result = $this->request('POST', $this->indexUrl().'/query', $payload);
+
+        foreach ($result['matches'] ?? [] as $match) {
             $vector = isset($match['values']) && [] !== $match['values']
                 ? new Vector($match['values'])
                 : new NullVector();
@@ -165,31 +189,98 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function drop(array $options = []): void
     {
-        $this->pinecone
-            ->control()
-            ->index($this->indexName)
-            ->delete();
+        $this->request('DELETE', $this->controlPlaneUrl().'/indexes/'.rawurlencode($this->indexName));
+
+        $this->resolvedIndexHost = null;
     }
 
     public function count(): int
     {
-        // data() is what resolves the index host and points the client at it, so it is called
-        // for that effect before the statistics request is sent through the client itself
-        $this->pinecone->data();
+        // Pinecone Local rejects the request without a body, and an empty array would be encoded as "[]"
+        $stats = $this->request('POST', $this->indexUrl().'/describe_index_stats', new \stdClass());
 
-        $stats = $this->pinecone->send(new DescribeIndexStats())->json();
-
-        if (null !== $this->namespace) {
-            $namespaces = $stats['namespaces'] ?? [];
-
-            return $namespaces[$this->namespace]['vectorCount'] ?? 0;
+        if (null !== $namespace = $this->namespace()) {
+            return $stats['namespaces'][$namespace]['vectorCount'] ?? 0;
         }
 
         return $stats['totalVectorCount'] ?? 0;
     }
 
-    private function getVectors(): VectorResource
+    /**
+     * @param array{ids?: list<string>, deleteAll?: bool} $payload
+     */
+    private function deleteVectors(array $payload): void
     {
-        return $this->pinecone->data()->vectors();
+        if (null !== $namespace = $this->namespace()) {
+            $payload['namespace'] = $namespace;
+        }
+
+        $this->request('POST', $this->indexUrl().'/vectors/delete', $payload);
+    }
+
+    private function namespace(): ?string
+    {
+        if (null === $this->namespace || '' === $this->namespace) {
+            return null;
+        }
+
+        return $this->namespace;
+    }
+
+    private function controlPlaneUrl(): string
+    {
+        return rtrim($this->controlPlaneUrl, '/');
+    }
+
+    private function indexUrl(): string
+    {
+        if (null !== $this->indexHost) {
+            return rtrim($this->indexHost, '/');
+        }
+
+        if (null !== $this->resolvedIndexHost) {
+            return $this->resolvedIndexHost;
+        }
+
+        $index = $this->request('GET', $this->controlPlaneUrl().'/indexes/'.rawurlencode($this->indexName));
+
+        $host = $index['host'] ?? throw new RuntimeException(\sprintf('The host of the Pinecone index "%s" is unknown.', $this->indexName));
+
+        // Pinecone Local reports the host without a scheme, so the one of the control plane is used
+        if (!str_contains($host, '://')) {
+            $host = (parse_url($this->controlPlaneUrl, \PHP_URL_SCHEME) ?: 'https').'://'.$host;
+        }
+
+        return $this->resolvedIndexHost = rtrim($host, '/');
+    }
+
+    /**
+     * @param array<string, mixed>|\stdClass|null $payload
+     *
+     * @return array<string, mixed>
+     */
+    private function request(string $method, string $url, array|\stdClass|null $payload = null): array
+    {
+        $options = [
+            'headers' => [
+                'Api-Key' => $this->apiKey,
+                'X-Pinecone-Api-Version' => self::API_VERSION,
+            ],
+        ];
+
+        if (null !== $payload) {
+            $options['json'] = $payload;
+        }
+
+        $content = $this->httpClient->request($method, $url, $options)->getContent();
+
+        // Deleting an index has no body, and Pinecone Local answers deleting vectors with an empty JSON string
+        if ('' === $content) {
+            return [];
+        }
+
+        $data = json_decode($content, true, flags: \JSON_THROW_ON_ERROR);
+
+        return \is_array($data) ? $data : [];
     }
 }
