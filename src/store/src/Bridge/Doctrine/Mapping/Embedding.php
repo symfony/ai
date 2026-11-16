@@ -20,7 +20,7 @@ namespace Symfony\AI\Store\Bridge\Doctrine\Mapping;
 final class Embedding
 {
     /**
-     * @param non-empty-list<string> $from the fields the embedding is built from, embedded again when one of them changes
+     * @param non-empty-list<string> $from the fields and associations the embedding is built from, embedded again when one of them changes
      */
     public function __construct(
         public readonly array $from,

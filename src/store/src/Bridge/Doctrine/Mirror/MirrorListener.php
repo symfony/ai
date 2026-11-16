@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\RetryableExceptionInterface;
 use Symfony\AI\Platform\Vector\VectorInterface;
+use Symfony\AI\Store\Bridge\Doctrine\AssociationChanges;
 use Symfony\AI\Store\Bridge\Doctrine\EntityEmbedder;
 use Symfony\AI\Store\Bridge\Doctrine\Mapping\EmbeddingMapping;
 use Symfony\AI\Store\Document\Metadata;
@@ -80,13 +81,18 @@ final class MirrorListener
             }
         }
 
+        $changed = [];
         foreach ($unitOfWork->getScheduledEntityUpdates() as $entity) {
             $mapping = $this->mapping($entityManager->getClassMetadata($entity::class));
 
             if (null !== $mapping && $mapping->isAffectedBy($unitOfWork->getEntityChangeSet($entity))) {
-                $this->upserts[] = $entity;
+                $changed[spl_object_id($entity)] = $entity;
             }
         }
+
+        $changed += AssociationChanges::affectedEntities($entityManager, $this->mapping(...));
+
+        array_push($this->upserts, ...array_values($changed));
 
         // Doctrine unsets generated ids while deleting, so the document ids are taken before
         foreach ($unitOfWork->getScheduledEntityDeletions() as $entity) {

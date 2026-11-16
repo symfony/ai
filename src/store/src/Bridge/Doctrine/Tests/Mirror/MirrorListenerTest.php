@@ -20,6 +20,7 @@ use Symfony\AI\Store\Bridge\Doctrine\Mirror\MirrorListener;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\ArrayStore;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Article;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\KeywordVectorizer;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Kit;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\MessageLogger;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Place;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Product;
@@ -75,6 +76,33 @@ final class MirrorListenerTest extends TestCase
 
         $this->assertCount(1, $this->store);
         $this->assertSame([0.01, 1.01, 0.01], array_values($this->store->documents)[0]->getVector()->getData());
+    }
+
+    public function testReplacesTheDocumentWhenAMirroredAssociationChanges()
+    {
+        $kit = $this->persisted(new Kit('Starter'));
+        $product = $this->persisted(new Product('Cats'));
+
+        $kit->addProduct($product);
+        $this->entityManager->flush();
+
+        $this->assertCount(2, $this->store);
+        $this->assertContains(['Starter Cats'], $this->vectorizer->calls);
+    }
+
+    public function testReplacesTheDocumentWhenAnEntityLeavesAMirroredAssociation()
+    {
+        $kit = new Kit('Starter');
+        $product = $this->persisted(new Product('Cats'));
+        $kit->addProduct($product);
+        $this->persisted($kit);
+        $this->vectorizer->calls = [];
+
+        $kit->removeProduct($product);
+        $this->entityManager->flush();
+
+        $this->assertCount(2, $this->store);
+        $this->assertSame([['Starter']], $this->vectorizer->calls);
     }
 
     public function testKeepsTheDocumentWhenAnotherFieldChanges()
