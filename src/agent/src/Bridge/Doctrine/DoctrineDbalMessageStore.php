@@ -61,7 +61,15 @@ final class DoctrineDbalMessageStore implements ManagedMessageStoreInterface, Me
 
         $schemaManager = $this->dbalConnection->createSchemaManager();
 
-        $schema = $schemaManager->introspectSchema();
+        $configuration = $this->dbalConnection->getConfiguration();
+        $assetFilter = $configuration->getSchemaAssetsFilter();
+        $configuration->setSchemaAssetsFilter(fn (string $assetName): bool => $assetName === $this->tableName);
+
+        try {
+            $schema = $schemaManager->introspectSchema();
+        } finally {
+            $configuration->setSchemaAssetsFilter($assetFilter);
+        }
 
         if ($schema->hasTable($this->tableName)) {
             return;
