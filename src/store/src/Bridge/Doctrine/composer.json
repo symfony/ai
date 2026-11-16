@@ -37,6 +37,7 @@
         "symfony/uid": "^7.4|^8.0"
     },
     "require-dev": {
+        "doctrine/orm-plugin-second-level-cache": "^1.0.2",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",

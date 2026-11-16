@@ -11,7 +11,11 @@
 
 namespace Symfony\AI\Store\Bridge\Doctrine;
 
+use Doctrine\DBAL\Types\Type;
+use Doctrine\ORM\Cache\TimestampCacheKey;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Mapping\ClassMetadata;
+use Symfony\AI\Store\Bridge\Doctrine\Dbal\Types\VectorType;
 use Symfony\AI\Store\Bridge\Doctrine\Mapping\EmbeddingMapping;
 use Symfony\AI\Store\Bridge\Doctrine\Mirror\MirrorListener;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
@@ -64,7 +68,10 @@ final class EntityIndexer implements IndexerInterface
 
         // before the table walks, which clear the entity manager
         if ([] !== $entities) {
-            $this->embed($entities);
+            $this->embed($entities, write: function (array $entities): void {
+                $this->embedder->embed($this->entityManager, $entities);
+                $this->entityManager->flush();
+            });
         }
 
         foreach ($entityClasses as $entityClass) {
@@ -124,7 +131,7 @@ final class EntityIndexer implements IndexerInterface
                 return;
             }
 
-            $this->embed($entities);
+            $this->embed($entities, write: $this->update(...));
 
             $lastIdentifier = $metadata->getIdentifierValues($entities[array_key_last($entities)])[$identifierField];
 
@@ -134,9 +141,10 @@ final class EntityIndexer implements IndexerInterface
     }
 
     /**
-     * @param list<object> $entities
+     * @param list<object>                 $entities
+     * @param \Closure(list<object>): void $write    writes the vectors of entities that are not mirrored
      */
-    private function embed(array $entities): void
+    private function embed(array $entities, \Closure $write): void
     {
         $mirrored = [];
         $embedded = [];
@@ -161,8 +169,122 @@ final class EntityIndexer implements IndexerInterface
                 throw new InvalidArgumentException(\sprintf('Entity "%s" is not mirrored, put #[Embedding] on the class or remove the mirror from the indexer.', $embedded[0]::class));
             }
 
-            $this->embedder->embed($this->entityManager, $embedded);
-            $this->entityManager->flush();
+            $write($embedded);
         }
+    }
+
+    /**
+     * Writes with an UPDATE per entity, a flush would run the application's listeners for every row.
+     *
+     * @param list<object> $entities
+     */
+    private function update(array $entities): void
+    {
+        $vectors = $this->embedder->vectorize($this->entityManager, $entities);
+        $connection = $this->entityManager->getConnection();
+        $unitOfWork = $this->entityManager->getUnitOfWork();
+        $statements = [];
+
+        $connection->transactional(function () use ($vectors, $connection, $unitOfWork, &$statements): void {
+            foreach ($vectors as $entity) {
+                $metadata = $this->entityManager->getClassMetadata($entity::class);
+                [$sql, $types, $versionField] = $statements[$entity::class] ??= $this->updateStatement($metadata);
+
+                // the unit of work holds association identifiers flattened to the identifier value of the target
+                $parameters = [$vectors[$entity], ...array_values($unitOfWork->getEntityIdentifier($entity))];
+
+                if (null !== $versionField) {
+                    $parameters[] = $metadata->getFieldValue($entity, $versionField);
+                }
+
+                // no row matches when the entity was edited since it was loaded, that edit wins
+                $connection->executeStatement($sql, $parameters, $types);
+            }
+        });
+
+        $cache = $this->entityManager->getCache();
+        if (null === $cache) {
+            return;
+        }
+
+        $timestampRegion = $this->entityManager->getConfiguration()->getSecondLevelCacheConfiguration()?->getCacheFactory()?->getTimestampRegion();
+        foreach (array_keys($statements) as $entityClass) {
+            $cache->evictEntityRegion($entityClass);
+            // a cached query result without the written entities, like an empty one, stays valid until the timestamp moves
+            $timestampRegion?->update(new TimestampCacheKey($this->entityManager->getClassMetadata($entityClass)->rootEntityName));
+        }
+    }
+
+    /**
+     * @param ClassMetadata<object> $metadata
+     *
+     * @return array{string, list<string>, string|null} the SQL, the parameter types and the version field
+     */
+    private function updateStatement(ClassMetadata $metadata): array
+    {
+        $mapping = EmbeddingMapping::fromClassMetadata($metadata);
+        \assert(null !== $mapping);
+        $vectorField = $mapping->getRequiredVectorField();
+        $platform = $this->entityManager->getConnection()->getDatabasePlatform();
+        $quoteStrategy = $this->entityManager->getConfiguration()->getQuoteStrategy();
+
+        // with class table inheritance, the vector is in the table of the class declaring it
+        $tableMetadata = $this->entityManager->getClassMetadata($metadata->getFieldMapping($vectorField)->inherited ?? $metadata->getName());
+        $table = $quoteStrategy->getTableName($tableMetadata, $platform);
+        $identifierColumn = $quoteStrategy->getIdentifierColumnNames($tableMetadata, $platform)[0];
+
+        // DQL would skip the SQL conversion of the vector type, which MariaDB needs
+        $sql = \sprintf(
+            'UPDATE %s SET %s = %s WHERE %s = ?',
+            $table,
+            $quoteStrategy->getColumnName($vectorField, $tableMetadata, $platform),
+            Type::getType(VectorType::NAME)->convertToDatabaseValueSQL('?', $platform),
+            $identifierColumn,
+        );
+        $types = [VectorType::NAME, $this->identifierType($metadata)];
+
+        $versionField = $metadata->isVersioned ? $metadata->versionField : null;
+        if (null !== $versionField) {
+            $versionMetadata = $this->entityManager->getClassMetadata($metadata->getFieldMapping($versionField)->inherited ?? $metadata->getName());
+            $versionTable = $quoteStrategy->getTableName($versionMetadata, $platform);
+            $versionColumn = $quoteStrategy->getColumnName($versionField, $versionMetadata, $platform);
+
+            if ($versionTable === $table) {
+                $sql .= \sprintf(' AND %s = ?', $versionColumn);
+            } else {
+                // with class table inheritance, the version is in the root table
+                $sql .= \sprintf(
+                    ' AND EXISTS (SELECT 1 FROM %1$s WHERE %1$s.%2$s = %3$s.%4$s AND %1$s.%5$s = ?)',
+                    $versionTable,
+                    $quoteStrategy->getIdentifierColumnNames($versionMetadata, $platform)[0],
+                    $table,
+                    $identifierColumn,
+                    $versionColumn,
+                );
+            }
+
+            $versionType = $metadata->getTypeOfField($versionField);
+            \assert(null !== $versionType);
+            $types[] = $versionType;
+        }
+
+        return [$sql, $types, $versionField];
+    }
+
+    /**
+     * @param ClassMetadata<object> $metadata
+     */
+    private function identifierType(ClassMetadata $metadata): string
+    {
+        $identifierField = $metadata->getSingleIdentifierFieldName();
+        while ($metadata->hasAssociation($identifierField)) {
+            $metadata = $this->entityManager->getClassMetadata($metadata->getAssociationTargetClass($identifierField));
+            $identifierField = $metadata->getSingleIdentifierFieldName();
+        }
+
+        $identifierType = $metadata->getTypeOfField($identifierField);
+        \assert(null !== $identifierType);
+
+        return $identifierType;
     }
 }

@@ -34,6 +34,7 @@ final class KeywordVectorizer implements VectorizerInterface
         private readonly array $keywords = ['cat', 'dog', 'fish'],
         private readonly int $maxLength = \PHP_INT_MAX,
         private readonly ?\Throwable $failure = null,
+        private readonly ?\Closure $whileVectorizing = null,
     ) {
     }
 
@@ -45,6 +46,10 @@ final class KeywordVectorizer implements VectorizerInterface
         if (\is_array($values)) {
             $values = array_map(static fn (mixed $value): string => \is_string($value) ? $value : throw new InvalidArgumentException('Expected strings only.'), array_values($values));
             $this->calls[] = $values;
+
+            if (null !== $this->whileVectorizing) {
+                ($this->whileVectorizing)($values);
+            }
 
             if (null !== $this->failure) {
                 throw $this->failure;
