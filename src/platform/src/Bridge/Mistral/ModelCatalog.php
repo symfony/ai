@@ -319,6 +319,20 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
+            'mistral-moderation-2603' => [
+                'class' => Moderation::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_MESSAGES,
+                ],
+            ],
+            'mistral-moderation-latest' => [
+                'class' => Moderation::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::INPUT_MESSAGES,
+                ],
+            ],
             'mistral-nemo' => [
                 'class' => Mistral::class,
                 'capabilities' => [

@@ -1,0 +1,61 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.mistral.ai/v1/chat/moderations",
+                "signature": "d32df8280d0943304570f2a73059e160",
+                "signature_v2": "cd7799ec622bb377ac67bc57bd2392a9",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"model\":\"mistral-moderation-latest\",\"input\":[{\"role\":\"user\",\"content\":\"Who wins the final?\"},{\"role\":\"assistant\",\"content\":\"Probably the favourites.\"}]}"
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "x-max-retry-attempts-reached": [
+                        "false"
+                    ],
+                    "x-ratelimit-tokens-query-cost": [
+                        "23"
+                    ],
+                    "x-ratelimit-limit-req-minute": [
+                        "500"
+                    ],
+                    "x-ratelimit-remaining-req-minute": [
+                        "495"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=15552000; includeSubDomains; preload"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ],
+                    "content-encoding": [
+                        "gzip"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"id\":\"1179509864a74f1dbee5e130b630245c\",\"usage\":{\"prompt_audio_seconds\":null,\"prompt_tokens\":23,\"total_tokens\":84,\"completion_tokens\":0,\"request_count\":1,\"prompt_tokens_details\":null,\"completion_tokens_details\":null,\"service_tier\":null},\"model\":\"mistral-moderation-2603\",\"results\":[{\"category_scores\":{\"sexual\":0.00029137005913071334,\"hate_and_discrimination\":0.0010322310263291001,\"violence_and_threats\":0.0006070755189284682,\"dangerous\":0.00016865275392774493,\"criminal\":0.0005442132242023945,\"selfharm\":2.8409745937096886e-05,\"health\":0.00015118200099095702,\"financial\":0.000954731716774404,\"law\":0.0003514382697176188,\"pii\":0.00040448151412419975,\"jailbreaking\":0.00034599160426296294},\"categories\":{\"sexual\":false,\"hate_and_discrimination\":false,\"violence_and_threats\":false,\"dangerous\":false,\"criminal\":false,\"selfharm\":false,\"health\":false,\"financial\":false,\"law\":false,\"pii\":false,\"jailbreaking\":false}}]}"
+            }
+        }
+    ]
+}
