@@ -426,6 +426,18 @@ Platform
 Store
 -----
 
+ * Postgres text and hybrid queries now require a generated `search_tsv` column. Run `Store::setup()` once for
+   each existing table during the upgrade, before serving queries with the new version:
+
+   ```diff
+   +$store->setup();
+    $store->query($query);
+   ```
+
+   Adding the stored column backfills existing rows and takes a table lock; schedule this outside normal query
+   traffic for large stores. The `search_tsv` name is reserved and cannot be used for `vectorFieldName`.
+   Changing the configured language requires rebuilding the generated column; `setup()` leaves existing columns unchanged.
+
  * The Pinecone store no longer uses `probots-io/pinecone-php`, which pulls in the vulnerable `saloonphp/saloon` 3.x.
    `Bridge\Pinecone\Store` takes an `HttpClientInterface` and the API key instead of a `Probots\Pinecone\Client`.
    The index host is looked up through the Pinecone control plane. Use the `indexHost` and `controlPlaneUrl` arguments

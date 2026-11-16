@@ -34,6 +34,10 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    private const IDENTIFIER_BYTE_LIMIT = 63;
+    private const SEARCH_TSV_COLUMN = 'search_tsv';
+    private const TEXT_GIN_INDEX_SUFFIX = '_search_tsv_gin';
+
     private ?\PDO $connection = null;
     private string $dsn;
 
@@ -58,6 +62,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
         private readonly ?string $indexOpclass = null,
         #[\SensitiveParameter] private readonly array $connectionOptions = [],
     ) {
+        if (self::SEARCH_TSV_COLUMN === $this->vectorFieldName) {
+            throw new InvalidArgumentException(\sprintf('The vector field name cannot be "%s" because that column stores the generated full-text representation.', self::SEARCH_TSV_COLUMN));
+        }
+
         if ($connection instanceof \PDO) {
             if ([] !== $connectionOptions) {
                 throw new InvalidArgumentException('The connection options can only be used with a DSN, not with a PDO instance.');
@@ -89,12 +97,25 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 'CREATE TABLE IF NOT EXISTS "%s" (
                     id UUID PRIMARY KEY,
                     metadata JSONB,
-                    "%s" %s(%d) NOT NULL
+                    "%s" %s(%d) NOT NULL,
+                    "%s" tsvector GENERATED ALWAYS AS (%s) STORED
                 )',
                 $this->tableName,
                 $this->vectorFieldName,
                 $this->vectorType,
                 $this->dimensions,
+                self::SEARCH_TSV_COLUMN,
+                $this->getTsvectorGenerationExpression(),
+            ),
+        );
+        // Existing tables created before this change need the generated column added.
+        // IF NOT EXISTS keeps an existing column of the same name unchanged, including its language.
+        $this->getConnection()->exec(
+            \sprintf(
+                'ALTER TABLE "%s" ADD COLUMN IF NOT EXISTS "%s" tsvector GENERATED ALWAYS AS (%s) STORED',
+                $this->tableName,
+                self::SEARCH_TSV_COLUMN,
+                $this->getTsvectorGenerationExpression(),
             ),
         );
         $this->getConnection()->exec(
@@ -106,6 +127,14 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 $this->indexMethod,
                 $this->vectorFieldName,
                 $indexOpclass,
+            ),
+        );
+        $this->getConnection()->exec(
+            \sprintf(
+                'CREATE INDEX IF NOT EXISTS "%s" ON "%s" USING GIN (%s)',
+                $this->getTextGinIndexName(),
+                $this->tableName,
+                $this->getTsvectorColumnReference(),
             ),
         );
     }
@@ -275,7 +304,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $tsqueryExpression = implode(' || ', $tsqueryParts); // OR operator in PostgreSQL
-        $tsvectorExpression = \sprintf("to_tsvector('%s', metadata->>'_text')", $this->lang);
+        $tsvectorExpression = $this->getTsvectorColumnReference();
 
         $sql = \sprintf(<<<SQL
             SELECT id, "%s" AS embedding, metadata,
@@ -334,7 +363,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
 
         $tsqueryExpression = '('.implode(' || ', $tsqueryParts).')'; // OR operator in PostgreSQL
-        $tsvectorExpression = \sprintf("to_tsvector('%s', COALESCE(metadata->>'_text', ''))", $this->lang);
+        $tsvectorExpression = $this->getTsvectorColumnReference();
 
         // Documents sharing no keyword still rank by their vector distance, unless the query is keywords only
         $whereClauses = 0.0 === $query->getSemanticRatio() ? [\sprintf('%s @@ %s', $tsvectorExpression, $tsqueryExpression)] : [];
@@ -400,6 +429,28 @@ final class Store implements ManagedStoreInterface, StoreInterface
             Metric::L1 => 'l1',
             Metric::L2 => 'l2',
         });
+    }
+
+    private function getTsvectorGenerationExpression(): string
+    {
+        return \sprintf("to_tsvector('%s', COALESCE(metadata->>'_text', ''))", $this->lang);
+    }
+
+    private function getTsvectorColumnReference(): string
+    {
+        return \sprintf('"%s"', self::SEARCH_TSV_COLUMN);
+    }
+
+    private function getTextGinIndexName(): string
+    {
+        $plainName = $this->tableName.self::TEXT_GIN_INDEX_SUFFIX;
+        if (\strlen($plainName) <= self::IDENTIFIER_BYTE_LIMIT) {
+            return $plainName;
+        }
+
+        $hashBudget = self::IDENTIFIER_BYTE_LIMIT - \strlen(self::TEXT_GIN_INDEX_SUFFIX);
+
+        return substr(hash('sha256', $this->tableName), 0, $hashBudget).self::TEXT_GIN_INDEX_SUFFIX;
     }
 
     private function toPgvector(VectorInterface $vector): string
