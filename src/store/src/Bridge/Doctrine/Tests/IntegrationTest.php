@@ -116,6 +116,19 @@ final class IntegrationTest extends TestCase
         $this->assertSame(['Cats cats cats', 'Cats'], array_map($this->titleOf(...), $documents));
     }
 
+    public function testFiltersWithADqlCondition()
+    {
+        [$cats] = $this->persist(new Article('Cats'), new Article('Cats and dogs'), new Article('Fish'));
+
+        $documents = (new OrmStore($this->entityManager, Article::class))->query(new VectorQuery($this->vectorizer->vectorFor('cat')), [
+            'where' => 'e.id != :self',
+            'params' => ['self' => $cats->getId()],
+            'limit' => 1,
+        ]);
+
+        $this->assertSame(['Cats and dogs'], array_map($this->titleOf(...), $documents));
+    }
+
     public function testIndexesWhatIsMissing()
     {
         $this->entityManager->getConnection()->executeStatement("INSERT INTO article (title, views, tags) VALUES ('Dogs', 0, '[]'), ('Fish', 0, '[]')");

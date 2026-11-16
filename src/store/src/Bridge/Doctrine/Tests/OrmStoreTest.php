@@ -12,6 +12,7 @@
 namespace Symfony\AI\Store\Bridge\Doctrine\Tests;
 
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Doctrine\Dbal\Metric;
@@ -31,6 +32,7 @@ use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\Retriever;
+use Symfony\Bridge\Doctrine\Types\UlidType;
 
 final class OrmStoreTest extends TestCase
 {
@@ -181,6 +183,42 @@ final class OrmStoreTest extends TestCase
         $documents = $this->store()->query(new VectorQuery((new KeywordVectorizer())->vectorFor('cat')), ['maxScore' => 0.5]);
 
         $this->assertSame(['Cats'], $this->titles($documents));
+    }
+
+    public function testFiltersWithADqlCondition()
+    {
+        $this->embed(...$this->persist(new Article('Cats', views: 3), new Article('Cats and dogs', views: 30), new Article('Dogs', views: 300)));
+
+        $documents = $this->store()->query(new VectorQuery((new KeywordVectorizer())->vectorFor('cat')), [
+            'where' => 'e.views BETWEEN :min AND :max',
+            'params' => ['min' => 10, 'max' => 1000],
+        ]);
+
+        $this->assertSame(['Cats and dogs', 'Dogs'], $this->titles($documents));
+    }
+
+    public function testBindsAParameterWithItsType()
+    {
+        [$cats, $dogs] = $this->persist(new Note('Cats'), new Note('Dogs'));
+        $this->embed($cats, $dogs);
+
+        $documents = $this->store(Note::class)->query(new VectorQuery((new KeywordVectorizer())->vectorFor('cat')), [
+            'where' => 'e.id != :self',
+            'params' => ['self' => $cats->getId()],
+            'paramTypes' => ['self' => UlidType::NAME],
+        ]);
+
+        $this->assertSame([$dogs], array_map(static fn (EntityVectorDocument $document): object => $document->getEntity(), [...$documents]));
+    }
+
+    #[TestWith(['vector'])]
+    #[TestWith([':vector'])]
+    public function testRefusesAParameterNamedLikeTheVector(string $name)
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The "vector" parameter is the vector of the query');
+
+        $this->store()->query(new VectorQuery(new Vector([1.0, 0.0, 0.0])), ['params' => [$name => 1]]);
     }
 
     public function testSkipsEntitiesWithoutVector()
