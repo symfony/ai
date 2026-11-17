@@ -8,7 +8,9 @@
     "require-dev": {
         "php": ">=8.2",
         "deptrac/deptrac": "^4.5",
+        "nikic/php-parser": "^5.4",
         "php-cs-fixer/shim": "^3.91.2",
+        "phpunit/phpunit": "^11.5.53",
         "symfony/console": "^5.4|^6.4|^7.4|^8.0",
         "symfony/filesystem": "^5.4|^6.4|^7.4|^8.0",
         "symfony/finder": "^5.4|^6.4|^7.4|^8.0",
@@ -21,6 +23,6 @@
     },
     "conflict": {
         "phpstan/phpdoc-parser": "<2.0.0",
-        "phpstan/phpstan": "2.2.x-dev || 2.3.x-dev || 2.2.15"
+        "phpstan/phpstan": "<2.1.30 || 2.2.x-dev || 2.3.x-dev || 2.2.15"
     }
 }

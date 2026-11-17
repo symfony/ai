@@ -1,0 +1,59 @@
+name: Backward Compatibility
+
+on:
+    pull_request:
+        types: [opened, synchronize, reopened, labeled, unlabeled]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+    cancel-in-progress: true
+
+jobs:
+    api:
+        name: Public API
+        runs-on: ubuntu-latest
+        # Informational until v1.0.0 is tagged
+        continue-on-error: true
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  # The merge commit and its first parent, the base the PR is merged onto
+                  fetch-depth: 2
+
+            - name: Fetch tags
+              run: git fetch --tags --depth=1 origin
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: 8.5
+
+            - name: Install root dependencies
+              uses: ramsey/composer-install@v4
+
+            - name: Check API snapshots
+              run: php .github/bc/bc.php check
+
+            - name: Compare with base
+              env:
+                  PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+              run: php .github/bc/bc.php compare "$(git rev-parse HEAD^1)"
+
+    tooling:
+        name: Tooling Tests
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: 8.5
+
+            - name: Install root dependencies
+              uses: ramsey/composer-install@v4
+
+            - name: BC checker
+              run: vendor/bin/phpunit -c .github/bc/phpunit.xml.dist

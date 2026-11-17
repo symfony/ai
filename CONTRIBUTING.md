@@ -175,7 +175,13 @@ needs an `UPGRADE.md` entry and the `BC Break` label.
 The promise linked below is what Symfony AI adopts at `1.0`, and reading it now
 is the best guide to which changes will hurt later.
 
+Every package lists its public API in `.github/bc/api/`. After changing the API, run
+`php .github/bc/bc.php dump` from the root of the repository and commit the
+updated snapshots. To check your branch against the promise before pushing, run
+`php .github/bc/bc.php compare upstream/main`.
+
 * [Our Backwards Compatibility Promise][6]
+* [Deprecating Code](https://symfony.com/doc/current/contributing/code/conventions.html#deprecating-code)
 
 Coding Standards
 ----------------

@@ -28,6 +28,7 @@
 // Changes to these paths never affect code
 const IRRELEVANT = [
     '#(^|/)(README|CHANGELOG|UPGRADE|AGENTS|CONTRIBUTING)\.md$#',
+    '#^\.github/bc/api/#',
     '#^docs/#',
     '#^ai\.symfony\.com/#',
     '#^\.github/ISSUE_TEMPLATE/#',
