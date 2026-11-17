@@ -326,36 +326,6 @@ to a dedicated OAuth server rather than hand-rolling one:
   and resource-bound tokens on top of the MCP Bundle and ``league/oauth2-server-bundle``, for servers that
   need to run their own authorization server.
 
-Decorating the Reference Handler
-................................
-
-Each server calls its tools, prompts and resources through the ``mcp.server.<name>.reference_handler``
-service. Decorate it to run code around every call, for example to deny tools by default::
-
-    use Mcp\Server\Capability\Registry\ElementReference;
-    use Mcp\Server\Capability\Registry\ReferenceHandlerInterface;
-    use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
-    use Symfony\Component\DependencyInjection\Attribute\AutowireDecorated;
-
-    #[AsDecorator('mcp.server.default.reference_handler')]
-    final class GuardedReferenceHandler implements ReferenceHandlerInterface
-    {
-        public function __construct(
-            #[AutowireDecorated]
-            private ReferenceHandlerInterface $inner,
-        ) {
-        }
-
-        public function handle(ElementReference $reference, array $arguments): mixed
-        {
-            // Check access to $reference here
-
-            return $this->inner->handle($reference, $arguments);
-        }
-    }
-
-The service exists for every server that exposes at least one capability.
-
 Attribute Placement Patterns
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -381,6 +351,35 @@ The MCP SDK, and therefore the MCP Bundle, supports two patterns for placing att
 
         #[McpTool(name: 'tool-two')]
         public function toolTwo(): string { }
+    }
+
+Decorating the Reference Handler
+................................
+
+Each server that exposes at least one capability calls its tools, prompts and resources through the
+``mcp.server.<name>.reference_handler`` service. Decorate it to run code around every call, for example
+to check access before a tool runs::
+
+    use Mcp\Server\Capability\Registry\ElementReference;
+    use Mcp\Server\Capability\Registry\ReferenceHandlerInterface;
+    use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
+    use Symfony\Component\DependencyInjection\Attribute\AutowireDecorated;
+
+    #[AsDecorator('mcp.server.default.reference_handler')]
+    final class GuardedReferenceHandler implements ReferenceHandlerInterface
+    {
+        public function __construct(
+            #[AutowireDecorated]
+            private ReferenceHandlerInterface $inner,
+        ) {
+        }
+
+        public function handle(ElementReference $reference, array $arguments): mixed
+        {
+            // Check access to $reference here
+
+            return $this->inner->handle($reference, $arguments);
+        }
     }
 
 MCP Apps
