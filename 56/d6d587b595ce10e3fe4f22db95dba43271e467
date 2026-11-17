@@ -1,0 +1,9 @@
+---------------------------------------------------------------------------
+
+by ineersa at 2026-11-17T03:36:44Z
+
+Rebased onto main (999d5fbe) and resolved the Store.php / StoreTest.php conflicts in signed commit acf3a36a. Retained upstream semantic-only matches for mixed hybrid queries, the keyword-only lexical predicate, COALESCE for missing text, and both upstream and filtered-query tests. Updated the description to reflect current upstream behavior.
+
+Local validation: 43 Postgres unit tests / 201 assertions, PHPStan, changed-file CS Fixer check, strict Composer validation, DOCtor-RST, and git diff --check passed. The full local suite could not run its integration tests because the tooling image lacks pdo_pgsql; this is not claimed as an integration pass. PHPStan initially encountered recursive development symlinks; it passed after replacing those links with tracked-source exports of the same rebased Store and Platform code in disposable vendor directories.
+
+CI monitoring is running for the updated head.
