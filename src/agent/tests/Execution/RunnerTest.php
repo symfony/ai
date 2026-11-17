@@ -17,7 +17,10 @@ use Symfony\AI\Agent\Execution\Runner;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
 use Symfony\AI\Agent\Execution\UpdateInterface;
+use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
+use Symfony\AI\Agent\Toolbox\Exception\ToolErrorException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
+use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
 use Symfony\AI\Agent\Toolbox\SequentialToolExecutor;
 use Symfony\AI\Agent\Toolbox\Source\Source;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
@@ -30,6 +33,7 @@ use Symfony\AI\Platform\Message\Content\File;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\Role;
 use Symfony\AI\Platform\Message\ToolCallMessage;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
@@ -62,6 +66,7 @@ use Symfony\AI\Platform\TokenUsage\TokenUsage;
 use Symfony\AI\Platform\TokenUsage\TokenUsageAggregation;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 final class RunnerTest extends TestCase
 {
@@ -69,6 +74,29 @@ final class RunnerTest extends TestCase
      * @var list<MessageBag>
      */
     private array $invokedMessages = [];
+
+    public function testFaultTolerantFailureStatusReachesTheNextRound()
+    {
+        $toolCall = new ToolCall('id1', 'tool1');
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('execute')->willThrowException(new ToolErrorException('Unavailable'));
+        $platform = $this->platform(new ToolCallResult([$toolCall]), new TextResult('Final response'));
+
+        $toolbox = new FaultTolerantToolbox($toolbox);
+        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher->expects($this->once())->method('dispatch')->willReturnCallback(function (ToolCallsExecuted $event): object {
+            $this->assertTrue($event->getToolResults()[0]->isError());
+            $this->assertSame('Unavailable', $event->getToolResults()[0]->getResult());
+
+            return $event;
+        });
+        $runner = new Runner($platform, $toolbox, new SequentialToolExecutor($toolbox), eventDispatcher: $dispatcher);
+        $this->drive($runner, new MessageBag());
+
+        $message = $this->lastInvokedMessages()->latestAs(Role::ToolCall);
+        $this->assertTrue($message->isError());
+        $this->assertSame('Unavailable', $message->asText());
+    }
 
     public function testWithoutRegisteredToolsTheToolsOptionStaysUntouched()
     {

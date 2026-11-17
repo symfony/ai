@@ -23,6 +23,7 @@ final class ToolResult
         private readonly ToolCall $toolCall,
         private readonly mixed $result,
         private readonly ?SourceCollection $sources = null,
+        private readonly bool $isError = false,
     ) {
     }
 
@@ -34,6 +35,11 @@ final class ToolResult
     public function getResult(): mixed
     {
         return $this->result;
+    }
+
+    public function isError(): bool
+    {
+        return $this->isError;
     }
 
     public function getSources(): ?SourceCollection

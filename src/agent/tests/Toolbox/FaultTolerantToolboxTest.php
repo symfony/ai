@@ -43,6 +43,7 @@ final class FaultTolerantToolboxTest extends TestCase
         $toolCall = new ToolCall('987654321', 'tool_foo');
         $actual = $faultTolerantToolbox->execute($toolCall);
 
+        $this->assertTrue($actual->isError());
         $this->assertSame($expected, $actual->getResult());
         $this->assertSame($toolCall, $actual->getToolCall());
     }
@@ -59,6 +60,7 @@ final class FaultTolerantToolboxTest extends TestCase
         $toolCall = new ToolCall('123456789', 'tool_xyz');
         $actual = $faultTolerantToolbox->execute($toolCall);
 
+        $this->assertTrue($actual->isError());
         $this->assertSame($expected, $actual->getResult());
         $this->assertSame($toolCall, $actual->getToolCall());
     }
@@ -83,6 +85,7 @@ final class FaultTolerantToolboxTest extends TestCase
         $toolCall = new ToolCall('123456789', 'tool_xyz');
         $actual = $faultTolerantToolbox->execute($toolCall);
 
+        $this->assertTrue($actual->isError());
         $this->assertSame($expected, $actual->getResult());
         $this->assertSame($toolCall, $actual->getToolCall());
     }
