@@ -12,8 +12,8 @@
 namespace Symfony\AI\Platform\Bridge\Mistral\Tests\TextToSpeech;
 
 use Symfony\AI\Platform\Bridge\Mistral\Factory;
+use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
-use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Test\Replay\AbstractBridgeReplayTestCase;
@@ -46,8 +46,8 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
     {
         $platform = $this->platformForCassette('bad_request');
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Unexpected response code 422');
+        $this->expectException(BadRequestException::class);
+        $this->expectExceptionMessage('HTTP 422 returned for "https://api.mistral.ai/v1/audio/speech": body.response_format: Input should be \'pcm\', \'wav\', \'mp3\', \'flac\' or \'opus\'');
 
         $platform->invoke('voxtral-mini-tts-3-0', 'Hello', ['voice' => 'gb_jane_neutral', 'response_format' => 'nope'])->asBinary();
     }

@@ -195,7 +195,7 @@ final class ResultConverterTest extends TestCase
     public function testItIgnoresValidationErrorsWithMalformedLocation()
     {
         $this->expectException(BadRequestException::class);
-        $this->expectExceptionMessage('Unprocessable Entity');
+        $this->expectExceptionMessage('HTTP 422 returned for "https://api.typesafe.ai/v1/systemone".');
 
         (new ResultConverter())->convert($this->createRawResult(['detail' => [
             ['type' => 'missing', 'loc' => 'body', 'msg' => 'Field required'],

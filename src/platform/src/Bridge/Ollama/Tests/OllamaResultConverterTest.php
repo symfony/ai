@@ -167,7 +167,7 @@ final class OllamaResultConverterTest extends TestCase
         $response = (new MockHttpClient(new MockResponse('{"error":"Service unavailable."}', ['http_code' => 503])))->request('POST', 'http://localhost:11434/api/embed');
 
         $this->expectException(ServerException::class);
-        $this->expectExceptionMessage('Server error (HTTP 503). Service unavailable.');
+        $this->expectExceptionMessage('Server error (HTTP 503). HTTP 503 returned for "http://localhost:11434/api/embed": Service unavailable.');
 
         (new OllamaResultConverter())->convert(new RawHttpResult($response));
     }

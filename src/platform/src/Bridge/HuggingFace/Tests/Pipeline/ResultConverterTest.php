@@ -214,7 +214,8 @@ final class ResultConverterTest extends TestCase
         yield 'not found' => [404, ['error' => 'Model does/not-exist does not exist'], ModelNotFoundException::class, 'Model does/not-exist does not exist'];
         yield 'rate limit' => [429, ['error' => 'Too many requests'], RateLimitExceededException::class, 'Too many requests'];
         yield 'model loading' => [503, ['error' => 'Model is currently loading'], ServerException::class, 'Model is currently loading'];
-        yield 'unexpected status' => [422, ['error' => 'Unprocessable input'], RuntimeException::class, 'Unexpected response code 422: "Unprocessable input"'];
+        yield 'unprocessable' => [422, ['error' => 'Unprocessable input'], BadRequestException::class, 'Unprocessable input'];
+        yield 'unexpected status' => [409, ['error' => 'Conflicting input'], RuntimeException::class, 'Unexpected response code 409: "Conflicting input"'];
     }
 
     /**

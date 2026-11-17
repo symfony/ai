@@ -33,7 +33,7 @@ final class LlamaResultConverterTest extends TestCase
     public function testThrowsModelNotFoundExceptionForUnknownDeployment()
     {
         $this->expectException(ModelNotFoundException::class);
-        $this->expectExceptionMessage('Not Found');
+        $this->expectExceptionMessage('HTTP 404 returned for "https://example.models.ai.azure.com/chat/completions": Not Found');
 
         (new LlamaResultConverter())->convert($this->createRawResult(['detail' => 'Not Found'], 404));
     }
