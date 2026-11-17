@@ -22,6 +22,7 @@ use Mcp\Server\Capability\Attribute\McpResourceTemplate;
 use Mcp\Server\Capability\Attribute\McpTool;
 use Mcp\Server\Capability\Discovery\DocBlockParser;
 use Mcp\Server\Capability\Discovery\SchemaGenerator;
+use Mcp\Server\Capability\Registry\Container;
 use Mcp\Server\Capability\Registry\ReferenceHandler;
 use Symfony\AI\McpBundle\App\McpAppReferenceHandler;
 use Symfony\AI\McpBundle\App\McpAppRenderer;
@@ -194,17 +195,18 @@ final class McpPass implements CompilerPassInterface
                 $serviceReferences[$server][$key] ??= new Reference($id);
             }
 
+            $referenceHandlerId = 'mcp.server.'.$server.'.reference_handler';
+            $referenceHandler = $container->register($referenceHandlerId, ReferenceHandler::class);
+            $builders[$server]->addMethodCall('setReferenceHandler', [new Reference($referenceHandlerId)]);
+
             if ([] === ($serviceReferences[$server] ?? [])) {
+                $referenceHandler->setArguments([new Definition(Container::class)]);
                 continue;
             }
 
             $serviceLocatorRef = ServiceLocatorTagPass::register($container, $serviceReferences[$server]);
             $builders[$server]->addMethodCall('setContainer', [$serviceLocatorRef]);
-
-            $referenceHandlerId = 'mcp.server.'.$server.'.reference_handler';
-            $container->register($referenceHandlerId, ReferenceHandler::class)
-                ->setArguments([$serviceLocatorRef]);
-            $builders[$server]->addMethodCall('setReferenceHandler', [new Reference($referenceHandlerId)]);
+            $referenceHandler->setArguments([$serviceLocatorRef]);
 
             $this->configureAppReferenceHandler($container, $server, $referenceHandlerId, $appTemplates[$server] ?? []);
         }

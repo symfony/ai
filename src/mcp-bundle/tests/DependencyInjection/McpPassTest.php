@@ -20,6 +20,7 @@ use Mcp\Server\Capability\Attribute\McpResourceTemplate;
 use Mcp\Server\Capability\Attribute\McpTool;
 use Mcp\Server\Capability\Attribute\Schema;
 use Mcp\Server\Capability\Completion\ProviderInterface;
+use Mcp\Server\Capability\Registry\Container;
 use Mcp\Server\Capability\Registry\ReferenceHandler;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\App\McpAppReferenceHandler;
@@ -335,16 +336,19 @@ final class McpPassTest extends TestCase
         (new McpPass())->process($container);
 
         $this->assertSame([], $this->callsNamed($container, 'addTool'));
-        $this->assertSame([], $container->getDefinition('mcp.server.default.builder')->getMethodCalls());
+        $this->assertSame([], $this->callsNamed($container, 'setContainer'));
     }
 
-    public function testDoesNothingWhenNoMcpServicesTagged()
+    public function testOnlyRegistersReferenceHandlerWhenNoMcpServicesTagged()
     {
         $container = $this->containerWithBuilder();
 
         (new McpPass())->process($container);
 
-        $this->assertSame([], $container->getDefinition('mcp.server.default.builder')->getMethodCalls());
+        $calls = $container->getDefinition('mcp.server.default.builder')->getMethodCalls();
+        $this->assertCount(1, $calls);
+        $this->assertSame('setReferenceHandler', $calls[0][0]);
+        $this->assertSame(Container::class, $container->getDefinition('mcp.server.default.reference_handler')->getArgument(0)->getClass());
     }
 
     public function testDoesNothingWhenNoServerConfigured()

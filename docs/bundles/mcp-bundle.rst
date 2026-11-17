@@ -356,9 +356,8 @@ The MCP SDK, and therefore the MCP Bundle, supports two patterns for placing att
 Decorating the Reference Handler
 ................................
 
-Each server that exposes at least one capability calls its tools, prompts and resources through the
-``mcp.server.<name>.reference_handler`` service. Decorate it to run code around every call, for example
-to check access before a tool runs::
+Each server calls its tools, prompts and resources through the ``mcp.server.<name>.reference_handler``
+service. Decorate it to run code around every call, for example to check access before a tool runs::
 
     use Mcp\Server\Capability\Registry\ElementReference;
     use Mcp\Server\Capability\Registry\ReferenceHandlerInterface;
