@@ -201,7 +201,12 @@ final class McpPass implements CompilerPassInterface
             $serviceLocatorRef = ServiceLocatorTagPass::register($container, $serviceReferences[$server]);
             $builders[$server]->addMethodCall('setContainer', [$serviceLocatorRef]);
 
-            $this->configureAppReferenceHandler($container, $server, $serviceLocatorRef, $appTemplates[$server] ?? []);
+            $referenceHandlerId = 'mcp.server.'.$server.'.reference_handler';
+            $container->register($referenceHandlerId, ReferenceHandler::class)
+                ->setArguments([$serviceLocatorRef]);
+            $builders[$server]->addMethodCall('setReferenceHandler', [new Reference($referenceHandlerId)]);
+
+            $this->configureAppReferenceHandler($container, $server, $referenceHandlerId, $appTemplates[$server] ?? []);
         }
     }
 
@@ -427,23 +432,18 @@ final class McpPass implements CompilerPassInterface
     /**
      * @param array<string, mixed> $toolTemplates
      */
-    private function configureAppReferenceHandler(ContainerBuilder $container, string $server, Reference $serviceLocatorRef, array $toolTemplates): void
+    private function configureAppReferenceHandler(ContainerBuilder $container, string $server, string $referenceHandlerId, array $toolTemplates): void
     {
         if ([] === $toolTemplates) {
             return;
         }
 
-        $handlerId = \sprintf('mcp.server.%s.app.reference_handler', $server);
-        $innerHandler = new Definition(ReferenceHandler::class, [$serviceLocatorRef]);
-
-        $container->register($handlerId, McpAppReferenceHandler::class)
+        $container->register(\sprintf('mcp.server.%s.app.reference_handler', $server), McpAppReferenceHandler::class)
+            ->setDecoratedService($referenceHandlerId)
             ->setArguments([
-                $innerHandler,
+                new Reference('.inner'),
                 new Reference(McpAppRenderer::SERVICE_ID),
                 $toolTemplates,
             ]);
-
-        $container->getDefinition('mcp.server.'.$server.'.builder')
-            ->addMethodCall('setReferenceHandler', [new Reference($handlerId)]);
     }
 }

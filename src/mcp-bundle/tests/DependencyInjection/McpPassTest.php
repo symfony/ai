@@ -20,7 +20,9 @@ use Mcp\Server\Capability\Attribute\McpResourceTemplate;
 use Mcp\Server\Capability\Attribute\McpTool;
 use Mcp\Server\Capability\Attribute\Schema;
 use Mcp\Server\Capability\Completion\ProviderInterface;
+use Mcp\Server\Capability\Registry\ReferenceHandler;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\McpBundle\App\McpAppReferenceHandler;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
 use Symfony\AI\McpBundle\Exception\LogicException;
 use Symfony\AI\McpBundle\McpBundle;
@@ -255,6 +257,41 @@ final class McpPassTest extends TestCase
         $reference = $services[TimeTool::class]->getValues()[0];
         $this->assertInstanceOf(Reference::class, $reference);
         $this->assertSame('app.time_tool', (string) $reference);
+    }
+
+    public function testRegistersReferenceHandlerAsService()
+    {
+        $container = $this->containerWithBuilder();
+        $container->setDefinition(TimeTool::class, (new Definition(TimeTool::class))->addTag('mcp.tool', ['method' => 'getCurrentTime']));
+
+        (new McpPass())->process($container);
+
+        $handler = $container->getDefinition('mcp.server.default.reference_handler');
+        $this->assertSame(ReferenceHandler::class, $handler->getClass());
+        $this->assertSame((string) $this->callsNamed($container, 'setContainer')[0][1][0], (string) $handler->getArgument(0));
+
+        $calls = $this->callsNamed($container, 'setReferenceHandler');
+        $this->assertCount(1, $calls);
+        $this->assertSame('mcp.server.default.reference_handler', (string) $calls[0][1][0]);
+        $this->assertFalse($container->hasDefinition('mcp.server.default.app.reference_handler'));
+    }
+
+    public function testDecoratesReferenceHandlerWithAppTemplates()
+    {
+        $container = $this->containerWithBuilder();
+        $container->setParameter('mcp.servers.app_tool_templates', ['default' => [TimeTool::class.'::getCurrentTime' => ['template' => 'time.html.twig', 'meta' => null]]]);
+        $container->setDefinition(TimeTool::class, (new Definition(TimeTool::class))->addTag('mcp.tool', ['method' => 'getCurrentTime']));
+
+        (new McpPass())->process($container);
+
+        $appHandler = $container->getDefinition('mcp.server.default.app.reference_handler');
+        $this->assertSame(McpAppReferenceHandler::class, $appHandler->getClass());
+        $this->assertSame(['mcp.server.default.reference_handler', null, 0], $appHandler->getDecoratedService());
+        $this->assertSame('.inner', (string) $appHandler->getArgument(0));
+
+        $calls = $this->callsNamed($container, 'setReferenceHandler');
+        $this->assertCount(1, $calls);
+        $this->assertSame('mcp.server.default.reference_handler', (string) $calls[0][1][0]);
     }
 
     public function testThrowsWhenExplicitTagMethodDoesNotExist()
