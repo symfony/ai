@@ -223,6 +223,108 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testFindRetrievesTheDocumentById()
+    {
+        $response = new JsonMockResponse([
+            'id' => '123e4567-e89b-12d3-a456-426614174000',
+            '_vectors' => [0.1, 0.2, 0.3],
+            'metadata' => '{"foo":"bar"}',
+        ]);
+        $httpClient = new MockHttpClient($response, 'http://127.0.0.1:8108');
+
+        $store = new Store($httpClient, 'test');
+        $document = $store->find('123e4567-e89b-12d3-a456-426614174000');
+
+        $this->assertSame('GET', $response->getRequestMethod());
+        $this->assertSame('http://127.0.0.1:8108/collections/test/documents/123e4567-e89b-12d3-a456-426614174000', $response->getRequestUrl());
+
+        $this->assertNotNull($document);
+        $this->assertSame('123e4567-e89b-12d3-a456-426614174000', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['foo' => 'bar'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindEncodesTheIdInThePath()
+    {
+        $response = new JsonMockResponse(['id' => 'a/b', '_vectors' => [0.1, 0.2, 0.3], 'metadata' => '{}']);
+        $store = new Store(new MockHttpClient($response, 'http://127.0.0.1:8108'), 'test');
+
+        $store->find('a/b');
+
+        $this->assertSame('http://127.0.0.1:8108/collections/test/documents/a%2Fb', $response->getRequestUrl());
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $collectionResponse = new JsonMockResponse(['name' => 'test', 'num_documents' => 3]);
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['message' => 'Could not find a document with id: unknown'], ['http_code' => 404]),
+            $collectionResponse,
+        ], 'http://127.0.0.1:8108');
+
+        $store = new Store($httpClient, 'test');
+
+        $this->assertNull($store->find('unknown'));
+        $this->assertSame('GET', $collectionResponse->getRequestMethod());
+        $this->assertSame('http://127.0.0.1:8108/collections/test', $collectionResponse->getRequestUrl());
+    }
+
+    public function testFindThrowsWhenTheCollectionDoesNotExist()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['message' => 'Collection not found'], ['http_code' => 404]),
+            new JsonMockResponse(['message' => 'Not Found'], ['http_code' => 404]),
+        ], 'http://127.0.0.1:8108');
+
+        $store = new Store($httpClient, 'test');
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 404 returned for "http://127.0.0.1:8108/collections/test".');
+
+        $store->find('unknown');
+    }
+
+    public function testFindThrowsOnServerError()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['message' => 'Forbidden - a valid `x-typesense-api-key` header must be sent.'], ['http_code' => 401]),
+        ], 'http://127.0.0.1:8108');
+
+        $store = new Store($httpClient, 'test');
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 401 returned for "http://127.0.0.1:8108/collections/test/documents/foo".');
+
+        $store->find('foo');
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $searchResponse = new JsonMockResponse(['results' => [['hits' => [
+            ['document' => ['id' => 'itself', '_vectors' => [0.1, 0.2, 0.3], 'metadata' => '{}'], 'vector_distance' => 0.0],
+            ['document' => ['id' => 'other', '_vectors' => [0.1, 0.2, 0.4], 'metadata' => '{}'], 'vector_distance' => 0.1],
+        ]]]]);
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['id' => 'itself', '_vectors' => [0.1, 0.2, 0.3], 'metadata' => '{}']),
+            $searchResponse,
+        ], 'http://127.0.0.1:8108');
+
+        $store = new Store($httpClient, 'test');
+        $documents = iterator_to_array($store->findSimilar('itself', ['limit' => 1]), false);
+
+        $body = $searchResponse->getRequestOptions()['body'];
+        $this->assertIsString($body);
+        $this->assertSame(['searches' => [[
+            'collection' => 'test',
+            'q' => '*',
+            'vector_query' => '_vectors:([0.1, 0.2, 0.3], k:2)',
+            'per_page' => 2,
+        ]]], json_decode($body, true));
+        $this->assertCount(1, $documents);
+        $this->assertSame('other', $documents[0]->getId());
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'test_collection');

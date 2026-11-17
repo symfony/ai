@@ -576,6 +576,109 @@ final class StoreTest extends TestCase
         $store->clear();
     }
 
+    public function testFindReturnsTheDocumentWithItsVector()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding');
+
+        $pdo->expects($this->once())
+            ->method('prepare')
+            ->with('SELECT id, VEC_ToText(`embedding`) embedding, metadata FROM embeddings_table WHERE id = :id')
+            ->willReturn($statement);
+
+        $statement->expects($this->once())
+            ->method('bindValue')
+            ->with(':id', '123e4567-e89b-12d3-a456-426614174000');
+
+        $statement->expects($this->once())
+            ->method('fetch')
+            ->with(\PDO::FETCH_ASSOC)
+            ->willReturn([
+                'id' => '123e4567-e89b-12d3-a456-426614174000',
+                'embedding' => '[0.1,0.2,0.3]',
+                'metadata' => '{"title":"Test Document"}',
+            ]);
+
+        $document = $store->find('123e4567-e89b-12d3-a456-426614174000');
+
+        $this->assertNotNull($document);
+        $this->assertSame('123e4567-e89b-12d3-a456-426614174000', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['title' => 'Test Document'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding');
+
+        $pdo->method('prepare')->willReturn($statement);
+        $statement->method('fetch')->willReturn(false);
+
+        $this->assertNull($store->find('123e4567-e89b-12d3-a456-426614174000'));
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $findStatement = $this->createMock(\PDOStatement::class);
+        $queryStatement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding_index', 'embedding');
+
+        $pdo->expects($this->exactly(2))
+            ->method('prepare')
+            ->willReturnCallback(function (string $sql) use ($findStatement, $queryStatement): \PDOStatement {
+                if (str_starts_with($sql, 'SELECT id, VEC_ToText(`embedding`) embedding, metadata FROM')) {
+                    return $findStatement;
+                }
+
+                $this->assertStringContainsString('LIMIT 3', $sql);
+
+                return $queryStatement;
+            });
+
+        $findStatement->method('fetch')->willReturn([
+            'id' => '123e4567-e89b-12d3-a456-426614174000',
+            'embedding' => '[0.1,0.2,0.3]',
+            'metadata' => '{}',
+        ]);
+
+        $bound = [];
+        $queryStatement->method('bindValue')
+            ->willReturnCallback(static function (string $param, mixed $value) use (&$bound): bool {
+                $bound[$param] = $value;
+
+                return true;
+            });
+
+        $queryStatement->method('fetchAll')->willReturn([
+            [
+                'id' => '123e4567-e89b-12d3-a456-426614174000',
+                'embedding' => '[0.1,0.2,0.3]',
+                'metadata' => '{}',
+                'score' => 0.0,
+            ],
+            [
+                'id' => 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+                'embedding' => '[0.1,0.2,0.4]',
+                'metadata' => '{}',
+                'score' => 0.1,
+            ],
+        ]);
+
+        $results = iterator_to_array($store->findSimilar('123e4567-e89b-12d3-a456-426614174000', ['limit' => 2]), false);
+
+        $this->assertSame([':embedding' => '[0.1,0.2,0.3]'], $bound);
+        $this->assertCount(1, $results);
+        $this->assertSame('f47ac10b-58cc-4372-a567-0e02b2c3d479', (string) $results[0]->getId());
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $connection = $this->createMock(\PDO::class);

@@ -18,6 +18,7 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
@@ -41,6 +42,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements StoreInterface
 {
+    use FindSimilarTrait;
+
     /**
      * @param HttpClientInterface $httpClient HTTP client scoped to the Supabase instance, see {@see StoreFactory}
      */
@@ -149,6 +152,33 @@ final class Store implements StoreInterface
         }
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $response = $this->httpClient->request(
+            'GET',
+            \sprintf('rest/v1/%s', $this->table),
+            [
+                'headers' => $this->getHeaders(),
+                'query' => [
+                    'select' => \sprintf('id,%s,metadata', $this->vectorFieldName),
+                    'id' => 'eq.'.$id,
+                ],
+            ]
+        );
+
+        if ($response->getStatusCode() >= 400) {
+            throw new RuntimeException('Supabase find failed: '.$response->getContent(false));
+        }
+
+        $records = json_decode($response->getContent(), true, 512, \JSON_THROW_ON_ERROR);
+
+        if ([] === $records) {
+            return null;
+        }
+
+        return $this->createVectorDocument($records[0]);
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
@@ -198,15 +228,7 @@ final class Store implements StoreInterface
                 continue;
             }
 
-            $embedding = \is_array($record[$this->vectorFieldName]) ? $record[$this->vectorFieldName] : json_decode($record[$this->vectorFieldName] ?? '{}', true, 512, \JSON_THROW_ON_ERROR);
-            $metadata = \is_array($record['metadata']) ? $record['metadata'] : json_decode($record['metadata'], true, 512, \JSON_THROW_ON_ERROR);
-
-            yield new VectorDocument(
-                id: $record['id'],
-                vector: new Vector($embedding),
-                metadata: new Metadata($metadata),
-                score: (float) $record['score'],
-            );
+            yield $this->createVectorDocument($record, (float) $record['score']);
         }
     }
 
@@ -229,6 +251,22 @@ final class Store implements StoreInterface
         }
 
         return 0;
+    }
+
+    /**
+     * @param array<string, mixed> $record
+     */
+    private function createVectorDocument(array $record, ?float $score = null): VectorDocumentInterface
+    {
+        $embedding = \is_array($record[$this->vectorFieldName]) ? $record[$this->vectorFieldName] : json_decode($record[$this->vectorFieldName] ?? '{}', true, 512, \JSON_THROW_ON_ERROR);
+        $metadata = \is_array($record['metadata']) ? $record['metadata'] : json_decode($record['metadata'], true, 512, \JSON_THROW_ON_ERROR);
+
+        return new VectorDocument(
+            id: $record['id'],
+            vector: new Vector($embedding),
+            metadata: new Metadata($metadata),
+            score: $score,
+        );
     }
 
     /**

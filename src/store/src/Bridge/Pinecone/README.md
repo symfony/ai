@@ -8,6 +8,7 @@ Pinecone Documentation
 
  * [Upsert vectors](https://docs.pinecone.io/reference/api/2026-07/data-plane/upsert)
  * [Query vectors](https://docs.pinecone.io/reference/api/2026-07/data-plane/query)
+ * [Fetch vectors](https://docs.pinecone.io/reference/api/2026-07/data-plane/fetch)
  * [Delete vectors](https://docs.pinecone.io/reference/api/2026-07/data-plane/delete)
  * [Describe index stats](https://docs.pinecone.io/reference/api/2026-07/data-plane/describeindexstats)
  * [Create serverless index](https://docs.pinecone.io/reference/api/2026-07/control-plane/create_index)

@@ -22,6 +22,7 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
@@ -35,6 +36,8 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class OrmStore implements StoreInterface
 {
+    use FindSimilarTrait;
+
     private ?EmbeddingMapping $mapping = null;
 
     /**
@@ -65,7 +68,7 @@ final class OrmStore implements StoreInterface
         foreach ($documents as $document) {
             $entity = $document instanceof EntityVectorDocument && $document->getEntity() instanceof $this->entityClass && $this->entityManager->contains($document->getEntity())
                 ? $document->getEntity()
-                : $this->find($document->getId());
+                : $this->findEntity($document->getId());
             $this->mapping()->setVector($this->entityManager, $entity, $document->getVector());
         }
 
@@ -88,7 +91,7 @@ final class OrmStore implements StoreInterface
         }
 
         foreach ($ids as $id) {
-            $this->mapping()->setVector($this->entityManager, $this->find($id), null);
+            $this->mapping()->setVector($this->entityManager, $this->findEntity($id), null);
         }
 
         $this->entityManager->flush();
@@ -117,6 +120,26 @@ final class OrmStore implements StoreInterface
             ->where($this->vectorField().' IS NOT NULL')
             ->getQuery()
             ->getSingleScalarResult());
+    }
+
+    /**
+     * Returns null as well for an entity without a vector.
+     */
+    public function find(string $id): ?EntityVectorDocument
+    {
+        $entity = $this->entityManager->find($this->entityClass, $id);
+
+        if (null === $entity) {
+            return null;
+        }
+
+        $vector = $this->classMetadata()->getFieldValue($entity, $this->mapping()->getRequiredVectorField());
+
+        if (!$vector instanceof VectorInterface) {
+            return null;
+        }
+
+        return $this->createDocument($entity, $vector);
     }
 
     public function supports(string $queryClass): bool
@@ -153,7 +176,6 @@ final class OrmStore implements StoreInterface
             ->getResult();
 
         $metadata = $this->classMetadata();
-        $identifierField = $metadata->getSingleIdentifierFieldName();
 
         $documents = [];
         foreach ($rows as $row) {
@@ -168,19 +190,26 @@ final class OrmStore implements StoreInterface
             /** @var VectorInterface $vector */
             $vector = $metadata->getFieldValue($entity, $this->mapping()->getRequiredVectorField());
 
-            $documents[] = new EntityVectorDocument(
-                entity: $entity,
-                id: $this->identifierAsString($metadata->getIdentifierValues($entity)[$identifierField]),
-                vector: $vector,
-                metadata: new Metadata([Metadata::KEY_TEXT => $this->mapping()->getContent($entity)]),
-                score: $score,
-            );
+            $documents[] = $this->createDocument($entity, $vector, $score);
         }
 
         return $documents;
     }
 
-    private function find(int|string $id): object
+    private function createDocument(object $entity, VectorInterface $vector, ?float $score = null): EntityVectorDocument
+    {
+        $metadata = $this->classMetadata();
+
+        return new EntityVectorDocument(
+            entity: $entity,
+            id: $this->identifierAsString($metadata->getIdentifierValues($entity)[$metadata->getSingleIdentifierFieldName()]),
+            vector: $vector,
+            metadata: new Metadata([Metadata::KEY_TEXT => $this->mapping()->getContent($entity)]),
+            score: $score,
+        );
+    }
+
+    private function findEntity(int|string $id): object
     {
         $entity = $this->entityManager->find($this->entityClass, $id);
 

@@ -16,6 +16,7 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -29,6 +30,8 @@ use Symfony\Contracts\Service\ResetInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface, ResetInterface
 {
+    use FindSimilarTrait;
+
     /**
      * @var VectorDocumentInterface[]
      */
@@ -79,6 +82,18 @@ final class Store implements ManagedStoreInterface, StoreInterface, ResetInterfa
         }
 
         $this->documents = [];
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        // documents added again under the same id are kept, the last one is the current version
+        foreach (array_reverse($this->documents) as $document) {
+            if ($id === (string) $document->getId()) {
+                return $document;
+            }
+        }
+
+        return null;
     }
 
     public function supports(string $queryClass): bool

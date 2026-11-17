@@ -18,6 +18,7 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -34,6 +35,7 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class VecStore implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
     use PdoConnectionTrait;
 
     private const RRF_K = 60;
@@ -240,6 +242,11 @@ final class VecStore implements ManagedStoreInterface, StoreInterface
 
             throw $e;
         }
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        return $this->loadDocumentsByIds([$id])[$id] ?? null;
     }
 
     public function supports(string $queryClass): bool

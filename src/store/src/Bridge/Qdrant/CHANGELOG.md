@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] Rename the `embeddingsDimension` and `embeddingsDistance` arguments of `Store` and `StoreFactory` to `dimensions` and `metric`
+ * Add `find` and `findSimilar` methods
 
 0.14
 ----

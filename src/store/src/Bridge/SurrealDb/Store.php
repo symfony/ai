@@ -19,6 +19,7 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -30,6 +31,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     private string $authenticationToken = '';
 
     public function __construct(
@@ -101,6 +104,21 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('POST', 'sql', \sprintf('DELETE %s;', $this->table));
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $rows = $this->fetchRows(\sprintf(
+            'SELECT id, %s, _metadata FROM %s:%s;',
+            $this->vectorFieldName, $this->table, $this->escapeIdentifier($id),
+        ));
+
+        $row = $rows[0] ?? null;
+        if (null === $row) {
+            return null;
+        }
+
+        return $this->convertToVectorDocument($row);
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
@@ -122,27 +140,18 @@ final class Store implements ManagedStoreInterface, StoreInterface
         // SurrealDB 2 returns at most EF results, whatever the limit
         $ef = max($options['ef'] ?? 40, $limit);
 
-        $results = $this->request('POST', 'sql', \sprintf(
+        $rows = $this->fetchRows(\sprintf(
             'SELECT id, %s, _metadata, vector::distance::knn() AS distance FROM %s WHERE %s <|%d,%d|> %s ORDER BY distance;',
             $this->vectorFieldName, $this->table, $this->vectorFieldName, $limit, $ef, $vectors,
         ));
 
-        $statement = $results[0] ?? null;
-        if (!\is_array($statement)) {
-            throw new RuntimeException('The SurrealDB query response is malformed.');
-        }
-
-        $rows = $statement['result'] ?? null;
-        if (!\is_array($rows)) {
-            throw new RuntimeException('The SurrealDB query response does not contain a result set.');
-        }
-
         foreach ($rows as $item) {
-            if (!\is_array($item)) {
-                throw new RuntimeException('The SurrealDB query response contains an invalid row.');
+            $distance = $item['distance'] ?? null;
+            if (!\is_int($distance) && !\is_float($distance)) {
+                throw new InvalidArgumentException('The document "distance" field must be a number.');
             }
 
-            yield $this->convertToVectorDocument($item);
+            yield $this->convertToVectorDocument($item)->withScore((float) $distance);
         }
     }
 
@@ -185,6 +194,35 @@ final class Store implements ManagedStoreInterface, StoreInterface
     private function escapeIdentifier(string $value): string
     {
         return '`'.str_replace(['\\', '`'], ['\\\\', '\\`'], $value).'`';
+    }
+
+    /**
+     * @return list<array<mixed>>
+     */
+    private function fetchRows(string $sql): array
+    {
+        $results = $this->request('POST', 'sql', $sql);
+
+        $statement = $results[0] ?? null;
+        if (!\is_array($statement)) {
+            throw new RuntimeException('The SurrealDB query response is malformed.');
+        }
+
+        $rows = $statement['result'] ?? null;
+        if (!\is_array($rows)) {
+            throw new RuntimeException('The SurrealDB query response does not contain a result set.');
+        }
+
+        $items = [];
+        foreach ($rows as $item) {
+            if (!\is_array($item)) {
+                throw new RuntimeException('The SurrealDB query response contains an invalid row.');
+            }
+
+            $items[] = $item;
+        }
+
+        return $items;
     }
 
     /**
@@ -254,7 +292,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @param array<mixed> $data
      */
-    private function convertToVectorDocument(array $data): VectorDocumentInterface
+    private function convertToVectorDocument(array $data): VectorDocument
     {
         $rawMetadata = $data['_metadata'] ?? null;
         if (!\is_array($rawMetadata)) {
@@ -297,16 +335,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         unset($metadata['_id']);
 
-        $distance = $data['distance'] ?? null;
-        if (!\is_int($distance) && !\is_float($distance)) {
-            throw new InvalidArgumentException('The document "distance" field must be a number.');
-        }
-
         return new VectorDocument(
             id: $id,
             vector: $vector,
             metadata: new Metadata($metadata),
-            score: (float) $distance,
         );
     }
 

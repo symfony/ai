@@ -368,6 +368,77 @@ class StoreTest extends TestCase
         $store->clear();
     }
 
+    public function testFindReturnsTheDocumentWithItsVectorAndMetadata()
+    {
+        $uuid = Uuid::v4()->toString();
+        $requestedMethod = null;
+        $requestedUrl = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url) use (&$requestedMethod, &$requestedUrl, $uuid): JsonMockResponse {
+            $requestedMethod = $method;
+            $requestedUrl = $url;
+
+            return new JsonMockResponse([
+                [
+                    'id' => $uuid,
+                    'embedding' => '[0.5,0.6,0.7]',
+                    'metadata' => ['category' => 'test'],
+                ],
+            ]);
+        });
+        $store = $this->createStore($httpClient, 3);
+
+        $document = $store->find($uuid);
+
+        $this->assertSame('GET', $requestedMethod);
+        $this->assertSame('https://test.supabase.co/rest/v1/documents?select=id%2Cembedding%2Cmetadata&id=eq.'.$uuid, $requestedUrl);
+        $this->assertNotNull($document);
+        $this->assertSame($uuid, $document->getId());
+        $this->assertSame([0.5, 0.6, 0.7], $document->getVector()->getData());
+        $this->assertSame(['category' => 'test'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([]));
+        $store = $this->createStore($httpClient);
+
+        $this->assertNull($store->find(Uuid::v4()->toString()));
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testFindThrowsExceptionOnHttpError()
+    {
+        $httpClient = new MockHttpClient(new MockResponse('Find failed', ['http_code' => 400]));
+        $store = $this->createStore($httpClient);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Supabase find failed: Find failed');
+        $store->find(Uuid::v4()->toString());
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $uuid = Uuid::v4()->toString();
+        $similarUuid = Uuid::v4()->toString();
+        $queryResponse = new JsonMockResponse([
+            ['id' => $uuid, 'embedding' => '[0.1,0.2]', 'metadata' => '{}', 'score' => 1.0],
+            ['id' => $similarUuid, 'embedding' => '[0.1,0.3]', 'metadata' => '{}', 'score' => 0.99],
+        ]);
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([['id' => $uuid, 'embedding' => '[0.1,0.2]', 'metadata' => []]]),
+            $queryResponse,
+        ]);
+        $store = $this->createStore($httpClient);
+
+        $results = iterator_to_array($store->findSimilar($uuid, ['limit' => 1]), false);
+
+        $this->assertCount(1, $results);
+        $this->assertSame($similarUuid, $results[0]->getId());
+        $this->assertSame([0.1, 0.2], json_decode($queryResponse->getRequestOptions()['body'], true)['query_embedding']);
+        $this->assertSame(2, json_decode($queryResponse->getRequestOptions()['body'], true)['match_count']);
+    }
+
     private function createStore(MockHttpClient $httpClient, ?int $dimensions = 2): SupabaseStore
     {
         return new SupabaseStore(

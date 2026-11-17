@@ -8,6 +8,7 @@ CHANGELOG
  * [BC BREAK] Rename the `topK` option of `Store::query()` and the `topK` argument of `Store` to `limit`
  * [BC BREAK] Replace `probots-io/pinecone-php` by the HTTP client: `Store` takes an `HttpClientInterface` and the API key instead of a `Probots\Pinecone\Client`, and the `indexHost` and `controlPlaneUrl` arguments
  * [BC BREAK] Replace the `dimension`, `metric`, `cloud` and `region` options of `Store::setup()` by the `dimensions`, `metric`, `cloud` and `region` arguments of `Store`, the dimensions default to 1536
+ * Add `find` and `findSimilar` methods
 
 0.14
 ----

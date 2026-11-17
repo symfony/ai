@@ -544,6 +544,24 @@ Store
    +$store = new Store($pdo, 'documents', metric: Metric::Cosine);
    ```
 
+ * `StoreInterface` has two new methods: `find()` returns a document by id, and `findSimilar()` returns the
+   documents nearest to it. Custom stores have to implement them, and can get `findSimilar()` from
+   `FindSimilarTrait`, which runs a vector query on the vector of the document returned by `find()`:
+
+   ```diff
+    final class MyStore implements StoreInterface
+    {
+   +    use FindSimilarTrait;
+   +
+        // ...
+   +
+   +    public function find(string $id): ?VectorDocumentInterface
+   +    {
+   +        return $this->connection->findDocument($id);
+   +    }
+    }
+   ```
+
 UPGRADE FROM 0.14 to 0.15
 =========================
 

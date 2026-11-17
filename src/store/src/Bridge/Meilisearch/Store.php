@@ -18,6 +18,7 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -30,6 +31,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     /**
      * @param string $embedder        The name of the embedder where vectors are stored
      * @param string $vectorFieldName The name of the field in the index that contains the vector
@@ -99,6 +102,19 @@ final class Store implements ManagedStoreInterface, StoreInterface
     public function clear(array $options = []): void
     {
         $this->request('DELETE', \sprintf('indexes/%s/documents', $this->indexName), []);
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $response = $this->httpClient->request('GET', \sprintf('indexes/%s/documents/%s', $this->indexName, rawurlencode($id)), [
+            'query' => ['retrieveVectors' => 'true'],
+        ]);
+
+        if (404 === $response->getStatusCode() && 'document_not_found' === ($response->toArray(false)['code'] ?? null)) {
+            return null;
+        }
+
+        return $this->convertToVectorDocument($response->toArray());
     }
 
     public function supports(string $queryClass): bool
@@ -199,7 +215,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $id = $data['id'] ?? throw new InvalidArgumentException('Missing "id" field in the document data.');
         $vector = !\array_key_exists($this->vectorFieldName, $data) || null === $data[$this->vectorFieldName]
             ? new NullVector()
-            : new Vector($data[$this->vectorFieldName][$this->embedder]['embeddings']);
+            // Meilisearch returns a list of embeddings per embedder, as a document may have several
+            : new Vector($data[$this->vectorFieldName][$this->embedder]['embeddings'][0]);
 
         $score = $data['_rankingScore'] ?? null;
 

@@ -356,6 +356,121 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testStoreCanFind()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): JsonMockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('http://127.0.0.1:6333/collections/test/points', $url);
+            $this->assertSame([
+                'ids' => ['123e4567-e89b-12d3-a456-426614174000'],
+                'with_payload' => true,
+                'with_vector' => true,
+            ], json_decode($options['body'], true, 512, \JSON_THROW_ON_ERROR));
+
+            return new JsonMockResponse([
+                'status' => 'ok',
+                'result' => [
+                    [
+                        'id' => '123e4567-e89b-12d3-a456-426614174000',
+                        'vector' => [0.1, 0.2, 0.3],
+                        'payload' => ['foo' => 'bar'],
+                    ],
+                ],
+            ]);
+        }, 'http://127.0.0.1:6333');
+
+        $store = new Store($httpClient, 'test');
+
+        $document = $store->find('123e4567-e89b-12d3-a456-426614174000');
+
+        $this->assertNotNull($document);
+        $this->assertSame('123e4567-e89b-12d3-a456-426614174000', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['foo' => 'bar'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testStoreReturnsNullWhenFindingAnUnknownDocument()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'status' => 'ok',
+                'result' => [],
+            ]),
+        ], 'http://127.0.0.1:6333');
+
+        $store = new Store($httpClient, 'test');
+
+        $this->assertNull($store->find('123e4567-e89b-12d3-a456-426614174000'));
+    }
+
+    public function testStoreCannotFindOnInvalidResponse()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([], [
+                'http_code' => 404,
+            ]),
+        ], 'http://127.0.0.1:6333');
+
+        $store = new Store($httpClient, 'test');
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 404 returned for "http://127.0.0.1:6333/collections/test/points".');
+        $store->find('123e4567-e89b-12d3-a456-426614174000');
+    }
+
+    public function testStoreCanFindSimilarDocuments()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'status' => 'ok',
+                'result' => [
+                    [
+                        'id' => '123e4567-e89b-12d3-a456-426614174000',
+                        'vector' => [0.1, 0.2, 0.3],
+                        'payload' => [],
+                    ],
+                ],
+            ]),
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame('http://127.0.0.1:6333/collections/test/points/query', $url);
+                $this->assertSame([
+                    'query' => [0.1, 0.2, 0.3],
+                    'with_payload' => true,
+                    'with_vector' => true,
+                    'limit' => 2,
+                ], json_decode($options['body'], true, 512, \JSON_THROW_ON_ERROR));
+
+                return new JsonMockResponse([
+                    'result' => [
+                        'points' => [
+                            [
+                                'id' => '123e4567-e89b-12d3-a456-426614174000',
+                                'vector' => [0.1, 0.2, 0.3],
+                                'payload' => [],
+                                'score' => 1.0,
+                            ],
+                            [
+                                'id' => 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+                                'vector' => [0.2, 0.1, 0.3],
+                                'payload' => [],
+                                'score' => 0.9,
+                            ],
+                        ],
+                    ],
+                ]);
+            },
+        ], 'http://127.0.0.1:6333');
+
+        $store = new Store($httpClient, 'test');
+
+        $documents = iterator_to_array($store->findSimilar('123e4567-e89b-12d3-a456-426614174000', ['limit' => 1]), false);
+
+        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertCount(1, $documents);
+        $this->assertSame('f47ac10b-58cc-4372-a567-0e02b2c3d479', $documents[0]->getId());
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = StoreFactory::create('test', 'http://127.0.0.1:6333', 'test', new MockHttpClient());

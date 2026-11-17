@@ -588,6 +588,133 @@ final class SearchStoreTest extends TestCase
         $store->remove('nonexistent-doc');
     }
 
+    public function testFindLooksTheDocumentUpByKey()
+    {
+        $httpClient = new MockHttpClient([
+            function (string $method, string $url): JsonMockResponse {
+                $this->assertSame('GET', $method);
+                $this->assertSame('https://test.search.windows.net/indexes/test-index/docs/123e4567-e89b-12d3-a456-426614174000?api-version=2026-04-01', $url);
+
+                return new JsonMockResponse([
+                    'id' => '123e4567-e89b-12d3-a456-426614174000',
+                    'vector' => [0.1, 0.2, 0.3],
+                    'title' => 'Test Document',
+                ]);
+            },
+        ]);
+
+        $store = StoreFactory::create(
+            indexName: 'test-index',
+            endpoint: 'https://test.search.windows.net',
+            apiKey: 'test-api-key',
+            apiVersion: '2026-04-01',
+            httpClient: $httpClient,
+        );
+
+        $document = $store->find('123e4567-e89b-12d3-a456-426614174000');
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+        $this->assertNotNull($document);
+        $this->assertSame('123e4567-e89b-12d3-a456-426614174000', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame('Test Document', $document->getMetadata()['title']);
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindEncodesTheKeyInThePath()
+    {
+        $httpClient = new MockHttpClient([
+            function (string $method, string $url): JsonMockResponse {
+                $this->assertSame('https://test.search.windows.net/indexes/test-index/docs/a%3Db', $url);
+
+                return new JsonMockResponse(['id' => 'a=b', 'vector' => [0.1]]);
+            },
+        ], 'https://test.search.windows.net/');
+
+        $store = new SearchStore($httpClient, 'test-index');
+
+        $this->assertNotNull($store->find('a=b'));
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([], ['http_code' => 404]),
+        ]);
+
+        $store = new SearchStore($httpClient, 'test-index');
+
+        $this->assertNull($store->find('unknown-id'));
+    }
+
+    public function testFindFailure()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'error' => [
+                    'code' => 'Forbidden',
+                    'message' => 'Access denied',
+                ],
+            ], [
+                'http_code' => 403,
+            ]),
+        ]);
+
+        $store = new SearchStore($httpClient, 'test-index');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Azure Search request failed:');
+
+        $store->find('doc-id');
+    }
+
+    public function testFindFailsWhenTheVectorFieldIsNotRetrievable()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['id' => 'doc-id', 'title' => 'Test Document']),
+        ]);
+
+        $store = new SearchStore($httpClient, 'test-index', 'custom_vector_field');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('The "custom_vector_field" field of the "test-index" index must be retrievable to find a document with its vector.');
+
+        $store->find('doc-id');
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['id' => 'doc-id', 'vector' => [0.1, 0.2, 0.3]]),
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame([
+                    'vectorQueries' => [
+                        [
+                            'kind' => 'vector',
+                            'vector' => [0.1, 0.2, 0.3],
+                            'fields' => 'vector',
+                            'k' => 2,
+                        ],
+                    ],
+                ], json_decode($options['body'], true));
+
+                return new JsonMockResponse([
+                    'value' => [
+                        ['id' => 'doc-id', 'vector' => [0.1, 0.2, 0.3], '@search.score' => 1.0],
+                        ['id' => 'other-id', 'vector' => [0.1, 0.2, 0.4], '@search.score' => 0.9],
+                    ],
+                ]);
+            },
+        ]);
+
+        $store = new SearchStore($httpClient, 'test-index');
+
+        $results = iterator_to_array($store->findSimilar('doc-id', ['limit' => 1]), false);
+
+        $this->assertCount(1, $results);
+        $this->assertSame('other-id', $results[0]->getId());
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new SearchStore(new MockHttpClient(), 'test-index');

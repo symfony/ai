@@ -1098,6 +1098,116 @@ final class StoreTest extends TestCase
         $this->assertSame(42, $store->count());
     }
 
+    public function testFindReturnsTheDocument()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding');
+
+        $pdo->expects($this->once())
+            ->method('prepare')
+            ->with('SELECT id, "embedding" AS embedding, metadata FROM "embeddings_table" WHERE id = :id')
+            ->willReturn($statement);
+
+        $statement->expects($this->once())
+            ->method('bindValue')
+            ->with(':id', '123e4567-e89b-12d3-a456-426614174000');
+
+        $statement->expects($this->once())
+            ->method('fetch')
+            ->with(\PDO::FETCH_ASSOC)
+            ->willReturn([
+                'id' => '123e4567-e89b-12d3-a456-426614174000',
+                'embedding' => '[0.1,0.2,0.3]',
+                'metadata' => '{"title":"Test Document"}',
+            ]);
+
+        $document = $store->find('123e4567-e89b-12d3-a456-426614174000');
+
+        $this->assertNotNull($document);
+        $this->assertSame('123e4567-e89b-12d3-a456-426614174000', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['title' => 'Test Document'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding');
+
+        $pdo->method('prepare')->willReturn($statement);
+        $statement->method('fetch')->willReturn(false);
+
+        $this->assertNull($store->find('123e4567-e89b-12d3-a456-426614174000'));
+    }
+
+    public function testFindSimilarRanksByTheVectorOfTheDocumentInASingleQuery()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding');
+
+        $expectedQuery = 'SELECT id, "embedding" AS embedding, metadata, ("embedding" <-> (SELECT "embedding" FROM "embeddings_table" WHERE id = :source_id)) AS score
+             FROM "embeddings_table"
+             WHERE (SELECT "embedding" FROM "embeddings_table" WHERE id = :source_id) IS NOT NULL
+               AND id != :source_id
+               AND ("embedding" <-> (SELECT "embedding" FROM "embeddings_table" WHERE id = :source_id)) <= :maxScore
+               AND (metadata->>\'category\' = :category)
+             ORDER BY score ASC
+             LIMIT 2';
+
+        $pdo->expects($this->once())
+            ->method('prepare')
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
+            }))
+            ->willReturn($statement);
+
+        $bound = [];
+        $statement->expects($this->exactly(3))
+            ->method('bindValue')
+            ->willReturnCallback(static function (string $param, mixed $value) use (&$bound): bool {
+                $bound[$param] = $value;
+
+                return true;
+            });
+
+        $statement->expects($this->once())
+            ->method('fetchAll')
+            ->with(\PDO::FETCH_ASSOC)
+            ->willReturn([
+                [
+                    'id' => 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+                    'embedding' => '[0.1,0.2,0.4]',
+                    'metadata' => '{"category":"books"}',
+                    'score' => 0.1,
+                ],
+            ]);
+
+        $results = iterator_to_array($store->findSimilar('123e4567-e89b-12d3-a456-426614174000', [
+            'limit' => 2,
+            'maxScore' => 0.8,
+            'where' => 'metadata->>\'category\' = :category',
+            'params' => ['category' => 'books'],
+        ]), false);
+
+        $this->assertSame([
+            ':source_id' => '123e4567-e89b-12d3-a456-426614174000',
+            ':maxScore' => 0.8,
+            ':category' => 'books',
+        ], $bound);
+        $this->assertCount(1, $results);
+        $this->assertSame('f47ac10b-58cc-4372-a567-0e02b2c3d479', $results[0]->getId());
+        $this->assertSame(0.1, $results[0]->getScore());
+    }
+
     public function testConnectsToTheDsnOnTheFirstQuery()
     {
         $store = new Store('missing-driver:dbname=test', 'embeddings_table');

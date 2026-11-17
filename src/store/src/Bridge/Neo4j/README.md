@@ -7,6 +7,8 @@ Neo4j Documentation
 -------------------
 
  * [Vector indexes (Cypher manual)](https://neo4j.com/docs/cypher-manual/current/indexes/semantic-indexes/vector-indexes/)
+ * [`MATCH` (Cypher manual)](https://neo4j.com/docs/cypher-manual/current/clauses/match/)
+ * [Query API](https://neo4j.com/docs/query-api/current/query/)
 
 Resources
 ---------

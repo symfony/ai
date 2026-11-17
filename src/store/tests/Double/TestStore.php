@@ -14,12 +14,15 @@ namespace Symfony\AI\Store\Tests\Double;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\UnsupportedFeatureException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 
 final class TestStore implements StoreInterface
 {
+    use FindSimilarTrait;
+
     /**
      * @var VectorDocumentInterface[]
      */
@@ -45,6 +48,17 @@ final class TestStore implements StoreInterface
     public function clear(array $options = []): void
     {
         $this->documents = [];
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        foreach ($this->documents as $document) {
+            if ($id === (string) $document->getId()) {
+                return $document;
+            }
+        }
+
+        return null;
     }
 
     public function supports(string $queryClass): bool

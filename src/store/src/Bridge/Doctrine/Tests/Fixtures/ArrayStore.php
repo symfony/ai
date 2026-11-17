@@ -50,6 +50,16 @@ final class ArrayStore implements StoreInterface
         $this->documents = [];
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        return $this->documents[$id] ?? null;
+    }
+
+    public function findSimilar(string $id, array $options = []): iterable
+    {
+        return [];
+    }
+
     public function query(QueryInterface $query, array $options = []): iterable
     {
         return array_values($this->documents);

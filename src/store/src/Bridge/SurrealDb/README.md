@@ -10,6 +10,8 @@ SurrealDB Documentation
  * [`DEFINE INDEX` (HNSW)](https://surrealdb.com/docs/surrealql/statements/define/indexes)
  * [Vector functions](https://surrealdb.com/docs/surrealql/functions/database/vector)
  * [KNN operator (`<|K,EF|>`)](https://surrealdb.com/docs/surrealql/operators#knn)
+ * [`SELECT` statement](https://surrealdb.com/docs/surrealql/statements/select)
+ * [Record IDs](https://surrealdb.com/docs/surrealql/datamodel/ids)
  * [Migrating from 2.x to 3.x](https://surrealdb.com/docs/build/migrating/from-old-surrealdb-versions/2x-to-3x)
 
 Resources

@@ -339,4 +339,34 @@ final class CombinedStoreTest extends TestCase
 
         $this->assertSame(4, $store->count());
     }
+
+    public function testFindDelegatesToVectorStore()
+    {
+        $document = new VectorDocument('doc', new Vector([0.1, 0.2, 0.3]));
+
+        $vectorStore = $this->createMock(StoreInterface::class);
+        $vectorStore->expects($this->once())->method('find')->with($document->getId())->willReturn($document);
+
+        $textStore = $this->createMock(StoreInterface::class);
+        $textStore->expects($this->never())->method('find');
+
+        $store = new CombinedStore($vectorStore, $textStore);
+
+        $this->assertSame($document, $store->find($document->getId()));
+    }
+
+    public function testFindSimilarDelegatesToVectorStore()
+    {
+        $document = new VectorDocument('doc', new Vector([0.1, 0.2, 0.3]));
+
+        $vectorStore = $this->createMock(StoreInterface::class);
+        $vectorStore->expects($this->once())->method('findSimilar')->with('source', ['limit' => 3])->willReturn([$document]);
+
+        $textStore = $this->createMock(StoreInterface::class);
+        $textStore->expects($this->never())->method('findSimilar');
+
+        $store = new CombinedStore($vectorStore, $textStore);
+
+        $this->assertSame([$document], $store->findSimilar('source', ['limit' => 3]));
+    }
 }

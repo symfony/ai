@@ -7,6 +7,7 @@ pgvector Documentation
 ----------------------
 
  * [pgvector (operators, indexes, vector/halfvec types)](https://github.com/pgvector/pgvector)
+ * [pgvector querying (nearest neighbors to a row)](https://github.com/pgvector/pgvector#querying)
  * [PostgreSQL full-text search](https://www.postgresql.org/docs/current/textsearch.html)
 
 Resources

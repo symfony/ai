@@ -18,6 +18,7 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -30,6 +31,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly string $databaseName = 'default',
@@ -96,6 +99,27 @@ final class Store implements ManagedStoreInterface, StoreInterface
     public function clear(array $options = []): void
     {
         $this->execute('POST', 'TRUNCATE TABLE {{ table }}');
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        // an id that is not a UUID matches no row instead of failing the query
+        $results = $this
+            ->execute('GET', 'SELECT id, embedding, metadata FROM {{ table }} WHERE id = toUUIDOrNull({id:String}) LIMIT 1', [
+                'id' => $id,
+            ])
+            ->toArray()['data']
+        ;
+
+        if ([] === $results) {
+            return null;
+        }
+
+        return new VectorDocument(
+            id: $results[0]['id'],
+            vector: new Vector($results[0]['embedding']),
+            metadata: new Metadata(json_decode($results[0]['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
+        );
     }
 
     public function supports(string $queryClass): bool

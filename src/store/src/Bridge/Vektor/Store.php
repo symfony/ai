@@ -15,6 +15,8 @@ use Centamiv\Vektor\Core\Config;
 use Centamiv\Vektor\Services\Indexer;
 use Centamiv\Vektor\Services\Optimizer;
 use Centamiv\Vektor\Services\Searcher;
+use Centamiv\Vektor\Storage\Binary\MetaFile;
+use Centamiv\Vektor\Storage\Binary\PayloadFile;
 use Centamiv\Vektor\Storage\Binary\VectorFile;
 use Symfony\AI\Platform\Vector\NullVector;
 use Symfony\AI\Platform\Vector\Vector;
@@ -22,7 +24,9 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -34,6 +38,8 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     public function __construct(
         private readonly string $storagePath,
         private readonly int $dimensions = 1536,
@@ -116,6 +122,39 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->setup();
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        // Vektor has no get-by-id operation, so its files are read under the shared lock its Searcher takes
+        $lock = fopen(Config::getLockFile(), 'c');
+        if (false === $lock) {
+            throw new RuntimeException(\sprintf('Failed to open the Vektor lock file "%s".', Config::getLockFile()));
+        }
+
+        flock($lock, \LOCK_SH);
+
+        try {
+            $entry = (new MetaFile())->findEntry($id);
+
+            // a deleted document keeps its entry, with -1 as internal id
+            if (null === $entry || -1 === $entry['id']) {
+                return null;
+            }
+
+            $data = (new VectorFile())->read($entry['id']);
+
+            if (null === $data) {
+                return null;
+            }
+
+            $metadata = (new PayloadFile())->read($entry['payload_offset'], $entry['payload_length']);
+        } finally {
+            flock($lock, \LOCK_UN);
+            fclose($lock);
+        }
+
+        return $this->convertToVectorDocument($data + ['metadata' => $metadata]);
+    }
+
     public function query(QueryInterface $query, array $options = []): iterable
     {
         if (!$query instanceof VectorQuery) {
@@ -146,7 +185,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
     /**
      * @param array{
      *     id: string,
-     *     score: float,
+     *     score?: float,
      *     vector: float[],
      *     metadata: mixed[],
      * } $data

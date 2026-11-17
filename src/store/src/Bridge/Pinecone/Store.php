@@ -19,6 +19,7 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -30,6 +31,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     private const API_VERSION = '2026-07';
 
     private ?string $resolvedIndexHost = null;
@@ -141,6 +144,27 @@ final class Store implements ManagedStoreInterface, StoreInterface
     public function clear(array $options = []): void
     {
         $this->deleteVectors(['deleteAll' => true]);
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $query = ['ids' => $id];
+        if (null !== $namespace = $this->namespace()) {
+            $query['namespace'] = $namespace;
+        }
+
+        $result = $this->request('GET', $this->indexUrl().'/vectors/fetch', query: $query);
+
+        $vector = $result['vectors'][$id] ?? null;
+        if (null === $vector) {
+            return null;
+        }
+
+        return new VectorDocument(
+            id: $vector['id'],
+            vector: new Vector($vector['values']),
+            metadata: new Metadata($vector['metadata'] ?? []),
+        );
     }
 
     public function supports(string $queryClass): bool
@@ -256,10 +280,11 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     /**
      * @param array<string, mixed>|\stdClass|null $payload
+     * @param array<string, string>               $query
      *
      * @return array<string, mixed>
      */
-    private function request(string $method, string $url, array|\stdClass|null $payload = null): array
+    private function request(string $method, string $url, array|\stdClass|null $payload = null, array $query = []): array
     {
         $options = [
             'headers' => [
@@ -270,6 +295,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         if (null !== $payload) {
             $options['json'] = $payload;
+        }
+
+        if ([] !== $query) {
+            $options['query'] = $query;
         }
 
         $content = $this->httpClient->request($method, $url, $options)->getContent();

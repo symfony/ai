@@ -19,6 +19,7 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -32,6 +33,8 @@ use Symfony\Contracts\Cache\CacheInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     public function __construct(
         private readonly CacheInterface&CacheItemPoolInterface $cache,
         private readonly DistanceCalculator $distanceCalculator = new DistanceCalculator(),
@@ -121,6 +124,20 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->cache->save($cacheItem);
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $documents = $this->getDocuments();
+
+        // documents added again under the same id are kept, the last one is the current version
+        foreach (array_reverse($documents) as $document) {
+            if ($id === (string) $document['id']) {
+                return $this->createVectorDocument($document);
+            }
+        }
+
+        return null;
+    }
+
     public function supports(string $queryClass): bool
     {
         return \in_array($queryClass, [
@@ -169,17 +186,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
      */
     private function queryVector(VectorQuery $query, array $options): iterable
     {
-        $documents = $this->cache->get($this->cacheKey, static fn (): array => []);
+        $documents = $this->getDocuments();
 
         if ([] === $documents) {
             return;
         }
 
-        $vectorDocuments = array_map(static fn (array $document): VectorDocumentInterface => new VectorDocument(
-            id: $document['id'],
-            vector: new Vector($document['vector']),
-            metadata: new Metadata($document['metadata']),
-        ), $documents);
+        $vectorDocuments = array_map($this->createVectorDocument(...), $documents);
 
         if (isset($options['filter'])) {
             $vectorDocuments = array_values(array_filter($vectorDocuments, $options['filter']));
@@ -198,17 +211,13 @@ final class Store implements ManagedStoreInterface, StoreInterface
      */
     private function queryText(TextQuery $query, array $options): iterable
     {
-        $documents = $this->cache->get($this->cacheKey, static fn (): array => []);
+        $documents = $this->getDocuments();
 
         if ([] === $documents) {
             return;
         }
 
-        $vectorDocuments = array_map(static fn (array $document): VectorDocumentInterface => new VectorDocument(
-            id: $document['id'],
-            vector: new Vector($document['vector']),
-            metadata: new Metadata($document['metadata']),
-        ), $documents);
+        $vectorDocuments = array_map($this->createVectorDocument(...), $documents);
 
         if (isset($options['filter'])) {
             $vectorDocuments = array_values(array_filter($vectorDocuments, $options['filter']));
@@ -298,5 +307,25 @@ final class Store implements ManagedStoreInterface, StoreInterface
             yield $document;
             ++$count;
         }
+    }
+
+    /**
+     * @return list<array{id: int|string, vector: list<float>, metadata: array<string, mixed>}>
+     */
+    private function getDocuments(): array
+    {
+        return $this->cache->get($this->cacheKey, static fn (): array => []);
+    }
+
+    /**
+     * @param array{id: int|string, vector: list<float>, metadata: array<string, mixed>} $document
+     */
+    private function createVectorDocument(array $document): VectorDocumentInterface
+    {
+        return new VectorDocument(
+            id: $document['id'],
+            vector: new Vector($document['vector']),
+            metadata: new Metadata($document['metadata']),
+        );
     }
 }

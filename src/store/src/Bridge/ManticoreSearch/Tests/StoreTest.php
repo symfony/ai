@@ -226,6 +226,81 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testFindSearchesTheDocumentByItsUuid()
+    {
+        $response = new JsonMockResponse([
+            'took' => 0,
+            'timed_out' => false,
+            'hits' => [
+                'total' => 1,
+                'total_relation' => 'eq',
+                'hits' => [
+                    [
+                        '_id' => 1,
+                        '_score' => 1,
+                        '_source' => [
+                            'uuid' => '123e4567-e89b-12d3-a456-426614174000',
+                            'random' => [0.1, 0.2, 0.3],
+                            'metadata' => ['foo' => 'bar'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+        $httpClient = new MockHttpClient($response);
+
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:9308/'), 'bar', 'random');
+        $document = $store->find('123e4567-e89b-12d3-a456-426614174000');
+
+        $this->assertSame('POST', $response->getRequestMethod());
+        $this->assertSame('http://127.0.0.1:9308/search', $response->getRequestUrl());
+        $this->assertSame([
+            'table' => 'bar',
+            'query' => ['equals' => ['uuid' => '123e4567-e89b-12d3-a456-426614174000']],
+            'limit' => 1,
+        ], json_decode($response->getRequestOptions()['body'], true));
+
+        $this->assertNotNull($document);
+        $this->assertSame('123e4567-e89b-12d3-a456-426614174000', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['foo' => 'bar'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindReturnsNullForAnUnknownUuid()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['took' => 0, 'timed_out' => false, 'hits' => ['total' => 0, 'total_relation' => 'eq', 'hits' => []]]),
+        ]);
+
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:9308/'), 'bar', 'random');
+
+        $this->assertNull($store->find('123e4567-e89b-12d3-a456-426614174000'));
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $searchResponse = new JsonMockResponse(['hits' => ['hits' => [
+            ['_id' => 1, '_score' => 1, '_knn_dist' => 0.0, '_source' => ['uuid' => 'itself', 'random' => [0.1, 0.2, 0.3], 'metadata' => []]],
+            ['_id' => 2, '_score' => 1, '_knn_dist' => 0.1, '_source' => ['uuid' => 'other', 'random' => [0.1, 0.2, 0.4], 'metadata' => []]],
+        ]]]);
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['hits' => ['hits' => [
+                ['_id' => 1, '_score' => 1, '_source' => ['uuid' => 'itself', 'random' => [0.1, 0.2, 0.3], 'metadata' => []]],
+            ]]]),
+            $searchResponse,
+        ]);
+
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:9308/'), 'bar', 'random');
+        $documents = iterator_to_array($store->findSimilar('itself', ['limit' => 1]), false);
+
+        $body = json_decode($searchResponse->getRequestOptions()['body'], true);
+        $this->assertSame([0.1, 0.2, 0.3], $body['knn']['query']);
+        $this->assertSame(2, $body['limit']);
+        $this->assertCount(1, $documents);
+        $this->assertSame('other', $documents[0]->getId());
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'test_index');
