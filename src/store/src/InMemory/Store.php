@@ -12,7 +12,6 @@
 namespace Symfony\AI\Store\InMemory;
 
 use Symfony\AI\Store\Distance\DistanceCalculator;
-use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
@@ -173,44 +172,27 @@ final class Store implements ManagedStoreInterface, StoreInterface, ResetInterfa
      */
     private function queryHybrid(HybridQuery $query, array $options): iterable
     {
-        $vectorResults = iterator_to_array($this->queryVector(
-            new VectorQuery($query->getVector()),
-            $options
-        ));
+        $textMatchIds = array_map(
+            static fn (VectorDocumentInterface $doc): string => (string) $doc->getId(),
+            iterator_to_array($this->queryText(new TextQuery($query->getTexts()), []), false),
+        );
 
-        $textResults = iterator_to_array($this->queryText(
-            new TextQuery($query->getTexts()),
-            $options
-        ));
+        $vectorResults = $this->queryVector(
+            new VectorQuery($query->getVector()),
+            array_diff_key($options, ['limit' => true]),
+        );
 
         $mergedResults = [];
-        $seenIds = [];
-
         foreach ($vectorResults as $doc) {
-            $id = (string) $doc->getId();
-            if (!isset($seenIds[$id])) {
-                $mergedResults[] = new VectorDocument(
-                    id: $doc->getId(),
-                    vector: $doc->getVector(),
-                    metadata: $doc->getMetadata(),
-                    score: null !== $doc->getScore() ? $doc->getScore() * $query->getSemanticRatio() : null,
-                );
-                $seenIds[$id] = true;
-            }
+            $textDistance = \in_array((string) $doc->getId(), $textMatchIds, true) ? 0.0 : 1.0;
+            $score = $query->getSemanticRatio() * $doc->getScore() + $query->getKeywordRatio() * $textDistance;
+
+            $mergedResults[] = $doc->withScore($score);
         }
 
-        foreach ($textResults as $doc) {
-            $id = (string) $doc->getId();
-            if (!isset($seenIds[$id])) {
-                $mergedResults[] = $doc;
-                $seenIds[$id] = true;
-            }
-        }
+        usort($mergedResults, static fn (VectorDocumentInterface $a, VectorDocumentInterface $b): int => $a->getScore() <=> $b->getScore());
 
-        if (isset($options['filter'])) {
-            $mergedResults = array_values(array_filter($mergedResults, $options['filter']));
-        }
-
-        yield from $mergedResults;
+        $limit = $options['limit'] ?? null;
+        yield from null !== $limit ? \array_slice($mergedResults, 0, $limit) : $mergedResults;
     }
 }
