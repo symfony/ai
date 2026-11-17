@@ -11,9 +11,15 @@
 
 namespace Symfony\AI\Agent\Bridge\Filesystem\Exception;
 
+use Symfony\AI\Agent\Toolbox\Exception\ToolExecutionExceptionInterface;
+
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-class PathSecurityException extends RuntimeException implements ExceptionInterface
+class PathSecurityException extends RuntimeException implements ExceptionInterface, ToolExecutionExceptionInterface
 {
+    public function getToolCallResult(): string
+    {
+        return $this->getMessage();
+    }
 }
