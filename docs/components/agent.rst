@@ -1222,6 +1222,15 @@ They are provided while instantiating the agent instance::
 
     $agent = new Agent($platform, $model, $inputProcessors, $outputProcessors);
 
+.. note::
+
+    Processors run once per ``call()``: input processors before the first model request, output processors on
+    the final result. When the agent calls tools, the assistant messages and tool results of each round are sent
+    to the model without passing through the input processors. For a change that must apply to every model request,
+    for example redacting personal data, listen to the platform's
+    :class:`Symfony\\AI\\Platform\\Event\\InvocationEvent` and
+    :class:`Symfony\\AI\\Platform\\Event\\ResultConvertedEvent` instead.
+
 InputProcessor
 ~~~~~~~~~~~~~~
 
