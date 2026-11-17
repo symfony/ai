@@ -978,6 +978,82 @@ final class StoreTest extends TestCase
         $this->assertCount(0, $results);
     }
 
+    public function testQueryWithHybridQueryWhereAndParams()
+    {
+        $pdo = $this->createMock(\PDO::class);
+        $statement = $this->createMock(\PDOStatement::class);
+
+        $store = new Store($pdo, 'embeddings_table', 'embedding');
+
+        $expectedQuery = "SELECT id, \"embedding\" AS embedding, metadata,
+                   ((:semantic_ratio * (1 - (\"embedding\" <-> :embedding))) +
+                    (:keyword_ratio * ts_rank(to_tsvector('english', COALESCE(metadata->>'_text', '')), (plainto_tsquery('english', :search_text_0))))) AS score
+            FROM \"embeddings_table\"
+            WHERE ((metadata->>'occurred_at')::bigint >= :after_ts AND (metadata->>'occurred_at')::bigint < :before_ts)
+            ORDER BY score DESC
+            LIMIT 5";
+
+        $pdo->expects($this->once())
+            ->method('prepare')
+            ->with($this->callback(function ($sql) use ($expectedQuery) {
+                $this->assertSame($this->normalizeQuery($expectedQuery), $this->normalizeQuery($sql));
+
+                return true;
+            }))
+            ->willReturn($statement);
+
+        $statement->expects($this->exactly(6))
+            ->method('bindValue')
+            ->willReturnCallback(function (string $param, mixed $value): bool {
+                static $callCount = 0;
+                ++$callCount;
+
+                switch ($callCount) {
+                    case 1:
+                        $this->assertSame([':embedding', '[0.1,0.2,0.3]'], [$param, $value]);
+                        break;
+                    case 2:
+                        $this->assertSame([':semantic_ratio', 0.7], [$param, $value]);
+                        break;
+                    case 3:
+                        $this->assertSame(':keyword_ratio', $param);
+                        $this->assertEqualsWithDelta(0.3, $value, 1e-12);
+                        break;
+                    case 4:
+                        $this->assertSame([':search_text_0', 'test query'], [$param, $value]);
+                        break;
+                    case 5:
+                        $this->assertSame([':after_ts', 1], [$param, $value]);
+                        break;
+                    case 6:
+                        $this->assertSame([':before_ts', 2], [$param, $value]);
+                        break;
+                    default:
+                        $this->fail('Unexpected bindValue call');
+                }
+
+                return true;
+            });
+
+        $statement->expects($this->once())
+            ->method('execute');
+
+        $statement->expects($this->once())
+            ->method('fetchAll')
+            ->with(\PDO::FETCH_ASSOC)
+            ->willReturn([]);
+
+        $results = iterator_to_array($store->query(new HybridQuery(new Vector([0.1, 0.2, 0.3]), 'test query', 0.7), [
+            'where' => "(metadata->>'occurred_at')::bigint >= :after_ts AND (metadata->>'occurred_at')::bigint < :before_ts",
+            'params' => [
+                'after_ts' => 1,
+                'before_ts' => 2,
+            ],
+        ]));
+
+        $this->assertCount(0, $results);
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $pdo = $this->createMock(\PDO::class);
