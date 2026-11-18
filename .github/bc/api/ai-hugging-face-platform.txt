@@ -128,9 +128,6 @@ Symfony\AI\Platform\Bridge\HuggingFace\Pipeline\ModelClient::__construct(): publ
 Symfony\AI\Platform\Bridge\HuggingFace\Pipeline\ModelClient::request(): public function request(Symfony\AI\Platform\Model $model, array|string $payload, array $options = []): Symfony\AI\Platform\Result\RawHttpResult
 Symfony\AI\Platform\Bridge\HuggingFace\Pipeline\ModelClient::supports(): public function supports(Symfony\AI\Platform\Model $model): bool
 Symfony\AI\Platform\Bridge\HuggingFace\Pipeline\ResponseHandlingTrait: trait uses Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait
-Symfony\AI\Platform\Bridge\HuggingFace\Pipeline\ResponseHandlingTrait::assertSuccessfulResponse(): private function assertSuccessfulResponse(Symfony\Contracts\HttpClient\ResponseInterface $response): void
-Symfony\AI\Platform\Bridge\HuggingFace\Pipeline\ResponseHandlingTrait::extractErrorMessage(): private function extractErrorMessage(Symfony\Contracts\HttpClient\ResponseInterface $response): null|string
-Symfony\AI\Platform\Bridge\HuggingFace\Pipeline\ResponseHandlingTrait::getResponseData(): private function getResponseData(Symfony\AI\Platform\Result\RawHttpResult|Symfony\AI\Platform\Result\RawResultInterface $result): array
 Symfony\AI\Platform\Bridge\HuggingFace\Provider: interface
 Symfony\AI\Platform\Bridge\HuggingFace\Provider::CEREBRAS: public const
 Symfony\AI\Platform\Bridge\HuggingFace\Provider::COHERE: public const

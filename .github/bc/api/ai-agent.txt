@@ -7,7 +7,6 @@ Symfony\AI\Agent\Agent::getName(): public function getName(): string
 Symfony\AI\Agent\AgentAwareInterface: interface
 Symfony\AI\Agent\AgentAwareInterface::setAgent(): public function setAgent(Symfony\AI\Agent\AgentInterface $agent): void
 Symfony\AI\Agent\AgentAwareTrait: trait
-Symfony\AI\Agent\AgentAwareTrait::$agent: private Symfony\AI\Agent\AgentInterface
 Symfony\AI\Agent\AgentAwareTrait::setAgent(): public function setAgent(Symfony\AI\Agent\AgentInterface $agent): void
 Symfony\AI\Agent\AgentInterface: interface
 Symfony\AI\Agent\AgentInterface::call(): public function call(Symfony\AI\Platform\Message\MessageBag|Symfony\AI\Platform\Message\UserMessage|string $input, array $options = []): Symfony\AI\Agent\Execution\ExecutionInterface
@@ -286,6 +285,7 @@ Symfony\AI\Agent\Toolbox\Exception\InvalidToolCallArgumentsException: final clas
 Symfony\AI\Agent\Toolbox\Exception\InvalidToolCallArgumentsException::__construct(): public function __construct(string $message = 'Invalid tool call arguments', int $code = 0, Throwable|null $previous = null, mixed $toolCallResult = null)
 Symfony\AI\Agent\Toolbox\Exception\InvalidToolCallArgumentsException::getToolCallResult(): public function getToolCallResult(): mixed
 Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException: final class extends Symfony\AI\Agent\Exception\InvalidArgumentException implements Symfony\AI\Agent\Toolbox\Exception\ExceptionInterface
+Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException::conflictingMethod(): public static function conflictingMethod(string $toolClass, string $methodName, string $configuredMethod): self
 Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException::duplicateToolName(): public static function duplicateToolName(string $name, Symfony\AI\Agent\Toolbox\ToolboxInterface $firstToolbox, Symfony\AI\Platform\Tool\Tool $firstTool, Symfony\AI\Agent\Toolbox\ToolboxInterface $secondToolbox, Symfony\AI\Platform\Tool\Tool $secondTool): self
 Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException::invalidMapToolArguments(): public static function invalidMapToolArguments(string $toolClass, string $methodName, string $reason): self
 Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException::invalidMethod(): public static function invalidMethod(string $toolClass, string $methodName, ReflectionException $previous): self
@@ -321,8 +321,6 @@ Symfony\AI\Agent\Toolbox\SequentialToolExecutor::execute(): public function exec
 Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface: interface
 Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface::setSourceCollection(): public function setSourceCollection(Symfony\AI\Agent\Toolbox\Source\SourceCollection $sourceMap): void
 Symfony\AI\Agent\Toolbox\Source\HasSourcesTrait: trait
-Symfony\AI\Agent\Toolbox\Source\HasSourcesTrait::$sourceCollection: private Symfony\AI\Agent\Toolbox\Source\SourceCollection
-Symfony\AI\Agent\Toolbox\Source\HasSourcesTrait::addSource(): private function addSource(Symfony\AI\Agent\Toolbox\Source\Source $source): void
 Symfony\AI\Agent\Toolbox\Source\HasSourcesTrait::getSourceCollection(): public function getSourceCollection(): Symfony\AI\Agent\Toolbox\Source\SourceCollection
 Symfony\AI\Agent\Toolbox\Source\HasSourcesTrait::setSourceCollection(): public function setSourceCollection(Symfony\AI\Agent\Toolbox\Source\SourceCollection $sourceCollection): void
 Symfony\AI\Agent\Toolbox\Source\Source: class

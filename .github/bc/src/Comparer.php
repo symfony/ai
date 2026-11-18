@@ -181,7 +181,7 @@ final class Comparer
     {
         $headConstants = $this->head->constants($head);
         foreach ($base->constants as $name => $constant) {
-            if ($constant->internal || !SnapshotRenderer::isVisible($constant->visibility, $base->isExtensible(), 'trait' === $base->kind)) {
+            if ($constant->internal || !SnapshotRenderer::isVisible($constant->visibility, $base->isExtensible())) {
                 continue;
             }
 
@@ -211,7 +211,7 @@ final class Comparer
         $extensible = $base->isExtensible();
         $headProperties = $this->head->properties($head);
         foreach ($base->properties as $name => $property) {
-            if ($property->internal || !SnapshotRenderer::isVisible($property->visibility, $extensible, 'trait' === $base->kind)) {
+            if ($property->internal || !SnapshotRenderer::isVisible($property->visibility, $extensible)) {
                 continue;
             }
 
@@ -254,7 +254,7 @@ final class Comparer
         $baseTags = $this->base->methodTags($base);
 
         foreach ($baseMethods as $key => $method) {
-            if (!$this->isOwnedBy($method, $base, $this->base) || $method->internal || !SnapshotRenderer::isVisible($method->visibility, $base->isExtensible(), 'trait' === $base->kind)) {
+            if (!$this->isOwnedBy($method, $base, $this->base) || $method->internal || !SnapshotRenderer::isVisible($method->visibility, $base->isExtensible())) {
                 continue;
             }
 

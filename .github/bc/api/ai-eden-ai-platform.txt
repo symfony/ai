@@ -37,11 +37,6 @@ Symfony\AI\Platform\Bridge\EdenAi\EdenAiJobClient::getResult(): public function 
 Symfony\AI\Platform\Bridge\EdenAi\EdenAiJobClient::getStatus(): public function getStatus(Symfony\AI\Platform\Job\JobHandle $handle): Symfony\AI\Platform\Job\JobStatus
 Symfony\AI\Platform\Bridge\EdenAi\EdenAiJobClient::supports(): public function supports(Symfony\AI\Platform\Job\JobHandle $handle): bool
 Symfony\AI\Platform\Bridge\EdenAi\ErrorHandlingTrait: trait
-Symfony\AI\Platform\Bridge\EdenAi\ErrorHandlingTrait::assertSuccessfulResponse(): private function assertSuccessfulResponse(Symfony\Contracts\HttpClient\ResponseInterface $response, array $expectedStatusCodes = [200]): void
-Symfony\AI\Platform\Bridge\EdenAi\ErrorHandlingTrait::extractEdenAiErrorMessage(): private function extractEdenAiErrorMessage(Symfony\Contracts\HttpClient\ResponseInterface $response): null|string
-Symfony\AI\Platform\Bridge\EdenAi\ErrorHandlingTrait::extractFieldErrors(): private function extractFieldErrors(array $data): array
-Symfony\AI\Platform\Bridge\EdenAi\ErrorHandlingTrait::extractPrimaryErrorMessage(): private function extractPrimaryErrorMessage(array $data): null|string
-Symfony\AI\Platform\Bridge\EdenAi\ErrorHandlingTrait::extractRetryAfterHeader(): private function extractRetryAfterHeader(Symfony\Contracts\HttpClient\ResponseInterface $response): int|null
 Symfony\AI\Platform\Bridge\EdenAi\Factory: final class
 Symfony\AI\Platform\Bridge\EdenAi\Factory::createJobClient(): public static function createJobClient(string $apiKey, Symfony\Contracts\HttpClient\HttpClientInterface|null $httpClient = null, string $baseUrl = 'https://api.edenai.run', string $name = 'edenai'): Symfony\AI\Platform\Bridge\EdenAi\EdenAiJobClient
 Symfony\AI\Platform\Bridge\EdenAi\Factory::createModelCatalog(): public static function createModelCatalog(Symfony\Contracts\HttpClient\HttpClientInterface|null $httpClient = null, string $baseUrl = 'https://api.edenai.run'): Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface
@@ -90,7 +85,6 @@ Symfony\AI\Platform\Bridge\EdenAi\Ocr\Result\OcrResult::getOriginalResponse(): p
 Symfony\AI\Platform\Bridge\EdenAi\Ocr\Result\OcrResult::getProvider(): public function getProvider(): null|string
 Symfony\AI\Platform\Bridge\EdenAi\Ocr\Result\OcrResult::getText(): public function getText(): string
 Symfony\AI\Platform\Bridge\EdenAi\ResultMetadataTrait: trait
-Symfony\AI\Platform\Bridge\EdenAi\ResultMetadataTrait::attachEdenAiMetadata(): private function attachEdenAiMetadata(Symfony\AI\Platform\Result\ResultInterface $result, array $data, array $extra = []): void
 Symfony\AI\Platform\Bridge\EdenAi\SpeechToText: final class extends Symfony\AI\Platform\Model
 Symfony\AI\Platform\Bridge\EdenAi\SpeechToText\ModelClient: final class implements Symfony\AI\Platform\ModelClientInterface uses Symfony\AI\Platform\Bridge\EdenAi\UniversalAi\UniversalAiPayloadTrait
 Symfony\AI\Platform\Bridge\EdenAi\SpeechToText\ModelClient::__construct(): public function __construct(Symfony\Contracts\HttpClient\HttpClientInterface $httpClient, string $baseUrl, string $apiKey, Symfony\AI\Platform\Bridge\EdenAi\UniversalAi\FileUploader|null $fileUploader = null)
@@ -115,8 +109,3 @@ Symfony\AI\Platform\Bridge\EdenAi\UniversalAi\ModelClient::__construct(): public
 Symfony\AI\Platform\Bridge\EdenAi\UniversalAi\ModelClient::request(): public function request(Symfony\AI\Platform\Model $model, array|string $payload, array $options = []): Symfony\AI\Platform\Result\RawHttpResult
 Symfony\AI\Platform\Bridge\EdenAi\UniversalAi\ModelClient::supports(): public function supports(Symfony\AI\Platform\Model $model): bool
 Symfony\AI\Platform\Bridge\EdenAi\UniversalAi\UniversalAiPayloadTrait: trait
-Symfony\AI\Platform\Bridge\EdenAi\UniversalAi\UniversalAiPayloadTrait::ROOT_OPTIONS: private const
-Symfony\AI\Platform\Bridge\EdenAi\UniversalAi\UniversalAiPayloadTrait::createRequestBody(): private function createRequestBody(Symfony\AI\Platform\Model $model, array|string $payload, array $options): array
-Symfony\AI\Platform\Bridge\EdenAi\UniversalAi\UniversalAiPayloadTrait::getFileUploader(): abstract private function getFileUploader(): Symfony\AI\Platform\Bridge\EdenAi\UniversalAi\FileUploader
-Symfony\AI\Platform\Bridge\EdenAi\UniversalAi\UniversalAiPayloadTrait::getStringPayloadKey(): private function getStringPayloadKey(Symfony\AI\Platform\Model $model): string
-Symfony\AI\Platform\Bridge\EdenAi\UniversalAi\UniversalAiPayloadTrait::uploadBinaryInput(): private function uploadBinaryInput(mixed $fileData): string

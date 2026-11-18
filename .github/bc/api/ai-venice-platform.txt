@@ -23,7 +23,6 @@ Symfony\AI\Platform\Bridge\Venice\VeniceClient::__construct(): public function _
 Symfony\AI\Platform\Bridge\Venice\VeniceClient::request(): public function request(Symfony\AI\Platform\Model $model, array|string $payload, array $options = []): Symfony\AI\Platform\Result\RawResultInterface
 Symfony\AI\Platform\Bridge\Venice\VeniceClient::supports(): public function supports(Symfony\AI\Platform\Model $model): bool
 Symfony\AI\Platform\Bridge\Venice\VeniceErrorHandlingTrait: trait uses Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait
-Symfony\AI\Platform\Bridge\Venice\VeniceErrorHandlingTrait::extractErrorMessage(): private function extractErrorMessage(Symfony\Contracts\HttpClient\ResponseInterface $response): null|string
 Symfony\AI\Platform\Bridge\Venice\VeniceJobClient: final class implements Symfony\AI\Platform\Job\JobClientInterface uses Symfony\AI\Platform\Bridge\Venice\VeniceErrorHandlingTrait
 Symfony\AI\Platform\Bridge\Venice\VeniceJobClient::DEFAULT_MAX_DURATION: public const
 Symfony\AI\Platform\Bridge\Venice\VeniceJobClient::DEFAULT_POLL_INTERVAL: public const

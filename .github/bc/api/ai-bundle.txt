@@ -69,5 +69,3 @@ Symfony\AI\AiBundle\Test\AiAssertionsTrait::assertToolCallCount(): public static
 Symfony\AI\AiBundle\Test\AiAssertionsTrait::assertToolCalled(): public static function assertToolCalled(string $tool, string $message = ''): void
 Symfony\AI\AiBundle\Test\AiAssertionsTrait::assertToolRegistered(): public static function assertToolRegistered(string $tool, string $message = ''): void
 Symfony\AI\AiBundle\Test\AiAssertionsTrait::getAiDataCollector(): protected static function getAiDataCollector(): Symfony\AI\AiBundle\Profiler\DataCollector
-Symfony\AI\AiBundle\Test\AiAssertionsTrait::getCalledModels(): private static function getCalledModels(): array
-Symfony\AI\AiBundle\Test\AiAssertionsTrait::getCalledTools(): private static function getCalledTools(): array
