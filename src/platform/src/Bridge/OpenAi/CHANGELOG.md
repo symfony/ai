@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add support for several input images when editing with `Image` models: the `image` option accepts a list of images
+
 0.14
 ----
 

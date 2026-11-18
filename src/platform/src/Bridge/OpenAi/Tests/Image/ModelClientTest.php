@@ -84,22 +84,7 @@ final class ModelClientTest extends TestCase
             $contentType = $options['normalized_headers']['content-type'][0];
             self::assertStringStartsWith('Content-Type: multipart/form-data; boundary=', $contentType);
 
-            // Depending on the HttpClient version the normalized body is a string, a generator, or a
-            // Closure(int): string streaming chunks; materialize all three into a single string.
-            $rawBody = $options['body'];
-            if (\is_string($rawBody)) {
-                $body = $rawBody;
-            } elseif ($rawBody instanceof \Closure) {
-                $body = '';
-                while ('' !== ($chunk = $rawBody(8192))) {
-                    $body .= $chunk;
-                }
-            } else {
-                $body = '';
-                foreach ($rawBody as $chunk) {
-                    $body .= $chunk;
-                }
-            }
+            $body = self::materializeBody($options['body']);
             self::assertStringContainsString('name="model"', $body);
             self::assertStringContainsString('gpt-image-1', $body);
             self::assertStringContainsString('name="prompt"', $body);
@@ -114,6 +99,68 @@ final class ModelClientTest extends TestCase
         $modelClient->request(new Image('gpt-image-1'), 'make it red', [
             'image' => ImageContent::fromFile(\dirname(__DIR__, 7).'/fixtures/image.jpg'),
         ]);
+    }
+
+    public function testItEditsSeveralImagesAsAnArrayField()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame('https://api.openai.com/v1/images/edits', $url);
+
+            $body = self::materializeBody($options['body']);
+            self::assertSame(2, substr_count($body, 'name="image[]"'));
+            self::assertSame(2, substr_count($body, "Content-Type: image/jpeg\r\n"));
+            self::assertStringNotContainsString('name="image";', $body);
+            self::assertStringContainsString('make a poster', $body);
+
+            $firstImage = strpos($body, 'name="image[]"; filename="image.jpg"');
+            $secondImage = strpos($body, 'name="image[]"; filename="accordion.jpg"');
+            self::assertIsInt($firstImage);
+            self::assertIsInt($secondImage);
+            self::assertLessThan($secondImage, $firstImage);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'sk-api-key');
+        $fixtures = \dirname(__DIR__, 7).'/fixtures';
+        $modelClient->request(new Image('gpt-image-1'), 'make a poster', [
+            'image' => [
+                ImageContent::fromFile($fixtures.'/image.jpg'),
+                ImageContent::fromFile($fixtures.'/accordion.jpg'),
+            ],
+        ]);
+    }
+
+    public function testItEditsASingleImageListAsAPlainField()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame('https://api.openai.com/v1/images/edits', $url);
+
+            $body = self::materializeBody($options['body']);
+            self::assertStringContainsString('name="image"; filename="image.jpg"', $body);
+            self::assertStringNotContainsString('name="image[]"', $body);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'sk-api-key');
+        $modelClient->request(new Image('gpt-image-1'), 'make it red', [
+            'image' => [ImageContent::fromFile(\dirname(__DIR__, 7).'/fixtures/image.jpg')],
+        ]);
+    }
+
+    #[TestWith(['/path/to/image.png', 'string'])]
+    #[TestWith([[], 'array'])]
+    #[TestWith([['first' => 'not-a-list'], 'array'])]
+    #[TestWith([['not-an-image'], 'string'])]
+    public function testItThrowsWhenTheImageOptionIsInvalid(mixed $image, string $givenType)
+    {
+        $modelClient = new ModelClient(new MockHttpClient(), 'sk-api-key');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(\sprintf('The "image" option must be an instance of "%s" or a non-empty list of them, but "%s" was given.', ImageContent::class, $givenType));
+
+        $modelClient->request(new Image('gpt-image-1'), 'make a poster', ['image' => $image]);
     }
 
     public function testItThrowsWhenPromptIsNotAString()
@@ -141,5 +188,31 @@ final class ModelClientTest extends TestCase
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key', $region);
         $modelClient->request(new Image('gpt-image-1'), 'foo', ['n' => 1]);
+    }
+
+    /**
+     * @param string|\Closure(int): string|iterable<string> $rawBody
+     */
+    private static function materializeBody(string|\Closure|iterable $rawBody): string
+    {
+        // The normalized body is a string, a generator or a chunk-streaming Closure, depending on the HttpClient version.
+        if (\is_string($rawBody)) {
+            return $rawBody;
+        }
+
+        $body = '';
+        if ($rawBody instanceof \Closure) {
+            while ('' !== ($chunk = $rawBody(8192))) {
+                $body .= $chunk;
+            }
+
+            return $body;
+        }
+
+        foreach ($rawBody as $chunk) {
+            $body .= $chunk;
+        }
+
+        return $body;
     }
 }
