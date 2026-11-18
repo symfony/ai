@@ -158,4 +158,27 @@ final class DecartClientTest extends TestCase
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame('prompt=foo', $options['body']);
+
+            return new MockResponse('image', ['response_headers' => ['content-type' => 'image/jpeg']]);
+        });
+
+        $client = new DecartClient(
+            $httpClient,
+            'my-api-key',
+        );
+
+        $client->request(new Decart('lucy-pro-t2i', [Capability::TEXT_TO_IMAGE]), [
+            'text' => 'foo',
+        ], [
+            'http_options' => ['max_duration' => 30, 'body' => 'overridden'],
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
 }

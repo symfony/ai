@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Mistral\TextToSpeech;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -50,6 +51,10 @@ final class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException('Streaming text to speech results is not supported yet.');
         }
 
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         $input = \is_string($payload) ? $payload : ($payload['text'] ?? throw new InvalidArgumentException('The payload must contain a "text" key.'));
 
         $options = array_merge($model->getOptions(), $options);
@@ -67,6 +72,6 @@ final class ModelClient implements ModelClientInterface
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.'/v1/audio/speech', [
             'auth_bearer' => $this->apiKey,
             'json' => array_merge($options, ['model' => $model->getName(), 'input' => $input]),
-        ]));
+        ] + $httpOptions));
     }
 }

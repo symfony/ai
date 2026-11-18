@@ -293,6 +293,17 @@ final class ModelClientTest extends TestCase
         $client->request($model, 'Hello', ['tools' => ['Read', ...self::toolDefinitions($model)]]);
     }
 
+    public function testRequestDoesNotPassHttpOptionsAsFlags()
+    {
+        $client = new ModelClient(self::$binary);
+        $model = new Codex('gpt-5-codex');
+
+        $result = $client->request($model, 'Hello', ['http_options' => ['max_duration' => 30]]);
+        $commandLine = $result->getObject()->getCommandLine();
+
+        $this->assertStringNotContainsString('--http-options', $commandLine);
+    }
+
     /**
      * @return array<string, mixed>
      */

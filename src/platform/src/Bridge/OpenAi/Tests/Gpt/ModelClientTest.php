@@ -164,7 +164,7 @@ final class ModelClientTest extends TestCase
     {
         $recorded = [];
         $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$recorded): MockResponse {
-            $recorded[] = [$url, self::collectBody($options)];
+            $recorded[] = [$url, self::collectBody($options), $options['max_duration']];
 
             return str_contains($url, '/v1/files')
                 ? new MockResponse('{"id": "file-abc"}')
@@ -175,15 +175,17 @@ final class ModelClientTest extends TestCase
         $result = $modelClient->request(new Gpt('gpt-4o-mini'), [
             'first' => ['input' => [['role' => 'user', 'content' => 'What is the capital of France?']]],
             'second' => ['input' => [['role' => 'user', 'content' => 'What is the capital of Germany?']]],
-        ], ['batch' => true, 'max_output_tokens' => 50]);
+        ], ['batch' => true, 'max_output_tokens' => 50, 'http_options' => ['max_duration' => 30]]);
 
         $this->assertSame('batch_123', $result->getData()['id']);
         $this->assertSame('https://api.openai.com/v1/files', $recorded[0][0]);
         $this->assertSame('https://api.openai.com/v1/batches', $recorded[1][0]);
 
-        // Each line is the request it would have been on its own, without the "batch" option itself.
+        // Each line is the request it would have been on its own, without the "batch" option itself nor the HTTP options.
         $this->assertStringContainsString('{"custom_id":"first","method":"POST","url":"\/v1\/responses","body":{"max_output_tokens":50,"model":"gpt-4o-mini","input":[{"role":"user","content":"What is the capital of France?"}]}}', $recorded[0][1]);
         $this->assertStringNotContainsString('"batch"', $recorded[0][1]);
+        $this->assertStringNotContainsString('http_options', $recorded[0][1]);
+        $this->assertSame([30.0, 30.0], array_column($recorded, 2));
     }
 
     public function testItRefusesToStreamABatch()

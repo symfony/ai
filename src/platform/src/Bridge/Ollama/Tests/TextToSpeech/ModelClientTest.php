@@ -136,4 +136,20 @@ final class ModelClientTest extends TestCase
             'stream_format' => 'audio',
         ]);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): HttpResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame(['model' => 'phonon', 'input' => 'Hello from Ollama.'], json_decode($options['body'], true));
+
+            return new MockResponse('fake-audio-bytes');
+        }, 'http://127.0.0.1:11434');
+
+        (new ModelClient($httpClient))->request(new TextToSpeech('phonon'), 'Hello from Ollama.', [
+            'http_options' => ['max_duration' => 30, 'body' => 'overridden'],
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
 }

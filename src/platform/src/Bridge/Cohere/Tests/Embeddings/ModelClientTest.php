@@ -96,4 +96,26 @@ final class ModelClientTest extends TestCase
         $model = new Embeddings('embed-english-v3.0', [], ['input_type' => InputType::Classification]);
         $client->request($model, 'Hello, world!');
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient([function (
+            string $method,
+            string $url,
+            array $options,
+        ): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame([
+                'model' => 'embed-english-v3.0',
+                'texts' => ['Hello, world!'],
+                'input_type' => 'search_document',
+            ], json_decode($options['body'], true));
+
+            return new MockResponse();
+        }]);
+
+        $client = new ModelClient($httpClient, 'test-key');
+
+        $client->request(new Embeddings('embed-english-v3.0'), 'Hello, world!', ['http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]]]);
+    }
 }

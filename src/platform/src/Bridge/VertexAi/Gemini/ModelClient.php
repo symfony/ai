@@ -52,6 +52,10 @@ final class ModelClient implements ModelClientInterface
      */
     public function request(BaseModel $model, array|string $payload, array $options = []): RawHttpResult
     {
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         $isStream = $options['stream'] ?? false;
         $method = $isStream ? 'streamGenerateContent' : 'generateContent';
 
@@ -129,7 +133,7 @@ final class ModelClient implements ModelClientInterface
                     'headers' => ['Content-Type' => 'application/json'],
                     'body' => $this->encodeJsonBody(array_merge($options, $payload)),
                     'query' => $query,
-                ]
+                ] + $httpOptions
             )
         );
     }

@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -68,6 +69,10 @@ final class ModelClient implements ModelClientInterface
             }
         }
 
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         foreach (self::FORWARDED_OPTIONS as $option) {
             if (isset($options[$option])) {
                 $body[$option] = $options[$option];
@@ -77,6 +82,6 @@ final class ModelClient implements ModelClientInterface
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.'/alpha/decisions', [
             'auth_bearer' => $this->apiKey,
             'json' => $body,
-        ]));
+        ] + $httpOptions));
     }
 }

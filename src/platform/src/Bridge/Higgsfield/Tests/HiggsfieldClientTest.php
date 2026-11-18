@@ -65,6 +65,20 @@ final class HiggsfieldClientTest extends TestCase
         $client->request(new Higgsfield('higgsfield-ai/soul/v2/standard', [Capability::TEXT_TO_IMAGE]), 'A cat', ['aspect_ratio' => '9:16']);
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame(['prompt' => 'A cat'], json_decode($options['body'], true));
+
+            return new MockResponse('{"request_id": "req-123", "status": "queued"}');
+        }, self::BASE_URL);
+
+        $client = new HiggsfieldClient($httpClient);
+
+        $client->request(new Higgsfield('higgsfield-ai/soul/v2/standard', [Capability::TEXT_TO_IMAGE]), 'A cat', ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
+
     public function testClientUploadsNormalizedImageAndPassesItsPublicUrl()
     {
         $image = Image::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg');
@@ -103,6 +117,41 @@ final class HiggsfieldClientTest extends TestCase
         $result = $client->request(new Higgsfield('kling-video/v2.5-turbo/pro/image-to-video', [Capability::IMAGE_TO_VIDEO]), $payload, ['prompt' => 'Slowly zoom in']);
 
         $this->assertSame('req-123', $result->getData()['request_id']);
+        $this->assertSame(3, $httpClient->getRequestsCount());
+    }
+
+    public function testHttpOptionsAreSentWithTheUploadRequests()
+    {
+        $image = Image::fromFile(\dirname(__DIR__, 6).'/fixtures/image.jpg');
+        $payload = (new ImageNormalizer())->normalize($image);
+
+        $httpClient = new MockHttpClient([
+            function (string $method, string $url, array $options): MockResponse {
+                $this->assertSame(30.0, $options['max_duration']);
+                $this->assertSame(['content_type' => 'image/jpeg'], json_decode($options['body'], true));
+
+                return new JsonMockResponse([
+                    'public_url' => 'https://cdn.example.com/image.jpeg',
+                    'upload_url' => 'https://bucket.example.com/image.jpeg?signature=abc',
+                ]);
+            },
+            function (string $method, string $url, array $options) use ($image): MockResponse {
+                $this->assertSame(30.0, $options['max_duration']);
+                $this->assertSame($image->asBinary(), $options['body']);
+
+                return new MockResponse();
+            },
+            function (string $method, string $url, array $options): MockResponse {
+                $this->assertSame(30.0, $options['max_duration']);
+
+                return new MockResponse('{"request_id": "req-123", "status": "queued"}');
+            },
+        ], self::BASE_URL);
+
+        $client = new HiggsfieldClient($httpClient);
+
+        $client->request(new Higgsfield('kling-video/v2.5-turbo/pro/image-to-video', [Capability::IMAGE_TO_VIDEO]), $payload, ['http_options' => ['max_duration' => 30]]);
+
         $this->assertSame(3, $httpClient->getRequestsCount());
     }
 }

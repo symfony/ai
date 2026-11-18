@@ -103,6 +103,19 @@ final class ModelClientTest extends TestCase
         $client->request(new Model('gemini-embedding-001'), 'test payload');
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame('{"instances":[{"content":"test payload","title":null,"task_type":"RETRIEVAL_QUERY"}]}', $options['body']);
+
+            return new JsonMockResponse(['predictions' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'global', 'test');
+        $client->request(new Model('gemini-embedding-001'), 'test payload', ['http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]]]);
+    }
+
     public function testItThrowsOnAnInvalidLocation()
     {
         $client = new ModelClient(new MockHttpClient(), 'evil.com/europe-west1', 'test');

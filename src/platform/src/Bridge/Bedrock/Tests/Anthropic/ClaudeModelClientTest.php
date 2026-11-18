@@ -300,4 +300,21 @@ final class ClaudeModelClientTest extends TestCase
         yield 'canonical only' => [['max_output_tokens' => 500], 500];
         yield 'explicit max_tokens wins' => [['max_tokens' => 2000, 'max_output_tokens' => 500], 2000];
     }
+
+    public function testHttpOptionsAreNotSentInTheBody()
+    {
+        $this->bedrockClient->expects($this->once())
+            ->method('invokeModel')
+            ->with($this->callback(function ($arg) {
+                $this->assertInstanceOf(InvokeModelRequest::class, $arg);
+                $this->assertArrayNotHasKey('http_options', json_decode($arg->getBody(), true));
+
+                return true;
+            }))
+            ->willReturn($this->createMock(InvokeModelResponse::class));
+
+        $this->modelClient = new ClaudeModelClient($this->bedrockClient, self::VERSION);
+
+        $this->modelClient->request($this->model, ['message' => 'test'], ['http_options' => ['max_duration' => 30]]);
+    }
 }

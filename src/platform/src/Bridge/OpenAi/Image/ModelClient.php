@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Image as ImageContent;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -42,7 +43,7 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
     }
 
     /**
-     * @param array{image?: ImageContent, ...} $options
+     * @param array{image?: ImageContent, http_options?: array<string, mixed>, ...} $options
      */
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
@@ -50,9 +51,13 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
             throw new InvalidArgumentException(\sprintf('The image prompt must be a string, but "%s" was given to "%s".', get_debug_type($payload), self::class));
         }
 
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         // A source image turns the request into an edit (different endpoint and encoding).
         if (isset($options['image'])) {
-            return $this->edit($model, $payload, $options);
+            return $this->edit($model, $payload, $options, $httpOptions);
         }
 
         return new RawHttpResult($this->httpClient->request('POST', self::getBaseUrl($this->region).'/v1/images/generations', [
@@ -61,13 +66,14 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
                 'model' => $model->getName(),
                 'prompt' => $payload,
             ]),
-        ]));
+        ] + $httpOptions));
     }
 
     /**
      * @param array{image: ImageContent, ...} $options
+     * @param array<string, mixed>            $httpOptions
      */
-    private function edit(Model $model, string $prompt, array $options): RawHttpResult
+    private function edit(Model $model, string $prompt, array $options, array $httpOptions): RawHttpResult
     {
         $image = $options['image'];
         unset($options['image']);
@@ -95,6 +101,6 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'multipart/form-data; boundary='.$boundary],
             'body' => $body,
-        ]));
+        ] + $httpOptions));
     }
 }

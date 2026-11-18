@@ -233,6 +233,19 @@ final class ModelClientTest extends TestCase
         $client->request(new Model('gemini-2.0-flash'), ['contents' => []], ['max_output_tokens' => 500]);
     }
 
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame(['contents' => []], json_decode($options['body'], true));
+
+            return new JsonMockResponse(['candidates' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'global', 'test');
+        $client->request(new Model('gemini-2.0-flash'), ['contents' => []], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
+
     public function testCanonicalMaxOutputTokensIsMergedIntoAnExistingGenerationConfig()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {

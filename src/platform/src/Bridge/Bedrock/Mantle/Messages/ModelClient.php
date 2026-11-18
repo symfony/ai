@@ -74,6 +74,10 @@ final class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        /** @var array<string, mixed> $httpOptions */
+        $httpOptions = $options[PlatformOptions::HTTP_OPTIONS] ?? [];
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
+
         if (isset($options['response_format']) || isset($options['output_config']['format']) || isset($payload['response_format']) || isset($payload['output_config']['format'])) {
             throw new InvalidArgumentException('Structured outputs are not supported by the Anthropic Messages API on the Bedrock Mantle endpoint.');
         }
@@ -123,6 +127,6 @@ final class ModelClient implements ModelClientInterface
         return new RawHttpResult($this->httpClient->request('POST', $url, [
             'headers' => $headers,
             'body' => $body,
-        ]));
+        ] + $httpOptions));
     }
 }

@@ -67,4 +67,17 @@ final class LlamaModelClientTest extends TestCase
 
         $modelClient->request($otherModel, ['prompt' => 'Hello']);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame('{"input":{"prompt":"Hello"}}', $options['body']);
+
+            return new MockResponse('{"id": "pred-123", "status": "starting"}');
+        });
+
+        $modelClient = new LlamaModelClient(new Client($httpClient, 'test-key'));
+        $modelClient->request(new Llama('llama-3.1-405b-instruct'), ['prompt' => 'Hello'], ['http_options' => ['max_duration' => 30, 'body' => 'overridden']]);
+    }
 }

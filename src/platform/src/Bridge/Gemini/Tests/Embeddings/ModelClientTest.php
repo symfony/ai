@@ -14,6 +14,8 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Tests\Embeddings;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Gemini\Embeddings;
 use Symfony\AI\Platform\Bridge\Gemini\Embeddings\ModelClient;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -58,6 +60,24 @@ final class ModelClientTest extends TestCase
 
         $result = (new ModelClient($httpClient, 'test'))->request($model, ['payload1', 'payload2']);
         $this->assertSame(json_decode($this->getEmbeddingStub(), true), $result->getData());
+    }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame([
+                'requests' => [
+                    ['model' => 'models/gemini-embedding-exp-03-07', 'content' => ['parts' => [['text' => 'payload']]]],
+                ],
+            ], json_decode($options['body'], true));
+
+            return new MockResponse($this->getEmbeddingStub());
+        });
+
+        (new ModelClient($httpClient, 'test'))->request(new Embeddings('gemini-embedding-exp-03-07'), 'payload', ['http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]]]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
     private function getEmbeddingStub(): string

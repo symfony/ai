@@ -121,4 +121,22 @@ final class ModelClientTest extends TestCase
         $this->assertSame('file-42', $body['input']['file']);
         $this->assertArrayNotHasKey('file_data', $body['input']);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame(30.0, $options['max_duration']);
+            $this->assertSame([
+                'model' => 'audio/speech_to_text_async/openai',
+                'input' => ['file' => 'https://example.com/audio.mp3'],
+            ], json_decode($options['body'], true));
+
+            return new JsonMockResponse(['status' => 'processing', 'public_id' => 'job-123'], ['http_code' => 202]);
+        });
+
+        $client = new ModelClient($httpClient, 'https://api.edenai.run', 'test-key');
+        $client->request(new SpeechToText('audio/speech_to_text_async/openai'), 'https://example.com/audio.mp3', ['http_options' => ['max_duration' => 30, 'json' => ['overridden' => true]]]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
 }

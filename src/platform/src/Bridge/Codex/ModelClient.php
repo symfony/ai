@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\MissingModelSupportException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
@@ -52,6 +53,8 @@ final class ModelClient implements ModelClientInterface
         if (\is_array($options['tools'] ?? null) && [] !== array_filter($options['tools'], static fn (mixed $tool): bool => !\is_string($tool))) {
             throw MissingModelSupportException::forToolCalling($model);
         }
+
+        unset($options[PlatformOptions::HTTP_OPTIONS]);
 
         if (!isset($options['model'])) {
             $options['model'] = $model->getName();

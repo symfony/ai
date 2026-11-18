@@ -54,16 +54,17 @@ final class BatchClient
     }
 
     /**
-     * @param array<string|int, array<string, mixed>> $requests the request bodies, keyed by the
-     *                                                          identifier to report them back under
+     * @param array<string|int, array<string, mixed>> $requests    the request bodies, keyed by the
+     *                                                             identifier to report them back under
+     * @param array<string, mixed>                    $httpOptions options of the HTTP requests sent to OpenAI
      */
-    public function submit(array $requests): RawHttpResult
+    public function submit(array $requests, array $httpOptions = []): RawHttpResult
     {
         if ([] === $requests) {
             throw new InvalidArgumentException('A batch needs at least one request.');
         }
 
-        $fileId = $this->upload($requests);
+        $fileId = $this->upload($requests, $httpOptions);
 
         $response = $this->httpClient->request('POST', $this->baseUrl.'/v1/batches', [
             'auth_bearer' => $this->apiKey,
@@ -73,13 +74,13 @@ final class BatchClient
                 'endpoint' => $this->path,
                 'completion_window' => self::COMPLETION_WINDOW,
             ]),
-        ]);
+        ] + $httpOptions);
 
         try {
             // A rejected batch will never read its input file, so it is deleted here rather than
             // left behind; reporting the rejection stays with the result converter.
             if (400 <= $response->getStatusCode()) {
-                $this->delete($fileId);
+                $this->delete($fileId, $httpOptions);
             }
         } catch (TransportExceptionInterface) {
             // Whether the batch was created is unknown, so its input file has to stay.
@@ -88,12 +89,15 @@ final class BatchClient
         return new RawHttpResult($response);
     }
 
-    private function delete(string $fileId): void
+    /**
+     * @param array<string, mixed> $httpOptions
+     */
+    private function delete(string $fileId, array $httpOptions): void
     {
         try {
             $this->httpClient->request('DELETE', \sprintf('%s/v1/files/%s', $this->baseUrl, urlencode($fileId)), [
                 'auth_bearer' => $this->apiKey,
-            ])->getStatusCode();
+            ] + $httpOptions)->getStatusCode();
         } catch (ExceptionInterface) {
             // Best effort: a leftover input file costs nothing but a slot in the account.
         }
@@ -101,8 +105,9 @@ final class BatchClient
 
     /**
      * @param array<string|int, array<string, mixed>> $requests
+     * @param array<string, mixed>                    $httpOptions
      */
-    private function upload(array $requests): string
+    private function upload(array $requests, array $httpOptions): string
     {
         $file = fopen('php://temp', 'r+');
 
@@ -135,7 +140,7 @@ final class BatchClient
             'auth_bearer' => $this->apiKey,
             'headers' => ['Content-Type' => 'multipart/form-data'],
             'body' => ['purpose' => 'batch', 'file' => $file],
-        ]);
+        ] + $httpOptions);
 
         $this->throwOnHttpError($response);
 

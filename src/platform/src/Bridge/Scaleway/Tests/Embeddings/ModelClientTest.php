@@ -90,4 +90,17 @@ final class ModelClientTest extends TestCase
         $modelClient = new ModelClient($httpClient, 'scaleway-api-key');
         $modelClient->request(new Embeddings('bge-multilingual-gemma2'), ['text1', 'text2', 'text3'], []);
     }
+
+    public function testHttpOptionsAreSentWithTheRequest()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame(30.0, $options['max_duration']);
+            self::assertSame('{"model":"bge-multilingual-gemma2","input":"test text"}', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'scaleway-api-key');
+        $modelClient->request(new Embeddings('bge-multilingual-gemma2'), 'test text', ['http_options' => ['max_duration' => 30, 'json' => 'overridden']]);
+    }
 }
