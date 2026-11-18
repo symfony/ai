@@ -11,6 +11,8 @@
 
 namespace Symfony\AI\Store\Bridge\Doctrine;
 
+use Doctrine\DBAL\ArrayParameterType;
+use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Symfony\AI\Platform\Vector\VectorInterface;
@@ -125,7 +127,13 @@ final class OrmStore implements StoreInterface
     }
 
     /**
-     * @param array{limit?: positive-int, maxScore?: float} $options
+     * @param array{
+     *     limit?: positive-int,
+     *     maxScore?: float,
+     *     where?: string,
+     *     params?: array<string, mixed>,
+     *     paramTypes?: array<string, ParameterType|ArrayParameterType|string|int>,
+     * } $options "where" is a DQL condition on the entity as "e", with "params" bound by name; the "vector" parameter is reserved
      *
      * @return list<EntityVectorDocument>
      */
@@ -140,17 +148,29 @@ final class OrmStore implements StoreInterface
             $configuration->addCustomNumericFunction(VectorDistance::NAME, VectorDistance::class);
         }
 
-        /** @var list<array{0: object, score: float|string}> $rows */
-        $rows = $this->entityManager->createQueryBuilder()
+        $queryBuilder = $this->entityManager->createQueryBuilder()
             ->select('e')
             ->addSelect(\sprintf("%s(%s, :vector, '%s') AS score", VectorDistance::NAME, $this->vectorField(), $this->metric->value))
             ->from($this->entityClass, 'e')
             ->where($this->vectorField().' IS NOT NULL')
             ->orderBy('score', 'ASC')
             ->setMaxResults($options['limit'] ?? 5)
-            ->setParameter('vector', $query->getVector(), VectorType::NAME)
-            ->getQuery()
-            ->getResult();
+            ->setParameter('vector', $query->getVector(), VectorType::NAME);
+
+        if (isset($options['where'])) {
+            $queryBuilder->andWhere($options['where']);
+        }
+
+        foreach ($options['params'] ?? [] as $name => $value) {
+            if ('vector' === ltrim((string) $name, ':')) {
+                throw new InvalidArgumentException('The "vector" parameter is the vector of the query, give your parameter another name.');
+            }
+
+            $queryBuilder->setParameter($name, $value, $options['paramTypes'][$name] ?? null);
+        }
+
+        /** @var list<array{0: object, score: float|string}> $rows */
+        $rows = $queryBuilder->getQuery()->getResult();
 
         $metadata = $this->classMetadata();
         $identifierField = $metadata->getSingleIdentifierFieldName();

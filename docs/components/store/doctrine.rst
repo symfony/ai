@@ -246,18 +246,35 @@ Each result is an :class:`Symfony\\AI\\Store\\Bridge\\Doctrine\\EntityVectorDocu
 entity and its distance to the query. On PostgreSQL, the inner product distance is the negative
 inner product, so ``maxScore`` needs a negative value with it.
 
-To filter or join, use ``VECTOR_DISTANCE`` in your own DQL. This query finds the articles that
-are most similar to ``$article``, without the article itself. On SQLite, sqlite-vec fails on a
-``NULL`` vector, so the query skips articles without embedding::
+To filter the entities, pass a DQL condition with the ``where`` option. The condition refers to the
+entity as ``e``. This query finds the published articles that are most similar to ``$article``,
+without the article itself::
+
+    use Symfony\AI\Store\Query\VectorQuery;
+
+    $documents = $store->query(new VectorQuery($article->getEmbedding()), [
+        'where' => 'e.id != :id AND e.published = true',
+        'params' => ['id' => $article->getId()],
+        // needed for values Doctrine can't guess the type of, e.g. a Uuid
+        'paramTypes' => ['id' => 'uuid'],
+    ]);
+
+The query uses the ``vector`` parameter itself, so give your parameters other names. The
+``where`` option is added to the DQL as it is: pass user input with ``params``, never put it in
+the condition.
+
+To join other entities, use ``VECTOR_DISTANCE`` in your own DQL. This query finds the articles
+of active authors that are most similar to ``$article``. On SQLite, sqlite-vec fails on a ``NULL``
+vector, so the query skips articles without embedding::
 
     use Symfony\AI\Store\Bridge\Doctrine\Dbal\Types\VectorType;
 
     $similarArticles = $entityManager->createQuery(
         'SELECT a FROM App\Entity\Article a
-            WHERE a.id != :id AND a.embedding IS NOT NULL
+            JOIN a.author au
+            WHERE au.active = true AND a.embedding IS NOT NULL
             ORDER BY VECTOR_DISTANCE(a.embedding, :vector) ASC'
     )
-        ->setParameter('id', $article->getId())
         ->setParameter('vector', $article->getEmbedding(), VectorType::NAME)
         ->setMaxResults(5)
         ->getResult();
