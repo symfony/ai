@@ -1,0 +1,19 @@
+---------------------------------------------------------------------------
+
+by carsonbot at 2026-11-17T19:16:42Z
+
+Hey!
+
+To help keep things organized, we don't allow "Draft" pull requests. Could you please click the "ready for review" button or close this PR and open a new one when you are done?
+
+Note that a pull request does not have to be "perfect" or "ready for merge" when you first open it. We just want it to be ready for a first review.
+
+Cheers!
+
+Carsonbot
+
+---------------------------------------------------------------------------
+
+by lyrixx at 2026-11-17T22:03:54Z
+
+Done: 429, 5xx and 422 now carry the status code and the URL too, 422 throws a `BadRequestException` and Mistral's FastAPI `detail` is read so the violations stay in the message. As the constructors are untouched, 5xx shows the status twice (`Server error (HTTP 503). HTTP 503 returned for "…": …`), tell me if you'd rather avoid it. The description now says Related to #2280.
