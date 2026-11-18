@@ -42,7 +42,7 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
     }
 
     /**
-     * @param array{image?: ImageContent, ...} $options
+     * @param array{image?: ImageContent|list<ImageContent>, ...} $options
      */
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
@@ -65,12 +65,24 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
     }
 
     /**
-     * @param array{image: ImageContent, ...} $options
+     * @param array{image: ImageContent|list<ImageContent>, ...} $options
      */
     private function edit(Model $model, string $prompt, array $options): RawHttpResult
     {
-        $image = $options['image'];
+        $images = $options['image'] instanceof ImageContent ? [$options['image']] : $options['image'];
         unset($options['image']);
+
+        if (!\is_array($images) || [] === $images || !array_is_list($images)) {
+            throw new InvalidArgumentException(\sprintf('The "image" option must be an instance of "%s" or a non-empty list of them, but "%s" was given.', ImageContent::class, get_debug_type($images)));
+        }
+
+        foreach ($images as $image) {
+            if (!$image instanceof ImageContent) {
+                throw new InvalidArgumentException(\sprintf('The "image" option must be an instance of "%s" or a non-empty list of them, but "%s" was given.', ImageContent::class, get_debug_type($image)));
+            }
+        }
+
+        $imageField = 1 === \count($images) ? 'image' : 'image[]';
 
         $fields = array_merge($options, [
             'model' => $model->getName(),
@@ -86,9 +98,11 @@ final class ModelClient extends AbstractModelClient implements ModelClientInterf
             $body .= \sprintf("--%s\r\nContent-Disposition: form-data; name=\"%s\"\r\n\r\n%s\r\n", $boundary, $name, $value);
         }
 
-        $format = $image->getFormat();
-        $filename = $image->getFilename() ?? 'image.'.(substr($format, strpos($format, '/') + 1) ?: 'png');
-        $body .= \sprintf("--%s\r\nContent-Disposition: form-data; name=\"image\"; filename=\"%s\"\r\nContent-Type: %s\r\n\r\n%s\r\n", $boundary, $filename, $format, $image->asBinary());
+        foreach ($images as $image) {
+            $format = $image->getFormat();
+            $filename = $image->getFilename() ?? 'image.'.(substr($format, strpos($format, '/') + 1) ?: 'png');
+            $body .= \sprintf("--%s\r\nContent-Disposition: form-data; name=\"%s\"; filename=\"%s\"\r\nContent-Type: %s\r\n\r\n%s\r\n", $boundary, $imageField, $filename, $format, $image->asBinary());
+        }
         $body .= \sprintf("--%s--\r\n", $boundary);
 
         return new RawHttpResult($this->httpClient->request('POST', self::getBaseUrl($this->region).'/v1/images/edits', [
