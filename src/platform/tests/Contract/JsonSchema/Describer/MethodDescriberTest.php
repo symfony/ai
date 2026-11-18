@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber;
 use Symfony\AI\Platform\Contract\JsonSchema\Factory;
 use Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject;
 use Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ParamDescriptionFixture;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\User;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithConstructor;
 
@@ -52,6 +53,33 @@ final class MethodDescriberTest extends TestCase
             [
                 'type' => 'string',
                 'description' => 'The name of the user in lowercase',
+            ],
+        ];
+
+        yield 'parameter with a generic type' => [
+            new PropertySubject('tags', new \ReflectionParameter([ParamDescriptionFixture::class, '__invoke'], 'tags')),
+            ['type' => 'array'],
+            [
+                'type' => 'array',
+                'description' => 'A list of tags',
+            ],
+        ];
+
+        yield 'parameter with a type containing a space' => [
+            new PropertySubject('labels', new \ReflectionParameter([ParamDescriptionFixture::class, '__invoke'], 'labels')),
+            ['type' => 'array'],
+            [
+                'type' => 'array',
+                'description' => 'Map of field name to label',
+            ],
+        ];
+
+        yield 'parameter with an array shape type' => [
+            new PropertySubject('person', new \ReflectionParameter([ParamDescriptionFixture::class, '__invoke'], 'person')),
+            ['type' => 'array'],
+            [
+                'type' => 'array',
+                'description' => 'The person to greet',
             ],
         ];
     }

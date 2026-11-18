@@ -50,7 +50,7 @@ final class MethodDescriber implements ObjectDescriberInterface, PropertyDescrib
             return '';
         }
 
-        if (preg_match('/@param\s+\S+\s+\$'.preg_quote($parameter->getName(), '/').'\s+((.*)(?=\*)|.*)/', $comment, $matches)) {
+        if (preg_match('/@param\s+[^\s$][^$\n]*?\s+\$'.preg_quote($parameter->getName(), '/').'\s+((.*)(?=\*)|.*)/', $comment, $matches)) {
             return trim($matches[1]);
         }
 
