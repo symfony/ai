@@ -625,13 +625,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_IMAGE,
                 ],
             ],
-            'gpt-image-1' => [
-                'class' => Image::class,
-                'capabilities' => [
-                    Capability::INPUT_TEXT,
-                    Capability::OUTPUT_IMAGE,
-                ],
-            ],
             'gpt-image-1-mini' => [
                 'class' => Image::class,
                 'capabilities' => [
@@ -647,6 +640,34 @@ final class ModelCatalog extends AbstractModelCatalog
                 ],
             ],
             'gpt-image-2' => [
+                'class' => Image::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_IMAGE,
+                ],
+            ],
+            'gpt-image-2.5-flare' => [
+                'class' => Image::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_IMAGE,
+                ],
+            ],
+            'gpt-image-2.5-sunburst' => [
+                'class' => Image::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_IMAGE,
+                ],
+            ],
+            'gpt-image-2.6-flare' => [
+                'class' => Image::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_IMAGE,
+                ],
+            ],
+            'gpt-image-2.6-sunburst' => [
                 'class' => Image::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
