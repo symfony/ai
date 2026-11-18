@@ -16,7 +16,7 @@ use Symfony\AI\Platform\Tool\ToolEffectHints;
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::IS_REPEATABLE)]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
 final class AsTool
 {
     /**

@@ -34,9 +34,10 @@ final class MoviesTest extends E2ETestCase
         $panel = $this->openAiPanel(platformCalls: 3);
 
         // Two calls of the agent, plus the vectorization of the search query by the movie search.
-        $panel->assertMetrics(platformCalls: 3, tools: 1, toolCalls: 1);
+        $panel->assertMetrics(platformCalls: 3, tools: 3, toolCalls: 1);
         $panel->assertPlatformCall('gpt-4.1');
         $panel->assertToolRegistered('movie_search');
+        $panel->assertToolRegistered('search_by_director');
         $this->assertStringContainsString('movie_search', $panel->platformCalls()[0]['result']);
 
         $embedding = array_values(array_filter($panel->platformCalls(), static fn (array $call) => 'text-embedding-ada-002' === $call['model']));

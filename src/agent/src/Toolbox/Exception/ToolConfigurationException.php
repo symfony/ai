@@ -25,6 +25,11 @@ final class ToolConfigurationException extends InvalidArgumentException implemen
         return new self(\sprintf('Method "%s" not found in tool "%s".', $methodName, $toolClass), previous: $previous);
     }
 
+    public static function conflictingMethod(string $toolClass, string $methodName, string $configuredMethod): self
+    {
+        return new self(\sprintf('The #[AsTool] attribute on "%s::%s()" configures the method "%s", leave the method out when the attribute is placed on a method.', $toolClass, $methodName, $configuredMethod));
+    }
+
     public static function duplicateToolName(string $name, ToolboxInterface $firstToolbox, Tool $firstTool, ToolboxInterface $secondToolbox, Tool $secondTool): self
     {
         return new self(\sprintf(

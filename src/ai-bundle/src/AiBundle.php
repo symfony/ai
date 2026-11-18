@@ -375,11 +375,15 @@ final class AiBundle extends AbstractBundle
         }
 
         if (ContainerBuilder::willBeAvailable('symfony/ai-agent', Agent::class, ['symfony/ai-bundle'])) {
-            $builder->registerAttributeForAutoconfiguration(AsTool::class, static function (ChildDefinition $definition, AsTool $attribute): void {
+            $builder->registerAttributeForAutoconfiguration(AsTool::class, static function (ChildDefinition $definition, AsTool $attribute, \ReflectionClass|\ReflectionMethod $reflector): void {
+                if ($reflector instanceof \ReflectionMethod && '__invoke' !== $attribute->method && $reflector->getName() !== $attribute->method) {
+                    throw new InvalidArgumentException(\sprintf('The #[AsTool] attribute on "%s::%s()" configures the method "%s", leave the method out when the attribute is placed on a method.', $reflector->class, $reflector->getName(), $attribute->method));
+                }
+
                 $definition->addTag('ai.tool', [
                     'name' => $attribute->name,
                     'description' => $attribute->description,
-                    'method' => $attribute->method,
+                    'method' => $reflector instanceof \ReflectionMethod ? $reflector->getName() : $attribute->method,
                 ]);
             });
 

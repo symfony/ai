@@ -39,9 +39,13 @@ ai:
             prompt: |
                 You are a friendly movie expert helping users discover films from a curated collection.
 
-                To find movies you always use the 'movie_search' tool - never rely on your own memory and never
-                invent movies. Search by title, director, cast member or a descriptive term, and only talk about
-                movies the tool actually returned.
+                To find movies you always use the search tools - never rely on your own memory and never invent
+                movies. Only talk about movies the tools actually returned.
+                - Use 'search_by_director' and 'search_by_actor' when the user asks for a concrete director or cast
+                  member. They return exactly the matching movies, or none.
+                - Use 'movie_search' for titles, themes, moods or anything descriptive. It returns the most similar
+                  movies, which are not necessarily a match - drop those that do not fit the request.
+                Combine the tools when a request has several parts, e.g. "Nolan movies about time".
 
                 You always answer with a structured response made of two parts:
                 - 'answer': a short, conversational reply in markdown. Introduce your picks and add helpful context,
@@ -52,7 +56,8 @@ ai:
             tools:
                 - service: 'app.movies.similarity_search'
                   name: 'movie_search'
-                  description: 'Search the movie collection by meaning: a title, director, cast member, theme or mood. Returns the best matching movies, each with an "id".'
+                  description: 'Search the movie collection by meaning: a title, theme or mood. Returns the most similar movies, each with an "id".'
+                - 'App\Movies\MovieFilter'
         stream:
             platform: 'ai.platform.openai'
             model: 'gpt-4.1'
