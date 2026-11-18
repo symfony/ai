@@ -874,6 +874,70 @@ final class ResultConverterTest extends TestCase
         $this->assertSame(['title' => 'Test'], $result->getContent()[0]->getContent()[0]->getArguments());
     }
 
+    /**
+     * @param array<string, mixed> $body
+     */
+    #[DataProvider('provideResponsesTruncatedBeforeAnyText')]
+    public function testConvertThrowsWhenTruncatedAtMaxTokensBeforeAnyText(array $body, string $expectedMessage)
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse(['stop_reason' => 'max_tokens'] + $body));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $this->expectException(MaxOutputTokensException::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, string}>
+     */
+    public static function provideResponsesTruncatedBeforeAnyText(): iterable
+    {
+        yield 'thinking' => [
+            ['content' => [
+                ['type' => 'thinking', 'thinking' => 'The user asks for the time, so I', 'signature' => 'sig_abc123'],
+            ]],
+            'Anthropic truncated the response after reaching the output token limit.',
+        ];
+
+        yield 'thinking with output token count' => [
+            [
+                'content' => [
+                    ['type' => 'thinking', 'thinking' => 'The user asks for the time, so I', 'signature' => 'sig_abc123'],
+                ],
+                'usage' => ['input_tokens' => 10, 'output_tokens' => 1000],
+            ],
+            'Anthropic truncated the response after reaching the maximum of 1000 output tokens.',
+        ];
+
+        yield 'redacted thinking' => [
+            ['content' => [
+                ['type' => 'redacted_thinking', 'data' => 'EmwKAhgBEgy3va3pzix'],
+            ]],
+            'Anthropic truncated the response after reaching the output token limit.',
+        ];
+    }
+
+    public function testConvertKeepsPartialTextWhenTruncatedAtMaxTokensAfterThinking()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                ['type' => 'thinking', 'thinking' => 'The user asks for the time.', 'signature' => 'sig_abc123'],
+                ['type' => 'text', 'text' => 'It is'],
+            ],
+            'stop_reason' => 'max_tokens',
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $this->assertInstanceOf(TextResult::class, $result->getContent()[1]);
+        $this->assertSame('It is', $result->getContent()[1]->getContent());
+        $this->assertTrue($result->getMetadata()->get('finish_reason')->is(FinishReasonCase::LENGTH));
+    }
+
     public function testConvertWithoutStopReasonOmitsFinishReasonMetadata()
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([
