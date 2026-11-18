@@ -37,6 +37,7 @@
         "phpunit/phpunit": "^11.5.53",
         "symfony/http-client": "^7.3|^8.0",
         "symfony/monolog-bundle": "^3.10 || ^4.0",
+        "symfony/security-bundle": "^7.3|^8.0",
         "symfony/security-core": "^7.3|^8.0",
         "symfony/twig-bundle": "^7.3|^8.0"
     },

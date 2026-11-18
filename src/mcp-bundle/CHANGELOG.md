@@ -8,6 +8,7 @@ CHANGELOG
  * Add the `none` value for `servers.<name>.session.store` to serve handshake-era HTTP clients without sessions
  * Bind handshake-era sessions to the user identifier of the authenticated user, or to the `mcp.principal`
    request attribute
+ * Add support for `#[IsGranted]` on tools called over HTTP, checked by Symfony before the MCP server runs
 
 0.15
 ----
