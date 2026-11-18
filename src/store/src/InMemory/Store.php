@@ -172,10 +172,10 @@ final class Store implements ManagedStoreInterface, StoreInterface, ResetInterfa
      */
     private function queryHybrid(HybridQuery $query, array $options): iterable
     {
-        $textMatchIds = array_map(
+        $textMatchIds = array_flip(array_map(
             static fn (VectorDocumentInterface $doc): string => (string) $doc->getId(),
             iterator_to_array($this->queryText(new TextQuery($query->getTexts()), []), false),
-        );
+        ));
 
         $vectorResults = $this->queryVector(
             new VectorQuery($query->getVector()),
@@ -184,7 +184,7 @@ final class Store implements ManagedStoreInterface, StoreInterface, ResetInterfa
 
         $mergedResults = [];
         foreach ($vectorResults as $doc) {
-            $textDistance = \in_array((string) $doc->getId(), $textMatchIds, true) ? 0.0 : 1.0;
+            $textDistance = isset($textMatchIds[(string) $doc->getId()]) ? 0.0 : 1.0;
             $score = $query->getSemanticRatio() * $doc->getScore() + $query->getKeywordRatio() * $textDistance;
 
             $mergedResults[] = $doc->withScore($score);
