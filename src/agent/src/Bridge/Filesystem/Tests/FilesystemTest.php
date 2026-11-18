@@ -17,6 +17,9 @@ use Symfony\AI\Agent\Bridge\Filesystem\Exception\OperationNotPermittedException;
 use Symfony\AI\Agent\Bridge\Filesystem\Exception\PathSecurityException;
 use Symfony\AI\Agent\Bridge\Filesystem\Filesystem;
 use Symfony\AI\Agent\Bridge\Filesystem\Tests\Fixtures\StatTrackingStreamWrapper;
+use Symfony\AI\Agent\Toolbox\FaultTolerantToolbox;
+use Symfony\AI\Agent\Toolbox\Toolbox;
+use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\Component\Filesystem\Filesystem as SymfonyFilesystem;
 
 class FilesystemTest extends TestCase
@@ -550,6 +553,54 @@ class FilesystemTest extends TestCase
 
         $this->assertNotEmpty($filesystem->list('.'));
         $this->assertStringContainsString('Successfully moved', $filesystem->move('sample.txt', 'moved.txt'));
+    }
+
+    public function testModelIsToldThatThePathDoesNotExist()
+    {
+        $result = $this->executeToolCall('filesystem_read', ['path' => 'does-not-exist.txt']);
+
+        $this->assertSame('Path "does-not-exist.txt" does not exist.', $result);
+    }
+
+    public function testModelIsToldThatWriteOperationsAreNotPermitted()
+    {
+        $result = $this->executeToolCall('filesystem_write', ['path' => 'new.txt', 'content' => 'content'], $this->createFilesystem(allowWrite: false));
+
+        $this->assertSame('Write operations are not permitted.', $result);
+    }
+
+    public function testModelIsNotToldTheServerPathOutsideTheBasePath()
+    {
+        $outsidePath = sys_get_temp_dir().'/filesystem_outside_'.uniqid();
+        $this->symfonyFilesystem->dumpFile($outsidePath.'/secret.txt', 'secret');
+        $this->symfonyFilesystem->symlink($outsidePath.'/secret.txt', $this->tempPath.'/link.txt');
+
+        try {
+            $result = $this->executeToolCall('filesystem_read', ['path' => 'link.txt']);
+        } finally {
+            $this->symfonyFilesystem->remove($outsidePath);
+        }
+
+        $this->assertSame('Path "link.txt" is outside the allowed base path.', $result);
+    }
+
+    public function testModelIsNotToldTheServerPathOfAMissingBasePath()
+    {
+        $filesystem = new Filesystem($this->symfonyFilesystem, $this->tempPath.'/missing');
+
+        $result = $this->executeToolCall('filesystem_read', ['path' => $this->tempPath.'/sample.txt'], $filesystem);
+
+        $this->assertSame('The base path of the filesystem does not exist.', $result);
+    }
+
+    /**
+     * @param array<string, mixed> $arguments
+     */
+    private function executeToolCall(string $name, array $arguments, ?Filesystem $filesystem = null): mixed
+    {
+        $toolbox = new FaultTolerantToolbox(new Toolbox([$filesystem ?? $this->createFilesystem()]));
+
+        return $toolbox->execute(new ToolCall('call', $name, $arguments))->getResult();
     }
 
     /**

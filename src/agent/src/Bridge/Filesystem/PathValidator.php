@@ -57,7 +57,7 @@ final class PathValidator
     {
         $resolvedPath = $this->resolvePath($path, $mustExist);
 
-        $this->assertWithinBasePath($resolvedPath);
+        $this->assertWithinBasePath($path, $resolvedPath);
         $this->assertExtensionAllowed($resolvedPath);
         $this->assertNotDeniedPattern($resolvedPath);
 
@@ -73,7 +73,7 @@ final class PathValidator
     {
         $resolvedPath = $this->resolvePath($path, $mustExist);
 
-        $this->assertWithinBasePath($resolvedPath);
+        $this->assertWithinBasePath($path, $resolvedPath);
         $this->assertNotDeniedPattern($resolvedPath);
 
         return $resolvedPath;
@@ -157,12 +157,12 @@ final class PathValidator
         return $realParent.'/'.$basename;
     }
 
-    private function assertWithinBasePath(string $resolvedPath): void
+    private function assertWithinBasePath(string $path, string $resolvedPath): void
     {
         $realBasePath = realpath($this->basePath);
 
         if (false === $realBasePath) {
-            throw new PathSecurityException(\sprintf('Base path "%s" does not exist.', $this->basePath));
+            throw new PathSecurityException('The base path of the filesystem does not exist.');
         }
 
         $base = $realBasePath;
@@ -180,7 +180,7 @@ final class PathValidator
         $base = rtrim($base, '/');
 
         if ($candidate !== $base && !str_starts_with($candidate, $base.'/')) {
-            throw new PathSecurityException(\sprintf('Path "%s" is outside the allowed base path.', $resolvedPath));
+            throw new PathSecurityException(\sprintf('Path "%s" is outside the allowed base path.', $path));
         }
     }
 
@@ -234,7 +234,7 @@ final class PathValidator
         $basePath = realpath($this->basePath);
 
         if (false === $basePath) {
-            throw new PathSecurityException(\sprintf('Base path "%s" does not exist.', $this->basePath));
+            throw new PathSecurityException('The base path of the filesystem does not exist.');
         }
 
         return Path::makeRelative($path, $basePath);
