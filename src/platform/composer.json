@@ -89,6 +89,10 @@
         "symfony/var-dumper": "^7.3|^8.0",
         "symfony/yaml": "^7.3|^8.0"
     },
+    "conflict": {
+        "phpdocumentor/reflection-docblock": "<5.6.1",
+        "webmozart/assert": "<1.11"
+    },
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {

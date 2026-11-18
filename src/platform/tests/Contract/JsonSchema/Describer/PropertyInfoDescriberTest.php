@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\PolymorphicType\ListItemName;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\User;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithConstructor;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\WrappedDescription;
 
 final class PropertyInfoDescriberTest extends TestCase
 {
@@ -43,6 +44,7 @@ final class PropertyInfoDescriberTest extends TestCase
      */
     #[TestWith([null, new PropertySubject('name', new \ReflectionParameter([UserWithConstructor::class, '__construct'], 'name'))], 'constructor parameter')]
     #[TestWith([['description' => 'The name of the user in lowercase'], new PropertySubject('name', new \ReflectionProperty(User::class, 'name'))])]
+    #[TestWith([['description' => 'A note that is long enough to wrap onto a second line'], new PropertySubject('note', new \ReflectionProperty(WrappedDescription::class, 'note'))], 'description wrapped onto a second line')]
     public function testDescribeDescription(?array $expectedSchema, PropertySubject $property)
     {
         $describer = new PropertyInfoDescriber();

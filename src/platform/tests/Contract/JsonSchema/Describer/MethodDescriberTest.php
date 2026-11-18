@@ -82,6 +82,33 @@ final class MethodDescriberTest extends TestCase
                 'description' => 'The person to greet',
             ],
         ];
+
+        yield 'parameter named in the description of a previous parameter' => [
+            new PropertySubject('count', new \ReflectionParameter([ParamDescriptionFixture::class, '__invoke'], 'count')),
+            ['type' => 'integer'],
+            [
+                'type' => 'integer',
+                'description' => 'How often to repeat',
+            ],
+        ];
+
+        yield 'parameter with a multi-line array shape type' => [
+            new PropertySubject('address', new \ReflectionParameter([ParamDescriptionFixture::class, '__invoke'], 'address')),
+            ['type' => 'array'],
+            [
+                'type' => 'array',
+                'description' => 'The address to ship to',
+            ],
+        ];
+
+        yield 'parameter with a description wrapped onto a second line' => [
+            new PropertySubject('note', new \ReflectionParameter([ParamDescriptionFixture::class, '__invoke'], 'note')),
+            ['type' => 'string'],
+            [
+                'type' => 'string',
+                'description' => 'A note that is long enough to wrap onto a second line',
+            ],
+        ];
     }
 
     /**
