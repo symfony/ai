@@ -25,7 +25,7 @@ jobs:
     # version is the same result a per-package install would produce.
     #
     # This does NOT hold for --prefer-lowest: a merged install resolves to the highest of all
-    # per-package floors (e.g. Mate allows symfony/console ^5.4 while Platform requires ^7.3),
+    # per-package floors (e.g. Mate allows symfony/console ^5.4 while Platform requires ^7.4),
     # so the lowest matrix below keeps installing each package on its own.
     unit:
         name: Unit / PHP ${{ matrix.php-version }}${{ matrix.symfony-version && format(' / Symfony {0}', matrix.symfony-version) || '' }}
@@ -142,9 +142,8 @@ jobs:
     # bound a single package declares. So each package is installed on its own -- but grouped a few
     # per job and run in parallel by .github/run-lowest.sh, instead of one job per package.
     #
-    # For the same reason this job sets no SYMFONY_REQUIRE. Packages declare "^7.3|^8.0", so pinning
-    # it to >=7.4 here left the 7.3 floor untested while we kept advertising it. Do not re-add it
-    # without raising those constraints first.
+    # For the same reason this job sets no SYMFONY_REQUIRE: each package must resolve to the floor it
+    # declares itself (^7.4 for most, ^5.4 for Mate), which a shared pin would override.
     lowest:
         name: Unit / Lowest / ${{ matrix.shard.name }}
         if: inputs.affected-packages != '[]'

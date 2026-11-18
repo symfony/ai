@@ -31,7 +31,7 @@
         "psr/log": "^3.0",
         "symfony/ai-platform": "^1.0",
         "symfony/ai-store": "^1.0",
-        "symfony/uid": "^7.3|^8.0"
+        "symfony/uid": "^7.4|^8.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",

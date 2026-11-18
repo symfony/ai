@@ -40,7 +40,7 @@
         "phpunit/phpunit": "^11.5.53",
         "symfony/ai-generic-platform": "^1.0",
         "symfony/ai-open-responses-platform": "^1.0",
-        "symfony/console": "^7.3|^8.0"
+        "symfony/console": "^7.4|^8.0"
     },
     "suggest": {
         "async-aws/sso": "Required to authenticate Bedrock Mantle with an AWS SSO profile.",

@@ -34,15 +34,15 @@
         "symfony/ai-platform": "^1.0",
         "symfony/ai-store": "^1.0",
         "symfony/http-client-contracts": "^3.5",
-        "symfony/uid": "^7.3|^8.0"
+        "symfony/uid": "^7.4|^8.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^11.5.53",
-        "symfony/cache": "^7.3|^8.0",
-        "symfony/doctrine-bridge": "^7.3|^8.0"
+        "symfony/cache": "^7.4|^8.0",
+        "symfony/doctrine-bridge": "^7.4|^8.0"
     },
     "minimum-stability": "dev",
     "autoload": {
