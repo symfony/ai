@@ -117,7 +117,7 @@ trait HttpStatusErrorHandlingTrait
             return $message;
         }
 
-        return $this->extractDetail($data['detail'] ?? null);
+        return $this->extractDetail($data['detail'] ?? $data['message']['detail'] ?? null);
     }
 
     private function extractDetail(mixed $detail): ?string
