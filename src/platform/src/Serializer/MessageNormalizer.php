@@ -64,6 +64,7 @@ use Symfony\Component\Uid\Uuid;
  *     content: string,
  *     parts: list<NormalizedPart>,
  *     toolCall: array<string, mixed>|null,
+ *     isError?: bool,
  *     metadata: array<string, mixed>,
  *     addedAt: int,
  *     ...<string, mixed>
@@ -111,7 +112,7 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
 
         $ignored = $context[AbstractNormalizer::IGNORED_ATTRIBUTES] ?? [];
 
-        return array_diff_key([
+        $normalized = [
             $context['identifier'] ?? 'id' => $data->getId()->toRfc4122(),
             'type' => $data::class,
             'content' => $content,
@@ -119,7 +120,13 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
             'toolCall' => $data instanceof ToolCallMessage ? $this->normalizePart($data->getToolCall()) : null,
             'metadata' => \in_array('metadata', $ignored, true) ? [] : $this->metadataNormalizer->normalize($data->getMetadata()->all(), $format, $context),
             'addedAt' => $data->getId()->getDateTime()->getTimestamp(),
-        ], array_flip($ignored));
+        ];
+
+        if ($data instanceof ToolCallMessage) {
+            $normalized['isError'] = $data->isError();
+        }
+
+        return array_diff_key($normalized, array_flip($ignored));
     }
 
     public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
@@ -253,13 +260,16 @@ final class MessageNormalizer implements NormalizerInterface, DenormalizerInterf
     private function denormalizeToolCallMessage(array $data, array $parts): ToolCallMessage
     {
         if (isset($data['toolCall'])) {
-            return new ToolCallMessage($this->denormalizeToolCall($data['toolCall']), ...$parts);
+            $message = new ToolCallMessage($this->denormalizeToolCall($data['toolCall']), ...$parts);
+        } else {
+            $message = new ToolCallMessage(
+                $this->denormalizeToolCall($data['toolsCalls']),
+                ...([] !== $parts ? $parts : [new Text($data['content'] ?? '')]),
+            );
         }
+        $message->setIsError($data['isError'] ?? false);
 
-        return new ToolCallMessage(
-            $this->denormalizeToolCall($data['toolsCalls']),
-            ...([] !== $parts ? $parts : [new Text($data['content'] ?? '')]),
-        );
+        return $message;
     }
 
     /**
