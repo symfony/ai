@@ -68,6 +68,7 @@ Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer::__construct(): publ
 Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer::describeObject(): public function describeObject(Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject $subject, array|null &$schema): iterable
 Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer::describeProperty(): public function describeProperty(Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject $subject, array|null &$schema): void
 Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber: final class implements Symfony\AI\Platform\Contract\JsonSchema\Describer\ObjectDescriberInterface, Symfony\AI\Platform\Contract\JsonSchema\Describer\PropertyDescriberInterface
+Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber::__construct(): public function __construct()
 Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber::describeObject(): public function describeObject(Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject $subject, array|null &$schema): iterable
 Symfony\AI\Platform\Contract\JsonSchema\Describer\MethodDescriber::describeProperty(): public function describeProperty(Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject $subject, array|null &$schema): void
 Symfony\AI\Platform\Contract\JsonSchema\Describer\ObjectDescriberAwareInterface: interface
@@ -305,7 +306,6 @@ Symfony\AI\Platform\Job\JobStatus::is(): public function is(Symfony\AI\Platform\
 Symfony\AI\Platform\Job\JobStatus::isTerminal(): public function isTerminal(): bool
 Symfony\AI\Platform\Job\JobStatus::jsonSerialize(): public function jsonSerialize(): array
 Symfony\AI\Platform\JsonBodyEncodingTrait: trait
-Symfony\AI\Platform\JsonBodyEncodingTrait::encodeJsonBody(): private function encodeJsonBody(array $payload): string
 Symfony\AI\Platform\Message\AssistantMessage: final class implements Symfony\AI\Platform\Message\MessageInterface uses Symfony\AI\Platform\Message\IdentifierAwareTrait, Symfony\AI\Platform\Metadata\MetadataAwareTrait
 Symfony\AI\Platform\Message\AssistantMessage::__construct(): public function __construct(Symfony\AI\Platform\Message\Content\ContentInterface ...$content)
 Symfony\AI\Platform\Message\AssistantMessage::asText(): public function asText(): null|string
@@ -416,7 +416,6 @@ Symfony\AI\Platform\Message\Content\WebSearch::getQuery(): public function getQu
 Symfony\AI\Platform\Message\Content\WebSearch::getSignature(): public function getSignature(): null|string
 Symfony\AI\Platform\Message\Content\WebSearch::getStatus(): public function getStatus(): null|string
 Symfony\AI\Platform\Message\IdentifierAwareTrait: trait
-Symfony\AI\Platform\Message\IdentifierAwareTrait::$id: private Symfony\Component\Uid\AbstractUid&Symfony\Component\Uid\TimeBasedUidInterface
 Symfony\AI\Platform\Message\IdentifierAwareTrait::getId(): public function getId(): Symfony\Component\Uid\AbstractUid&Symfony\Component\Uid\TimeBasedUidInterface
 Symfony\AI\Platform\Message\IdentifierAwareTrait::withId(): public function withId(Symfony\Component\Uid\AbstractUid&Symfony\Component\Uid\TimeBasedUidInterface $id): self
 Symfony\AI\Platform\Message\Message: final class
@@ -517,7 +516,6 @@ Symfony\AI\Platform\Metadata\Metadata::set(): public function set(array $metadat
 Symfony\AI\Platform\Metadata\MetadataAwareInterface: interface
 Symfony\AI\Platform\Metadata\MetadataAwareInterface::getMetadata(): public function getMetadata(): Symfony\AI\Platform\Metadata\Metadata
 Symfony\AI\Platform\Metadata\MetadataAwareTrait: trait
-Symfony\AI\Platform\Metadata\MetadataAwareTrait::$metadata: private Symfony\AI\Platform\Metadata\Metadata|null
 Symfony\AI\Platform\Metadata\MetadataAwareTrait::getMetadata(): public function getMetadata(): Symfony\AI\Platform\Metadata\Metadata
 Symfony\AI\Platform\Metadata\StreamListener: final class extends Symfony\AI\Platform\Result\Stream\AbstractStreamListener
 Symfony\AI\Platform\Metadata\StreamListener::onDelta(): public function onDelta(Symfony\AI\Platform\Result\Stream\DeltaEvent $event): void
@@ -676,10 +674,6 @@ Symfony\AI\Platform\Result\FileSearchResult::getId(): public function getId(): n
 Symfony\AI\Platform\Result\FileSearchResult::getQueries(): public function getQueries(): array
 Symfony\AI\Platform\Result\FileSearchResult::getStatus(): public function getStatus(): null|string
 Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait: trait
-Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait::extractErrorMessage(): private function extractErrorMessage(Symfony\Contracts\HttpClient\ResponseInterface $response): null|string
-Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait::extractRetryAfter(): private function extractRetryAfter(Symfony\Contracts\HttpClient\ResponseInterface $response): int|null
-Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait::extractRetryInfoDelay(): private function extractRetryInfoDelay(Symfony\Contracts\HttpClient\ResponseInterface $response): int|null
-Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait::throwOnHttpError(): private function throwOnHttpError(Symfony\Contracts\HttpClient\ResponseInterface $response): void
 Symfony\AI\Platform\Result\InMemoryRawResult: final class implements Symfony\AI\Platform\Result\RawResultInterface
 Symfony\AI\Platform\Result\InMemoryRawResult::__construct(): public function __construct(array $data = [], iterable $dataStream = [], object $object = new \stdClass())
 Symfony\AI\Platform\Result\InMemoryRawResult::getData(): public function getData(): array

@@ -65,6 +65,18 @@ final class ComparerTest extends TestCase
             [],
         ];
 
+        yield 'removed private method of a trait' => [
+            'trait Foo { private function bar() {} }',
+            'trait Foo {}',
+            [],
+        ];
+
+        yield 'removed protected method of a trait' => [
+            'trait Foo { protected function bar() {} }',
+            'trait Foo {}',
+            [[Finding::BREAK, 'The method is removed.']],
+        ];
+
         yield 'method moved to the parent class' => [
             'class Base {} class Foo extends Base { public function bar(int $a) {} }',
             'class Base { public function bar(int $a) {} } class Foo extends Base {}',

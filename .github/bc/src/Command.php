@@ -67,8 +67,9 @@ final class Command
         foreach ($packages as $package) {
             $file = $package->snapshotFile();
             $path = $this->root.'/'.$file;
-            if (!is_file($path) || file_get_contents($path) !== $renderer->render($api, $package)) {
-                $outdated[] = $file;
+            $snapshot = $renderer->render($api, $package);
+            if (!is_file($path) || file_get_contents($path) !== $snapshot) {
+                $outdated[$file] = $snapshot;
             }
         }
 
@@ -79,11 +80,53 @@ final class Command
         }
 
         $output = new Output();
-        foreach ($outdated as $file) {
-            $output->annotate('error', 'The API snapshot is outdated. Run "php .github/bc/bc.php dump" and commit the result, so the API change shows in the review.', $file, null, 'Outdated API snapshot');
+        foreach ($outdated as $file => $snapshot) {
+            $output->annotate('error', \sprintf("The API snapshot is outdated - this is not a BC break, the public API just changed. Run \"php .github/bc/bc.php dump\" and commit the result, so the change shows in the review.\n\n%s", $this->changes($file, $snapshot)), $file, null, 'Outdated API snapshot');
         }
 
         return 1;
+    }
+
+    private function changes(string $file, string $snapshot): string
+    {
+        $committed = self::declarations(is_file($this->root.'/'.$file) ? file_get_contents($this->root.'/'.$file) : '');
+        $current = self::declarations($snapshot);
+
+        $sections = [
+            'Added' => array_map(static fn (string $symbol) => '  + '.$symbol, array_keys(array_diff_key($current, $committed))),
+            'Removed' => array_map(static fn (string $symbol) => '  - '.$symbol, array_keys(array_diff_key($committed, $current))),
+            'Changed' => [],
+        ];
+        foreach (array_intersect_key($committed, $current) as $symbol => $declaration) {
+            if ($declaration !== $current[$symbol]) {
+                $sections['Changed'][] = \sprintf("  ~ %s\n      before: %s\n      after:  %s", $symbol, $declaration, $current[$symbol]);
+            }
+        }
+
+        $lines = [];
+        foreach (array_filter($sections) as $title => $entries) {
+            $lines[] = $title.':';
+            array_push($lines, ...$entries);
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * @return array<string, string> declarations by symbol
+     */
+    private static function declarations(string $snapshot): array
+    {
+        $declarations = [];
+        foreach (explode("\n", $snapshot) as $line) {
+            if ('' === $line || str_starts_with($line, '#')) {
+                continue;
+            }
+            [$symbol, $declaration] = explode(': ', $line, 2) + [1 => ''];
+            $declarations[$symbol] = $declaration;
+        }
+
+        return $declarations;
     }
 
     private function compare(?string $baseRef): int

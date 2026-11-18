@@ -66,9 +66,9 @@ final class SnapshotRenderer
         );
     }
 
-    public static function isVisible(string $visibility, bool $extensible, bool $trait): bool
+    public static function isVisible(string $visibility, bool $extensible): bool
     {
-        return 'public' === $visibility || $trait || ('protected' === $visibility && $extensible);
+        return 'public' === $visibility || ('protected' === $visibility && $extensible);
     }
 
     /**
@@ -103,21 +103,20 @@ final class SnapshotRenderer
 
         $lines = [$line];
         $extensible = $class->isExtensible();
-        $trait = 'trait' === $class->kind;
 
         foreach ($class->cases as $case) {
             $lines[] = $class->name.'::'.$case.': case';
         }
 
         foreach ($class->constants as $constant) {
-            if ($constant->internal || !self::isVisible($constant->visibility, $extensible, $trait)) {
+            if ($constant->internal || !self::isVisible($constant->visibility, $extensible)) {
                 continue;
             }
             $lines[] = \sprintf('%s::%s: %s%s const%s', $class->name, $constant->name, $constant->final ? 'final ' : '', $constant->visibility, self::tags(null, $constant->deprecated));
         }
 
         foreach ($class->properties as $property) {
-            if ($property->internal || !self::isVisible($property->visibility, $extensible, $trait)) {
+            if ($property->internal || !self::isVisible($property->visibility, $extensible)) {
                 continue;
             }
             $modifiers = array_filter([$property->visibility, $property->static ? 'static' : null, $property->readonly ? 'readonly' : null, $property->type]);
@@ -129,7 +128,7 @@ final class SnapshotRenderer
         }
 
         foreach ($class->methods as $method) {
-            if ($method->internal || !self::isVisible($method->visibility, $extensible, $trait)) {
+            if ($method->internal || !self::isVisible($method->visibility, $extensible)) {
                 continue;
             }
             $lines[] = $class->name.'::'.$method->name.'(): '.self::signature($method).self::tags($method->finalTag, $method->deprecated).($method->announcedInternal ? ' @internal since' : '');

@@ -138,11 +138,7 @@ Symfony\AI\Mate\Command\ToolsListCommand::execute(): protected function execute(
 Symfony\AI\Mate\Command\ToolsListCommand::getDefaultDescription(): public static function getDefaultDescription(): string
 Symfony\AI\Mate\Command\ToolsListCommand::getDefaultName(): public static function getDefaultName(): string
 Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait: trait
-Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait::ensureFormatSupported(): private function ensureFormatSupported(Symfony\Component\Console\Style\SymfonyStyle $io, string $format, array $supported): bool
-Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait::ensureToonFormatAvailable(): private function ensureToonFormatAvailable(Symfony\Component\Console\Style\SymfonyStyle $io, string $format): bool
 Symfony\AI\Mate\Command\Trait\RendersSkillOutcomeTrait: trait
-Symfony\AI\Mate\Command\Trait\RendersSkillOutcomeTrait::renderSkillRow(): private function renderSkillRow(Symfony\Component\Console\Style\SymfonyStyle $io, Symfony\AI\Mate\Skill\SkillManager $manager, string $name): void
-Symfony\AI\Mate\Command\Trait\RendersSkillOutcomeTrait::resolveSkill(): private function resolveSkill(Symfony\Component\Console\Style\SymfonyStyle $io, Symfony\AI\Mate\Skill\SkillManager $manager, string $input): array|null
 Symfony\AI\Mate\Container\ContainerFactory: final class
 Symfony\AI\Mate\Container\ContainerFactory::__construct(): public function __construct(string $rootDir)
 Symfony\AI\Mate\Container\ContainerFactory::create(): public function create(): Symfony\Component\DependencyInjection\ContainerInterface

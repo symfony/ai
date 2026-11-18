@@ -52,9 +52,4 @@ Symfony\AI\Platform\Bridge\VertexAi\Gemini\TokenUsageExtractor::fromUsageMetadat
 Symfony\AI\Platform\Bridge\VertexAi\ModelCatalog: final class extends Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog
 Symfony\AI\Platform\Bridge\VertexAi\ModelCatalog::__construct(): public function __construct(array $additionalModels = [])
 Symfony\AI\Platform\Bridge\VertexAi\RegionAwareTrait: trait
-Symfony\AI\Platform\Bridge\VertexAi\RegionAwareTrait::GLOBAL_HOST: private const
-Symfony\AI\Platform\Bridge\VertexAi\RegionAwareTrait::LOCATION_PATTERN: private const
-Symfony\AI\Platform\Bridge\VertexAi\RegionAwareTrait::RESIDENCY_HOSTS: private const
-Symfony\AI\Platform\Bridge\VertexAi\RegionAwareTrait::getEndpoint(): private static function getEndpoint(null|string $location, null|string $projectId, string $model, string $method): string
-Symfony\AI\Platform\Bridge\VertexAi\RegionAwareTrait::getHost(): private static function getHost(string $location): string
 Symfony\AI\Platform\Bridge\VertexAi\SchemaNormalizer: @internal class
