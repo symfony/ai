@@ -269,6 +269,28 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         }
     }
 
+    public function testReadsValidationErrorsNestedUnderTheMessage()
+    {
+        $response = $this->response(json_encode([
+            'object' => 'error',
+            'message' => [
+                'detail' => [
+                    ['type' => 'extra_forbidden', 'loc' => ['body', 'bogus_field'], 'msg' => 'Extra inputs are not permitted', 'input' => 1],
+                ],
+            ],
+            'type' => 'invalid_request_error',
+            'param' => null,
+            'code' => null,
+        ]), 422);
+
+        try {
+            $this->subject()->throwOnHttpError($response);
+            $this->fail('Expected BadRequestException.');
+        } catch (BadRequestException $e) {
+            $this->assertSame('HTTP 422 returned for "https://example.test/": body.bogus_field: Extra inputs are not permitted', $e->getMessage());
+        }
+    }
+
     public function testReadsAFastApiDetailMessage()
     {
         $response = $this->response('{"detail":"Not Found"}', 404);
