@@ -394,6 +394,22 @@ Bundle Configuration
                     # embeds the entities on flush and through "ai:store:index articles", null by default
                     vectorizer: 'ai.vectorizer.openai_embeddings'
 
+To save the entities without embedding them, for example in your tests, set the ``vectorizer``
+back to ``null``:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    when@test:
+        ai:
+            store:
+                doctrine:
+                    articles:
+                        entity: 'App\Entity\Article'
+                        vectorizer: ~
+
+A mirrored store needs a ``vectorizer``, so turn the mirror off as well with ``mirror_to: ~``.
+
 To mirror the entity into another store, set ``mirror_to`` to that store. It needs a
 ``vectorizer`` and ``#[Embedding]`` on the entity class. The bundle then registers no ``OrmStore``.
 It registers the listener, the indexer and an entity retriever instead, named like the store:

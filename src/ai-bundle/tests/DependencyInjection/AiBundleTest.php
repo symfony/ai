@@ -7861,6 +7861,53 @@ class AiBundleTest extends TestCase
         $this->assertFalse($container->hasDefinition('ai.indexer.movies'));
     }
 
+    public function testDoctrineStoreVectorizerCanBeTurnedOffAgain()
+    {
+        $container = $this->buildContainer([
+            'ai' => ['store' => ['doctrine' => ['movies' => ['entity' => 'App\\Entity\\Movie', 'vectorizer' => 'ai.vectorizer.my_vectorizer']]]],
+            'when@test' => ['store' => ['doctrine' => ['movies' => ['entity' => 'App\\Entity\\Movie', 'vectorizer' => null]]]],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.doctrine.movies'));
+        $this->assertFalse($container->hasDefinition('ai.store.doctrine.movies.embedder'));
+        $this->assertFalse($container->hasDefinition('ai.store.doctrine.movies.embedding_listener'));
+        $this->assertFalse($container->hasDefinition('ai.indexer.movies'));
+    }
+
+    public function testDoctrineStoreTakesAnEmptyVectorizerAsNull()
+    {
+        $container = $this->buildContainer([
+            'ai' => ['store' => ['doctrine' => ['movies' => ['entity' => 'App\\Entity\\Movie', 'vectorizer' => '', 'mirror_to' => '']]]],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.doctrine.movies'));
+        $this->assertFalse($container->hasDefinition('ai.store.doctrine.movies.embedding_listener'));
+        $this->assertFalse($container->hasDefinition('ai.store.doctrine.movies.mirror_listener'));
+    }
+
+    public function testDoctrineStoreMirrorStillNeedsAVectorizerWhenItIsTurnedOff()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The Doctrine store "products" needs a "vectorizer" to mirror its entity into "ai.store.memory.catalog".');
+
+        $this->buildContainer([
+            'ai' => ['store' => ['doctrine' => ['products' => ['entity' => 'App\\Entity\\Product', 'vectorizer' => 'ai.vectorizer.my_vectorizer', 'mirror_to' => 'ai.store.memory.catalog']]]],
+            'when@test' => ['store' => ['doctrine' => ['products' => ['entity' => 'App\\Entity\\Product', 'vectorizer' => null]]]],
+        ]);
+    }
+
+    public function testDoctrineStoreMirrorCanBeTurnedOffAgain()
+    {
+        $container = $this->buildContainer([
+            'ai' => ['store' => ['doctrine' => ['products' => ['entity' => 'App\\Entity\\Product', 'vectorizer' => 'ai.vectorizer.my_vectorizer', 'mirror_to' => 'ai.store.memory.catalog']]]],
+            'when@test' => ['store' => ['doctrine' => ['products' => ['entity' => 'App\\Entity\\Product', 'mirror_to' => null]]]],
+        ]);
+
+        $this->assertTrue($container->hasDefinition('ai.store.doctrine.products'));
+        $this->assertFalse($container->hasDefinition('ai.store.doctrine.products.mirror_listener'));
+        $this->assertTrue($container->hasDefinition('ai.store.doctrine.products.embedding_listener'));
+    }
+
     public function testDoctrineStoreMirrorsTheEntityIntoAnotherStore()
     {
         $container = $this->buildContainer([
