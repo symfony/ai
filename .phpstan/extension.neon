@@ -18,3 +18,30 @@ services:
         class: Symfony\AI\PHPStan\ForbidTestCoverageAttributesRule
         tags:
             - phpstan.rules.rule
+    -
+        class: Symfony\AI\PHPStan\Deprecation\AnnouncedMethodCallRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: Symfony\AI\PHPStan\Deprecation\DeprecationTagFormatRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: Symfony\AI\PHPStan\Deprecation\DeprecationTriggerRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: Symfony\AI\PHPStan\Deprecation\TriggerDeprecationArgumentsRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: Symfony\AI\PHPStan\Deprecation\DeprecatedUsageExtension
+        tags:
+            - phpstan.restrictedMethodUsageExtension
+            - phpstan.restrictedClassNameUsageExtension
+            - phpstan.restrictedPropertyUsageExtension
+            - phpstan.restrictedClassConstantUsageExtension
+    -
+        class: Symfony\AI\PHPStan\Deprecation\VirtualArgumentIgnoreExtension
+        tags:
+            - phpstan.ignoreErrorExtension

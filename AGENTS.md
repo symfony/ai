@@ -136,6 +136,7 @@ Each component uses:
 - Use project specific exceptions instead of global exception classes like \RuntimeException, \InvalidArgumentException etc.
 - NEVER mention Claude as co-author in commits
 - Avoid using the `empty()` function; prefer explicit checks like `[] === $array`, `'' === $string`, or `null === $value`
+- After changing a public API, run `php .github/bc/bc.php dump` and commit the updated snapshots in `.github/bc/api/`; follow the `deprecate` skill (`.claude/skills/deprecate/SKILL.md`) whenever a change touches public API
 
 ## Code Comments
 
