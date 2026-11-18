@@ -27,9 +27,10 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  * bad requests, missing models, rate limits and transient server errors
  * without parsing error bodies themselves.
  *
- * Error bodies are parsed leniently: both the nested `error.message` shape
- * (OpenAI, Gemini, Perplexity) and the flat top-level `message` shape
- * (Mistral, Cerebras, Cohere) are supported.
+ * Error bodies are parsed leniently: the nested `error.message` shape
+ * (OpenAI, Gemini, Perplexity), the flat top-level `message` shape
+ * (Mistral, Cerebras, Cohere) and the FastAPI `detail` shape, a message or
+ * the list of violations of a 422 (Mistral, Azure), are supported.
  *
  * On 429, the retry time comes from the `Retry-After` header, or else from the
  * `google.rpc.RetryInfo` detail of the error body (`error.details[].retryDelay`),
@@ -46,24 +47,61 @@ trait HttpStatusErrorHandlingTrait
         $status = $response->getStatusCode();
 
         if (401 === $status) {
-            throw new AuthenticationException($this->extractErrorMessage($response) ?? 'Unauthorized');
+            throw new AuthenticationException($this->buildHttpErrorMessage($response));
         }
 
-        if (400 === $status) {
-            throw new BadRequestException($this->extractErrorMessage($response) ?? 'Bad Request');
+        if (400 === $status || 422 === $status) {
+            throw new BadRequestException($this->buildHttpErrorMessage($response));
         }
 
         if (404 === $status) {
-            throw new ModelNotFoundException($this->extractErrorMessage($response) ?? 'Not Found');
+            throw new ModelNotFoundException($this->buildHttpErrorMessage($response));
         }
 
         if (429 === $status) {
-            throw new RateLimitExceededException($this->extractRetryAfter($response), $this->extractErrorMessage($response));
+            throw new RateLimitExceededException($this->extractRetryAfter($response), $this->buildHttpErrorMessage($response));
         }
 
         if ($status >= 500) {
-            throw new ServerException($status, $this->extractErrorMessage($response));
+            throw new ServerException($status, $this->buildHttpErrorMessage($response));
         }
+    }
+
+    private function buildHttpErrorMessage(ResponseInterface $response): string
+    {
+        $message = \sprintf('HTTP %d returned', $response->getStatusCode());
+
+        $url = $this->extractRequestUrl($response);
+        if (null !== $url) {
+            $message .= \sprintf(' for "%s"', $url);
+        }
+
+        $errorMessage = $this->extractErrorMessage($response);
+        if (null === $errorMessage || '' === $errorMessage) {
+            return $message.'.';
+        }
+
+        return $message.': '.$errorMessage;
+    }
+
+    /**
+     * Drops the query and the user info, which may carry credentials (e.g. the "key" parameter of VertexAI).
+     */
+    private function extractRequestUrl(ResponseInterface $response): ?string
+    {
+        $url = $response->getInfo('url');
+        if (!\is_string($url)) {
+            return null;
+        }
+
+        $parts = parse_url($url);
+        if (false === $parts || !isset($parts['scheme'], $parts['host'])) {
+            return null;
+        }
+
+        $port = isset($parts['port']) ? ':'.$parts['port'] : '';
+
+        return $parts['scheme'].'://'.$parts['host'].$port.($parts['path'] ?? '');
     }
 
     private function extractErrorMessage(ResponseInterface $response): ?string
@@ -74,7 +112,36 @@ trait HttpStatusErrorHandlingTrait
             return null;
         }
 
-        return $data['error']['message'] ?? $data['message'] ?? null;
+        $message = $data['error']['message'] ?? $data['message'] ?? null;
+        if (\is_string($message)) {
+            return $message;
+        }
+
+        return $this->extractDetail($data['detail'] ?? null);
+    }
+
+    private function extractDetail(mixed $detail): ?string
+    {
+        if (\is_string($detail)) {
+            return $detail;
+        }
+
+        if (!\is_array($detail)) {
+            return null;
+        }
+
+        $violations = [];
+        foreach ($detail as $violation) {
+            if (\is_array($violation) && \is_array($violation['loc'] ?? null) && \is_string($violation['msg'] ?? null)) {
+                $violations[] = \sprintf('%s: %s', implode('.', $violation['loc']), $violation['msg']);
+            }
+        }
+
+        if ([] === $violations) {
+            return null;
+        }
+
+        return implode('; ', $violations);
     }
 
     private function extractRetryAfter(ResponseInterface $response): ?int

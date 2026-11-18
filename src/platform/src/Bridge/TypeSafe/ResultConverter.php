@@ -13,7 +13,6 @@ namespace Symfony\AI\Platform\Bridge\TypeSafe;
 
 use Symfony\AI\Platform\Bridge\Decision\AnswersConverter;
 use Symfony\AI\Platform\Bridge\Decision\TokenUsageExtractor;
-use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
@@ -40,10 +39,6 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface|RawHttpResult $result, array $options = []): ObjectResult
     {
         $httpResponse = $result->getObject();
-
-        if (422 === $httpResponse->getStatusCode()) {
-            throw new BadRequestException($this->extractErrorMessage($httpResponse) ?? 'Unprocessable Entity');
-        }
 
         $this->throwOnHttpError($httpResponse);
 

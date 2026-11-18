@@ -118,7 +118,7 @@ final class VeniceResultConverterTest extends TestCase
         $result = new RawHttpResult($httpClient->request('POST', 'embeddings'));
 
         $this->expectException(ServerException::class);
-        $this->expectExceptionMessage('Server error (HTTP 503). Service unavailable.');
+        $this->expectExceptionMessage('Server error (HTTP 503). HTTP 503 returned for "https://api.venice.ai/api/v1/embeddings": Service unavailable.');
 
         (new VeniceResultConverter())->convert($result);
     }

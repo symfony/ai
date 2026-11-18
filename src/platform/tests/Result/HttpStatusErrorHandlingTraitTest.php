@@ -29,7 +29,7 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 final class HttpStatusErrorHandlingTraitTest extends TestCase
 {
     /**
-     * Any status outside the handled 400/401/404/429/5xx set - success,
+     * Any status outside the handled 400/401/404/422/429/5xx set - success,
      * redirect - is passed through untouched for the calling converter to handle.
      */
     #[DataProvider('unhandledStatusCodes')]
@@ -66,7 +66,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
             $this->fail('Expected ServerException.');
         } catch (ServerException $e) {
             $this->assertSame($status, $e->getStatusCode());
-            $this->assertStringContainsString('Service down', $e->getMessage());
+            $this->assertSame(\sprintf('Server error (HTTP %d). HTTP %d returned for "https://example.test/": Service down', $status, $status), $e->getMessage());
         }
     }
 
@@ -88,7 +88,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
             $this->fail('Expected ServerException.');
         } catch (ServerException $e) {
             $this->assertSame(503, $e->getStatusCode());
-            $this->assertSame('Server error (HTTP 503).', $e->getMessage());
+            $this->assertSame('Server error (HTTP 503). HTTP 503 returned for "https://example.test/".', $e->getMessage());
         }
     }
 
@@ -104,7 +104,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         ]), 401);
 
         $this->expectException(AuthenticationException::class);
-        $this->expectExceptionMessage('Invalid API key');
+        $this->expectExceptionMessage('HTTP 401 returned for "https://example.test/": Invalid API key');
 
         $this->subject()->throwOnHttpError($response);
     }
@@ -119,7 +119,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         ]), 401);
 
         $this->expectException(AuthenticationException::class);
-        $this->expectExceptionMessage('invalid api token');
+        $this->expectExceptionMessage('HTTP 401 returned for "https://example.test/": invalid api token');
 
         $this->subject()->throwOnHttpError($response);
     }
@@ -129,7 +129,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         $response = $this->response('', 401);
 
         $this->expectException(AuthenticationException::class);
-        $this->expectExceptionMessage('Unauthorized');
+        $this->expectExceptionMessage('HTTP 401 returned for "https://example.test/".');
 
         $this->subject()->throwOnHttpError($response);
     }
@@ -139,7 +139,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         $response = $this->response('not json at all', 401);
 
         $this->expectException(AuthenticationException::class);
-        $this->expectExceptionMessage('Unauthorized');
+        $this->expectExceptionMessage('HTTP 401 returned for "https://example.test/".');
 
         $this->subject()->throwOnHttpError($response);
     }
@@ -153,7 +153,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         ]), 400);
 
         $this->expectException(BadRequestException::class);
-        $this->expectExceptionMessage('Invalid request body');
+        $this->expectExceptionMessage('HTTP 400 returned for "https://example.test/": Invalid request body');
 
         $this->subject()->throwOnHttpError($response);
     }
@@ -165,7 +165,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         ]), 400);
 
         $this->expectException(BadRequestException::class);
-        $this->expectExceptionMessage('invalid model specified');
+        $this->expectExceptionMessage('HTTP 400 returned for "https://example.test/": invalid model specified');
 
         $this->subject()->throwOnHttpError($response);
     }
@@ -175,7 +175,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         $response = $this->response('', 400);
 
         $this->expectException(BadRequestException::class);
-        $this->expectExceptionMessage('Bad Request');
+        $this->expectExceptionMessage('HTTP 400 returned for "https://example.test/".');
 
         $this->subject()->throwOnHttpError($response);
     }
@@ -189,7 +189,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         ]), 404);
 
         $this->expectException(ModelNotFoundException::class);
-        $this->expectExceptionMessage('The model `foo` does not exist');
+        $this->expectExceptionMessage('HTTP 404 returned for "https://example.test/": The model `foo` does not exist');
 
         $this->subject()->throwOnHttpError($response);
     }
@@ -204,7 +204,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         ]), 404);
 
         $this->expectException(ModelNotFoundException::class);
-        $this->expectExceptionMessage('Model llama3.1-8b does not exist or you do not have access to it.');
+        $this->expectExceptionMessage('HTTP 404 returned for "https://example.test/": Model llama3.1-8b does not exist or you do not have access to it.');
 
         $this->subject()->throwOnHttpError($response);
     }
@@ -214,9 +214,81 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         $response = $this->response('', 404);
 
         $this->expectException(ModelNotFoundException::class);
-        $this->expectExceptionMessage('Not Found');
+        $this->expectExceptionMessage('HTTP 404 returned for "https://example.test/".');
 
         $this->subject()->throwOnHttpError($response);
+    }
+
+    public function testDropsTheQueryAndTheCredentialsOfTheRequestUrl()
+    {
+        $response = $this->response(
+            '{"message":"invalid model specified"}',
+            400,
+            url: 'https://user:password@example.test:8443/v1/models/gemini-2.5-flash:generateContent?key=api-key',
+        );
+
+        try {
+            $this->subject()->throwOnHttpError($response);
+            $this->fail('Expected BadRequestException.');
+        } catch (BadRequestException $e) {
+            $this->assertSame('HTTP 400 returned for "https://example.test:8443/v1/models/gemini-2.5-flash:generateContent": invalid model specified', $e->getMessage());
+        }
+    }
+
+    public function testOmitsTheRequestUrlWhenTheResponseHasNone()
+    {
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(400);
+        $response->method('getInfo')->willReturn(null);
+        $response->method('toArray')->willReturn(['error' => ['message' => 'Invalid request body']]);
+
+        $this->expectException(BadRequestException::class);
+        $this->expectExceptionMessage('HTTP 400 returned: Invalid request body');
+
+        $this->subject()->throwOnHttpError($response);
+    }
+
+    /**
+     * FastAPI's HTTPValidationError, which Mistral documents for its 422 responses.
+     */
+    public function testThrowsBadRequestExceptionOn422WithValidationErrors()
+    {
+        $response = $this->response(json_encode([
+            'detail' => [
+                ['type' => 'enum', 'loc' => ['body', 'response_format'], 'msg' => 'Input should be \'mp3\' or \'wav\'', 'input' => 'nope'],
+                ['type' => 'missing', 'loc' => ['body', 'messages', 0, 'content'], 'msg' => 'Field required'],
+                ['type' => 'missing', 'loc' => 'body', 'msg' => 'Ignored, as the location is not a list'],
+            ],
+        ]), 422);
+
+        try {
+            $this->subject()->throwOnHttpError($response);
+            $this->fail('Expected BadRequestException.');
+        } catch (BadRequestException $e) {
+            $this->assertSame('HTTP 422 returned for "https://example.test/": body.response_format: Input should be \'mp3\' or \'wav\'; body.messages.0.content: Field required', $e->getMessage());
+        }
+    }
+
+    public function testReadsAFastApiDetailMessage()
+    {
+        $response = $this->response('{"detail":"Not Found"}', 404);
+
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage('HTTP 404 returned for "https://example.test/": Not Found');
+
+        $this->subject()->throwOnHttpError($response);
+    }
+
+    public function testIgnoresAMessageThatIsNotAString()
+    {
+        $response = $this->response('{"message":{"code":"invalid"}}', 400);
+
+        try {
+            $this->subject()->throwOnHttpError($response);
+            $this->fail('Expected BadRequestException.');
+        } catch (BadRequestException $e) {
+            $this->assertSame('HTTP 400 returned for "https://example.test/".', $e->getMessage());
+        }
     }
 
     public function testThrowsRateLimitExceededExceptionOn429WithRetryAfter()
@@ -228,7 +300,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
             $this->fail('Expected RateLimitExceededException.');
         } catch (RateLimitExceededException $e) {
             $this->assertSame(42, $e->getRetryAfter());
-            $this->assertSame('Rate limit exceeded. Too many requests', $e->getMessage());
+            $this->assertSame('Rate limit exceeded. HTTP 429 returned for "https://example.test/": Too many requests', $e->getMessage());
         }
     }
 
@@ -241,7 +313,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
             $this->fail('Expected RateLimitExceededException.');
         } catch (RateLimitExceededException $e) {
             $this->assertNull($e->getRetryAfter());
-            $this->assertSame('Rate limit exceeded. Too many requests', $e->getMessage());
+            $this->assertSame('Rate limit exceeded. HTTP 429 returned for "https://example.test/": Too many requests', $e->getMessage());
         }
     }
 
@@ -260,7 +332,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
             $this->subject()->throwOnHttpError($response);
             $this->fail('Expected RateLimitExceededException.');
         } catch (RateLimitExceededException $e) {
-            $this->assertSame('Rate limit exceeded. You exceeded your current quota, please check your plan and billing details.', $e->getMessage());
+            $this->assertSame('Rate limit exceeded. HTTP 429 returned for "https://example.test/": You exceeded your current quota, please check your plan and billing details.', $e->getMessage());
         }
     }
 
@@ -272,7 +344,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
             $this->subject()->throwOnHttpError($response);
             $this->fail('Expected RateLimitExceededException.');
         } catch (RateLimitExceededException $e) {
-            $this->assertSame('Rate limit exceeded.', $e->getMessage());
+            $this->assertSame('Rate limit exceeded. HTTP 429 returned for "https://example.test/".', $e->getMessage());
         }
     }
 
@@ -372,7 +444,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
     /**
      * @param array<string, string> $headers
      */
-    private function response(string $body, int $statusCode, array $headers = []): ResponseInterface
+    private function response(string $body, int $statusCode, array $headers = [], string $url = 'https://example.test/'): ResponseInterface
     {
         $client = new MockHttpClient([
             new MockResponse($body, [
@@ -381,7 +453,7 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
             ]),
         ]);
 
-        return $client->request('GET', 'https://example.test/');
+        return $client->request('GET', $url);
     }
 
     private function subject(): object
