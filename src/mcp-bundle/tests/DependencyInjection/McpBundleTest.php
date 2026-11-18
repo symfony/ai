@@ -56,12 +56,14 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class McpBundleTest extends TestCase
 {
-    public function testNoServersRegistersNothing()
+    public function testNoConfigurationRegistersOnlyTheRouteLoader()
     {
         $container = $this->buildContainer([]);
 
+        $routeLoader = $container->getDefinition('mcp.server.route_loader');
+        $this->assertTrue($routeLoader->hasTag('routing.loader'));
+        $this->assertSame([], $routeLoader->getArgument(0));
         $this->assertFalse($container->hasDefinition('mcp.server.default'));
-        $this->assertFalse($container->hasDefinition('mcp.server.route_loader'));
         $this->assertFalse($container->hasDefinition('mcp.data_collector'));
         $this->assertFalse($container->hasParameter('mcp.servers.elements'));
     }
@@ -338,6 +340,18 @@ class McpBundleTest extends TestCase
             // No explicit path: derived from the server name, never a bare "/mcp".
             ['name' => 'editors', 'path' => '/mcp/editors', 'controller' => 'mcp.server.editors.controller::handle'],
         ], $container->getDefinition('mcp.server.route_loader')->getArgument(0));
+    }
+
+    public function testRouteLoaderIsRegisteredForAClientOnlyApplication()
+    {
+        $container = $this->buildContainer(['mcp' => ['clients' => [
+            'app' => ['servers' => ['site' => ['transport' => 'http', 'url' => 'http://localhost/mcp']]],
+        ]]]);
+
+        $routeLoader = $container->getDefinition('mcp.server.route_loader');
+        $this->assertTrue($routeLoader->hasTag('routing.loader'));
+        $this->assertSame([], $routeLoader->getArgument(0));
+        $this->assertFalse($container->hasDefinition('mcp.server.default'));
     }
 
     public function testStdioCommandOnlyKnowsStdioServers()

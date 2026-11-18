@@ -117,6 +117,9 @@ final class McpBundle extends AbstractBundle
         $builder->registerForAutoconfiguration(NotificationHandlerInterface::class)
             ->addTag('mcp.notification_handler');
 
+        // Always registered: the recipe imports the "mcp" routes whatever the configuration.
+        $this->configureRouting($config['servers'], $builder);
+
         if ([] === $config['servers'] && [] === $config['clients']) {
             return;
         }
@@ -322,7 +325,6 @@ final class McpBundle extends AbstractBundle
         $this->registerServerLocator('mcp.server_locator.builder', array_keys($servers), 'builder', $container);
         $this->registerServerLocator('mcp.server_locator.registry', array_keys($servers), 'registry', $container);
 
-        $this->configureRouting($servers, $container);
         $this->configureCommands($servers, $container);
         $this->configureProfiler($servers, $container);
     }
