@@ -105,7 +105,7 @@ final class PropertyInfoDescriber implements ObjectDescriberInterface, PropertyD
         }
 
         if ($description = $this->propertyDescriptionExtractor->getShortDescription($reflector->class, $subject->getName())) {
-            $schema['description'] = $description;
+            $schema['description'] = preg_replace('/(?<=\S)[ \t]*\R[ \t]*(?=\S)/', ' ', $description) ?? $description;
         }
     }
 }

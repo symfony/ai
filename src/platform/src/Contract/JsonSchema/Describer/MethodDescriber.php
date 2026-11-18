@@ -11,11 +11,21 @@
 
 namespace Symfony\AI\Platform\Contract\JsonSchema\Describer;
 
+use phpDocumentor\Reflection\DocBlock\Tags\Param;
+use phpDocumentor\Reflection\DocBlockFactory;
+use phpDocumentor\Reflection\DocBlockFactoryInterface;
 use Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject;
 use Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject;
 
 final class MethodDescriber implements ObjectDescriberInterface, PropertyDescriberInterface
 {
+    private readonly DocBlockFactoryInterface $docBlockFactory;
+
+    public function __construct()
+    {
+        $this->docBlockFactory = DocBlockFactory::createInstance();
+    }
+
     public function describeObject(ObjectSubject $subject, ?array &$schema): iterable
     {
         $reflection = $subject->getReflector();
@@ -50,8 +60,16 @@ final class MethodDescriber implements ObjectDescriberInterface, PropertyDescrib
             return '';
         }
 
-        if (preg_match('/@param\s+[^\s$][^$\n]*?\s+\$'.preg_quote($parameter->getName(), '/').'\s+((.*)(?=\*)|.*)/', $comment, $matches)) {
-            return trim($matches[1]);
+        try {
+            $docBlock = $this->docBlockFactory->create($comment);
+        } catch (\InvalidArgumentException|\RuntimeException) {
+            return '';
+        }
+
+        foreach ($docBlock->getTagsByName('param') as $tag) {
+            if ($tag instanceof Param && $parameter->getName() === $tag->getVariableName()) {
+                return preg_replace('/(?<=\S)[ \t]*\R[ \t]*(?=\S)/', ' ', trim((string) $tag->getDescription())) ?? '';
+            }
         }
 
         return '';
