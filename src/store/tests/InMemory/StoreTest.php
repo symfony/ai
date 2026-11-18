@@ -485,6 +485,22 @@ final class StoreTest extends TestCase
         $this->assertSame('orthogonal', $result[0]->getId());
     }
 
+    public function testHybridQueryWithFilter()
+    {
+        $store = new Store();
+        $store->add([
+            new VectorDocument('same', new Vector([1.0, 0.0]), new Metadata(['_text' => 'cafe', 'category' => 'food'])),
+            new VectorDocument('orthogonal', new Vector([0.0, 1.0]), new Metadata(['_text' => 'dentist', 'category' => 'health'])),
+        ]);
+
+        $result = iterator_to_array($store->query(new HybridQuery(new Vector([1.0, 0.0]), 'dentist', 0.1), [
+            'filter' => static fn (VectorDocumentInterface $doc) => 'food' === $doc->getMetadata()['category'],
+        ]), false);
+
+        $this->assertCount(1, $result);
+        $this->assertSame('same', $result[0]->getId());
+    }
+
     public function testHybridQueryThrowsExceptionForInvalidSemanticRatio()
     {
         $this->expectException(InvalidArgumentException::class);
