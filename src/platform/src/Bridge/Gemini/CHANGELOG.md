@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add batch support: `invoke($model, $inputs, ['batch' => true])` submits the inputs as a Gemini batch and returns a `JobHandle`, resolved later through `Batch\JobClient` (`Factory::createJobClient()`), which also reports the batch's progress and can cancel it
+
 0.15
 ----
 

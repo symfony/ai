@@ -12,6 +12,7 @@ Gemini Documentation
  * [Text generation guide](https://ai.google.dev/gemini-api/docs/text-generation)
  * [Priority inference (`service_tier`)](https://ai.google.dev/gemini-api/docs/generate-content/priority-inference)
  * [Function calling](https://ai.google.dev/gemini-api/docs/function-calling)
+ * [Batch API (`batchGenerateContent`)](https://ai.google.dev/gemini-api/docs/batch-api)
 
 Test Fixtures
 -------------
