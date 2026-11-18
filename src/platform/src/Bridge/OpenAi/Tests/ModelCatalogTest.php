@@ -71,10 +71,13 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'gpt-4o-mini-realtime-preview' => ['gpt-4o-mini-realtime-preview', Realtime::class, [Capability::REALTIME_SESSION]];
 
         // Image models
-        yield 'gpt-image-1' => ['gpt-image-1', Image::class, [Capability::INPUT_TEXT, Capability::OUTPUT_IMAGE]];
         yield 'gpt-image-1-mini' => ['gpt-image-1-mini', Image::class, [Capability::INPUT_TEXT, Capability::OUTPUT_IMAGE]];
         yield 'gpt-image-1.5' => ['gpt-image-1.5', Image::class, [Capability::INPUT_TEXT, Capability::OUTPUT_IMAGE]];
         yield 'gpt-image-2' => ['gpt-image-2', Image::class, [Capability::INPUT_TEXT, Capability::OUTPUT_IMAGE]];
+        yield 'gpt-image-2.5-flare' => ['gpt-image-2.5-flare', Image::class, [Capability::INPUT_TEXT, Capability::OUTPUT_IMAGE]];
+        yield 'gpt-image-2.5-sunburst' => ['gpt-image-2.5-sunburst', Image::class, [Capability::INPUT_TEXT, Capability::OUTPUT_IMAGE]];
+        yield 'gpt-image-2.6-flare' => ['gpt-image-2.6-flare', Image::class, [Capability::INPUT_TEXT, Capability::OUTPUT_IMAGE]];
+        yield 'gpt-image-2.6-sunburst' => ['gpt-image-2.6-sunburst', Image::class, [Capability::INPUT_TEXT, Capability::OUTPUT_IMAGE]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

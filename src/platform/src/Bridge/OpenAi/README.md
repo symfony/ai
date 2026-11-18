@@ -18,7 +18,8 @@ OpenAI Documentation
  * [Tools (function calling)](https://platform.openai.com/docs/guides/tools?api-mode=responses)
  * [Assistant message phase (commentary and final answer)](https://developers.openai.com/api/docs/guides/reasoning#phase-parameter)
  * [Embeddings](https://developers.openai.com/api/reference/resources/embeddings)
- * [Images (DALL·E)](https://developers.openai.com/api/reference/resources/images)
+ * [Images](https://developers.openai.com/api/reference/resources/images)
+ * [Image generation and editing](https://developers.openai.com/api/docs/guides/image-generation)
  * [Text-to-speech](https://developers.openai.com/api/reference/resources/audio/subresources/speech)
  * [Transcription (Whisper)](https://developers.openai.com/api/reference/resources/audio/subresources/transcriptions)
 
