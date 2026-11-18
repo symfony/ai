@@ -176,7 +176,7 @@ final class DeepgramResultConverterTest extends TestCase
         $response = $httpClient->request('POST', 'listen');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('The Deepgram API returned an error: "Invalid credentials.".');
+        $this->expectExceptionMessage('HTTP 401 returned for "https://api.deepgram.com/v1/listen": Invalid credentials.');
 
         (new DeepgramResultConverter($httpClient))->convert(new RawHttpResult($response));
     }
@@ -204,10 +204,10 @@ final class DeepgramResultConverterTest extends TestCase
      */
     public static function provideErrorMessageKeys(): iterable
     {
-        yield 'error key' => [['error' => 'Bad request.'], 'The Deepgram API returned an error: "Bad request.".'];
-        yield 'reason key' => [['reason' => 'Quota exceeded.'], 'The Deepgram API returned an error: "Quota exceeded.".'];
-        yield 'message key' => [['message' => 'Invalid model.'], 'The Deepgram API returned an error: "Invalid model.".'];
-        yield 'no known key' => [['foo' => 'bar'], 'The Deepgram API returned a non-successful status code "400".'];
+        yield 'error key' => [['error' => 'Bad request.'], 'HTTP 400 returned for "https://api.deepgram.com/v1/listen": Bad request.'];
+        yield 'reason key' => [['reason' => 'Quota exceeded.'], 'HTTP 400 returned for "https://api.deepgram.com/v1/listen": Quota exceeded.'];
+        yield 'message key' => [['message' => 'Invalid model.'], 'HTTP 400 returned for "https://api.deepgram.com/v1/listen": Invalid model.'];
+        yield 'no known key' => [['foo' => 'bar'], 'HTTP 400 returned for "https://api.deepgram.com/v1/listen".'];
     }
 
     public function testFallsBackToStatusCodeOnNonJsonError()
@@ -219,7 +219,7 @@ final class DeepgramResultConverterTest extends TestCase
         $response = $httpClient->request('POST', 'speak');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('The Deepgram API returned a non-successful status code "500".');
+        $this->expectExceptionMessage('Server error (HTTP 500). HTTP 500 returned for "https://api.deepgram.com/v1/speak".');
 
         (new DeepgramResultConverter($httpClient))->convert(new RawHttpResult($response));
     }

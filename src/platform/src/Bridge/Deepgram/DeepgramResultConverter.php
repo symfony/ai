@@ -59,7 +59,12 @@ final class DeepgramResultConverter implements ResultConverterInterface
         if (200 !== $response->getStatusCode()) {
             $this->throwOnHttpError($response);
 
-            throw new RuntimeException($this->extractErrorMessage($response));
+            $errorMessage = $this->extractErrorMessage($response);
+            if (null === $errorMessage) {
+                throw new RuntimeException(\sprintf('The Deepgram API returned a non-successful status code "%d".', $response->getStatusCode()));
+            }
+
+            throw new RuntimeException(\sprintf('The Deepgram API returned an error: "%s".', $errorMessage));
         }
 
         if (str_ends_with($path, '/speak')) {
@@ -129,12 +134,12 @@ final class DeepgramResultConverter implements ResultConverterInterface
         }
     }
 
-    private function extractErrorMessage(ResponseInterface $response): string
+    private function extractErrorMessage(ResponseInterface $response): ?string
     {
         try {
             $data = $response->toArray(false);
         } catch (JsonException) {
-            return \sprintf('The Deepgram API returned a non-successful status code "%d".', $response->getStatusCode());
+            return null;
         }
 
         $message = $data['err_msg']
@@ -144,9 +149,9 @@ final class DeepgramResultConverter implements ResultConverterInterface
             ?? null;
 
         if (\is_string($message) && '' !== $message) {
-            return \sprintf('The Deepgram API returned an error: "%s".', $message);
+            return $message;
         }
 
-        return \sprintf('The Deepgram API returned a non-successful status code "%d".', $response->getStatusCode());
+        return null;
     }
 }
