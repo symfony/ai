@@ -357,9 +357,9 @@ class BridgeConfigCompilationTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition($expectedServiceId), \sprintf('Service "%s" should be defined.', $expectedServiceId));
+        $this->assertTrue($container->has($expectedServiceId), \sprintf('Service "%s" should be defined.', $expectedServiceId));
 
-        $definition = $container->getDefinition($expectedServiceId);
+        $definition = $container->findDefinition($expectedServiceId);
 
         // Verify tag exists with name attribute
         $this->assertTrue($definition->hasTag('ai.platform'), \sprintf('Service "%s" should have the "ai.platform" tag.', $expectedServiceId));
@@ -387,7 +387,7 @@ class BridgeConfigCompilationTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition($expectedServiceId), \sprintf('Service "%s" should be defined.', $expectedServiceId));
+        $this->assertTrue($container->has($expectedServiceId), \sprintf('Service "%s" should be defined.', $expectedServiceId));
 
         $definition = $container->getDefinition($expectedServiceId);
 
@@ -411,7 +411,7 @@ class BridgeConfigCompilationTest extends TestCase
             ],
         ]);
 
-        $this->assertTrue($container->hasDefinition($expectedServiceId), \sprintf('Service "%s" should be defined.', $expectedServiceId));
+        $this->assertTrue($container->has($expectedServiceId), \sprintf('Service "%s" should be defined.', $expectedServiceId));
 
         $definition = $container->getDefinition($expectedServiceId);
 
@@ -433,7 +433,7 @@ class BridgeConfigCompilationTest extends TestCase
             ],
         ]);
         $container->register('test_http_client')->setSynthetic(true)->setPublic(true);
-        $container->getDefinition('ai.platform.ollama')->setPublic(true);
+        $container->getAlias('ai.platform.ollama')->setPublic(true);
 
         (new AiBundle())->build($container);
         $container->compile();
@@ -469,7 +469,7 @@ class BridgeConfigCompilationTest extends TestCase
                 ],
             ],
         ]);
-        $container->getDefinition('ai.platform.openai')->setPublic(true);
+        $container->getAlias('ai.platform.openai')->setPublic(true);
 
         (new AiBundle())->build($container);
         $container->compile();
