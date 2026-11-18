@@ -344,6 +344,32 @@ final class TemplateRendererListenerTest extends TestCase
         $this->assertArrayHasKey('other_option', $options);
     }
 
+    public function testRemovesTemplateOptionsWithoutTemplateVars()
+    {
+        $event = new InvocationEvent($this->model, new MessageBag(Message::ofUser('Hello')), [
+            'template_options' => ['normalizer_context' => []],
+            'temperature' => 0.5,
+        ]);
+
+        ($this->listener)($event);
+
+        $this->assertSame(['temperature' => 0.5], $event->getOptions());
+    }
+
+    public function testRemovesTemplateOptionsForInputThatIsNoMessageBag()
+    {
+        $event = new InvocationEvent($this->model, 'Hello', [
+            'template_vars' => ['name' => 'World'],
+            'template_options' => ['normalizer_context' => []],
+            'temperature' => 0.5,
+        ]);
+
+        ($this->listener)($event);
+
+        $this->assertSame('Hello', $event->getInput());
+        $this->assertSame(['temperature' => 0.5], $event->getOptions());
+    }
+
     public function testThrowsExceptionForNonStringTemplateVarKey()
     {
         $template = Template::string('Value: {0}');

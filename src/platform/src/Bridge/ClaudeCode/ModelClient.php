@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\ClaudeCode\Exception\CliNotFoundException;
 use Symfony\AI\Platform\Exception\MissingModelSupportException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
@@ -54,6 +55,10 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::TOOLS => 'tools',
+        ]);
+
         // the CLI only runs its built-in tools, given by name, it cannot call tools of the application
         if (\is_array($options['tools'] ?? null) && [] !== array_filter($options['tools'], static fn (mixed $tool): bool => !\is_string($tool))) {
             throw MissingModelSupportException::forToolCalling($model);
@@ -73,7 +78,7 @@ final class ModelClient implements ModelClientInterface
         }
 
         $cwd = $options['cwd'] ?? $this->workingDirectory;
-        unset($options['cwd'], $options['stream']);
+        unset($options['cwd']);
         $command = $this->buildCommand($prompt, $options);
 
         $this->logger->info('Spawning Claude Code CLI subprocess.', [

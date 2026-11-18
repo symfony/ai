@@ -14,9 +14,11 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Mantle;
 use AsyncAws\Core\Credentials\ChainProvider;
 use AsyncAws\Core\Credentials\CredentialProvider;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
+use Symfony\AI\Platform\Bridge\OpenResponses\ResponsesModel;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -63,6 +65,18 @@ final class ModelClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        $wireFields = [
+            PlatformOptions::STREAM => 'stream',
+            PlatformOptions::TOOLS => 'tools',
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            PlatformOptions::TEMPERATURE => 'temperature',
+        ];
+
+        if (is_a($this->supportedModel, ResponsesModel::class, true)) {
+            $wireFields[PlatformOptions::MAX_OUTPUT_TOKENS] = 'max_output_tokens';
+        }
+
+        $options = PlatformOptions::toProviderOptions($options, $wireFields);
         $body = \is_string($payload) ? $payload : $this->encodeJsonBody(array_merge($options, ['model' => $model->getName()], $payload));
         $url = $this->baseUrl.$this->path;
 

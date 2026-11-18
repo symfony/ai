@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultConvertedEvent;
 use Symfony\AI\Platform\Event\ResultErrorEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
@@ -105,7 +106,7 @@ final class Provider implements ProviderInterface
         $options = $invocationEvent->getOptions();
 
         $payload = $this->contract->createRequestPayload($model, $input, $options);
-        $options = array_merge($model->getOptions(), $options);
+        $options = $this->mergeOptions($model->getOptions(), $options);
 
         if (isset($options['tools'])) {
             $options['tools'] = $this->contract->createToolOption($options['tools'], $model);
@@ -140,6 +141,34 @@ final class Provider implements ProviderInterface
     public function getModelCatalog(): ModelCatalogInterface
     {
         return $this->modelCatalog;
+    }
+
+    /**
+     * @param array<string, mixed> $modelOptions
+     * @param array<string, mixed> $options
+     *
+     * @return array<string, mixed>
+     */
+    private function mergeOptions(array $modelOptions, array $options): array
+    {
+        $merged = array_merge($modelOptions, $options);
+
+        foreach (array_keys($merged) as $name) {
+            if (!PlatformOptions::isPlatformOption($name)) {
+                throw new InvalidArgumentException(\sprintf('The option "%s" is not a platform option, pass it under "%s" instead.', $name, PlatformOptions::PROVIDER_OPTIONS));
+            }
+        }
+
+        if (isset($modelOptions[PlatformOptions::PROVIDER_OPTIONS], $options[PlatformOptions::PROVIDER_OPTIONS])) {
+            $merged[PlatformOptions::PROVIDER_OPTIONS] = array_merge($modelOptions[PlatformOptions::PROVIDER_OPTIONS], $options[PlatformOptions::PROVIDER_OPTIONS]);
+        }
+
+        // the result converters decide on streaming by the platform option only
+        if (isset($merged[PlatformOptions::PROVIDER_OPTIONS][PlatformOptions::STREAM])) {
+            throw new InvalidArgumentException(\sprintf('The option "%s" is a platform option, pass it on the top level instead of under "%s".', PlatformOptions::STREAM, PlatformOptions::PROVIDER_OPTIONS));
+        }
+
+        return $merged;
     }
 
     /**

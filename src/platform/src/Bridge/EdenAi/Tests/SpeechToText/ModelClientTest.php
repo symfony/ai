@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\EdenAi\Ocr;
 use Symfony\AI\Platform\Bridge\EdenAi\SpeechToText;
 use Symfony\AI\Platform\Bridge\EdenAi\SpeechToText\ModelClient;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -45,7 +46,7 @@ final class ModelClientTest extends TestCase
         });
 
         $client = new ModelClient($httpClient, 'https://api.edenai.run', 'test-key');
-        $result = $client->request(new SpeechToText('audio/speech_to_text_async/openai'), 'https://example.com/audio.mp3', ['language' => 'en']);
+        $result = $client->request(new SpeechToText('audio/speech_to_text_async/openai'), 'https://example.com/audio.mp3', [PlatformOptions::PROVIDER_OPTIONS => ['language' => 'en']]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
         $this->assertSame(['POST', 'https://api.edenai.run/v3/universal-ai/async'], $requests[0]);
@@ -84,8 +85,10 @@ final class ModelClientTest extends TestCase
 
         $client = new ModelClient($httpClient, 'https://api.edenai.run', 'test-key');
         $client->request(new SpeechToText('audio/speech_to_text_async/openai'), 'https://example.com/audio.mp3', [
-            'webhook_receiver' => 'https://example.com/webhook',
-            'user_webhook_parameters' => ['job' => 'transcription'],
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'webhook_receiver' => 'https://example.com/webhook',
+                'user_webhook_parameters' => ['job' => 'transcription'],
+            ],
         ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());

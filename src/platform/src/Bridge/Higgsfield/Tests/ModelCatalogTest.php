@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\Higgsfield\ModelCatalog;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -112,7 +113,7 @@ final class ModelCatalogTest extends TestCase
         $model = $catalog->getModel('higgsfield-ai/soul/v2/standard?aspect_ratio=16:9');
 
         $this->assertSame('higgsfield-ai/soul/v2/standard', $model->getName());
-        $this->assertSame(['aspect_ratio' => '16:9'], $model->getOptions());
+        $this->assertSame([PlatformOptions::PROVIDER_OPTIONS => ['aspect_ratio' => '16:9']], $model->getOptions());
     }
 
     public function testItThrowsWhenModelIsUnknown()

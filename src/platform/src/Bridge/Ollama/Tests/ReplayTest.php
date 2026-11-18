@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Ollama\Factory;
 use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech\Format;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Test\Replay\AbstractBridgeReplayTestCase;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -32,8 +33,10 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
         $platform = $this->platformForCassette('speech');
 
         $result = $platform->invoke('phonon', 'Hello from Ollama.', [
-            'voice' => 'Zoey',
-            'response_format' => 'wav',
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => 'Zoey',
+                'response_format' => 'wav',
+            ],
         ]);
 
         $binary = $result->getResult();
@@ -47,7 +50,7 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
         $platform = $this->platformForCassette('pcm');
 
         $result = $platform->invoke('phonon', 'Raw samples.', [
-            'response_format' => Format::PCM,
+            PlatformOptions::PROVIDER_OPTIONS => ['response_format' => Format::PCM],
         ]);
 
         $binary = $result->getResult();
@@ -63,7 +66,7 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
         $this->expectException(BadRequestException::class);
         $this->expectExceptionMessage('voice "nope" not found; available voices: default');
 
-        $platform->invoke('phonon', 'Hello', ['voice' => 'nope'])->asBinary();
+        $platform->invoke('phonon', 'Hello', [PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'nope']])->asBinary();
     }
 
     protected function createPlatform(HttpClientInterface $httpClient): PlatformInterface

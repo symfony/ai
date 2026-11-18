@@ -50,7 +50,9 @@ You can also choose the provider for one request, either with the ``provider`` o
 with a suffix on the model ID::
 
     $result = $platform->invoke('openai/gpt-oss-120b', $messages, [
-        'provider' => Provider::GROQ,
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'provider' => Provider::GROQ,
+        ],
     ]);
 
     // the same request
@@ -128,7 +130,9 @@ of the ``Symfony\AI\Platform\Bridge\HuggingFace\Output`` namespace. Use
 Options of the invocation are sent as the ``parameters`` of the task::
 
     $result = $platform->invoke('facebook/bart-large-mnli', $text, [
-        'candidate_labels' => ['refund', 'legal', 'faq'],
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'candidate_labels' => ['refund', 'legal', 'faq'],
+        ],
     ]);
 
 The `Hugging Face examples`_ show one invocation per task.

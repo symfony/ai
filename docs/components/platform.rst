@@ -56,8 +56,8 @@ start for vendor-specific models and their capabilities.
 Capabilities are a list of enum cases defined by :class:`Symfony\\AI\\Platform\\Capability`, which can be used to check if a model
 supports a specific feature, like ``Capability::INPUT_AUDIO``, ``Capability::OUTPUT_IMAGE``, or ``Capability::THINKING``.
 
-Options are additional parameters that can be passed to the model, like ``temperature`` or ``max_output_tokens``, and are
-usually defined by the specific models and their documentation.
+Options are additional parameters that can be passed to the model, like ``temperature`` or ``max_output_tokens``, see
+`Options`_.
 
 Model Size Variants
 ~~~~~~~~~~~~~~~~~~~
@@ -408,30 +408,47 @@ Options
 -------
 
 The third parameter of the :method:`Symfony\\AI\\Platform\\PlatformInterface::invoke`
-method is an array of options, which basically wraps the options of the corresponding
-model and platform, like ``temperature`` or ``max_output_tokens``::
+method is an array of options. The :class:`Symfony\\AI\\Platform\\PlatformOptions`
+class lists the options the platform knows. They work the same way on every platform:
+
+* ``PlatformOptions::MAX_OUTPUT_TOKENS`` and ``PlatformOptions::TEMPERATURE`` set
+  parameters of the model. Each bridge sends them as the field its provider expects, for
+  example ``max_tokens`` for Anthropic or ``maxOutputTokens`` for Gemini. A bridge that
+  does not translate an option ignores it.
+* ``PlatformOptions::LANGUAGE`` sets the language of the input, as an ISO 639-1 code like
+  ``en``: the audio for speech to text, the speech for text to speech, or the document for
+  the OCR models of Eden AI. ElevenLabs, for example, receives it as ``language_code``.
+* ``PlatformOptions::STREAM``, ``PlatformOptions::TOOLS`` and
+  ``PlatformOptions::RESPONSE_FORMAT`` turn on streaming, tool calling and structured
+  output.
+
+All other options belong to a provider. Pass them under
+``PlatformOptions::PROVIDER_OPTIONS``, and the bridge sends them as they are::
 
     use Symfony\AI\Platform\PlatformOptions;
 
-    $result = $platform->invoke('gpt-4o-mini', $input, [
-        'temperature' => 0.7,
-        PlatformOptions::MAX_OUTPUT_TOKENS => 100,
+    $result = $platform->invoke('claude-sonnet-4-5', $input, [
+        PlatformOptions::TEMPERATURE => 0.7,
+        PlatformOptions::MAX_OUTPUT_TOKENS => 1000,
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'thinking' => ['type' => 'enabled', 'budget_tokens' => 500],
+        ],
     ]);
+
+The platform throws an
+:class:`Symfony\\AI\\Platform\\Exception\\InvalidArgumentException` for any other
+option on the top level. If a provider option sets the same field as a platform option,
+like ``max_tokens`` and ``PlatformOptions::MAX_OUTPUT_TOKENS`` for Anthropic, the
+provider option wins.
+
+The options in the name of a model, like ``gpt-4o-mini?temperature=0.7&service_tier=flex``,
+don't need this structure: the platform options stay on the top level, and the others
+become provider options. The options you pass to ``invoke()`` are merged with them,
+including the provider options.
 
 .. note::
 
-    For model- and platform-specific options, please refer to the respective documentation.
-
-Some options work the same way on every platform. The
-:class:`Symfony\\AI\\Platform\\PlatformOptions` class lists them as constants, and
-each bridge translates them to the field its provider expects. For example,
-``PlatformOptions::MAX_OUTPUT_TOKENS`` becomes ``max_tokens`` for Anthropic and
-``maxOutputTokens`` for Gemini. If you also pass the provider-specific option, like
-``max_tokens``, it wins over the canonical one.
-
-The Anthropic, Amazon Bedrock (Claude and Nova), Gemini, Vertex AI (Gemini), Mistral and
-generic OpenAI-compatible completions bridges translate ``max_output_tokens``. OpenAI
-uses this name natively. Other bridges do not translate it yet.
+    For the options of a provider, please refer to the documentation of its bridge.
 
 Language Models and Messages
 ----------------------------
@@ -702,7 +719,7 @@ apart from one that was cut off by the output token limit::
 
     use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 
-    $result = $platform->invoke($model, $messages, ['max_tokens' => 50]);
+    $result = $platform->invoke($model, $messages, [PlatformOptions::MAX_OUTPUT_TOKENS => 50]);
 
     $finishReason = $result->getMetadata()->get('finish_reason');
 
@@ -954,9 +971,11 @@ may use for reasoning)::
 
     $result = $platform->invoke('claude-sonnet-4-5', $messages, [
         'stream' => true,
-        'thinking' => [
-            'type' => 'enabled',
-            'budget_tokens' => 10000,
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'thinking' => [
+                'type' => 'enabled',
+                'budget_tokens' => 10000,
+            ],
         ],
     ]);
 
@@ -1196,7 +1215,9 @@ result later. Those providers answer the invocation with a job identifier, so ``
     use Symfony\AI\Platform\Message\Content\Text;
 
     $handle = $platform->invoke('MiniMax-Hailuo-02', new Text('A cat playing the piano'), [
-        'duration' => 6,
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'duration' => 6,
+        ],
     ])->asJob();
 
 The handle holds no connection and no client, only what is needed to ask the provider about that job
@@ -1382,7 +1403,7 @@ inputs, keyed by the identifier each result is reported back under::
     $handle = $platform->invoke('gpt-4o-mini', [
         'capital-fr' => new MessageBag(Message::ofUser('What is the capital of France?')),
         'capital-de' => new MessageBag(Message::ofUser('What is the capital of Germany?')),
-    ], ['batch' => true, 'max_output_tokens' => 50])->asJob();
+    ], ['max_output_tokens' => 50, PlatformOptions::PROVIDER_OPTIONS => ['batch' => true]])->asJob();
 
 Every input becomes the request it would have been on its own. The keys are yours: a batch comes
 back as an unordered file hours later, and the identifier is the only thing tying a result to the
@@ -1473,8 +1494,10 @@ result exposes the generated audio as binary data, which can be written to a fil
     // Initialize Platform
 
     $result = $platform->invoke('gpt-4o-mini-tts', 'Welcome to Symfony AI!', [
-        'voice' => Voice::CORAL,
-        'instructions' => 'Speak in a cheerful and positive tone.',
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'voice' => Voice::CORAL,
+            'instructions' => 'Speak in a cheerful and positive tone.',
+        ],
     ]);
 
     // Write the audio binary to a file
@@ -1491,8 +1514,10 @@ base64-encoded MP3 or WAV clip as ``ref_audio``. The ``response_format`` option 
     $platform = Factory::createPlatform($apiKey);
 
     $result = $platform->invoke('voxtral-mini-tts-3-0', 'Welcome to Symfony AI!', [
-        'voice' => 'gb_jane_neutral',
         'response_format' => Format::WAV,
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'voice' => 'gb_jane_neutral',
+        ],
     ]);
 
     file_put_contents('output.wav', $result->asBinary());

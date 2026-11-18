@@ -73,7 +73,9 @@ direct file URL or a file ID from Eden AI's upload API. Input parameters like ``
 
     // OCR: extract raw text and bounding boxes
     $result = $platform->invoke('ocr/ocr/google', new ImageUrl('https://example.com/scan.jpg'), [
-        'language' => 'en',
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'language' => 'en',
+        ],
     ]);
 
     $ocr = $result->asObject();
@@ -83,8 +85,10 @@ direct file URL or a file ID from Eden AI's upload API. Input parameters like ``
 
     // Document parsing: extract structured data from an invoice
     $result = $platform->invoke('ocr/financial_parser/affinda', new DocumentUrl('https://example.com/invoice.pdf'), [
-        'language' => 'en',
-        'document_type' => 'invoice',
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'language' => 'en',
+            'document_type' => 'invoice',
+        ],
     ]);
 
     $parsing = $result->asObject();

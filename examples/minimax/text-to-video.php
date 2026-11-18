@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\MiniMax\Factory;
 use Symfony\AI\Platform\Job\JobRunner;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -20,8 +21,10 @@ $platform = Factory::createPlatform(env('MINI_MAX_API_KEY'), http_client());
 // Video generation is asynchronous: MiniMax accepts the request and answers with a task, so the
 // invocation returns a handle instead of a video.
 $handle = $platform->invoke('MiniMax-Hailuo-02', new Text('A cat playing the piano on a stage, cinematic lighting'), [
-    'duration' => 6,
-    'resolution' => '768P',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'duration' => 6,
+        'resolution' => '768P',
+    ],
 ])->asJob();
 
 echo 'Started job '.$handle->getId().', waiting for it to finish...'.\PHP_EOL;

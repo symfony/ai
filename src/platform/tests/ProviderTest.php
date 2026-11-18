@@ -17,11 +17,13 @@ use Symfony\AI\Platform\Event\InvocationEvent;
 use Symfony\AI\Platform\Event\ResultConvertedEvent;
 use Symfony\AI\Platform\Event\ResultErrorEvent;
 use Symfony\AI\Platform\Event\ResultEvent;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Provider;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -142,7 +144,7 @@ final class ProviderTest extends TestCase
     public function testInvokeReusesTheModelThatSupportsResolvedForANameWithOptions()
     {
         $catalog = $this->createMock(ModelCatalogInterface::class);
-        $catalog->expects($this->once())->method('getModel')->with('qwen3:8b?think=false')->willReturn(new Model('qwen3:8b', [Capability::INPUT_MESSAGES], ['think' => false]));
+        $catalog->expects($this->once())->method('getModel')->with('qwen3:8b?think=false')->willReturn(new Model('qwen3:8b', [Capability::INPUT_MESSAGES], [PlatformOptions::PROVIDER_OPTIONS => ['think' => false]]));
 
         $modelClient = $this->createStub(ModelClientInterface::class);
         $modelClient->method('supports')->willReturn(true);
@@ -156,6 +158,60 @@ final class ProviderTest extends TestCase
 
         $this->assertTrue($provider->supports('qwen3:8b?think=false'));
         $provider->invoke('qwen3:8b?think=false', 'Hello');
+    }
+
+    public function testInvokeRejectsAnOptionThatIsNotAPlatformOption()
+    {
+        $modelClient = $this->createMock(ModelClientInterface::class);
+        $modelClient->expects($this->never())->method('request');
+
+        $provider = new Provider('openai', [$modelClient], [], $this->createStub(ModelCatalogInterface::class));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The option "max_tokens" is not a platform option, pass it under "provider_options" instead.');
+
+        $provider->invoke(new Model('gpt-4o', [Capability::INPUT_MESSAGES]), 'Hello', ['max_tokens' => 100]);
+    }
+
+    public function testInvokeRejectsStreamAsProviderOption()
+    {
+        $modelClient = $this->createMock(ModelClientInterface::class);
+        $modelClient->expects($this->never())->method('request');
+
+        $provider = new Provider('openai', [$modelClient], [], $this->createStub(ModelCatalogInterface::class));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The option "stream" is a platform option, pass it on the top level instead of under "provider_options".');
+
+        $provider->invoke(new Model('gpt-4o', [Capability::INPUT_MESSAGES]), 'Hello', [PlatformOptions::PROVIDER_OPTIONS => ['stream' => true]]);
+    }
+
+    public function testInvokeMergesTheProviderOptionsOfTheModelAndTheInvocation()
+    {
+        $model = new Model('gpt-4o', [Capability::INPUT_MESSAGES], [
+            PlatformOptions::TEMPERATURE => 0.2,
+            PlatformOptions::PROVIDER_OPTIONS => ['service_tier' => 'flex', 'top_k' => 5],
+        ]);
+
+        $modelClient = $this->createMock(ModelClientInterface::class);
+        $modelClient->method('supports')->willReturn(true);
+        $modelClient->expects($this->once())
+            ->method('request')
+            ->with($model, 'Hello', [
+                PlatformOptions::TEMPERATURE => 0.7,
+                PlatformOptions::PROVIDER_OPTIONS => ['service_tier' => 'flex', 'top_k' => 10],
+            ])
+            ->willReturn($this->createStub(RawResultInterface::class));
+
+        $resultConverter = $this->createStub(ResultConverterInterface::class);
+        $resultConverter->method('supports')->willReturn(true);
+
+        $provider = new Provider('openai', [$modelClient], [$resultConverter], $this->createStub(ModelCatalogInterface::class));
+
+        $provider->invoke($model, 'Hello', [
+            PlatformOptions::TEMPERATURE => 0.7,
+            PlatformOptions::PROVIDER_OPTIONS => ['top_k' => 10],
+        ]);
     }
 
     public function testInvokeThrowsWhenNoModelClientSupportsModel()

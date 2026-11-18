@@ -11,6 +11,7 @@
 
 use Symfony\AI\Platform\Bridge\Cartesia\Factory;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -21,11 +22,13 @@ $platform = Factory::createPlatform(
 );
 
 $result = $platform->invoke('sonic-3', new Text('Hello world'), [
-    'voice' => '6ccbfb76-1fc6-48f7-b71d-91ac6298247b', // Tessa (https://play.cartesia.ai/voices/6ccbfb76-1fc6-48f7-b71d-91ac6298247b)
-    'output_format' => [
-        'container' => 'mp3',
-        'sample_rate' => 48000,
-        'bit_rate' => 192000,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'voice' => '6ccbfb76-1fc6-48f7-b71d-91ac6298247b', // Tessa (https://play.cartesia.ai/voices/6ccbfb76-1fc6-48f7-b71d-91ac6298247b)
+        'output_format' => [
+            'container' => 'mp3',
+            'sample_rate' => 48000,
+            'bit_rate' => 192000,
+        ],
     ],
 ]);
 

@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -30,7 +31,7 @@ $messages = new MessageBag(
     Message::ofUser('Compute the 10th Fibonacci number using a short Python snippet.'),
 );
 
-$execution = $agent->call($messages, ['server_tools' => $serverTools]);
+$execution = $agent->call($messages, [PlatformOptions::PROVIDER_OPTIONS => ['server_tools' => $serverTools]]);
 $assistant = $execution->getMessages()->latestAs(Role::Assistant);
 
 output()->writeln('<info>====== Turn 1 ======</info>');
@@ -47,5 +48,5 @@ foreach ($assistant->getContent() as $part) {
 echo \PHP_EOL;
 
 output()->writeln('<info>====== Turn 2 ======</info>');
-$execution = $agent->call($execution->getMessages()->with(Message::ofUser('What number did your snippet print? Answer with the number only.')), ['server_tools' => $serverTools]);
+$execution = $agent->call($execution->getMessages()->with(Message::ofUser('What number did your snippet print? Answer with the number only.')), [PlatformOptions::PROVIDER_OPTIONS => ['server_tools' => $serverTools]]);
 output()->writeln('<comment>Assistant:</comment> '.$execution->asText());

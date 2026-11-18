@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Mistral\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -29,7 +30,9 @@ $messages = new MessageBag(
 // chunks, which the bridge maps to ThinkingDelta/ThinkingComplete before the answer TextDeltas.
 $result = $platform->invoke('mistral-medium-2604', $messages, [
     'stream' => true,
-    'reasoning_effort' => 'high',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'reasoning_effort' => 'high',
+    ],
 ]);
 
 $thinking = false;

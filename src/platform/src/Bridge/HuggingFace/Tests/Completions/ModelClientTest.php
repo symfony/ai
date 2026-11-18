@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\HuggingFace\Classification;
 use Symfony\AI\Platform\Bridge\HuggingFace\Completions;
 use Symfony\AI\Platform\Bridge\HuggingFace\Completions\ModelClient;
 use Symfony\AI\Platform\Bridge\HuggingFace\Provider;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -58,7 +59,7 @@ final class ModelClientTest extends TestCase
         $response = new MockResponse('{}');
         $modelClient = new ModelClient(new MockHttpClient($response), 'test-api-key', Provider::NSCALE);
 
-        $modelClient->request(new Completions('Qwen/Qwen3-32B'), ['model' => 'Qwen/Qwen3-32B', 'messages' => []], ['provider' => Provider::TOGETHER]);
+        $modelClient->request(new Completions('Qwen/Qwen3-32B'), ['model' => 'Qwen/Qwen3-32B', 'messages' => []], [PlatformOptions::PROVIDER_OPTIONS => ['provider' => Provider::TOGETHER]]);
 
         $body = json_decode($response->getRequestOptions()['body'], true);
         $this->assertSame('Qwen/Qwen3-32B:together', $body['model']);

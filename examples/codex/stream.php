@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Codex\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -26,7 +27,9 @@ $messages = new MessageBag(
 );
 $result = $platform->invoke('gpt-5.4', $messages, [
     'stream' => true,
-    'sandbox' => 'read-only',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'sandbox' => 'read-only',
+    ],
 ]);
 
 foreach ($result->asStream() as $word) {

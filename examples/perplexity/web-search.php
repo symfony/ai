@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Perplexity\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once __DIR__.'/bootstrap.php';
 
@@ -27,8 +28,10 @@ $result = $platform->invoke('perplexity/sonar', $messages, [
             'search_recency_filter' => 'month',
         ],
     ]],
-    // Offering the tool lets the model decide whether to search; this forces it
-    'tool_choice' => ['type' => 'web_search'],
+    PlatformOptions::PROVIDER_OPTIONS => [
+        // Offering the tool lets the model decide whether to search; this forces it
+        'tool_choice' => ['type' => 'web_search'],
+    ],
 ]);
 
 echo $result->asText().\PHP_EOL;

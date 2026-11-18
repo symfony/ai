@@ -82,7 +82,9 @@ search filters (domains, recency, dates) and settings::
                 'search_recency_filter' => 'month',
             ],
         ]],
-        'tool_choice' => ['type' => 'web_search'],
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'tool_choice' => ['type' => 'web_search'],
+        ],
     ]);
 
 Offering the tool lets the model decide whether to search, ``tool_choice`` forces it. See the

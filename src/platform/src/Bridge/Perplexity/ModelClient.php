@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Perplexity;
 use Symfony\AI\Platform\Bridge\OpenResponses\ModelClient as OpenResponsesModelClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\Stream\HttpStreamInterface;
 use Symfony\AI\Platform\Result\Stream\SseStream;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -65,6 +66,14 @@ final class ModelClient extends OpenResponsesModelClient
      */
     protected function createBody(Model $model, array $payload, array $options): array
     {
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::STREAM => 'stream',
+            PlatformOptions::TOOLS => 'tools',
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            PlatformOptions::MAX_OUTPUT_TOKENS => 'max_output_tokens',
+            PlatformOptions::TEMPERATURE => 'temperature',
+        ]);
+
         if (isset($options['max_tokens'])) {
             $options['max_output_tokens'] ??= $options['max_tokens'];
             unset($options['max_tokens']);

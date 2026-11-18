@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\ElevenLabs\Result\AdditionalFormat;
 use Symfony\AI\Platform\Bridge\ElevenLabs\Result\Transcript;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\ObjectResult;
@@ -96,8 +97,10 @@ final class ElevenLabsConverterTest extends TestCase
         });
 
         $result = $converter->convert($rawResult, [
-            'additional_formats' => [
-                ['format' => 'srt', 'include_timestamps' => true],
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'additional_formats' => [
+                    ['format' => 'srt', 'include_timestamps' => true],
+                ],
             ],
         ]);
 
@@ -188,7 +191,7 @@ final class ElevenLabsConverterTest extends TestCase
         ]));
 
         $result = $converter->convert($rawResult, [
-            'stream' => true,
+            PlatformOptions::STREAM => true,
         ]);
 
         $this->assertInstanceOf(StreamResult::class, $result);

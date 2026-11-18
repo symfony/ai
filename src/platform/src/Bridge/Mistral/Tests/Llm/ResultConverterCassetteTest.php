@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Test\Replay\CassetteHttpClient;
 use Symfony\AI\Platform\Test\Replay\HttpCassette;
@@ -61,7 +62,7 @@ final class ResultConverterCassetteTest extends TestCase
 
     public function testReplaysTruncatedTextResponseThroughRealConverter()
     {
-        $result = $this->replay('truncated_response.json', 'Write a long essay about the Eiffel Tower.', ['max_tokens' => 5]);
+        $result = $this->replay('truncated_response.json', 'Write a long essay about the Eiffel Tower.', [PlatformOptions::PROVIDER_OPTIONS => ['max_tokens' => 5]]);
 
         $this->assertSame('# **The Eiff', $result->asText());
         $this->assertTrue($result->getResult()->getMetadata()->get('finish_reason')->is(FinishReasonCase::LENGTH));
@@ -82,7 +83,7 @@ final class ResultConverterCassetteTest extends TestCase
                     ],
                 ],
             ]],
-            'tool_choice' => 'any',
+            PlatformOptions::PROVIDER_OPTIONS => ['tool_choice' => 'any'],
         ]);
 
         $toolCalls = $result->asToolCalls();

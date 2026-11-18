@@ -4,6 +4,8 @@ UPGRADE FROM 0.15 to 1.0
 Agent
 -----
 
+ * `SpeechAgent` no longer passes the options of `call()` to the speech-to-text platform, only to the decorated
+   agent. Configure the options of the speech-to-text model in `SpeechConfiguration` instead.
  * `Bridge\SimilaritySearch\SimilaritySearch::getUsedDocuments()` is removed. The retrieved documents are added as
    `Bridge\SimilaritySearch\DocumentSource` sources of the tool instead, enable `includeSources` on the agent to read
    them from the result metadata:
@@ -370,6 +372,29 @@ MCP Bundle
 
 Platform
 --------
+
+ * Invocation options other than the ones of `PlatformOptions` (`max_output_tokens`, `temperature`, `language`, `stream`,
+   `tools` and `response_format`) have to be passed under `PlatformOptions::PROVIDER_OPTIONS`, any other option on the top
+   level throws an `InvalidArgumentException`. Options in a model name like `gpt-4o?max_tokens=100` are nested
+   automatically:
+
+   ```diff
+    $platform->invoke('claude-sonnet-4-5', $messages, [
+        'temperature' => 0.7,
+   -    'max_tokens' => 1000,
+   -    'thinking' => ['type' => 'enabled', 'budget_tokens' => 500],
+   +    PlatformOptions::PROVIDER_OPTIONS => [
+   +        'max_tokens' => 1000,
+   +        'thinking' => ['type' => 'enabled', 'budget_tokens' => 500],
+   +    ],
+    ]);
+   ```
+
+   Custom model clients and result converters receive the provider options under that key as well, use
+   `PlatformOptions::toProviderOptions()` to translate the options into the ones of the provider.
+
+ * `CachePlatform` always consumes `prompt_cache_key` and `prompt_cache_ttl`, also without a cache. Pass the
+   `prompt_cache_key` of OpenAI under `PlatformOptions::PROVIDER_OPTIONS` instead.
 
  * `MessageBag` is immutable. `add()`, `prepend()` and `removeSystemMessage()` have been removed, use the methods
    returning a copy instead, and `replace()` returns a copy as well:

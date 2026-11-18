@@ -13,6 +13,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Mistral\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -27,7 +28,9 @@ $messages = new MessageBag(
 
 $result = $agent->call($messages, [
     'temperature' => 0.3,
-    'max_tokens' => 500,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'max_tokens' => 500,
+    ],
 ]);
 
 print_token_usage($result->getMetadata()->get('token_usage'));

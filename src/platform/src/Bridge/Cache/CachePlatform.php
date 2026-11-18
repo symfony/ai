@@ -69,7 +69,13 @@ final class CachePlatform implements PlatformInterface
 
     public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult
     {
-        if (null === $this->cache || !\array_key_exists('prompt_cache_key', $options) || '' === $options['prompt_cache_key']) {
+        $useCache = null !== $this->cache && \array_key_exists('prompt_cache_key', $options) && '' !== $options['prompt_cache_key'];
+        $namespace = $options['prompt_cache_key'] ?? $this->cacheKey;
+        $ttl = $options['prompt_cache_ttl'] ?? $this->cacheTtl;
+
+        unset($options['prompt_cache_key'], $options['prompt_cache_ttl']);
+
+        if (!$useCache) {
             return $this->platform->invoke($model, $input, $options);
         }
 
@@ -80,11 +86,6 @@ final class CachePlatform implements PlatformInterface
             \is_array($input) => json_encode($input),
             default => $this->generateInputCacheKey($input),
         };
-
-        $namespace = $options['prompt_cache_key'] ?? $this->cacheKey;
-        $ttl = $options['prompt_cache_ttl'] ?? $this->cacheTtl;
-
-        unset($options['prompt_cache_key'], $options['prompt_cache_ttl']);
 
         try {
             $normalizedOptions = hash('xxh128', serialize($model instanceof Model ? array_merge($model->getOptions(), $options) : $options));

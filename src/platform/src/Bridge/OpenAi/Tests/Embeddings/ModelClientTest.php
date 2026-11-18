@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings;
 use Symfony\AI\Platform\Bridge\OpenAi\Embeddings\ModelClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
@@ -88,7 +89,7 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
-        $modelClient->request(new Embeddings('text-embedding-3-large'), 'test text', ['dimensions' => 256]);
+        $modelClient->request(new Embeddings('text-embedding-3-large'), 'test text', [PlatformOptions::PROVIDER_OPTIONS => ['dimensions' => 256]]);
     }
 
     public function testItIsExecutingTheCorrectRequestWithArrayInput()

@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Venice\Factory;
 use Symfony\AI\Platform\Job\JobRunner;
 use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -21,9 +22,11 @@ $platform = Factory::createPlatform(env('VENICE_API_KEY'), httpClient: http_clie
 // aspect ratio from the source image and rejects `aspect_ratio` outright - its `model_spec`
 // reports an empty `aspect_ratios` list.
 $handle = $platform->invoke('pixverse-c1-image-to-video', Image::fromFile(dirname(__DIR__, 2).'/fixtures/image.jpg'), [
-    'prompt' => 'Slowly zoom into the scene',
-    'duration' => '3s',
-    'resolution' => '360p',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'prompt' => 'Slowly zoom into the scene',
+        'duration' => '3s',
+        'resolution' => '360p',
+    ],
 ])->asJob();
 
 echo 'Started job '.$handle->getId().', waiting for it to finish...'.\PHP_EOL;

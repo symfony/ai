@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelOptionsParser;
+use Symfony\AI\Platform\PlatformOptions;
 
 /**
  * @author Oskar Stark <oskarstark@googlemail.com>
@@ -87,7 +88,7 @@ abstract class AbstractModelCatalog implements ModelCatalogInterface
 
             $options = ModelOptionsParser::parse($queryString);
 
-            $options = self::convertScalarStrings($options);
+            $options = PlatformOptions::nest(self::convertScalarStrings($options));
         }
 
         // Determine catalog key: try exact match first, then fall back to base model

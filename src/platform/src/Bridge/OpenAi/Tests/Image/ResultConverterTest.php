@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\OpenAi\Tests\Image;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Image\ResultConverter;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
@@ -64,7 +65,7 @@ final class ResultConverterTest extends TestCase
             ],
         ]);
 
-        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse), ['output_format' => 'webp']);
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse), [PlatformOptions::PROVIDER_OPTIONS => ['output_format' => 'webp']]);
 
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('image/webp', $result->getMimeType());

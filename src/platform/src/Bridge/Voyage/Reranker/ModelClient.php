@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Voyage\Reranker;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -50,6 +51,8 @@ final class ModelClient implements ModelClientInterface
         if (!\is_array($payload) || !isset($payload['query'], $payload['texts'])) {
             throw new InvalidArgumentException('Reranker payload must be an array with "query" and "texts" keys.');
         }
+
+        $options = $options[PlatformOptions::PROVIDER_OPTIONS] ?? [];
 
         $body = [
             'model' => $model->getName(),

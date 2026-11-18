@@ -18,6 +18,7 @@ use Symfony\AI\Platform\Bridge\Higgsfield\HiggsfieldClient;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -62,7 +63,7 @@ final class HiggsfieldClientTest extends TestCase
 
         $client = new HiggsfieldClient($httpClient);
 
-        $client->request(new Higgsfield('higgsfield-ai/soul/v2/standard', [Capability::TEXT_TO_IMAGE]), 'A cat', ['aspect_ratio' => '9:16']);
+        $client->request(new Higgsfield('higgsfield-ai/soul/v2/standard', [Capability::TEXT_TO_IMAGE]), 'A cat', [PlatformOptions::PROVIDER_OPTIONS => ['aspect_ratio' => '9:16']]);
     }
 
     public function testClientUploadsNormalizedImageAndPassesItsPublicUrl()
@@ -100,7 +101,7 @@ final class HiggsfieldClientTest extends TestCase
 
         $client = new HiggsfieldClient($httpClient);
 
-        $result = $client->request(new Higgsfield('kling-video/v2.5-turbo/pro/image-to-video', [Capability::IMAGE_TO_VIDEO]), $payload, ['prompt' => 'Slowly zoom in']);
+        $result = $client->request(new Higgsfield('kling-video/v2.5-turbo/pro/image-to-video', [Capability::IMAGE_TO_VIDEO]), $payload, [PlatformOptions::PROVIDER_OPTIONS => ['prompt' => 'Slowly zoom in']]);
 
         $this->assertSame('req-123', $result->getData()['request_id']);
         $this->assertSame(3, $httpClient->getRequestsCount());

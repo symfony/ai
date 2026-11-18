@@ -12,9 +12,11 @@ infrastructure. Enable them with the ``server_tools`` option, a map of tool name
 tool with no extra parameters)::
 
     $result = $platform->invoke('claude-sonnet-4-5-20250929', $messages, [
-        'server_tools' => [
-            'web_search' => true,
-            'code_execution' => true,
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'server_tools' => [
+                'web_search' => true,
+                'code_execution' => true,
+            ],
         ],
     ]);
 
@@ -32,8 +34,10 @@ Web Search
 The Web Search tool (``web_search``) lets the model search the web and ground its response in the results::
 
     $result = $platform->invoke('claude-sonnet-4-5-20250929', $messages, [
-        'server_tools' => [
-            'web_search' => ['max_uses' => 3],
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'server_tools' => [
+                'web_search' => ['max_uses' => 3],
+            ],
         ],
     ]);
 
@@ -42,8 +46,10 @@ into the tool definition Anthropic sends, and this also lets a caller override t
 defaults to::
 
     $result = $platform->invoke('claude-sonnet-5', $messages, [
-        'server_tools' => [
-            'web_search' => ['type' => 'web_search_20260209', 'max_uses' => 3],
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'server_tools' => [
+                'web_search' => ['type' => 'web_search_20260209', 'max_uses' => 3],
+            ],
         ],
     ]);
 
@@ -72,8 +78,10 @@ Anthropic provides two main tools for code execution:
 Both are enabled together through the single ``code_execution`` server tool::
 
     $result = $platform->invoke('claude-sonnet-4-5-20250929', $messages, [
-        'server_tools' => [
-            'code_execution' => true,
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'server_tools' => [
+                'code_execution' => true,
+            ],
         ],
     ]);
 

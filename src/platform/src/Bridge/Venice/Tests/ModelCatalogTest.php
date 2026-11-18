@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\Venice\ModelCatalog;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -896,7 +897,7 @@ final class ModelCatalogTest extends TestCase
         $model = $modelCatalog->getModel('venice-uncensored?temperature=0.5&max_completion_tokens=100');
 
         $this->assertSame('venice-uncensored', $model->getName());
-        $this->assertSame(['temperature' => 0.5, 'max_completion_tokens' => 100], $model->getOptions());
+        $this->assertSame(['temperature' => 0.5, PlatformOptions::PROVIDER_OPTIONS => ['max_completion_tokens' => 100]], $model->getOptions());
     }
 
     public function testModelCatalogFailsWhenTheApiIsUnreachable()

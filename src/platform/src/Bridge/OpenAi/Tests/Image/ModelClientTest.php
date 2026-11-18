@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\Image;
 use Symfony\AI\Platform\Bridge\OpenAi\Image\ModelClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Image as ImageContent;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
@@ -71,7 +72,7 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
-        $modelClient->request(new Image('gpt-image-1'), 'foo', ['n' => 1]);
+        $modelClient->request(new Image('gpt-image-1'), 'foo', [PlatformOptions::PROVIDER_OPTIONS => ['n' => 1]]);
     }
 
     public function testItEditsAnImageUsingTheEditsEndpoint()
@@ -112,7 +113,9 @@ final class ModelClientTest extends TestCase
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
         $modelClient->request(new Image('gpt-image-1'), 'make it red', [
-            'image' => ImageContent::fromFile(\dirname(__DIR__, 7).'/fixtures/image.jpg'),
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'image' => ImageContent::fromFile(\dirname(__DIR__, 7).'/fixtures/image.jpg'),
+            ],
         ]);
     }
 
@@ -140,6 +143,20 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key', $region);
-        $modelClient->request(new Image('gpt-image-1'), 'foo', ['n' => 1]);
+        $modelClient->request(new Image('gpt-image-1'), 'foo', [PlatformOptions::PROVIDER_OPTIONS => ['n' => 1]]);
+    }
+
+    public function testItSendsATopLevelResponseFormat()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame('{"response_format":"b64_json","model":"dall-e-3","prompt":"foo"}', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'sk-api-key');
+        $modelClient->request(new Image('dall-e-3'), 'foo', [PlatformOptions::RESPONSE_FORMAT => 'b64_json']);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 }

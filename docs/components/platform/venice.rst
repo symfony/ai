@@ -149,8 +149,10 @@ Models with the ``thinking`` capability (e.g. ``qwen3-235b-a22b-thinking-2507``)
 tokens are also exposed via ``TokenUsage::getThinkingTokens()``::
 
     $result = $platform->invoke('qwen3-235b-a22b-thinking-2507', $messages, [
-        'reasoning_effort' => 'high',
         'stream' => true,
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'reasoning_effort' => 'high',
+        ],
     ]);
 
     foreach ($result->asStream() as $chunk) {
@@ -172,12 +174,14 @@ roleplay, X/Twitter search, end-to-end encryption (TEE) and thinking control. Th
     $platform = Factory::createPlatform($_ENV['VENICE_API_KEY'], httpClient: $httpClient);
 
     $result = $platform->invoke('venice-uncensored-1-2', $messages, [
-        'venice_parameters' => new VeniceParameters(
-            characterSlug: 'alan-watts',
-            enableWebSearch: VeniceParameters::WEB_SEARCH_AUTO,
-            enableWebCitations: true,
-            stripThinkingResponse: true,
-        ),
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'venice_parameters' => new VeniceParameters(
+                characterSlug: 'alan-watts',
+                enableWebSearch: VeniceParameters::WEB_SEARCH_AUTO,
+                enableWebCitations: true,
+                stripThinkingResponse: true,
+            ),
+        ],
     ]);
 
 Plain arrays are also accepted, e.g. ``['venice_parameters' => ['enable_web_search' => 'on']]``.
@@ -193,8 +197,10 @@ Generate vector embeddings from text. The encoding format defaults to ``float`` 
     $platform = Factory::createPlatform($_ENV['VENICE_API_KEY'], httpClient: $httpClient);
 
     $result = $platform->invoke('text-embedding-bge-m3', 'The quick brown fox jumps over the lazy dog.', [
-        'dimensions' => 512,
-        'encoding_format' => 'float',
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'dimensions' => 512,
+            'encoding_format' => 'float',
+        ],
     ]);
 
     $vector = $result->asVectors()[0];
@@ -213,9 +219,11 @@ options::
     $platform = Factory::createPlatform($_ENV['VENICE_API_KEY'], httpClient: $httpClient);
 
     $result = $platform->invoke('z-image-turbo', 'A beautiful sunset over a mountain range', [
-        'aspect_ratio' => '16:9',
-        'cfg_scale' => 7.5,
-        'safe_mode' => false,
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'aspect_ratio' => '16:9',
+            'cfg_scale' => 7.5,
+            'safe_mode' => false,
+        ],
     ]);
 
     $result->asFile('/path/to/image.png');
@@ -234,20 +242,26 @@ or as a raw ``image`` string holding a base64 payload, a data URL or an HTTP URL
 
     // Edit
     $result = $platform->invoke('firered-image-edit', Image::fromFile('/path/to/in.png'), [
-        'prompt' => 'Make it sepia',
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'prompt' => 'Make it sepia',
+        ],
     ]);
     $result->asFile('/tmp/edited.png');
 
     // Upscale
     $result = $platform->invoke('upscaler', Image::fromFile('/path/to/in.png'), [
-        'mode' => 'upscale',
-        'scale' => 2,
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'mode' => 'upscale',
+            'scale' => 2,
+        ],
     ]);
     $result->asFile('/tmp/upscaled.png');
 
     // Background removal - the endpoint takes no model, so any image-to-image model selects it
     $result = $platform->invoke('upscaler', ['image' => 'https://example.com/in.png'], [
-        'mode' => 'background-remove',
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'mode' => 'background-remove',
+        ],
     ]);
     $result->asFile('/tmp/transparent.png');
 
@@ -263,9 +277,11 @@ configurable through options. Use a voice handle prefixed with ``vv_`` for voice
     $platform = Factory::createPlatform($_ENV['VENICE_API_KEY'], httpClient: $httpClient);
 
     $result = $platform->invoke('tts-kokoro', new Text('Hello world from Venice'), [
-        'voice' => 'af_sky',
         'response_format' => 'wav',
-        'speed' => 1.1,
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'voice' => 'af_sky',
+            'speed' => 1.1,
+        ],
     ]);
 
     echo $result->asBinary();
@@ -281,8 +297,10 @@ Transcribe audio files to text. ``language`` (ISO 639-1) and ``timestamps`` are 
     $platform = Factory::createPlatform($_ENV['VENICE_API_KEY'], httpClient: $httpClient);
 
     $result = $platform->invoke('nvidia/parakeet-tdt-0.6b-v3', Audio::fromFile('/path/to/audio.mp3'), [
-        'language' => 'en',
-        'timestamps' => true,
+        PlatformOptions::LANGUAGE => 'en',
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'timestamps' => true,
+        ],
     ]);
 
     echo $result->asText();
@@ -306,9 +324,11 @@ that takes minutes. See :ref:`Asynchronous Jobs <platform-asynchronous-jobs>` fo
     // `resolution`; `GET /models` reports all three under `model_spec.constraints`. Generation is
     // billed per pixel-second, so a short clip at a low resolution costs a fraction of a long one.
     $handle = $platform->invoke('pixverse-c1-text-to-video', new Text('A timelapse of a sunset over a mountain range'), [
-        'duration' => '3s',
-        'aspect_ratio' => '16:9',
-        'resolution' => '360p',
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'duration' => '3s',
+            'aspect_ratio' => '16:9',
+            'resolution' => '360p',
+        ],
     ])->asJob();
 
     // Waiting is the caller's decision, and the job client needs no platform of its own.
@@ -318,9 +338,11 @@ that takes minutes. See :ref:`Asynchronous Jobs <platform-asynchronous-jobs>` fo
     // Image-to-video. This model derives the aspect ratio from the source image and rejects
     // `aspect_ratio`, which its empty `aspect_ratios` constraint announces.
     $handle = $platform->invoke('pixverse-c1-image-to-video', Image::fromFile('/path/to/mountain.jpg'), [
-        'prompt' => 'Camera slowly zooms in',
-        'duration' => '3s',
-        'resolution' => '360p',
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'prompt' => 'Camera slowly zooms in',
+            'duration' => '3s',
+            'resolution' => '360p',
+        ],
     ])->asJob();
 
     (new JobRunner())->wait($jobClient, $handle)->asFile('/path/to/zoom.mp4');

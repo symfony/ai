@@ -13,6 +13,7 @@
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Bridge\OpenAi\Whisper\Result\Transcript;
 use Symfony\AI\Platform\Message\Content\Audio;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -20,7 +21,9 @@ $platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 $file = Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3');
 
 $result = $platform->invoke('whisper-1', $file, [
-    'verbose' => true,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'verbose' => true,
+    ],
 ]);
 
 $transcript = $result->asObject();

@@ -42,10 +42,11 @@ final class TemplateRendererListener implements EventSubscriberInterface
     public function __invoke(InvocationEvent $event): void
     {
         $options = $event->getOptions();
-        $hasTemplateVars = isset($options['template_vars']);
-        if ($hasTemplateVars && !\is_array($options['template_vars'])) {
+        if (isset($options['template_vars']) && !\is_array($options['template_vars'])) {
             throw new InvalidArgumentException('The "template_vars" option must be an array.');
         }
+
+        $event->setOptions(array_diff_key($options, ['template_vars' => true, 'template_options' => true]));
 
         $input = $event->getInput();
         if (!$input instanceof MessageBag) {
@@ -70,11 +71,6 @@ final class TemplateRendererListener implements EventSubscriberInterface
         }
 
         $event->setInput(new MessageBag(...$renderedMessages));
-
-        if ($hasTemplateVars) {
-            unset($options['template_vars'], $options['template_options']);
-        }
-        $event->setOptions($options);
     }
 
     public static function getSubscribedEvents(): array

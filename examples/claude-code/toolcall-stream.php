@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\ClaudeCode\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolCallStart;
 use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
@@ -29,8 +30,10 @@ $messages = new MessageBag(
 );
 $result = $platform->invoke('sonnet', $messages, [
     'stream' => true,
-    'permission_mode' => 'plan',
-    'max_turns' => 4,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'permission_mode' => 'plan',
+        'max_turns' => 4,
+    ],
 ]);
 
 foreach ($result->asStream() as $delta) {

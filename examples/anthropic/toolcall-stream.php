@@ -15,6 +15,7 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\Anthropic\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -34,9 +35,11 @@ $messages = new MessageBag(Message::ofUser(<<<TXT
     TXT));
 $result = $agent->call($messages, [
     'stream' => true, // enable streaming of response text
-    'thinking' => [
-        'type' => 'enabled',
-        'budget_tokens' => 10000,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'thinking' => [
+            'type' => 'enabled',
+            'budget_tokens' => 10000,
+        ],
     ],
 ]);
 

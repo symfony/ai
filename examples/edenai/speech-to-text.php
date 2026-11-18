@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\EdenAi\Factory;
 use Symfony\AI\Platform\Exception\JobTimeoutException;
 use Symfony\AI\Platform\Job\JobRunner;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\JobResult;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -19,7 +20,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = Factory::createPlatform(env('EDENAI_API_KEY'), http_client());
 
 $result = $platform->invoke('audio/speech_to_text_async/openai', 'https://raw.githubusercontent.com/symfony/ai/main/fixtures/audio.mp3', [
-    'language' => 'en',
+    PlatformOptions::LANGUAGE => 'en',
 ]);
 
 // Transcription runs on Eden AI's asynchronous endpoint. A provider that is done by the time it

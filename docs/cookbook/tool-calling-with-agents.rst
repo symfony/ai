@@ -127,7 +127,9 @@ emit ``ThinkingDelta`` deltas when you pass the ``reasoning`` option::
 
     $result = $agent->call($messages, [
         'stream' => true,
-        'reasoning' => ['summary' => 'auto'],
+        PlatformOptions::PROVIDER_OPTIONS => [
+            'reasoning' => ['summary' => 'auto'],
+        ],
     ]);
 
     foreach ($result->getContent() as $delta) {

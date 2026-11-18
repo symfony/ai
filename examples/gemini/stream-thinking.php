@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Gemini\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -31,8 +32,10 @@ $messages = new MessageBag(
 // instances and turns the answer into TextDelta instances.
 $result = $platform->invoke('gemini-2.5-flash', $messages, [
     'stream' => true,
-    'thinkingConfig' => [
-        'includeThoughts' => true,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'thinkingConfig' => [
+            'includeThoughts' => true,
+        ],
     ],
 ]);
 

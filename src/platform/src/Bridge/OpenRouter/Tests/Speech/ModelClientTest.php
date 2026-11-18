@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\OpenRouter\Speech\ModelClient;
 use Symfony\AI\Platform\Bridge\OpenRouter\SpeechModel;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -64,7 +65,9 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient($httpClient, 'test-key');
 
         $client->request(new SpeechModel('openai/gpt-4o-mini-tts-2025-12-15'), 'Hello world', [
-            'voice' => 'alloy',
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => 'alloy',
+            ],
         ]);
     }
 
@@ -85,7 +88,9 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient($httpClient, 'test-key');
 
         $client->request(new SpeechModel('openai/gpt-4o-mini-tts-2025-12-15'), ['text' => 'Hello world'], [
-            'voice' => 'alloy',
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => 'alloy',
+            ],
         ]);
     }
 
@@ -107,10 +112,12 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient($httpClient, 'test-key');
 
         $client->request(new SpeechModel('openai/gpt-4o-mini-tts-2025-12-15'), 'Hello world', [
-            'voice' => 'alloy',
-            'response_format' => 'mp3',
-            'speed' => 1.25,
-            'provider' => ['options' => ['order' => ['openai']]],
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => 'alloy',
+                'response_format' => 'mp3',
+                'speed' => 1.25,
+                'provider' => ['options' => ['order' => ['openai']]],
+            ],
         ]);
     }
 
@@ -132,7 +139,29 @@ final class ModelClientTest extends TestCase
         $this->expectExceptionMessage('The payload must be a string or an array with a "text" key.');
 
         $client->request(new SpeechModel('openai/gpt-4o-mini-tts-2025-12-15'), ['invalid' => 'payload'], [
-            'voice' => 'alloy',
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => 'alloy',
+            ],
         ]);
+    }
+
+    public function testItSendsATopLevelResponseFormat()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): MockResponse {
+            $body = json_decode($options['body'], true);
+            $this->assertSame('wav', $body['response_format']);
+
+            return new MockResponse();
+        });
+
+        $client = new ModelClient($httpClient, 'test-key');
+        $client->request(new SpeechModel('openai/gpt-4o-mini-tts-2025-12-15'), 'Hello world', [
+            PlatformOptions::RESPONSE_FORMAT => 'wav',
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => 'alloy',
+            ],
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 }

@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -28,8 +29,10 @@ $inputs = array_map(
 );
 
 $handle = $platform->invoke('gpt-4o-mini', $inputs, [
-    'batch' => true,
     'max_output_tokens' => 50,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'batch' => true,
+    ],
 ])->asJob();
 
 echo 'Submitted batch '.$handle->getId().' with '.count($inputs).' requests.'.\PHP_EOL;

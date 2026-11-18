@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Voyage\ModelClient;
 use Symfony\AI\Platform\Bridge\Voyage\Voyage;
 use Symfony\AI\Platform\Capability;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -43,7 +44,7 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient($httpClient, '');
 
         $client->request($model, 'Hello, world!', [
-            'dimensions' => 300,
+            PlatformOptions::PROVIDER_OPTIONS => ['dimensions' => 300],
         ]);
     }
 

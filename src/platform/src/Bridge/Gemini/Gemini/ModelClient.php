@@ -59,6 +59,14 @@ final class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::STREAM => 'stream',
+            PlatformOptions::TOOLS => 'tools',
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            PlatformOptions::MAX_OUTPUT_TOKENS => 'maxOutputTokens',
+            PlatformOptions::TEMPERATURE => 'temperature',
+        ]);
+
         $url = \sprintf(
             '%s/v1beta/models/%s:%s',
             $this->baseUrl,
@@ -70,12 +78,6 @@ final class ModelClient implements ModelClientInterface
             $options['responseMimeType'] = 'application/json';
             $options['responseJsonSchema'] = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'];
             unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
-        }
-
-        // generationConfig expects the camelCase "maxOutputTokens" and rejects unknown fields
-        if (isset($options[PlatformOptions::MAX_OUTPUT_TOKENS])) {
-            $options['maxOutputTokens'] ??= $options[PlatformOptions::MAX_OUTPUT_TOKENS];
-            unset($options[PlatformOptions::MAX_OUTPUT_TOKENS]);
         }
 
         $config = ['generationConfig' => $options];

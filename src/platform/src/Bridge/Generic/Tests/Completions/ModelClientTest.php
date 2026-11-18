@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Generic\Completions\ModelClient;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
@@ -108,7 +109,7 @@ final class ModelClientTest extends TestCase
         $modelClient->request(
             new CompletionsModel('gpt-4o'),
             ['model' => 'gpt-4o', 'messages' => [['role' => 'user', 'content' => 'Hello']]],
-            ['stream' => true, 'stream_options' => ['foo' => 'bar']],
+            ['stream' => true, PlatformOptions::PROVIDER_OPTIONS => ['stream_options' => ['foo' => 'bar']]],
         );
     }
 
@@ -160,22 +161,6 @@ final class ModelClientTest extends TestCase
         $modelClient->request(new CompletionsModel('gpt-4o'), ['messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
     }
 
-    public function testCanonicalMaxOutputTokensIsRenamedToMaxTokens()
-    {
-        $capturedBody = $this->captureRequestBody(['max_output_tokens' => 500]);
-
-        $this->assertSame(500, $capturedBody['max_tokens']);
-        $this->assertArrayNotHasKey('max_output_tokens', $capturedBody);
-    }
-
-    public function testExplicitMaxTokensWinsOverCanonicalMaxOutputTokens()
-    {
-        $capturedBody = $this->captureRequestBody(['max_tokens' => 2000, 'max_output_tokens' => 500]);
-
-        $this->assertSame(2000, $capturedBody['max_tokens']);
-        $this->assertArrayNotHasKey('max_output_tokens', $capturedBody);
-    }
-
     public function testToolChoiceDefaultsToAutoWhenToolsAreProvided()
     {
         $capturedBody = $this->captureRequestBody(['tools' => $this->tools()]);
@@ -185,7 +170,7 @@ final class ModelClientTest extends TestCase
 
     public function testToolChoiceIsNotOverriddenWhenExplicitlySet()
     {
-        $capturedBody = $this->captureRequestBody(['tools' => $this->tools(), 'tool_choice' => 'required']);
+        $capturedBody = $this->captureRequestBody(['tools' => $this->tools(), PlatformOptions::PROVIDER_OPTIONS => ['tool_choice' => 'required']]);
 
         $this->assertSame('required', $capturedBody['tool_choice']);
     }

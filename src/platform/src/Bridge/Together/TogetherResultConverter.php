@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\InvalidRequestException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Reranking\RerankingEntry;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
@@ -185,7 +186,7 @@ final class TogetherResultConverter implements ResultConverterInterface
         }
 
         // The Together API defaults the image "output_format" to jpeg.
-        $mimeType = 'png' === ($options['output_format'] ?? 'jpeg') ? 'image/png' : 'image/jpeg';
+        $mimeType = 'png' === ($options[PlatformOptions::PROVIDER_OPTIONS]['output_format'] ?? 'jpeg') ? 'image/png' : 'image/jpeg';
 
         return BinaryResult::fromBase64($image['b64_json'], $mimeType);
     }
@@ -195,7 +196,7 @@ final class TogetherResultConverter implements ResultConverterInterface
      */
     private function convertSpeech(RawHttpResult $result, array $options): BinaryResult
     {
-        $mimeType = match ($options['response_format'] ?? 'wav') {
+        $mimeType = match ($options[PlatformOptions::PROVIDER_OPTIONS]['response_format'] ?? $options[PlatformOptions::RESPONSE_FORMAT] ?? 'wav') {
             'mp3' => 'audio/mpeg',
             'wav' => 'audio/wav',
             default => 'application/octet-stream',

@@ -26,6 +26,7 @@ use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\FinishReason\FinishReasonCase;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\CodeExecutionResult;
 use Symfony\AI\Platform\Result\ExecutableCodeResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
@@ -821,7 +822,7 @@ class ResultConverterTest extends TestCase
             'status' => 'validating',
         ]);
 
-        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse), ['batch' => true]);
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse), [PlatformOptions::PROVIDER_OPTIONS => ['batch' => true]]);
 
         $this->assertInstanceOf(JobResult::class, $result);
 
@@ -847,7 +848,7 @@ class ResultConverterTest extends TestCase
         $httpResponse->method('getStatusCode')->willReturn(200);
         $httpResponse->method('toArray')->willReturn(['id' => 'batch_123', 'completion_window' => $window]);
 
-        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse), ['batch' => true]);
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse), [PlatformOptions::PROVIDER_OPTIONS => ['batch' => true]]);
 
         $this->assertInstanceOf(JobResult::class, $result);
         $this->assertSame($expected, $result->getContent()->getMaxDuration());
@@ -862,7 +863,7 @@ class ResultConverterTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('The OpenAI response does not contain a batch identifier.');
 
-        (new ResultConverter())->convert(new RawHttpResult($httpResponse), ['batch' => true]);
+        (new ResultConverter())->convert(new RawHttpResult($httpResponse), [PlatformOptions::PROVIDER_OPTIONS => ['batch' => true]]);
     }
 
     public function testItReportsAnErrorOnABatchSubmission()
@@ -874,6 +875,6 @@ class ResultConverterTest extends TestCase
         $this->expectException(AuthenticationException::class);
         $this->expectExceptionMessage('Incorrect API key provided.');
 
-        (new ResultConverter())->convert(new RawHttpResult($httpResponse), ['batch' => true]);
+        (new ResultConverter())->convert(new RawHttpResult($httpResponse), [PlatformOptions::PROVIDER_OPTIONS => ['batch' => true]]);
     }
 }

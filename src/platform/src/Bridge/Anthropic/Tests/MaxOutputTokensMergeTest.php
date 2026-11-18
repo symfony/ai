@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -52,11 +53,11 @@ final class MaxOutputTokensMergeTest extends TestCase
     {
         yield 'model default' => ['claude-sonnet-4-0', [], 1000];
         yield 'canonical option overrides the model default' => ['claude-sonnet-4-0', ['max_output_tokens' => 500], 500];
-        yield 'max_tokens overrides the model default' => ['claude-sonnet-4-0', ['max_tokens' => 2000], 2000];
-        yield 'max_tokens wins over the canonical option' => ['claude-sonnet-4-0', ['max_tokens' => 2000, 'max_output_tokens' => 500], 2000];
+        yield 'max_tokens overrides the model default' => ['claude-sonnet-4-0', [PlatformOptions::PROVIDER_OPTIONS => ['max_tokens' => 2000]], 2000];
+        yield 'max_tokens wins over the canonical option' => ['claude-sonnet-4-0', [PlatformOptions::PROVIDER_OPTIONS => ['max_tokens' => 2000], PlatformOptions::MAX_OUTPUT_TOKENS => 500], 2000];
         yield 'canonical option configured on the model' => ['claude-sonnet-4-0?max_output_tokens=500', [], 500];
         yield 'canonical option overrides the one configured on the model' => ['claude-sonnet-4-0?max_output_tokens=500', ['max_output_tokens' => 300], 300];
-        yield 'max_tokens overrides the canonical option configured on the model' => ['claude-sonnet-4-0?max_output_tokens=500', ['max_tokens' => 2000], 2000];
+        yield 'max_tokens overrides the canonical option configured on the model' => ['claude-sonnet-4-0?max_output_tokens=500', [PlatformOptions::PROVIDER_OPTIONS => ['max_tokens' => 2000]], 2000];
         yield 'max_tokens configured on the model' => ['claude-sonnet-4-0?max_tokens=2000', [], 2000];
     }
 }

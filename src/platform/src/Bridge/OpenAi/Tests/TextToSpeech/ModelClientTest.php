@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\TextToSpeech\ModelClient;
 use Symfony\AI\Platform\Bridge\OpenAi\TextToSpeech\ResultConverter;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
@@ -56,8 +57,10 @@ final class ModelClientTest extends TestCase
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
         $modelClient->request(new TextToSpeech('tts-1'), 'Hello World!', [
-            'voice' => 'alloy',
-            'instruction' => 'Speak like a pirate',
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => 'alloy',
+                'instruction' => 'Speak like a pirate',
+            ],
         ]);
     }
 
@@ -75,7 +78,9 @@ final class ModelClientTest extends TestCase
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
         $modelClient->request(new TextToSpeech('tts-1'), ['text' => 'Hello World!'], [
-            'voice' => 'alloy',
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => 'alloy',
+            ],
         ]);
     }
 
@@ -87,7 +92,9 @@ final class ModelClientTest extends TestCase
         $httpClient = new MockHttpClient();
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
         $modelClient->request(new TextToSpeech('tts-1'), 'Hello World!', [
-            'instruction' => 'Speak like a pirate',
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'instruction' => 'Speak like a pirate',
+            ],
         ]);
     }
 
@@ -99,8 +106,29 @@ final class ModelClientTest extends TestCase
         $httpClient = new MockHttpClient();
         $modelClient = new ModelClient($httpClient, 'sk-api-key');
         $modelClient->request(new TextToSpeech('tts-1'), 'Hello World!', [
-            'voice' => 'alloy',
-            'stream' => true,
+            PlatformOptions::STREAM => true,
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => 'alloy',
+            ],
         ]);
+    }
+
+    public function testItSendsATopLevelResponseFormat()
+    {
+        $resultCallback = static function (string $method, string $url, array $options): HttpResponse {
+            self::assertSame('{"response_format":"wav","voice":"alloy","model":"tts-1","input":"Hello World!"}', $options['body']);
+
+            return new MockResponse();
+        };
+        $httpClient = new MockHttpClient([$resultCallback]);
+        $modelClient = new ModelClient($httpClient, 'sk-api-key');
+        $modelClient->request(new TextToSpeech('tts-1'), 'Hello World!', [
+            PlatformOptions::RESPONSE_FORMAT => 'wav',
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => 'alloy',
+            ],
+        ]);
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
     }
 }

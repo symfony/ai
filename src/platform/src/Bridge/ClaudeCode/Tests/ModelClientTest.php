@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Bridge\ClaudeCode\Exception\CliNotFoundException;
 use Symfony\AI\Platform\Bridge\ClaudeCode\ModelClient;
 use Symfony\AI\Platform\Bridge\ClaudeCode\RawProcessResult;
 use Symfony\AI\Platform\Exception\MissingModelSupportException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Tool\ExecutionReference;
 use Symfony\AI\Platform\Tool\Tool;
 
@@ -282,6 +283,20 @@ final class ModelClientTest extends TestCase
         $commandLine = $result->getObject()->getCommandLine();
 
         $this->assertStringContainsString('Hello, World!', $commandLine);
+    }
+
+    public function testRequestPassesProviderOptionsAsFlags()
+    {
+        $client = new ModelClient(self::$binary);
+
+        $result = $client->request(new ClaudeCode('sonnet'), 'Hello', [
+            PlatformOptions::STREAM => true,
+            PlatformOptions::PROVIDER_OPTIONS => ['max_turns' => 3],
+        ]);
+        $commandLine = $result->getObject()->getCommandLine();
+
+        $this->assertStringContainsString("'--max-turns' '3'", $commandLine);
+        $this->assertStringNotContainsString('--stream', $commandLine);
     }
 
     public function testRequestWithToolDefinitionsThrowsException()

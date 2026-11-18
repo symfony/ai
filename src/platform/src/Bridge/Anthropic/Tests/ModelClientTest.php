@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Anthropic\ModelClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -46,7 +47,7 @@ class ModelClientTest extends TestCase
 
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
 
-        $options = ['beta_features' => ['feature-1']];
+        $options = [PlatformOptions::PROVIDER_OPTIONS => ['beta_features' => ['feature-1']]];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
@@ -63,7 +64,7 @@ class ModelClientTest extends TestCase
 
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
 
-        $options = ['beta_features' => ['feature-1', 'feature-2', 'feature-3']];
+        $options = [PlatformOptions::PROVIDER_OPTIONS => ['beta_features' => ['feature-1', 'feature-2', 'feature-3']]];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
@@ -79,7 +80,7 @@ class ModelClientTest extends TestCase
 
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
 
-        $options = ['beta_features' => []];
+        $options = [PlatformOptions::PROVIDER_OPTIONS => ['beta_features' => []]];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
@@ -95,7 +96,7 @@ class ModelClientTest extends TestCase
 
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
 
-        $options = ['some_other_option' => 'value'];
+        $options = [PlatformOptions::PROVIDER_OPTIONS => ['some_other_option' => 'value']];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
@@ -116,7 +117,7 @@ class ModelClientTest extends TestCase
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
 
         $options = [
-            'thinking' => ['type' => 'enabled', 'budget_tokens' => 10000],
+            PlatformOptions::PROVIDER_OPTIONS => ['thinking' => ['type' => 'enabled', 'budget_tokens' => 10000]],
         ];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
@@ -137,7 +138,7 @@ class ModelClientTest extends TestCase
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
 
         $options = [
-            'thinking' => ['type' => 'adaptive'],
+            PlatformOptions::PROVIDER_OPTIONS => ['thinking' => ['type' => 'adaptive']],
         ];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
@@ -157,8 +158,10 @@ class ModelClientTest extends TestCase
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
 
         $options = [
-            'thinking' => ['type' => 'enabled', 'budget_tokens' => 5000],
-            'beta_features' => ['other-feature'],
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'thinking' => ['type' => 'enabled', 'budget_tokens' => 5000],
+                'beta_features' => ['other-feature'],
+            ],
         ];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
@@ -214,7 +217,7 @@ class ModelClientTest extends TestCase
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
 
         $options = [
-            'output_config' => ['effort' => 'medium'],
+            PlatformOptions::PROVIDER_OPTIONS => ['output_config' => ['effort' => 'medium']],
             'response_format' => [
                 'json_schema' => [
                     'schema' => ['type' => 'object'],
@@ -253,7 +256,7 @@ class ModelClientTest extends TestCase
 
         $options = [
             'tools' => [['name' => 'noop', 'description' => '', 'input_schema' => []]],
-            'tool_choice' => ['type' => 'tool', 'name' => 'noop'],
+            PlatformOptions::PROVIDER_OPTIONS => ['tool_choice' => ['type' => 'tool', 'name' => 'noop']],
         ];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
@@ -269,7 +272,7 @@ class ModelClientTest extends TestCase
 
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
 
-        $options = ['server_tools' => ['code_execution' => true]];
+        $options = [PlatformOptions::PROVIDER_OPTIONS => ['server_tools' => ['code_execution' => true]]];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
@@ -288,7 +291,7 @@ class ModelClientTest extends TestCase
 
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
 
-        $options = ['server_tools' => ['web_search' => ['max_uses' => 3]]];
+        $options = [PlatformOptions::PROVIDER_OPTIONS => ['server_tools' => ['web_search' => ['max_uses' => 3]]]];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
@@ -306,7 +309,7 @@ class ModelClientTest extends TestCase
 
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
 
-        $options = ['server_tools' => ['code_execution' => true]];
+        $options = [PlatformOptions::PROVIDER_OPTIONS => ['server_tools' => ['code_execution' => true]]];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
@@ -321,7 +324,7 @@ class ModelClientTest extends TestCase
 
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
 
-        $options = ['server_tools' => ['web_search' => false, 'code_execution' => null]];
+        $options = [PlatformOptions::PROVIDER_OPTIONS => ['server_tools' => ['web_search' => false, 'code_execution' => null]]];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 
@@ -333,7 +336,7 @@ class ModelClientTest extends TestCase
         $this->expectExceptionMessage('Unsupported Anthropic server tool "web_fetch". Supported server tools are "web_search", "code_execution". Use the "tools" option to pass an unmapped tool through verbatim.');
 
         $this->modelClient->request($this->model, ['message' => 'test'], [
-            'server_tools' => ['web_fetch' => true],
+            PlatformOptions::PROVIDER_OPTIONS => ['server_tools' => ['web_fetch' => true]],
         ]);
     }
 
@@ -357,7 +360,7 @@ class ModelClientTest extends TestCase
 
         $options = [
             'tools' => [['name' => 'tool_a', 'description' => 'First tool', 'input_schema' => ['type' => 'object']]],
-            'server_tools' => ['web_search' => true],
+            PlatformOptions::PROVIDER_OPTIONS => ['server_tools' => ['web_search' => true]],
         ];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
@@ -373,39 +376,7 @@ class ModelClientTest extends TestCase
 
         $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
 
-        $options = ['server_tools' => ['code_execution' => true]];
-        $this->modelClient->request($this->model, ['message' => 'test'], $options);
-    }
-
-    public function testCanonicalMaxOutputTokensIsRenamedToMaxTokens()
-    {
-        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
-            $body = json_decode($options['body'], true);
-            $this->assertSame(500, $body['max_tokens']);
-            $this->assertArrayNotHasKey('max_output_tokens', $body);
-
-            return new JsonMockResponse('{"success": true}');
-        });
-
-        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
-
-        $options = ['max_output_tokens' => 500];
-        $this->modelClient->request($this->model, ['message' => 'test'], $options);
-    }
-
-    public function testExplicitMaxTokensWinsOverCanonicalMaxOutputTokens()
-    {
-        $this->httpClient = new MockHttpClient(function ($method, $url, $options) {
-            $body = json_decode($options['body'], true);
-            $this->assertSame(2000, $body['max_tokens']);
-            $this->assertArrayNotHasKey('max_output_tokens', $body);
-
-            return new JsonMockResponse('{"success": true}');
-        });
-
-        $this->modelClient = new ModelClient($this->httpClient, 'test-api-key');
-
-        $options = ['max_tokens' => 2000, 'max_output_tokens' => 500];
+        $options = [PlatformOptions::PROVIDER_OPTIONS => ['server_tools' => ['code_execution' => true]]];
         $this->modelClient->request($this->model, ['message' => 'test'], $options);
     }
 

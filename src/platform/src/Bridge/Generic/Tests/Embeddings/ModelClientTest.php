@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\Embeddings\ModelClient;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Contracts\HttpClient\ResponseInterface as HttpResponse;
@@ -66,7 +67,7 @@ final class ModelClientTest extends TestCase
         };
         $httpClient = new MockHttpClient([$resultCallback]);
         $modelClient = new ModelClient($httpClient, 'http://localhost:8000', 'sk-api-key');
-        $modelClient->request(new EmbeddingsModel('text-embedding-3-large'), 'test text', ['dimensions' => 256]);
+        $modelClient->request(new EmbeddingsModel('text-embedding-3-large'), 'test text', [PlatformOptions::PROVIDER_OPTIONS => ['dimensions' => 256]]);
     }
 
     public function testItIsExecutingTheCorrectRequestWithArrayInput()

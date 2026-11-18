@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\VertexAi\Embeddings\Model;
 use Symfony\AI\Platform\Bridge\VertexAi\Embeddings\ModelClient;
 use Symfony\AI\Platform\Bridge\VertexAi\Embeddings\TaskType;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -32,7 +33,7 @@ final class ModelClientTest extends TestCase
 
         $client = new ModelClient($httpClient, 'global', 'test');
 
-        $model = new Model('gemini-embedding-001', options: ['outputDimensionality' => 1536, 'task_type' => TaskType::CLASSIFICATION]);
+        $model = new Model('gemini-embedding-001', options: [PlatformOptions::PROVIDER_OPTIONS => ['outputDimensionality' => 1536, 'task_type' => TaskType::CLASSIFICATION]]);
 
         $result = $client->request($model, 'test payload');
 

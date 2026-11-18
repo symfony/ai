@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\EdenAi\Ocr;
 use Symfony\AI\Platform\Bridge\EdenAi\Tts;
 use Symfony\AI\Platform\Bridge\EdenAi\UniversalAi\ModelClient;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -33,11 +34,28 @@ final class UniversalAiPayloadTraitTest extends TestCase
         $body = $this->capture(
             new Ocr('ocr/ocr/google'),
             ['file' => 'https://example.com/from-payload.pdf'],
-            ['file' => 'https://example.com/from-options.pdf', 'language' => 'en'],
+            [PlatformOptions::PROVIDER_OPTIONS => ['file' => 'https://example.com/from-options.pdf', 'language' => 'en']],
         );
 
         $this->assertSame('https://example.com/from-payload.pdf', $body['input']['file']);
         $this->assertSame('en', $body['input']['language']);
+    }
+
+    public function testTopLevelResponseFormatIsSentAsInput()
+    {
+        $body = $this->capture(new ImageGeneration('image/generation/openai'), 'A cat', [PlatformOptions::RESPONSE_FORMAT => 'png']);
+
+        $this->assertSame('png', $body['input']['response_format']);
+    }
+
+    public function testProviderResponseFormatWinsOverTopLevelOne()
+    {
+        $body = $this->capture(new ImageGeneration('image/generation/openai'), 'A cat', [
+            PlatformOptions::RESPONSE_FORMAT => 'png',
+            PlatformOptions::PROVIDER_OPTIONS => ['response_format' => 'jpeg'],
+        ]);
+
+        $this->assertSame('jpeg', $body['input']['response_format']);
     }
 
     public function testItSendsTheModelNameAtTheRoot()

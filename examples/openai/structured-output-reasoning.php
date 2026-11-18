@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ThinkingResult;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
@@ -31,7 +32,9 @@ $messages = new MessageBag(
 
 $result = $platform->invoke('gpt-5-mini', $messages, [
     'response_format' => MathReasoning::class,
-    'reasoning' => ['summary' => 'auto'],
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'reasoning' => ['summary' => 'auto'],
+    ],
 ]);
 
 $converted = $result->getResult();

@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\FinishReason\FinishReason;
 use Symfony\AI\Platform\FinishReason\FinishReasonCase;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\ChoiceResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
@@ -427,7 +428,7 @@ final class TogetherResultConverterTest extends TestCase
         $httpResponse = $httpClient->request('POST', 'https://api.together.xyz/v1/images/generations');
         $converter = new TogetherResultConverter();
 
-        $result = $converter->convert(new RawHttpResult($httpResponse), ['output_format' => 'png']);
+        $result = $converter->convert(new RawHttpResult($httpResponse), [PlatformOptions::PROVIDER_OPTIONS => ['output_format' => 'png']]);
 
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('image/png', $result->getMimeType());
@@ -471,10 +472,22 @@ final class TogetherResultConverterTest extends TestCase
         $httpResponse = $httpClient->request('POST', 'https://api.together.xyz/v1/audio/speech');
         $converter = new TogetherResultConverter();
 
-        $result = $converter->convert(new RawHttpResult($httpResponse), ['response_format' => 'mp3']);
+        $result = $converter->convert(new RawHttpResult($httpResponse), [PlatformOptions::PROVIDER_OPTIONS => ['response_format' => 'mp3']]);
 
         $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('AUDIO_BYTES', $result->getContent());
+        $this->assertSame('audio/mpeg', $result->getMimeType());
+    }
+
+    public function testConvertSpeechResponseReadsTopLevelResponseFormat()
+    {
+        $httpClient = new MockHttpClient(new MockResponse('AUDIO_BYTES'));
+
+        $httpResponse = $httpClient->request('POST', 'https://api.together.xyz/v1/audio/speech');
+
+        $result = (new TogetherResultConverter())->convert(new RawHttpResult($httpResponse), [PlatformOptions::RESPONSE_FORMAT => 'mp3']);
+
+        $this->assertInstanceOf(BinaryResult::class, $result);
         $this->assertSame('audio/mpeg', $result->getMimeType());
     }
 

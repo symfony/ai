@@ -15,6 +15,7 @@ use Symfony\AI\Agent\Toolbox\Toolbox;
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -26,9 +27,11 @@ $toolbox = new Toolbox([new Clock(clock())], logger: logger());
 $agent = new Agent($platform, 'gpt-5-mini', toolbox: $toolbox);
 
 $options = [
-    'store' => false,
-    'include' => ['reasoning.encrypted_content'],
-    'reasoning' => ['effort' => 'low', 'summary' => 'auto'],
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'store' => false,
+        'include' => ['reasoning.encrypted_content'],
+        'reasoning' => ['effort' => 'low', 'summary' => 'auto'],
+    ],
 ];
 
 $messages = new MessageBag(

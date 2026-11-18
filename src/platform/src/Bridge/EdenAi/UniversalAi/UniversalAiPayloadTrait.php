@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\EdenAi\ImageGeneration;
 use Symfony\AI\Platform\Bridge\EdenAi\Tts;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 
 /**
  * Builds the request body for the Eden AI universal-ai endpoints, shared between the
@@ -51,6 +52,10 @@ trait UniversalAiPayloadTrait
             $input['file'] = $this->uploadBinaryInput($fileData);
         }
 
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            PlatformOptions::LANGUAGE => 'language',
+        ]);
         $rootOptions = array_intersect_key($options, array_flip(self::ROOT_OPTIONS));
         $inputOptions = array_diff_key($options, array_flip(self::ROOT_OPTIONS));
 

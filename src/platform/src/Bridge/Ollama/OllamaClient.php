@@ -16,9 +16,9 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\Stream\NdjsonStream;
-use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -73,12 +73,19 @@ final class OllamaClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
 
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::STREAM => 'stream',
+            PlatformOptions::TOOLS => 'tools',
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            PlatformOptions::TEMPERATURE => 'temperature',
+        ]);
+
         // Revert Ollama's default streaming behavior
         $options['stream'] ??= false;
 
-        if (isset($options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'])) {
-            $options['format'] = $options[PlatformSubscriber::RESPONSE_FORMAT]['json_schema']['schema'];
-            unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
+        if (isset($options['response_format']['json_schema']['schema'])) {
+            $options['format'] = $options['response_format']['json_schema']['schema'];
+            unset($options['response_format']);
         }
 
         $options = $this->normalizeOllamaOptions($options, self::CHAT_TOP_LEVEL_KEYS);
@@ -97,7 +104,7 @@ final class OllamaClient implements ModelClientInterface
      */
     private function doEmbeddingsRequest(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
-        $options = self::normalizeOllamaOptions($options, self::EMBED_TOP_LEVEL_KEYS);
+        $options = self::normalizeOllamaOptions(PlatformOptions::toProviderOptions($options), self::EMBED_TOP_LEVEL_KEYS);
 
         return new RawHttpResult($this->httpClient->request('POST', '/api/embed', [
             'json' => array_merge($options, [

@@ -11,14 +11,17 @@
 
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Bridge\OpenAi\TextToSpeech\Voice;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 
 $result = $platform->invoke('gpt-4o-mini-tts', 'Today is a wonderful day to build something people love!', [
-    'voice' => Voice::CORAL,
-    'instructions' => 'Speak in a cheerful and positive tone.',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'voice' => Voice::CORAL,
+        'instructions' => 'Speak in a cheerful and positive tone.',
+    ],
 ]);
 
 echo $result->asBinary();

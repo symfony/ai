@@ -13,6 +13,7 @@ use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Bridge\Anthropic\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\WebSearchResult;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -26,8 +27,10 @@ $messages = new MessageBag(
 );
 
 $result = $agent->call($messages, [
-    'server_tools' => [
-        'web_search' => ['max_uses' => 3],
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'server_tools' => [
+            'web_search' => ['max_uses' => 3],
+        ],
     ],
 ]);
 

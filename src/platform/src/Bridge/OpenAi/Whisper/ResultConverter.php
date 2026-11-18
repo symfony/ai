@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -65,10 +66,10 @@ final class ResultConverter implements ResultConverterInterface
             throw new RuntimeException(\sprintf('Error "%s"-%s (%s): "%s".', $data['error']['code'] ?? '-', $data['error']['type'] ?? '-', $data['error']['param'] ?? '-', $data['error']['message'] ?? '-'));
         }
 
-        if (!($options['verbose'] ?? false) && !isset($data['text'])) {
+        if (!($options[PlatformOptions::PROVIDER_OPTIONS]['verbose'] ?? false) && !isset($data['text'])) {
             throw new RuntimeException(\sprintf('The response is missing the required "text" field. Response data: "%s"', json_encode($data)));
         }
-        $result = ($options['verbose'] ?? false) ? $this->getVerboseResult($data) : new TextResult($data['text']);
+        $result = ($options[PlatformOptions::PROVIDER_OPTIONS]['verbose'] ?? false) ? $this->getVerboseResult($data) : new TextResult($data['text']);
 
         if (isset($data['usage'])) {
             $result->getMetadata()->add('usage', $data['usage']);

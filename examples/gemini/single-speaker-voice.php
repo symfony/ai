@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Gemini\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -21,11 +22,13 @@ $messages = new MessageBag(
     Message::ofUser('Say cheerfully: Have a wonderful day!'),
 );
 $result = $platform->invoke('gemini-2.5-flash-preview-tts', $messages, [
-    'responseModalities' => ['AUDIO'],
-    'speechConfig' => [
-        'voiceConfig' => [
-            'prebuiltVoiceConfig' => [
-                'voiceName' => 'Kore',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'responseModalities' => ['AUDIO'],
+        'speechConfig' => [
+            'voiceConfig' => [
+                'prebuiltVoiceConfig' => [
+                    'voiceName' => 'Kore',
+                ],
             ],
         ],
     ],

@@ -61,7 +61,7 @@ forwarded as query-string parameters when you pass them as invocation options::
     $platform->invoke(
         'aura-2-thalia-en',
         new Text('Hello world'),
-        ['encoding' => 'linear16', 'sample_rate' => 24000],
+        [PlatformOptions::PROVIDER_OPTIONS => ['encoding' => 'linear16', 'sample_rate' => 24000]],
     );
 
 Streaming text-to-speech
@@ -100,10 +100,13 @@ forwarded as query parameters::
     $platform->invoke(
         'nova-3',
         Audio::fromFile('/path/to/audio.mp3'),
-        ['smart_format' => 'true', 'language' => 'en', 'diarize' => 'true'],
+        [
+            PlatformOptions::LANGUAGE => 'en',
+            PlatformOptions::PROVIDER_OPTIONS => ['smart_format' => 'true', 'diarize' => 'true'],
+        ],
     );
 
-Use ``'language' => 'multi'`` to enable multilingual (code-switching) transcription on ``nova-3``
+Use ``'multi'`` as language to enable multilingual (code-switching) transcription on ``nova-3``
 models.
 
 URL-based transcription

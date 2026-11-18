@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Higgsfield\Factory;
 use Symfony\AI\Platform\Job\JobRunner;
 use Symfony\AI\Platform\Message\Content\Text;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -23,7 +24,9 @@ $platform = Factory::createPlatform(
 
 // Higgsfield generates asynchronously, so the invocation returns a handle instead of an image.
 $handle = $platform->invoke('soul-2', new Text('A cat on a kitchen table'), [
-    'aspect_ratio' => '9:16',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'aspect_ratio' => '9:16',
+    ],
 ])->asJob();
 
 echo 'Started job '.$handle->getId().', waiting for it to finish...'.\PHP_EOL;

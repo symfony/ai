@@ -10,6 +10,7 @@
  */
 
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RealtimeSessionResult;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -20,7 +21,9 @@ $platform = Factory::createPlatform(env('OPENAI_API_KEY'), http_client());
 // secret. That secret is what you hand to a browser or mobile client, which
 // then opens the WebRTC or WebSocket connection to OpenAI itself.
 $result = $platform->invoke('gpt-realtime', 'You are a friendly assistant. Keep your answers short.', [
-    'voice' => 'alloy',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'voice' => 'alloy',
+    ],
 ]);
 
 $session = $result->getResult();

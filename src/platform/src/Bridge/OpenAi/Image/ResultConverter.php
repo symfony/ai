@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\OpenAi\Image;
 use Symfony\AI\Platform\Bridge\OpenAi\Image;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\AI\Platform\Result\MultiPartResult;
@@ -50,7 +51,7 @@ final class ResultConverter implements ResultConverterInterface
         }
 
         // The images endpoint only returns base64-encoded images; PNG is the default output format.
-        $mimeType = 'image/'.($options['output_format'] ?? 'png');
+        $mimeType = 'image/'.($options[PlatformOptions::PROVIDER_OPTIONS]['output_format'] ?? 'png');
 
         $images = [];
         foreach ($result['data'] as $image) {

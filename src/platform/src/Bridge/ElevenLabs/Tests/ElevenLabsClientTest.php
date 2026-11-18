@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -156,13 +157,15 @@ final class ElevenLabsClientTest extends TestCase
             Capability::OUTPUT_TEXT,
             Capability::SPEECH_TO_TEXT,
         ]), $payload, [
-            'language_code' => 'pl',
-            'tag_audio_events' => false,
-            'num_speakers' => 1,
-            'diarize' => true,
-            'timestamps_granularity' => 'word',
-            'additional_formats' => [
-                ['format' => 'srt', 'include_timestamps' => true],
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'language_code' => 'pl',
+                'tag_audio_events' => false,
+                'num_speakers' => 1,
+                'diarize' => true,
+                'timestamps_granularity' => 'word',
+                'additional_formats' => [
+                    ['format' => 'srt', 'include_timestamps' => true],
+                ],
             ],
         ]);
 
@@ -200,11 +203,11 @@ final class ElevenLabsClientTest extends TestCase
             Capability::OUTPUT_TEXT,
             Capability::SPEECH_TO_TEXT,
         ], [
-            'language_code' => 'de',
+            PlatformOptions::PROVIDER_OPTIONS => ['language_code' => 'de'],
         ]);
 
         $result = $platform->invoke($model, Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'), [
-            'language_code' => 'pl',
+            PlatformOptions::PROVIDER_OPTIONS => ['language_code' => 'pl'],
         ]);
         $result->asText();
 
@@ -232,12 +235,14 @@ final class ElevenLabsClientTest extends TestCase
         $platform = Factory::createPlatform(apiKey: 'sk-test', httpClient: $httpClient);
 
         $model = new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH], [
-            'voice' => 'Dslrhjl3ZpzrctukrQSN',
-            'voice_settings' => ['stability' => 0.1],
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => 'Dslrhjl3ZpzrctukrQSN',
+                'voice_settings' => ['stability' => 0.1],
+            ],
         ]);
 
         $result = $platform->invoke($model, 'foo', [
-            'voice_settings' => ['stability' => 0.9],
+            PlatformOptions::PROVIDER_OPTIONS => ['voice_settings' => ['stability' => 0.9]],
         ]);
         $result->asBinary();
 
@@ -256,7 +261,7 @@ final class ElevenLabsClientTest extends TestCase
         $this->expectExceptionMessage('The payload must contain a "text" key');
         $this->expectExceptionCode(0);
         $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH], [
-            'voice' => 'Dslrhjl3ZpzrctukrQSN',
+            PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'Dslrhjl3ZpzrctukrQSN'],
         ]), []);
     }
 
@@ -274,7 +279,7 @@ final class ElevenLabsClientTest extends TestCase
         $client = new ElevenLabsClient($httpClient);
 
         $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH], [
-            'voice' => 'Dslrhjl3ZpzrctukrQSN',
+            PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'Dslrhjl3ZpzrctukrQSN'],
         ]), [
             'text' => 'foo',
         ]);
@@ -298,7 +303,7 @@ final class ElevenLabsClientTest extends TestCase
         $client = new ElevenLabsClient($httpClient);
 
         $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH], [
-            'voice' => 'Dslrhjl3ZpzrctukrQSN',
+            PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'Dslrhjl3ZpzrctukrQSN'],
         ]), 'foo');
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -320,7 +325,7 @@ final class ElevenLabsClientTest extends TestCase
         $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH]), [
             'text' => 'foo',
         ], [
-            'voice' => 'Dslrhjl3ZpzrctukrQSN',
+            PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'Dslrhjl3ZpzrctukrQSN'],
         ]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
@@ -340,8 +345,8 @@ final class ElevenLabsClientTest extends TestCase
         $client = new ElevenLabsClient($httpClient);
 
         $result = $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH], [
-            'voice' => 'Dslrhjl3ZpzrctukrQSN',
-            'stream' => true,
+            PlatformOptions::STREAM => true,
+            PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'Dslrhjl3ZpzrctukrQSN'],
         ]), [
             'text' => 'foo',
         ]);
@@ -366,8 +371,8 @@ final class ElevenLabsClientTest extends TestCase
         $result = $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH]), [
             'text' => 'foo',
         ], [
-            'voice' => 'Dslrhjl3ZpzrctukrQSN',
-            'stream' => true,
+            PlatformOptions::STREAM => true,
+            PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'Dslrhjl3ZpzrctukrQSN'],
         ]);
 
         $this->assertInstanceOf(RawHttpResult::class, $result);
@@ -401,13 +406,15 @@ final class ElevenLabsClientTest extends TestCase
         $client->request(new ElevenLabs('eleven_multilingual_v2', [Capability::TEXT_TO_SPEECH]), [
             'text' => 'foo',
         ], [
-            'voice' => 'Dslrhjl3ZpzrctukrQSN',
-            'voice_settings' => [
-                'stability' => 0.5,
-                'use_speaker_boost' => 1,
-                'similarity_boost' => 0.7,
-                'style' => 0.2,
-                'speed' => 1.2,
+            PlatformOptions::PROVIDER_OPTIONS => [
+                'voice' => 'Dslrhjl3ZpzrctukrQSN',
+                'voice_settings' => [
+                    'stability' => 0.5,
+                    'use_speaker_boost' => 1,
+                    'similarity_boost' => 0.7,
+                    'style' => 0.2,
+                    'speed' => 1.2,
+                ],
             ],
         ]);
 

@@ -80,11 +80,13 @@ final class ClaudeModelClient implements ModelClientInterface
 
         unset($payload['model']);
 
-        // Anthropic expects "max_tokens"; an explicit one wins over the canonical option
-        if (isset($options[PlatformOptions::MAX_OUTPUT_TOKENS])) {
-            $options['max_tokens'] ??= $options[PlatformOptions::MAX_OUTPUT_TOKENS];
-            unset($options[PlatformOptions::MAX_OUTPUT_TOKENS]);
-        }
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::STREAM => 'stream',
+            PlatformOptions::TOOLS => 'tools',
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            PlatformOptions::MAX_OUTPUT_TOKENS => 'max_tokens',
+            PlatformOptions::TEMPERATURE => 'temperature',
+        ]);
 
         if (isset($options['tools'])) {
             $options['tool_choice'] ??= ['type' => 'auto'];

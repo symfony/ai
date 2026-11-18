@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\ClaudeCode\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -26,8 +27,10 @@ $messages = new MessageBag(
 );
 $result = $platform->invoke('haiku', $messages, [
     'stream' => true,
-    'permission_mode' => 'plan',
-    'max_turns' => 3,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'permission_mode' => 'plan',
+        'max_turns' => 3,
+    ],
 ]);
 
 foreach ($result->asTextStream() as $delta) {

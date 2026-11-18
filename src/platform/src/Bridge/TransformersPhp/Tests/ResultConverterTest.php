@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\TransformersPhp\Tests;
 use Codewithkyrian\Transformers\Pipelines\Task;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\TransformersPhp\ResultConverter;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\Result\VectorResult;
@@ -29,7 +30,7 @@ final class ResultConverterTest extends TestCase
             ['generated_text' => 'Some response'],
         ]);
 
-        $textResult = (new ResultConverter())->convert($result, ['task' => Task::Text2TextGeneration]);
+        $textResult = (new ResultConverter())->convert($result, [PlatformOptions::PROVIDER_OPTIONS => ['task' => Task::Text2TextGeneration]]);
         $this->assertInstanceOf(TextResult::class, $textResult);
 
         $this->assertSame('Some response', $textResult->getContent());
@@ -42,7 +43,7 @@ final class ResultConverterTest extends TestCase
             [0.4, 0.5, 0.6],
         ]);
 
-        $vectorResult = (new ResultConverter())->convert($result, ['task' => Task::FeatureExtraction]);
+        $vectorResult = (new ResultConverter())->convert($result, [PlatformOptions::PROVIDER_OPTIONS => ['task' => Task::FeatureExtraction]]);
         $this->assertInstanceOf(VectorResult::class, $vectorResult);
 
         $convertedContent = $vectorResult->getContent();

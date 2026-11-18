@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\ClaudeCode\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -25,8 +26,10 @@ $messages = new MessageBag(
     Message::ofUser('Explain the architecture of this project in 3 sentences.'),
 );
 $result = $platform->invoke('sonnet', $messages, [
-    'permission_mode' => 'plan',
-    'max_turns' => 3,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'permission_mode' => 'plan',
+        'max_turns' => 3,
+    ],
 ]);
 
 echo $result->asText().\PHP_EOL;

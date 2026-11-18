@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Bridge\OpenAi\TextToSpeech\Voice;
 use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Test\Replay\AbstractBridgeReplayTestCase;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -33,7 +34,7 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
     {
         $platform = $this->platformForCassette('speech');
 
-        $result = $platform->invoke('gpt-4o-mini-tts', 'Today is a wonderful day to build something people love!', ['voice' => Voice::CORAL]);
+        $result = $platform->invoke('gpt-4o-mini-tts', 'Today is a wonderful day to build something people love!', [PlatformOptions::PROVIDER_OPTIONS => ['voice' => Voice::CORAL]]);
 
         $this->assertInstanceOf(BinaryResult::class, $result->getResult());
         $this->assertNotSame('', $result->asBinary());
@@ -46,7 +47,7 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
         $this->expectException(BadRequestException::class);
         $this->expectExceptionMessage('Invalid value: nope.');
 
-        $platform->invoke('gpt-4o-mini-tts', 'Hello', ['voice' => 'nope'])->asBinary();
+        $platform->invoke('gpt-4o-mini-tts', 'Hello', [PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'nope']])->asBinary();
     }
 
     protected function createPlatform(HttpClientInterface $httpClient): PlatformInterface

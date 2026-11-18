@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\Gemini\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -23,23 +24,25 @@ Joe: Hows it going today Jane?
 Jane: Not too bad, how about you?'),
 );
 $result = $platform->invoke('gemini-2.5-flash-preview-tts', $messages, [
-    'responseModalities' => ['AUDIO'],
-    'speechConfig' => [
-        'multiSpeakerVoiceConfig' => [
-            'speakerVoiceConfigs' => [
-                [
-                    'speaker' => 'Joe',
-                    'voiceConfig' => [
-                        'prebuiltVoiceConfig' => [
-                            'voiceName' => 'Kore',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'responseModalities' => ['AUDIO'],
+        'speechConfig' => [
+            'multiSpeakerVoiceConfig' => [
+                'speakerVoiceConfigs' => [
+                    [
+                        'speaker' => 'Joe',
+                        'voiceConfig' => [
+                            'prebuiltVoiceConfig' => [
+                                'voiceName' => 'Kore',
+                            ],
                         ],
                     ],
-                ],
-                [
-                    'speaker' => 'Jane',
-                    'voiceConfig' => [
-                        'prebuiltVoiceConfig' => [
-                            'voiceName' => 'Puck',
+                    [
+                        'speaker' => 'Jane',
+                        'voiceConfig' => [
+                            'prebuiltVoiceConfig' => [
+                                'voiceName' => 'Puck',
+                            ],
                         ],
                     ],
                 ],

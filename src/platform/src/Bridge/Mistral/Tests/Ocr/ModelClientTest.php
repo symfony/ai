@@ -17,6 +17,7 @@ use Symfony\AI\Platform\Bridge\Mistral\Mistral;
 use Symfony\AI\Platform\Bridge\Mistral\Ocr;
 use Symfony\AI\Platform\Bridge\Mistral\Ocr\ModelClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -85,7 +86,7 @@ final class ModelClientTest extends TestCase
         $client->request(new Ocr('mistral-ocr-latest'), [
             'type' => 'image_url',
             'image_url' => 'https://example.com/image.png',
-        ], ['include_image_base64' => true]);
+        ], [PlatformOptions::PROVIDER_OPTIONS => ['include_image_base64' => true]]);
 
         $this->assertSame(1, $httpClient->getRequestsCount());
     }

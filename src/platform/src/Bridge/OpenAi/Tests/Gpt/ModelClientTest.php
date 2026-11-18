@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
 use Symfony\AI\Platform\Bridge\OpenAi\Gpt\ModelClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -175,7 +176,7 @@ final class ModelClientTest extends TestCase
         $result = $modelClient->request(new Gpt('gpt-4o-mini'), [
             'first' => ['input' => [['role' => 'user', 'content' => 'What is the capital of France?']]],
             'second' => ['input' => [['role' => 'user', 'content' => 'What is the capital of Germany?']]],
-        ], ['batch' => true, 'max_output_tokens' => 50]);
+        ], ['max_output_tokens' => 50, PlatformOptions::PROVIDER_OPTIONS => ['batch' => true]]);
 
         $this->assertSame('batch_123', $result->getData()['id']);
         $this->assertSame('https://api.openai.com/v1/files', $recorded[0][0]);
@@ -193,7 +194,7 @@ final class ModelClientTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('A batch is answered as a file hours later, so it cannot be streamed.');
 
-        $modelClient->request(new Gpt('gpt-4o-mini'), ['first' => ['input' => []]], ['batch' => true, 'stream' => true]);
+        $modelClient->request(new Gpt('gpt-4o-mini'), ['first' => ['input' => []]], ['stream' => true, PlatformOptions::PROVIDER_OPTIONS => ['batch' => true]]);
     }
 
     public function testItRefusesASingleInputAsABatch()
@@ -203,7 +204,7 @@ final class ModelClientTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('A batch invocation expects an array of inputs, keyed by the identifier to report each result under, and not a single input.');
 
-        $modelClient->request(new Gpt('gpt-4o-mini'), ['input' => [['role' => 'user', 'content' => 'Hello']]], ['batch' => true]);
+        $modelClient->request(new Gpt('gpt-4o-mini'), ['input' => [['role' => 'user', 'content' => 'Hello']]], [PlatformOptions::PROVIDER_OPTIONS => ['batch' => true]]);
     }
 
     public function testItSaysWhatIsWrongWithAnInputThatIsNotARequest()
@@ -213,7 +214,7 @@ final class ModelClientTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The input "first" of the batch did not normalize into a request');
 
-        $modelClient->request(new Gpt('gpt-4o-mini'), ['first' => 'What is the capital of France?'], ['batch' => true]);
+        $modelClient->request(new Gpt('gpt-4o-mini'), ['first' => 'What is the capital of France?'], [PlatformOptions::PROVIDER_OPTIONS => ['batch' => true]]);
     }
 
     public function testItRefusesAnEmptyBatch()
@@ -223,7 +224,7 @@ final class ModelClientTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('A batch invocation expects a non-empty array of inputs, "array" given.');
 
-        $modelClient->request(new Gpt('gpt-4o-mini'), [], ['batch' => true]);
+        $modelClient->request(new Gpt('gpt-4o-mini'), [], [PlatformOptions::PROVIDER_OPTIONS => ['batch' => true]]);
     }
 
     /**

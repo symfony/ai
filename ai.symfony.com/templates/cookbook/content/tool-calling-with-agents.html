@@ -289,7 +289,9 @@ emit <code translate="no" class="notranslate">ThinkingDelta</code> deltas when y
 13
 14
 15
-16</pre>
+16
+17
+18</pre>
                     </div>
                 </td>
                 <td class="code">
@@ -299,7 +301,9 @@ emit <code translate="no" class="notranslate">ThinkingDelta</code> deltas when y
 
 <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>result</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>agent</span>-&gt;<span class="hljs-title invoke__">call</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>, [
     <span class="hljs-string">'stream'</span> =&gt; <span class="hljs-keyword">true</span>,
-    <span class="hljs-string">'reasoning'</span> =&gt; [<span class="hljs-string">'summary'</span> =&gt; <span class="hljs-string">'auto'</span>],
+    PlatformOptions::<span class="hljs-variable constant_">PROVIDER_OPTIONS</span> =&gt; [
+        <span class="hljs-string">'reasoning'</span> =&gt; [<span class="hljs-string">'summary'</span> =&gt; <span class="hljs-string">'auto'</span>],
+    ],
 ]);
 
 <span class="hljs-keyword">foreach</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>result</span>-&gt;<span class="hljs-title invoke__">getContent</span>() <span class="hljs-keyword">as</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>delta</span>) {

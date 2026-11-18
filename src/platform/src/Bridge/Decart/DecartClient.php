@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -44,6 +45,8 @@ final class DecartClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawResultInterface
     {
+        $options = PlatformOptions::toProviderOptions($options);
+
         return match (true) {
             \in_array(Capability::TEXT_TO_IMAGE, $model->getCapabilities(), true),
             \in_array(Capability::TEXT_TO_VIDEO, $model->getCapabilities(), true) => $this->generate($model, $payload, $options),

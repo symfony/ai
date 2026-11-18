@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\OpenAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\Stream\Delta\CommentaryComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\CommentaryDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\CommentaryStart;
@@ -33,11 +34,13 @@ $messages = new MessageBag(
 // A stream carries three kinds of text: the reasoning summary, the narration of the next step
 // while a tool runs ("commentary"), and the answer - each on a channel of its own.
 $result = $platform->invoke('gpt-5.5', $messages, [
-    'reasoning' => ['effort' => 'high', 'summary' => 'auto'],
     'tools' => [
         ['type' => 'code_interpreter', 'container' => ['type' => 'auto']],
     ],
     'stream' => true,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'reasoning' => ['effort' => 'high', 'summary' => 'auto'],
+    ],
 ]);
 
 foreach ($result->asStream() as $delta) {

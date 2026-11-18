@@ -11,13 +11,16 @@
 
 use Symfony\AI\Platform\Bridge\Venice\Factory;
 use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
 $platform = Factory::createPlatform(env('VENICE_API_KEY'), httpClient: http_client());
 
 $result = $platform->invoke('firered-image-edit', Image::fromFile(dirname(__DIR__, 2).'/fixtures/accordion.jpg'), [
-    'prompt' => 'Convert it to a sepia tone with a vintage feel',
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'prompt' => 'Convert it to a sepia tone with a vintage feel',
+    ],
 ]);
 
 $result->asFile(__DIR__.'/image-editing.png');

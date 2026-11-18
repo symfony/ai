@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -35,13 +36,18 @@ final class TogetherClient implements ModelClientInterface
 
     public function request(Model $model, array|string $payload, array $options = []): RawHttpResult
     {
+        if ($model->supports(Capability::INPUT_MESSAGES)) {
+            return $this->doCompletionsRequest($payload, $options);
+        }
+
+        $providerOptions = PlatformOptions::toProviderOptions($options);
+
         return match (true) {
-            $model->supports(Capability::INPUT_MESSAGES) => $this->doCompletionsRequest($payload, $options),
-            $model->supports(Capability::EMBEDDINGS) => $this->doEmbeddingsRequest($model, $payload, $options),
-            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeechRequest($model, $payload, $options),
+            $model->supports(Capability::EMBEDDINGS) => $this->doEmbeddingsRequest($model, $payload, $providerOptions),
+            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeechRequest($model, $payload, PlatformOptions::toProviderOptions($options, [PlatformOptions::RESPONSE_FORMAT => 'response_format', PlatformOptions::LANGUAGE => 'language'])),
             $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToTextRequest($model, $payload, $options),
-            $model->supports(Capability::OUTPUT_IMAGE) => $this->doImageGenerationRequest($model, $payload, $options),
-            $model->supports(Capability::RERANKING) => $this->doRerankRequest($model, $payload, $options),
+            $model->supports(Capability::OUTPUT_IMAGE) => $this->doImageGenerationRequest($model, $payload, PlatformOptions::toProviderOptions($options, [PlatformOptions::RESPONSE_FORMAT => 'response_format'])),
+            $model->supports(Capability::RERANKING) => $this->doRerankRequest($model, $payload, $providerOptions),
             default => throw new InvalidArgumentException(\sprintf('Unsupported model "%s": "%s".', $model::class, $model->getName())),
         };
     }
@@ -55,6 +61,13 @@ final class TogetherClient implements ModelClientInterface
         if (\is_string($payload)) {
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
+
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::STREAM => 'stream',
+            PlatformOptions::TOOLS => 'tools',
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            PlatformOptions::TEMPERATURE => 'temperature',
+        ]);
 
         return new RawHttpResult($this->httpClient->request('POST', '/v1/chat/completions', [
             'json' => array_merge($options, $payload),
@@ -118,7 +131,9 @@ final class TogetherClient implements ModelClientInterface
             throw new InvalidArgumentException('The speech-to-text payload must contain a "file" key holding an audio resource or URL.');
         }
 
-        $task = $options['task'] ?? 'transcription';
+        $task = $options[PlatformOptions::PROVIDER_OPTIONS]['task'] ?? 'transcription';
+        $wireFields = 'translation' === $task ? [] : [PlatformOptions::LANGUAGE => 'language'];
+        $options = PlatformOptions::toProviderOptions($options, $wireFields);
         unset($options['task']);
 
         $endpoint = 'translation' === $task ? '/v1/audio/translations' : '/v1/audio/transcriptions';

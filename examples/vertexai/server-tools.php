@@ -12,6 +12,7 @@
 use Symfony\AI\Platform\Bridge\VertexAi\Factory;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once __DIR__.'/bootstrap.php';
 
@@ -25,6 +26,6 @@ $messages = new MessageBag(
     ),
 );
 
-$result = $platform->invoke('gemini-2.5-pro', $messages, ['server_tools' => ['url_context' => true]]);
+$result = $platform->invoke('gemini-2.5-pro', $messages, [PlatformOptions::PROVIDER_OPTIONS => ['server_tools' => ['url_context' => true]]]);
 
 echo $result->asText().\PHP_EOL;

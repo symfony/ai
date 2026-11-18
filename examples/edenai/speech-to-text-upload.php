@@ -13,6 +13,7 @@ use Symfony\AI\Platform\Bridge\EdenAi\Factory;
 use Symfony\AI\Platform\Exception\JobTimeoutException;
 use Symfony\AI\Platform\Job\JobRunner;
 use Symfony\AI\Platform\Message\Content\Audio;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\JobResult;
 
 require_once dirname(__DIR__).'/bootstrap.php';
@@ -21,7 +22,7 @@ $platform = Factory::createPlatform(env('EDENAI_API_KEY'), http_client());
 
 // The local audio file is transparently uploaded through Eden AI's /v3/upload endpoint
 $result = $platform->invoke('audio/speech_to_text_async/deepgram', Audio::fromFile(dirname(__DIR__, 2).'/fixtures/audio.mp3'), [
-    'language' => 'en',
+    PlatformOptions::LANGUAGE => 'en',
 ]);
 
 // As in speech-to-text.php, the answer is either the transcription or a job still running.

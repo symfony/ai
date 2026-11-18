@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -46,7 +47,7 @@ final class SpeechToTextTest extends TestCase
         $result = $platform->invoke(
             new SpeechToText('voxtral-mini-latest'),
             Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'),
-            ['language' => 'en'],
+            [PlatformOptions::PROVIDER_OPTIONS => ['language' => 'en']],
         );
 
         $this->assertSame('Hello from the fixture.', $result->asText());

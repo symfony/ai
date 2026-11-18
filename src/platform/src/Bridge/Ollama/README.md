@@ -52,8 +52,10 @@ use Symfony\AI\Platform\Bridge\Ollama\TextToSpeech\Format;
 $platform = Factory::createPlatform('http://127.0.0.1:11434');
 
 $result = $platform->invoke('phonon', 'Hello from Ollama.', [
-    'voice' => 'Zoey',
     'response_format' => Format::WAV,
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'voice' => 'Zoey',
+    ],
 ]);
 
 $result->asFile('speech.wav');

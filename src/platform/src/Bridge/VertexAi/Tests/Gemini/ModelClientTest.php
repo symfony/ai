@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\Model;
 use Symfony\AI\Platform\Bridge\VertexAi\Gemini\ModelClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -176,7 +177,7 @@ final class ModelClientTest extends TestCase
         );
 
         $client = new ModelClient($httpClient, 'global', 'test');
-        $client->request(new Model('gemini-2.0-flash'), $payload, ['server_tools' => ['google_search' => true]]);
+        $client->request(new Model('gemini-2.0-flash'), $payload, [PlatformOptions::PROVIDER_OPTIONS => ['server_tools' => ['google_search' => true]]]);
     }
 
     public function testItNormalizesNullableFieldsInStructuredOutputResponseSchema()
@@ -215,57 +216,6 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient($httpClient, 'global', 'test');
         $client->request(new Model('gemini-2.0-flash'), ['contents' => []], [
             'response_format' => ['json_schema' => ['schema' => $schema]],
-        ]);
-    }
-
-    public function testCanonicalMaxOutputTokensIsNestedUnderGenerationConfigAsCamelCase()
-    {
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
-            $body = json_decode($options['body'], true);
-
-            $this->assertSame(500, $body['generationConfig']['maxOutputTokens']);
-            $this->assertArrayNotHasKey('max_output_tokens', $body);
-
-            return new JsonMockResponse(['candidates' => []]);
-        });
-
-        $client = new ModelClient($httpClient, 'global', 'test');
-        $client->request(new Model('gemini-2.0-flash'), ['contents' => []], ['max_output_tokens' => 500]);
-    }
-
-    public function testCanonicalMaxOutputTokensIsMergedIntoAnExistingGenerationConfig()
-    {
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
-            $body = json_decode($options['body'], true);
-
-            $this->assertSame(500, $body['generationConfig']['maxOutputTokens']);
-            $this->assertSame(0.7, $body['generationConfig']['temperature']);
-
-            return new JsonMockResponse(['candidates' => []]);
-        });
-
-        $client = new ModelClient($httpClient, 'global', 'test');
-        $client->request(new Model('gemini-2.0-flash'), ['contents' => []], [
-            'generationConfig' => ['temperature' => 0.7],
-            'max_output_tokens' => 500,
-        ]);
-    }
-
-    public function testExplicitMaxOutputTokensInGenerationConfigWinsOverCanonicalOption()
-    {
-        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
-            $body = json_decode($options['body'], true);
-
-            $this->assertSame(2000, $body['generationConfig']['maxOutputTokens']);
-            $this->assertArrayNotHasKey('max_output_tokens', $body);
-
-            return new JsonMockResponse(['candidates' => []]);
-        });
-
-        $client = new ModelClient($httpClient, 'global', 'test');
-        $client->request(new Model('gemini-2.0-flash'), ['contents' => []], [
-            'generationConfig' => ['maxOutputTokens' => 2000],
-            'max_output_tokens' => 500,
         ]);
     }
 

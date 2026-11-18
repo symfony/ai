@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Higgsfield;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -45,7 +46,7 @@ final class HiggsfieldClient implements ModelClientInterface
         $endpoint = ltrim($model->getName(), '/');
 
         return new RawHttpResult($this->httpClient->request('POST', \sprintf('/%s', $endpoint), [
-            'body' => $this->encodeJsonBody($this->createInput($payload, $options)),
+            'body' => $this->encodeJsonBody($this->createInput($payload, PlatformOptions::toProviderOptions($options))),
             'headers' => ['Content-Type' => 'application/json'],
         ]));
     }

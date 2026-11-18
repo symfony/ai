@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -50,6 +51,13 @@ final class ModelClient implements ModelClientInterface
         if (\is_string($payload)) {
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
         }
+
+        $options = PlatformOptions::toProviderOptions($options, [
+            PlatformOptions::STREAM => 'stream',
+            PlatformOptions::TOOLS => 'tools',
+            PlatformOptions::RESPONSE_FORMAT => 'response_format',
+            PlatformOptions::TEMPERATURE => 'temperature',
+        ]);
 
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.'/v2/chat', [
             'auth_bearer' => $this->apiKey,

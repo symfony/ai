@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -169,6 +170,18 @@ final class CachePlatformTest extends TestCase
         $cachedPlatform->invoke(new Model('foo'), 'bar', ['prompt_cache_key' => 'symfony', 'temperature' => 0.1]);
     }
 
+    public function testPlatformDoesNotForwardCacheOptionsWhenBypassingTheCache()
+    {
+        $platform = $this->createMock(PlatformInterface::class);
+        $platform->expects($this->once())->method('invoke')
+            ->with('foo', 'bar', [PlatformOptions::TEMPERATURE => 0.1])
+            ->willReturn(new DeferredResult(new PlainConverter(new TextResult('test content')), new InMemoryRawResult()));
+
+        $cachedPlatform = new CachePlatform($platform);
+
+        $cachedPlatform->invoke('foo', 'bar', ['prompt_cache_key' => 'symfony', 'prompt_cache_ttl' => 5, PlatformOptions::TEMPERATURE => 0.1]);
+    }
+
     public function testPlatformBypassesCacheForOptionsThatCannotBeHashed()
     {
         $platform = $this->createMock(PlatformInterface::class);
@@ -177,7 +190,7 @@ final class CachePlatformTest extends TestCase
         ));
 
         $cachedPlatform = new CachePlatform($platform, cache: new TagAwareAdapter(new ArrayAdapter()));
-        $options = ['prompt_cache_key' => 'symfony', 'callback' => static fn () => null];
+        $options = ['prompt_cache_key' => 'symfony', PlatformOptions::PROVIDER_OPTIONS => ['callback' => static fn () => null]];
 
         $this->assertFalse($cachedPlatform->invoke('foo', 'bar', $options)->getMetadata()->has('cached_at'));
         $cachedPlatform->invoke('foo', 'bar', $options);

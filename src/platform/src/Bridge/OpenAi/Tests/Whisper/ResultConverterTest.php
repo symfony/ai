@@ -22,6 +22,7 @@ use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -64,7 +65,7 @@ final class ResultConverterTest extends TestCase
             'text' => 'Hello, this is a transcription.',
         ]);
 
-        $result = $this->resultConverter->convert($rawResult, ['verbose' => false]);
+        $result = $this->resultConverter->convert($rawResult, [PlatformOptions::PROVIDER_OPTIONS => ['verbose' => false]]);
 
         $this->assertInstanceOf(TextResult::class, $result);
         $this->assertSame('Hello, this is a transcription.', $result->getContent());
@@ -95,7 +96,7 @@ final class ResultConverterTest extends TestCase
             ],
         ]);
 
-        $result = $this->resultConverter->convert($rawResult, ['verbose' => true]);
+        $result = $this->resultConverter->convert($rawResult, [PlatformOptions::PROVIDER_OPTIONS => ['verbose' => true]]);
 
         $this->assertInstanceOf(ObjectResult::class, $result);
 
@@ -129,7 +130,7 @@ final class ResultConverterTest extends TestCase
             'usage' => ['type' => 'duration', 'duration' => 3],
         ]);
 
-        $result = $this->resultConverter->convert($rawResult, ['verbose' => true]);
+        $result = $this->resultConverter->convert($rawResult, [PlatformOptions::PROVIDER_OPTIONS => ['verbose' => true]]);
 
         $this->assertInstanceOf(ObjectResult::class, $result);
         $this->assertSame(['type' => 'duration', 'duration' => 3], $result->getMetadata()->get('usage'));
@@ -146,7 +147,7 @@ final class ResultConverterTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('The verbose response is missing required fields: text, language, duration, or segments.');
 
-        $this->resultConverter->convert($rawResult, ['verbose' => true]);
+        $this->resultConverter->convert($rawResult, [PlatformOptions::PROVIDER_OPTIONS => ['verbose' => true]]);
     }
 
     public function testVerboseResultThrowsExceptionWhenMissingLanguage()
@@ -160,7 +161,7 @@ final class ResultConverterTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('The verbose response is missing required fields: text, language, duration, or segments.');
 
-        $this->resultConverter->convert($rawResult, ['verbose' => true]);
+        $this->resultConverter->convert($rawResult, [PlatformOptions::PROVIDER_OPTIONS => ['verbose' => true]]);
     }
 
     public function testVerboseResultThrowsExceptionWhenMissingDuration()
@@ -174,7 +175,7 @@ final class ResultConverterTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('The verbose response is missing required fields: text, language, duration, or segments.');
 
-        $this->resultConverter->convert($rawResult, ['verbose' => true]);
+        $this->resultConverter->convert($rawResult, [PlatformOptions::PROVIDER_OPTIONS => ['verbose' => true]]);
     }
 
     public function testVerboseResultThrowsExceptionWhenMissingSegments()
@@ -188,7 +189,7 @@ final class ResultConverterTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('The verbose response is missing required fields: text, language, duration, or segments.');
 
-        $this->resultConverter->convert($rawResult, ['verbose' => true]);
+        $this->resultConverter->convert($rawResult, [PlatformOptions::PROVIDER_OPTIONS => ['verbose' => true]]);
     }
 
     public function testGetTokenUsageExtractorReturnsNull()

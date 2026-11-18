@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -38,13 +39,15 @@ final class ElevenLabsClient implements ModelClientInterface
     {
         return match (true) {
             $model->supports(Capability::SPEECH_TO_TEXT) => $this->doSpeechToTextRequest($model, $payload, [
-                ...$model->getOptions(),
-                ...$options,
+                ...PlatformOptions::toProviderOptions($model->getOptions(), [PlatformOptions::LANGUAGE => 'language_code']),
+                ...PlatformOptions::toProviderOptions($options, [PlatformOptions::LANGUAGE => 'language_code']),
             ]),
-            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeechRequest($model, $payload, [
-                ...$model->getOptions(),
-                ...$options,
-            ]),
+            $model->supports(Capability::TEXT_TO_SPEECH) => $this->doTextToSpeechRequest(
+                $model,
+                $payload,
+                PlatformOptions::toProviderOptions($model->getOptions(), [PlatformOptions::STREAM => 'stream', PlatformOptions::LANGUAGE => 'language_code']),
+                PlatformOptions::toProviderOptions($options, [PlatformOptions::STREAM => 'stream', PlatformOptions::LANGUAGE => 'language_code']),
+            ),
             default => throw new InvalidArgumentException(\sprintf('The model "%s" does not support text-to-speech or speech-to-text, please check the model information.', $model->getName())),
         };
     }
@@ -117,17 +120,20 @@ final class ElevenLabsClient implements ModelClientInterface
 
     /**
      * @param array<string|int, mixed> $payload
+     * @param array<string, mixed>     $modelOptions
      * @param array<string, mixed>     $options
      */
-    private function doTextToSpeechRequest(Model $model, array|string $payload, array $options): RawHttpResult
+    private function doTextToSpeechRequest(Model $model, array|string $payload, array $modelOptions, array $options): RawHttpResult
     {
+        $options = [...$modelOptions, ...$options];
+
         if (!\array_key_exists('voice', $options)) {
             throw new InvalidArgumentException('The voice option is required.');
         }
 
         $text = \is_string($payload) ? $payload : ($payload['text'] ?? throw new InvalidArgumentException('The payload must contain a "text" key.'));
 
-        $voice = $model->getOptions()['voice'] ?? $options['voice'] ?? throw new InvalidArgumentException('The voice option is required.');
+        $voice = $modelOptions['voice'] ?? $options['voice'] ?? throw new InvalidArgumentException('The voice option is required.');
         $stream = $options['stream'] ?? false;
 
         $url = $stream

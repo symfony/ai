@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Generic\ModelCatalog;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformOptions;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
@@ -44,7 +45,9 @@ $messages = new MessageBag(
     Message::ofUser('What is the Symfony framework?'),
 );
 $result = $platform->invoke('mistral-small-latest', $messages, [
-    'max_tokens' => 500, // specific options just for this call
+    PlatformOptions::PROVIDER_OPTIONS => [
+        'max_tokens' => 500, // specific options just for this call
+    ],
 ]);
 
 echo $result->asText().\PHP_EOL;

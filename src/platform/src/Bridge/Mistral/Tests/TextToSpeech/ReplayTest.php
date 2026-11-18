@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Mistral\Factory;
 use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\Test\Replay\AbstractBridgeReplayTestCase;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -25,7 +26,7 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
     {
         $platform = $this->platformForCassette('speech');
 
-        $result = $platform->invoke('voxtral-mini-tts-3-0', 'Hello world', ['voice' => 'gb_jane_neutral']);
+        $result = $platform->invoke('voxtral-mini-tts-3-0', 'Hello world', [PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'gb_jane_neutral']]);
 
         $this->assertInstanceOf(BinaryResult::class, $result->getResult());
         $this->assertSame('audio/mpeg', $result->getResult()->getMimeType());
@@ -39,7 +40,7 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
         $this->expectException(ModelNotFoundException::class);
         $this->expectExceptionMessage("Voice 'nope' not found.");
 
-        $platform->invoke('voxtral-mini-tts-3-0', 'Hello', ['voice' => 'nope'])->asBinary();
+        $platform->invoke('voxtral-mini-tts-3-0', 'Hello', [PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'nope']])->asBinary();
     }
 
     public function testBadRequest()
@@ -49,7 +50,7 @@ final class ReplayTest extends AbstractBridgeReplayTestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Unexpected response code 422');
 
-        $platform->invoke('voxtral-mini-tts-3-0', 'Hello', ['voice' => 'gb_jane_neutral', 'response_format' => 'nope'])->asBinary();
+        $platform->invoke('voxtral-mini-tts-3-0', 'Hello', [PlatformOptions::PROVIDER_OPTIONS => ['voice' => 'gb_jane_neutral', 'response_format' => 'nope']])->asBinary();
     }
 
     protected function createPlatform(HttpClientInterface $httpClient): PlatformInterface
