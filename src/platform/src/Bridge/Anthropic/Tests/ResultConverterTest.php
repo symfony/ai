@@ -917,6 +917,39 @@ final class ResultConverterTest extends TestCase
             ]],
             'Anthropic truncated the response after reaching the output token limit.',
         ];
+
+        yield 'web search' => [
+            ['content' => [
+                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'web_search', 'input' => ['query' => 'symfony ai']],
+                ['type' => 'web_search_tool_result', 'tool_use_id' => 'srvtoolu_01ABC123', 'content' => []],
+            ]],
+            'Anthropic truncated the response after reaching the output token limit.',
+        ];
+
+        yield 'thinking and web search' => [
+            ['content' => [
+                ['type' => 'thinking', 'thinking' => 'I need to look this up.', 'signature' => 'sig_abc123'],
+                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'web_search', 'input' => ['query' => 'symfony ai']],
+                ['type' => 'web_search_tool_result', 'tool_use_id' => 'srvtoolu_01ABC123', 'content' => []],
+            ]],
+            'Anthropic truncated the response after reaching the output token limit.',
+        ];
+
+        yield 'bash code execution' => [
+            ['content' => [
+                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'bash_code_execution', 'input' => ['command' => 'ls']],
+                ['type' => 'bash_code_execution_tool_result', 'tool_use_id' => 'srvtoolu_01ABC123', 'content' => ['return_code' => 0, 'stdout' => 'notes.md']],
+            ]],
+            'Anthropic truncated the response after reaching the output token limit.',
+        ];
+
+        yield 'text editor code execution' => [
+            ['content' => [
+                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'text_editor_code_execution', 'input' => ['command' => 'create', 'path' => '/tmp/notes.md', 'file_text' => '# Notes']],
+                ['type' => 'text_editor_code_execution_tool_result', 'tool_use_id' => 'srvtoolu_01ABC123', 'content' => ['type' => 'text_editor_code_execution_create_result', 'is_file_update' => false]],
+            ]],
+            'Anthropic truncated the response after reaching the output token limit.',
+        ];
     }
 
     public function testConvertKeepsPartialTextWhenTruncatedAtMaxTokensAfterThinking()
@@ -936,64 +969,6 @@ final class ResultConverterTest extends TestCase
         $this->assertInstanceOf(TextResult::class, $result->getContent()[1]);
         $this->assertSame('It is', $result->getContent()[1]->getContent());
         $this->assertTrue($result->getMetadata()->get('finish_reason')->is(FinishReasonCase::LENGTH));
-    }
-
-    /**
-     * @param list<array<string, mixed>> $content
-     * @param class-string               $expectedResult
-     */
-    #[DataProvider('provideServerToolResultsTruncatedBeforeAnyText')]
-    public function testConvertKeepsServerToolResultWhenTruncatedAtMaxTokensBeforeAnyText(array $content, string $expectedResult)
-    {
-        $httpClient = new MockHttpClient(new JsonMockResponse([
-            'content' => $content,
-            'stop_reason' => 'max_tokens',
-        ]));
-        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
-
-        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
-
-        $this->assertInstanceOf($expectedResult, $result);
-        $this->assertTrue($result->getMetadata()->get('finish_reason')->is(FinishReasonCase::LENGTH));
-    }
-
-    /**
-     * @return iterable<string, array{list<array<string, mixed>>, class-string}>
-     */
-    public static function provideServerToolResultsTruncatedBeforeAnyText(): iterable
-    {
-        yield 'web search' => [
-            [
-                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'web_search', 'input' => ['query' => 'symfony ai']],
-                ['type' => 'web_search_tool_result', 'tool_use_id' => 'srvtoolu_01ABC123', 'content' => []],
-            ],
-            WebSearchResult::class,
-        ];
-
-        yield 'thinking and web search' => [
-            [
-                ['type' => 'thinking', 'thinking' => 'I need to look this up.', 'signature' => 'sig_abc123'],
-                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'web_search', 'input' => ['query' => 'symfony ai']],
-                ['type' => 'web_search_tool_result', 'tool_use_id' => 'srvtoolu_01ABC123', 'content' => []],
-            ],
-            MultiPartResult::class,
-        ];
-
-        yield 'bash code execution' => [
-            [
-                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'bash_code_execution', 'input' => ['command' => 'ls']],
-                ['type' => 'bash_code_execution_tool_result', 'tool_use_id' => 'srvtoolu_01ABC123', 'content' => ['return_code' => 0, 'stdout' => 'notes.md']],
-            ],
-            MultiPartResult::class,
-        ];
-
-        yield 'text editor code execution' => [
-            [
-                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'text_editor_code_execution', 'input' => ['command' => 'create', 'path' => '/tmp/notes.md', 'file_text' => '# Notes']],
-                ['type' => 'text_editor_code_execution_tool_result', 'tool_use_id' => 'srvtoolu_01ABC123', 'content' => ['type' => 'text_editor_code_execution_create_result', 'is_file_update' => false]],
-            ],
-            MultiPartResult::class,
-        ];
     }
 
     public function testConvertWithoutStopReasonOmitsFinishReasonMetadata()
