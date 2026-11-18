@@ -1,0 +1,5 @@
+version: 1
+
+labels: [dependencies, Demo]
+branch_prefix: importmap-updates/demo
+commit_message_prefix: '[Demo]'
