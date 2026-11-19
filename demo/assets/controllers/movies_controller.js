@@ -7,6 +7,11 @@ export default class extends Controller {
         this.scrollToBottom();
 
         this.component.on('loading.state:started', (e,r) => {
+            if (r.actions.includes('reset')) {
+                // Answers pushed via Mercure are not removed by the live component's re-render
+                this.element.querySelectorAll('.movie-message').forEach((answer) => answer.remove());
+            }
+
             if (!r.actions.includes('submit')) {
                 return;
             }
@@ -36,6 +41,21 @@ export default class extends Controller {
         input.value = prompt;
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.form.requestSubmit();
+    }
+
+    connect() {
+        this.onStreamRender = (event) => {
+            const render = event.detail.render;
+            event.detail.render = async (stream) => {
+                await render(stream);
+                this.scrollToBottom();
+            };
+        };
+        document.addEventListener('turbo:before-stream-render', this.onStreamRender);
+    }
+
+    disconnect() {
+        document.removeEventListener('turbo:before-stream-render', this.onStreamRender);
     }
 
     scrollToBottom() {

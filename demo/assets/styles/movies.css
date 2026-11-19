@@ -1,11 +1,6 @@
 .movies {
     --movie-card-size: 6.5rem;
 
-    .movie-suggestions {
-        margin-top: -8px;
-        padding-left: 46px;
-    }
-
     .movie-poster-btn {
         display: block;
         width: var(--movie-card-size);

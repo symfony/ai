@@ -1,32 +1,26 @@
 {% import '_message.html.twig' as message %}
+{% import 'movies/_answer.html.twig' as movies %}
 {% set messages = this.messages %}
 
 <section class="chat" {{ attributes.defaults(stimulus_controller('movies')) }}>
     {{ include('_chat_header.html.twig', { demo: demos.movies }) }}
     <div id="chat-body" class="chat-body">
+        {# Kept across re-renders, so the connection to the Mercure hub stays open #}
+        <div id="movie-stream" data-live-ignore>{{ turbo_stream_from(this.topic) }}</div>
         {% for msg in messages %}
-            {% include '_message.html.twig' with { message: msg, latest: loop.last } %}
             {% if msg.role.value == 'assistant' %}
-                {% set suggestions = this.getMoviesFor(msg) %}
-                {% if suggestions is not empty %}
-                    <div class="movie-suggestions d-flex flex-wrap gap-3">
-                        {% for suggestion in suggestions %}
-                            <button type="button"
-                                    class="movie-suggestion movie-poster-btn text-start"
-                                    title="{{ suggestion.reason }}"
-                                    {{ live_action('showDetails', { slug: suggestion.movie.slug }) }}>
-                                {% include 'components/_movie_poster.html.twig' with { movie: suggestion.movie, aspect: '1 / 1' } only %}
-                            </button>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+                {{ movies.answer(msg, this.getMoviesFor(msg)) }}
+            {% else %}
+                {{ message.user(msg.content) }}
             {% endif %}
         {% else %}
-            {{ message.welcome('Chat about movies', 'Search for movies in our collection by title, director, cast or vibe - matching movies appear as cards.') }}
+            {{ message.welcome('Chat about movies', 'Search for movies in our collection by title, director, cast or vibe - a background worker streams the answer via Mercure, with the movie cards and the tool calls of the agent.') }}
         {% endfor %}
+        {% if this.answering %}
+            {{ movies.answering() }}
+        {% endif %}
         <div id="loading-message" class="d-none">
             {{ message.user([{text:''}]) }}
-            {{ message.bot('The Movie Bot is browsing the collection ...', true) }}
         </div>
     </div>
     {% set detailMovie = this.detailMovie %}
