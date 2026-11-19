@@ -17,9 +17,12 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Store\Bridge\Doctrine\Mapping\Embedding;
 use Symfony\AI\Store\Bridge\Doctrine\Mapping\EmbeddingMapping;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Article;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Genre;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Note;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Novel;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Page;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Product;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Shelf;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Untracked;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\SqliteEntityManagerTrait;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
@@ -50,6 +53,23 @@ final class EmbeddingMappingTest extends TestCase
         $this->assertSame('Cats', $mapping->getContent(new Product('Cats', 3)));
         $this->assertTrue($mapping->isAffectedBy(['name' => ['Cats', 'Dogs']]));
         $this->assertFalse($mapping->isAffectedBy(['stock' => [1, 2]]));
+    }
+
+    public function testIsBuiltFromAnAssociation()
+    {
+        $mapping = $this->mapping(Novel::class);
+
+        $this->assertTrue($mapping->isAffectedBy(['genres' => true]));
+        $this->assertTrue($mapping->isAffectedBy(['shelf' => [null, new Shelf('Fiction')]]));
+    }
+
+    public function testBuildsTheTextFromTheEntitiesOfAToManyAssociation()
+    {
+        $genre = new Genre('Fiction');
+        (new Novel('Cats'))->addGenre($genre);
+        (new Novel('Dogs'))->addGenre($genre);
+
+        $this->assertSame('Fiction'.\PHP_EOL.'Cats'.\PHP_EOL.'Dogs', $this->mapping(Genre::class)->getContent($genre));
     }
 
     public function testKeepsTheVectorOnTheEntityWithTheEmbeddingOnAField()
@@ -150,7 +170,7 @@ final class EmbeddingMappingTest extends TestCase
     public function testRefusesASourceFieldThatIsNotMapped()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('"missing", which is not a mapped field');
+        $this->expectExceptionMessage('"missing", which is neither a mapped field nor an association');
 
         EmbeddingMapping::fromClassMetadata($this->metadataWithEmbedding(new class {
             #[Embedding(from: ['missing'])]

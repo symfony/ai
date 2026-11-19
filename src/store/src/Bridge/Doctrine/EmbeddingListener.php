@@ -22,7 +22,7 @@ use Symfony\AI\Store\Bridge\Doctrine\Mapping\EmbeddingMapping;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 /**
- * Embeds new entities and entities whose embedded fields changed, as part of the flush.
+ * Embeds new entities and entities whose embedded fields or associations changed, as part of the flush.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
@@ -59,12 +59,23 @@ final class EmbeddingListener
             }
         }
 
+        $changed = [];
         foreach ($unitOfWork->getScheduledEntityUpdates() as $entity) {
+            $mapping = $this->mapping($entityManager->getClassMetadata($entity::class));
+
+            if (null !== $mapping && $mapping->isAffectedBy($unitOfWork->getEntityChangeSet($entity))) {
+                $changed[spl_object_id($entity)] = $entity;
+            }
+        }
+
+        $changed += AssociationChanges::affectedEntities($entityManager, $this->mapping(...));
+
+        foreach ($changed as $entity) {
             $metadata = $entityManager->getClassMetadata($entity::class);
             $mapping = $this->mapping($metadata);
-            $changeSet = $unitOfWork->getEntityChangeSet($entity);
+            \assert(null !== $mapping);
 
-            if (null !== $mapping && !\array_key_exists($mapping->getRequiredVectorField(), $changeSet) && $mapping->isAffectedBy($changeSet)) {
+            if (!\array_key_exists($mapping->getRequiredVectorField(), $unitOfWork->getEntityChangeSet($entity))) {
                 $entitiesByClass[$metadata->getName()][] = $entity;
             }
         }
@@ -79,7 +90,15 @@ final class EmbeddingListener
             }
 
             foreach ($entities as $entity) {
+                $originalData = $unitOfWork->getOriginalEntityData($entity);
                 $unitOfWork->recomputeSingleEntityChangeSet($metadata, $entity);
+
+                // Doctrine drops the collections from the original data, so a later replacement would keep the old rows
+                foreach ($metadata->getAssociationNames() as $field) {
+                    if ($metadata->isCollectionValuedAssociation($field) && \array_key_exists($field, $originalData)) {
+                        $unitOfWork->setOriginalEntityProperty(spl_object_id($entity), $field, $originalData[$field]);
+                    }
+                }
             }
         }
     }

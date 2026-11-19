@@ -81,8 +81,8 @@ final class EmbeddingMapping
         }
 
         foreach ($attribute->from as $sourceField) {
-            if (!$metadata->hasField($sourceField)) {
-                throw new InvalidArgumentException(\sprintf('The embedding "%s" is built from "%s", which is not a mapped field.', $label, $sourceField));
+            if (!$metadata->hasField($sourceField) && !$metadata->hasAssociation($sourceField)) {
+                throw new InvalidArgumentException(\sprintf('The embedding "%s" is built from "%s", which is neither a mapped field nor an association.', $label, $sourceField));
             }
         }
 
@@ -130,12 +130,17 @@ final class EmbeddingMapping
         foreach ($this->sourceFields as $sourceField) {
             $value = $this->metadata->getFieldValue($entity, $sourceField);
 
-            foreach (\is_array($value) ? $value : [$value] as $item) {
+            foreach (\is_array($value) || $this->metadata->isCollectionValuedAssociation($sourceField) ? $value : [$value] as $item) {
                 $lines[] = $this->toText($item, $sourceField);
             }
         }
 
         return implode(\PHP_EOL, array_filter($lines, static fn (string $line): bool => '' !== $line));
+    }
+
+    public function isBuiltFrom(string $field): bool
+    {
+        return \in_array($field, $this->sourceFields, true);
     }
 
     /**

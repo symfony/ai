@@ -58,10 +58,15 @@ By default, the values of these fields are joined, one per line. A field holding
 a JSON field, adds one line per item. Values that have no text, like a ``DateTimeImmutable``, throw
 an exception.
 
+``from`` can also name an association, like the ``tags`` of an article. Each related entity adds a
+line, so the related class needs a ``__toString()`` method. To embed the entity, Doctrine loads the
+whole collection. For a large collection, like all products of a category, implement
+``IndexableEntityInterface`` and pick the entities to embed instead.
+
 To build the text in PHP, implement
 :class:`Symfony\\AI\\Store\\Bridge\\Doctrine\\IndexableEntityInterface`. Its
 ``getIndexableContent()`` method then returns the text to embed. Keep ``from`` in sync with the
-fields this method reads, because only changes of these fields embed the entity again.
+fields and associations this method reads, because only their changes embed the entity again.
 
 The field has no size. PostgreSQL doesn't report the size of a vector column, so a size in the
 mapping would make Doctrine change the column on every schema update. Give the column its size and
@@ -219,6 +224,17 @@ The listener embeds new entities. It embeds an existing entity again when one of
 fields changes. If the vector is already set in the same flush, for example by the indexer, the
 listener keeps it. The listener calls the model during the flush, so a slow model call also slows
 down the flush.
+
+An association in ``from`` changes when an entity joins or leaves it, on both sides of a
+bidirectional association. For example, when a book with ``#[Embedding(from: ['title', 'shelf'])]``
+moves to another shelf, the listener embeds the book, and also the old and the new shelf if their
+``from`` names ``books``. Renaming the shelf doesn't change the association, so its books are not
+embedded again and their vectors still hold the old name.
+
+.. note::
+
+    Doctrine doesn't update the loaded collection of the other side of an association. Update both
+    sides in your entities, otherwise the listener embeds the content without the change.
 
 An entity that another ``onFlush`` listener persists is only embedded if that listener runs
 before the embedding listener. Give the embedding listener a lower ``priority``, or run the indexer

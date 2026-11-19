@@ -23,11 +23,19 @@ use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\ORMSetup;
 use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\AI\Store\Bridge\Doctrine\Dbal\Types\VectorType;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Album;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Article;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Genre;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Kit;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Library;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Memo;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Note;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Novel;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Place;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Playlist;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Product;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Shelf;
+use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Track;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Untracked;
 use Symfony\Bridge\Doctrine\Types\UlidType;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
@@ -88,7 +96,7 @@ trait SqliteEntityManagerTrait
      */
     private function schemaMetadata(EntityManagerInterface $entityManager): array
     {
-        return array_map($entityManager->getClassMetadata(...), [Article::class, Memo::class, Note::class, Place::class, Product::class, Untracked::class]);
+        return array_map($entityManager->getClassMetadata(...), [Album::class, Article::class, Genre::class, Kit::class, Library::class, Memo::class, Note::class, Novel::class, Place::class, Playlist::class, Product::class, Shelf::class, Track::class, Untracked::class]);
     }
 
     private function registerFunction(\PDO $pdo, string $name, \Closure $function): void
