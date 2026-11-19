@@ -22,7 +22,7 @@ use Symfony\AI\Agent\Execution\UpdateType;
 final class Progress implements UpdateInterface
 {
     /**
-     * The model is about to be invoked; the payload is the model name.
+     * The model is about to be invoked; the payload is the model name or the {@see \Symfony\AI\Platform\Model}.
      */
     public const STAGE_MODEL_REQUEST = 'model_request';
 

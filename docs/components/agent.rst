@@ -26,6 +26,16 @@ model name to the :class:`Symfony\\AI\\Agent\\Agent` class::
 
     $agent = new Agent($platform, $model);
 
+Instead of a model name, you can pass a :class:`Symfony\\AI\\Platform\\Model` instance. The platform then skips
+its model catalog and uses the capabilities and options of that instance::
+
+    use Symfony\AI\Platform\Bridge\OpenAi\Gpt;
+    use Symfony\AI\Platform\Capability;
+
+    $model = new Gpt('gpt-4o-mini', [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT]);
+
+    $agent = new Agent($platform, $model);
+
 You can then run the agent with a :class:`Symfony\\AI\\Platform\\Message\\MessageBag` instance as input and an optional
 array of options::
 

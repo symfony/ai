@@ -12,6 +12,7 @@
 namespace Symfony\AI\Agent;
 
 use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Model;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
@@ -19,21 +20,28 @@ use Symfony\AI\Platform\Message\MessageBag;
 final class Input
 {
     /**
-     * @param array<string, mixed> $options
+     * @param non-empty-string|Model $model
+     * @param array<string, mixed>   $options
      */
     public function __construct(
-        private string $model,
+        private string|Model $model,
         private MessageBag $messageBag,
         private array $options = [],
     ) {
     }
 
-    public function getModel(): string
+    /**
+     * @return non-empty-string|Model
+     */
+    public function getModel(): string|Model
     {
         return $this->model;
     }
 
-    public function setModel(string $model): void
+    /**
+     * @param non-empty-string|Model $model
+     */
+    public function setModel(string|Model $model): void
     {
         $this->model = $model;
     }
