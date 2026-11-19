@@ -132,6 +132,28 @@ final class McpBundleClientTest extends TestCase
         $this->assertSame('app.psr18', (string) $container->getDefinition('mcp.client.research.server.github.transport')->getArgument(2));
     }
 
+    public function testAStringOptionSetToNullIsTheSameAsLeavingItOut()
+    {
+        $servers = [
+            'github' => ['transport' => 'http', 'url' => 'https://example.com/mcp'],
+            'filesystem' => ['transport' => 'stdio', 'command' => ['php', 'server.php']],
+        ];
+
+        $expected = $this->buildContainer($this->config(['research' => ['servers' => $servers]]));
+
+        $servers['github']['http_client'] = null;
+        $servers['filesystem']['cwd'] = null;
+        $container = $this->buildContainer($this->config(['research' => [
+            'client_info' => ['name' => null, 'description' => null],
+            'roots' => null,
+            'sampling' => null,
+            'elicitation' => null,
+            'servers' => $servers,
+        ]]));
+
+        $this->assertEquals($expected->getDefinitions(), $container->getDefinitions());
+    }
+
     public function testClientInfoDefaultsToTheConfigurationKey()
     {
         $container = $this->buildContainer($this->config([

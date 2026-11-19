@@ -1014,6 +1014,26 @@ class McpBundleTest extends TestCase
         $this->assertSame([], $this->callsNamed($container, 'setSubscriptionLifetime'));
     }
 
+    public function testAStringOptionSetToNullIsTheSameAsLeavingItOut()
+    {
+        $expected = $this->buildContainer($this->config([
+            'default' => ['session' => ['lock' => ['enabled' => true]]],
+        ]));
+
+        $container = $this->buildContainer($this->config(['default' => [
+            'name' => null,
+            'description' => null,
+            'website_url' => null,
+            'instructions' => null,
+            'http' => ['path' => null],
+            'request_state' => ['key' => null],
+            'session' => ['directory' => null, 'prefix' => null, 'lock' => ['enabled' => true, 'factory' => null]],
+        ]]));
+
+        $this->assertEquals($expected->getDefinitions(), $container->getDefinitions());
+        $this->assertSame($expected->getParameterBag()->all(), $container->getParameterBag()->all());
+    }
+
     /**
      * Builds an "mcp" configuration from partial server definitions, defaulting each server to
      * exposing every tool so the "at least one element list" validation is satisfied.
