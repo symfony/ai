@@ -172,22 +172,36 @@ final class Store implements ManagedStoreInterface, StoreInterface, ResetInterfa
      */
     private function queryHybrid(HybridQuery $query, array $options): iterable
     {
-        $textMatchIds = array_flip(array_map(
-            static fn (VectorDocumentInterface $doc): string => (string) $doc->getId(),
-            iterator_to_array($this->queryText(new TextQuery($query->getTexts()), []), false),
-        ));
+        $texts = array_map('strtolower', $query->getTexts());
+        $semanticRatio = $query->getSemanticRatio();
 
-        $vectorResults = $this->queryVector(
+        $vectorResults = iterator_to_array($this->queryVector(
             new VectorQuery($query->getVector()),
             array_diff_key($options, ['limit' => true]),
-        );
+        ), false);
+
+        $distances = array_map(static fn (VectorDocumentInterface $doc): float => $doc->getScore() ?? 0.0, $vectorResults);
+        $minDistance = [] !== $distances ? min($distances) : 0.0;
+        $distanceRange = [] !== $distances ? max($distances) - $minDistance : 0.0;
 
         $mergedResults = [];
         foreach ($vectorResults as $doc) {
-            $textDistance = isset($textMatchIds[(string) $doc->getId()]) ? 0.0 : 1.0;
-            $score = $query->getSemanticRatio() * $doc->getScore() + $query->getKeywordRatio() * $textDistance;
+            $docText = strtolower($doc->getMetadata()->getText() ?? '');
+            $matchedTexts = 0;
+            foreach ($texts as $text) {
+                if (str_contains($docText, $text)) {
+                    ++$matchedTexts;
+                }
+            }
 
-            $mergedResults[] = $doc->withScore($score);
+            if (0.0 === $semanticRatio && 0 === $matchedTexts) {
+                continue;
+            }
+
+            $vectorDistance = $distanceRange > 0.0 ? (($doc->getScore() ?? 0.0) - $minDistance) / $distanceRange : 0.0;
+            $textDistance = [] !== $texts ? 1.0 - $matchedTexts / \count($texts) : 1.0;
+
+            $mergedResults[] = $doc->withScore($semanticRatio * $vectorDistance + $query->getKeywordRatio() * $textDistance);
         }
 
         usort($mergedResults, static fn (VectorDocumentInterface $a, VectorDocumentInterface $b): int => $a->getScore() <=> $b->getScore());
