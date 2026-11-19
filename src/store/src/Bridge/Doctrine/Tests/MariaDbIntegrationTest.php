@@ -25,6 +25,7 @@ use Symfony\AI\Store\Bridge\Doctrine\Dbal\Metric;
 use Symfony\AI\Store\Bridge\Doctrine\Dbal\Types\VectorType;
 use Symfony\AI\Store\Bridge\Doctrine\EmbeddingListener;
 use Symfony\AI\Store\Bridge\Doctrine\EntityEmbedder;
+use Symfony\AI\Store\Bridge\Doctrine\EntityIndexer;
 use Symfony\AI\Store\Bridge\Doctrine\EntityVectorDocument;
 use Symfony\AI\Store\Bridge\Doctrine\OrmStore;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\KeywordVectorizer;
@@ -109,6 +110,15 @@ final class MariaDbIntegrationTest extends TestCase
         $reloaded = $this->entityManager->find(SizedArticle::class, $article->getId());
 
         $this->assertSame([1.01, 0.01, 0.01], $reloaded?->getEmbedding()?->getData());
+    }
+
+    public function testIndexesTheTableAgain()
+    {
+        $article = $this->persist(new SizedArticle('Cats'))[0];
+
+        (new EntityIndexer($this->entityManager, new EntityEmbedder(new KeywordVectorizer(['fish', 'dog', 'cat']))))->index(SizedArticle::class);
+
+        $this->assertSame([0.01, 0.01, 1.01], $this->entityManager->find(SizedArticle::class, $article->getId())?->getEmbedding()?->getData());
     }
 
     public function testRefusesTheInnerProduct()

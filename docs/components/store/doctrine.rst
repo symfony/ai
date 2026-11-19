@@ -184,9 +184,21 @@ To embed a table that already has rows, use
         'batch_size' => 100,
     ]);
 
-The indexer embeds each batch with one call to the model and flushes it. Then it clears the entity
-manager, so all entities managed by it are detached. You can also pass entities to ``index()``,
-if the entity manager manages them.
+The indexer embeds each batch with one call to the model. It writes the vectors with one ``UPDATE``
+query per entity, so Doctrine runs no lifecycle callbacks and no flush listeners for them. Then it
+clears the entity manager, so all entities managed by it are detached.
+
+Flush your own changes before you index a table. The indexer doesn't save them, so they are lost
+when it clears the entity manager.
+
+.. warning::
+
+    If your application changes a row while the indexer embeds its batch, the indexer can store a
+    vector of the old content. With a version field (``#[ORM\Version]``) on the entity, the indexer
+    skips that row. Without one, run the indexer when your application doesn't write to the table.
+
+You can also pass entities to ``index()``, if the entity manager manages them. The indexer flushes
+the entity manager for them, so it also saves new entities.
 
 To embed entities when they are created or changed, register
 :class:`Symfony\\AI\\Store\\Bridge\\Doctrine\\EmbeddingListener` as a Doctrine listener of the

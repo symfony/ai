@@ -14,6 +14,9 @@ namespace Symfony\AI\Store\Bridge\Doctrine\Tests;
 use Doctrine\Common\EventManager;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\ORM\Cache\CacheConfiguration;
+use Doctrine\ORM\Cache\DefaultCacheFactory;
+use Doctrine\ORM\Cache\RegionsConfiguration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
@@ -27,13 +30,14 @@ use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Place;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Product;
 use Symfony\AI\Store\Bridge\Doctrine\Tests\Fixtures\Untracked;
 use Symfony\Bridge\Doctrine\Types\UlidType;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 /**
  * An in-memory SQLite entity manager, with the sqlite-vec distance functions implemented in PHP.
  */
 trait SqliteEntityManagerTrait
 {
-    private function createEntityManager(?EventManager $eventManager = null): EntityManagerInterface
+    private function createEntityManager(?EventManager $eventManager = null, bool $secondLevelCache = false): EntityManagerInterface
     {
         if (!Type::hasType(VectorType::NAME)) {
             Type::addType(VectorType::NAME, VectorType::class);
@@ -47,6 +51,13 @@ trait SqliteEntityManagerTrait
 
         if (\PHP_VERSION_ID >= 80400) {
             $configuration->enableNativeLazyObjects(true);
+        }
+
+        if ($secondLevelCache) {
+            $cacheConfiguration = new CacheConfiguration();
+            $cacheConfiguration->setCacheFactory(new DefaultCacheFactory(new RegionsConfiguration(), new ArrayAdapter()));
+            $configuration->setSecondLevelCacheEnabled();
+            $configuration->setSecondLevelCacheConfiguration($cacheConfiguration);
         }
 
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true], $configuration);
