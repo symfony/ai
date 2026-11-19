@@ -36,16 +36,16 @@ final class TokenUsageExtractor implements TokenUsageExtractorInterface
         }
 
         $usage = $content['usage'];
-        $cachedTokens = null;
-
-        if (\array_key_exists('cache_creation_input_tokens', $usage) || \array_key_exists('cache_read_input_tokens', $usage)) {
-            $cachedTokens = ($usage['cache_creation_input_tokens'] ?? 0) + ($usage['cache_read_input_tokens'] ?? 0);
-        }
+        $cacheCreationTokens = isset($usage['cache_creation_input_tokens']) ? (int) $usage['cache_creation_input_tokens'] : null;
+        $cacheReadTokens = isset($usage['cache_read_input_tokens']) ? (int) $usage['cache_read_input_tokens'] : null;
+        $cachedTokens = (null !== $cacheCreationTokens || null !== $cacheReadTokens) ? ($cacheCreationTokens ?? 0) + ($cacheReadTokens ?? 0) : null;
 
         return new TokenUsage(
             promptTokens: $usage['input_tokens'] ?? null,
             completionTokens: $usage['output_tokens'] ?? null,
             cachedTokens: $cachedTokens,
+            cacheCreationTokens: $cacheCreationTokens,
+            cacheReadTokens: $cacheReadTokens,
         );
     }
 }
