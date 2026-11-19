@@ -195,12 +195,16 @@ trait CompletionsConversionTrait
             // empty string — isset() is true for "", so the empty-string case must be excluded or each
             // continuation is misread as a start (losing the name and clobbering accumulated arguments).
             if (isset($toolCall['id']) && '' !== $toolCall['id']) {
-                // initialize tool call
+                // initialize tool call, the name may follow in a later chunk
                 $toolCalls[$index] = [
                     'id' => $toolCall['id'],
-                    'function' => $toolCall['function'],
+                    'function' => ($toolCall['function'] ?? []) + ['name' => ''],
                 ];
                 continue;
+            }
+
+            if (isset($toolCall['function']['name']) && '' !== $toolCall['function']['name'] && '' === ($toolCalls[$index]['function']['name'] ?? '')) {
+                $toolCalls[$index]['function']['name'] = $toolCall['function']['name'];
             }
 
             // add arguments delta to tool call
@@ -232,7 +236,7 @@ trait CompletionsConversionTrait
 
             if (isset($toolCall['id']) && '' !== $toolCall['id']) {
                 $id = $toolCall['id'];
-                $name = $toolCall['function']['name'];
+                $name = $toolCall['function']['name'] ?? '';
                 yield new ToolCallStart($id, $name);
             }
 
