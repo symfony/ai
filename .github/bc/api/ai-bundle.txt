@@ -28,7 +28,6 @@ Symfony\AI\AiBundle\Mcp\ConnectionToolset::__construct(): public function __cons
 Symfony\AI\AiBundle\Mcp\ConnectionToolset::callTool(): public function callTool(string $name, array $arguments = []): Mcp\Schema\Result\CallToolResult
 Symfony\AI\AiBundle\Mcp\ConnectionToolset::getName(): public function getName(): string
 Symfony\AI\AiBundle\Mcp\ConnectionToolset::getTools(): public function getTools(): array
-Symfony\AI\AiBundle\Mcp\McpSchemaAttributeDescriber: @internal class
 Symfony\AI\AiBundle\Profiler\DataCollector: final class extends Symfony\Bundle\FrameworkBundle\DataCollector\AbstractDataCollector implements Symfony\Component\HttpKernel\DataCollector\LateDataCollectorInterface
 Symfony\AI\AiBundle\Profiler\DataCollector::__construct(): public function __construct(iterable $platforms, iterable $toolboxes, iterable $toolSources, iterable $messageStores, iterable $agents, iterable $stores)
 Symfony\AI\AiBundle\Profiler\DataCollector::collect(): public function collect(Symfony\Component\HttpFoundation\Request $request, Symfony\Component\HttpFoundation\Response $response, Throwable|null $exception = null): void

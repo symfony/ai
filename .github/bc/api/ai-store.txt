@@ -19,11 +19,9 @@ Symfony\AI\Store\Command\IndexCommand::complete(): public function complete(Symf
 Symfony\AI\Store\Command\RetrieveCommand: final class extends Symfony\Component\Console\Command\Command uses Symfony\AI\Store\Command\ServiceArgumentTrait
 Symfony\AI\Store\Command\RetrieveCommand::__construct(): public function __construct(Symfony\Component\DependencyInjection\ServiceLocator $retrievers)
 Symfony\AI\Store\Command\RetrieveCommand::complete(): public function complete(Symfony\Component\Console\Completion\CompletionInput $input, Symfony\Component\Console\Completion\CompletionSuggestions $suggestions): void
-Symfony\AI\Store\Command\ServiceArgumentTrait: @internal trait
 Symfony\AI\Store\Command\SetupStoreCommand: final class extends Symfony\Component\Console\Command\Command uses Symfony\AI\Store\Command\ServiceArgumentTrait, Symfony\AI\Store\Command\StoreOptionsTrait
 Symfony\AI\Store\Command\SetupStoreCommand::__construct(): public function __construct(Symfony\Component\DependencyInjection\ServiceLocator $stores)
 Symfony\AI\Store\Command\SetupStoreCommand::complete(): public function complete(Symfony\Component\Console\Completion\CompletionInput $input, Symfony\Component\Console\Completion\CompletionSuggestions $suggestions): void
-Symfony\AI\Store\Command\StoreOptionsTrait: @internal trait
 Symfony\AI\Store\Distance\DistanceCalculator: final class
 Symfony\AI\Store\Distance\DistanceCalculator::__construct(): public function __construct(Symfony\AI\Store\Distance\DistanceStrategy $strategy = \Symfony\AI\Store\Distance\DistanceStrategy::COSINE_DISTANCE, int $batchSize = 100)
 Symfony\AI\Store\Distance\DistanceCalculator::calculate(): public function calculate(array $documents, Symfony\AI\Platform\Vector\VectorInterface $vector, int|null $limit = null): array

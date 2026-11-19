@@ -6,7 +6,6 @@ Symfony\AI\Mate\Bridge\Monolog\Capability\LogSearchTool::listFiles(): public fun
 Symfony\AI\Mate\Bridge\Monolog\Capability\LogSearchTool::search(): public function search(null|string $term = null, bool $regex = false, null|string $level = null, null|string $channel = null, null|string $environment = null, null|string $from = null, null|string $to = null, int $limit = 100, null|string $kernelContext = null): string
 Symfony\AI\Mate\Bridge\Monolog\Capability\LogSearchTool::searchContext(): public function searchContext(string $key, string $value, null|string $level = null, null|string $environment = null, int $limit = 100, null|string $kernelContext = null): string
 Symfony\AI\Mate\Bridge\Monolog\Capability\LogSearchTool::tail(): public function tail(int $limit = 50, null|string $level = null, null|string $environment = null, null|string $channel = null, null|string $kernelContext = null): string
-Symfony\AI\Mate\Bridge\Monolog\Exception\LogFileNotFoundException: @internal class
 Symfony\AI\Mate\Bridge\Monolog\Model\LogEntry: final class
 Symfony\AI\Mate\Bridge\Monolog\Model\LogEntry::__construct(): public function __construct(DateTimeImmutable $datetime, string $channel, string $level, string $message, array $context = [], array $extra = [], null|string $sourceFile = null, int|null $lineNumber = null, null|string $kernelContext = null)
 Symfony\AI\Mate\Bridge\Monolog\Model\LogEntry::getChannel(): public function getChannel(): string

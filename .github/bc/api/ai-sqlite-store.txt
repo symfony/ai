@@ -2,7 +2,6 @@
 Symfony\AI\Store\Bridge\Sqlite\Metric: enum uses OskarStark\Enum\Trait\Comparable
 Symfony\AI\Store\Bridge\Sqlite\Metric::Cosine: case
 Symfony\AI\Store\Bridge\Sqlite\Metric::L2: case
-Symfony\AI\Store\Bridge\Sqlite\PdoConnectionTrait: @internal trait
 Symfony\AI\Store\Bridge\Sqlite\Store: final class implements Symfony\AI\Store\ManagedStoreInterface, Symfony\AI\Store\StoreInterface uses Symfony\AI\Store\Bridge\Sqlite\PdoConnectionTrait
 Symfony\AI\Store\Bridge\Sqlite\Store::__construct(): public function __construct(PDO|string $connection, string $tableName, Symfony\AI\Store\Distance\DistanceCalculator $distanceCalculator = new \Symfony\AI\Store\Distance\DistanceCalculator(), array $connectionOptions = [])
 Symfony\AI\Store\Bridge\Sqlite\Store::add(): public function add(Symfony\AI\Store\Document\VectorDocumentInterface|array $documents): void

@@ -42,6 +42,5 @@ Symfony\AI\Platform\Bridge\Decision\Question\QuestionInterface::jsonSerialize():
 Symfony\AI\Platform\Bridge\Decision\Question\ScoreQuestion: final class implements Symfony\AI\Platform\Bridge\Decision\Question\QuestionInterface
 Symfony\AI\Platform\Bridge\Decision\Question\ScoreQuestion::__construct(): public function __construct(array|string $instructions, array $levels)
 Symfony\AI\Platform\Bridge\Decision\Question\ScoreQuestion::jsonSerialize(): public function jsonSerialize(): array
-Symfony\AI\Platform\Bridge\Decision\RequestBodyBuilder: @internal class
 Symfony\AI\Platform\Bridge\Decision\TokenUsageExtractor: final class implements Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface
 Symfony\AI\Platform\Bridge\Decision\TokenUsageExtractor::extract(): public function extract(Symfony\AI\Platform\Result\RawResultInterface $rawResult, array $options = []): Symfony\AI\Platform\TokenUsage\TokenUsageInterface|null

@@ -39,7 +39,6 @@ Symfony\AI\Platform\Bridge\Anthropic\Factory::createPlatform(): public static fu
 Symfony\AI\Platform\Bridge\Anthropic\Factory::createProvider(): public static function createProvider(string $apiKey, Symfony\Contracts\HttpClient\HttpClientInterface|null $httpClient = null, Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface $modelCatalog = new \Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog(), Symfony\AI\Platform\Contract|null $contract = null, Symfony\Contracts\EventDispatcher\EventDispatcherInterface|null $eventDispatcher = null, string $cacheRetention = 'short', string $name = 'anthropic', string $baseUrl = 'https://api.anthropic.com'): Symfony\AI\Platform\ProviderInterface
 Symfony\AI\Platform\Bridge\Anthropic\FinishReasonMapper: final class
 Symfony\AI\Platform\Bridge\Anthropic\FinishReasonMapper::map(): public static function map(null|string $rawFinishReason): Symfony\AI\Platform\FinishReason\FinishReason|null
-Symfony\AI\Platform\Bridge\Anthropic\JsonSchemaSanitizerTrait: @internal trait
 Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog: final class extends Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog
 Symfony\AI\Platform\Bridge\Anthropic\ModelCatalog::__construct(): public function __construct(array $additionalModels = [])
 Symfony\AI\Platform\Bridge\Anthropic\ModelClient: final class implements Symfony\AI\Platform\ModelClientInterface uses Symfony\AI\Platform\JsonBodyEncodingTrait, Symfony\AI\Platform\Bridge\Anthropic\JsonSchemaSanitizerTrait, Symfony\AI\Platform\Bridge\Anthropic\PromptCachingTrait

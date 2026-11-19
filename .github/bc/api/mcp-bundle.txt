@@ -125,7 +125,6 @@ Symfony\AI\McpBundle\DependencyInjection\ElementMatcher::WILDCARD: public const
 Symfony\AI\McpBundle\DependencyInjection\ElementMatcher::__construct(): public function __construct(array $servers)
 Symfony\AI\McpBundle\DependencyInjection\ElementMatcher::getUnusedPatterns(): public function getUnusedPatterns(): array
 Symfony\AI\McpBundle\DependencyInjection\ElementMatcher::match(): public function match(string $kind, string $serviceId, string $class): array
-Symfony\AI\McpBundle\DependencyInjection\LiteralArguments: @internal class
 Symfony\AI\McpBundle\DependencyInjection\McpAppPass: final class implements Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface
 Symfony\AI\McpBundle\DependencyInjection\McpAppPass::process(): public function process(Symfony\Component\DependencyInjection\ContainerBuilder $container): void
 Symfony\AI\McpBundle\DependencyInjection\McpPass: final class implements Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface
@@ -142,7 +141,6 @@ Symfony\AI\McpBundle\Exception\RuntimeException: class extends RuntimeException 
 Symfony\AI\McpBundle\Http\MiddlewareFactory: final class
 Symfony\AI\McpBundle\Http\MiddlewareFactory::__construct(): public function __construct(array|false|null $allowedHosts = null, array $allowedOrigins = [])
 Symfony\AI\McpBundle\Http\MiddlewareFactory::create(): public function create(): array|null
-Symfony\AI\McpBundle\Http\Psr17Factory: @internal class
 Symfony\AI\McpBundle\McpBundle: final class extends Symfony\Component\HttpKernel\Bundle\AbstractBundle
 Symfony\AI\McpBundle\McpBundle::DEFAULT_NOTIFICATION_CACHE_POOL: public const
 Symfony\AI\McpBundle\McpBundle::DEFAULT_SESSION_CACHE_POOL: public const

@@ -3,7 +3,6 @@ Symfony\AI\Platform\Bridge\ModelsDev\CapabilityMapper: final class
 Symfony\AI\Platform\Bridge\ModelsDev\CapabilityMapper::isEmbeddingModel(): public static function isEmbeddingModel(array $modelData): bool
 Symfony\AI\Platform\Bridge\ModelsDev\CapabilityMapper::isImageGenerationModel(): public static function isImageGenerationModel(array $modelData): bool
 Symfony\AI\Platform\Bridge\ModelsDev\CapabilityMapper::map(): public static function map(array $modelData): array
-Symfony\AI\Platform\Bridge\ModelsDev\DataLoader: @internal class
 Symfony\AI\Platform\Bridge\ModelsDev\ModelCatalog: final class extends Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog
 Symfony\AI\Platform\Bridge\ModelsDev\ModelCatalog::__construct(): public function __construct(string $providerId, null|string $dataPath = null, array $additionalModels = [], null|string $completionsModelClass = null, null|string $embeddingsModelClass = null)
 Symfony\AI\Platform\Bridge\ModelsDev\ProviderRegistry: final class

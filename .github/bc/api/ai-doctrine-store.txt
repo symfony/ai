@@ -18,7 +18,6 @@ Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\SqliteVectorPlatform::getColumnD
 Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\SqliteVectorPlatform::getDistanceSql(): public function getDistanceSql(string $column, string $parameterSql, Symfony\AI\Store\Bridge\Doctrine\Dbal\Metric $metric): string
 Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\SqliteVectorPlatform::getVectorParameterSql(): public function getVectorParameterSql(string $parameter): string
 Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\SqliteVectorPlatform::getVectorSelectSql(): public function getVectorSelectSql(string $column): string
-Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\VectorLiteralTrait: @internal trait
 Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\VectorPlatformFactory: final class
 Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\VectorPlatformFactory::create(): public static function create(Doctrine\DBAL\Platforms\AbstractPlatform $platform): Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\VectorPlatformInterface
 Symfony\AI\Store\Bridge\Doctrine\Dbal\Platforms\VectorPlatformInterface: interface
@@ -59,7 +58,6 @@ Symfony\AI\Store\Bridge\Doctrine\IndexableEntityInterface::getIndexableContent()
 Symfony\AI\Store\Bridge\Doctrine\Mapping\Embedding: final class
 Symfony\AI\Store\Bridge\Doctrine\Mapping\Embedding::$from: public readonly array
 Symfony\AI\Store\Bridge\Doctrine\Mapping\Embedding::__construct(): public function __construct(array $from)
-Symfony\AI\Store\Bridge\Doctrine\Mapping\EmbeddingMapping: @internal class
 Symfony\AI\Store\Bridge\Doctrine\Mirror\EntityRetriever: final class implements Symfony\AI\Store\RetrieverInterface
 Symfony\AI\Store\Bridge\Doctrine\Mirror\EntityRetriever::__construct(): public function __construct(Symfony\AI\Store\RetrieverInterface $retriever, Doctrine\ORM\EntityManagerInterface $entityManager, callable|null $onSkippedDocument = null)
 Symfony\AI\Store\Bridge\Doctrine\Mirror\EntityRetriever::retrieve(): public function retrieve(string $query, array $options = []): iterable
