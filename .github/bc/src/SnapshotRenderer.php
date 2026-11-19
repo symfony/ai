@@ -20,7 +20,7 @@ final class SnapshotRenderer
 {
     public function render(Api $api, Package $package): string
     {
-        $classes = array_filter($api->classes, static fn (ClassApi $class): bool => $class->package === $package->name);
+        $classes = array_filter($api->classes, static fn (ClassApi $class): bool => $class->package === $package->name && $class->isCovered());
         usort($classes, static fn (ClassApi $a, ClassApi $b): int => strcmp($a->name, $b->name));
 
         $lines = [];
@@ -76,13 +76,6 @@ final class SnapshotRenderer
      */
     private function renderClass(ClassApi $class): array
     {
-        if ($class->internal) {
-            return [$class->name.': @internal '.$class->kind];
-        }
-        if ($class->experimental) {
-            return [$class->name.': @experimental '.$class->kind];
-        }
-
         $modifiers = array_filter([
             $class->final ? 'final' : null,
             $class->abstract ? 'abstract' : null,

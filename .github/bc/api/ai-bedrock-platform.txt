@@ -37,7 +37,6 @@ Symfony\AI\Platform\Bridge\Bedrock\Mantle\ModelClient::request(): public functio
 Symfony\AI\Platform\Bridge\Bedrock\Mantle\ModelClient::supports(): public function supports(Symfony\AI\Platform\Model $model): bool
 Symfony\AI\Platform\Bridge\Bedrock\Mantle\Responses\ModelCatalog: final class extends Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog
 Symfony\AI\Platform\Bridge\Bedrock\Mantle\Responses\ModelCatalog::__construct(): public function __construct(array $additionalModels = [])
-Symfony\AI\Platform\Bridge\Bedrock\Mantle\SigV4RequestSigner: @internal class
 Symfony\AI\Platform\Bridge\Bedrock\Meta\LlamaModelClient: class implements Symfony\AI\Platform\ModelClientInterface
 Symfony\AI\Platform\Bridge\Bedrock\Meta\LlamaModelClient::__construct(): public function __construct(AsyncAws\BedrockRuntime\BedrockRuntimeClient $bedrockRuntimeClient)
 Symfony\AI\Platform\Bridge\Bedrock\Meta\LlamaModelClient::request(): public function request(Symfony\AI\Platform\Model $model, array|string $payload, array $options = []): Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult

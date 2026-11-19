@@ -38,7 +38,6 @@ Symfony\AI\Agent\Exception\MaxIterationsExceededException: final class extends S
 Symfony\AI\Agent\Exception\MaxIterationsExceededException::__construct(): public function __construct(int $maxToolCalls, Throwable|null $previous = null)
 Symfony\AI\Agent\Exception\OutOfBoundsException: class extends OutOfBoundsException implements Symfony\AI\Agent\Exception\ExceptionInterface
 Symfony\AI\Agent\Exception\RuntimeException: class extends RuntimeException implements Symfony\AI\Agent\Exception\ExceptionInterface
-Symfony\AI\Agent\Execution\Cancellation: @internal class
 Symfony\AI\Agent\Execution\Execution: final class implements Symfony\AI\Agent\Execution\ExecutionInterface uses Symfony\AI\Platform\Result\TypedResultTrait
 Symfony\AI\Agent\Execution\Execution::__construct(): public function __construct(Closure $factory, bool $streamed = false, Symfony\AI\Agent\Execution\Cancellation|null $cancellation = null)
 Symfony\AI\Agent\Execution\Execution::asStream(): public function asStream(): Generator
@@ -90,7 +89,6 @@ Symfony\AI\Agent\Execution\ExecutionStatus::Pending: case
 Symfony\AI\Agent\Execution\ExecutionStatus::Running: case
 Symfony\AI\Agent\Execution\ExecutionStatus::WaitingForInput: case
 Symfony\AI\Agent\Execution\ExecutionStatus::isFinished(): public function isFinished(): bool
-Symfony\AI\Agent\Execution\Runner: @internal class
 Symfony\AI\Agent\Execution\UpdateInterface: interface
 Symfony\AI\Agent\Execution\UpdateInterface::getType(): public function getType(): Symfony\AI\Agent\Execution\UpdateType
 Symfony\AI\Agent\Execution\UpdateType: enum
@@ -119,7 +117,6 @@ Symfony\AI\Agent\Input::getOptions(): public function getOptions(): array
 Symfony\AI\Agent\Input::setMessageBag(): public function setMessageBag(Symfony\AI\Platform\Message\MessageBag $messageBag): void
 Symfony\AI\Agent\Input::setModel(): public function setModel(Symfony\AI\Platform\Model|string $model): void
 Symfony\AI\Agent\Input::setOptions(): public function setOptions(array $options): void
-Symfony\AI\Agent\InputNormalizer: @internal class
 Symfony\AI\Agent\InputProcessorInterface: interface
 Symfony\AI\Agent\InputProcessorInterface::processInput(): public function processInput(Symfony\AI\Agent\Input $input): void
 Symfony\AI\Agent\InputProcessor\ModelOverrideInputProcessor: final class implements Symfony\AI\Agent\InputProcessorInterface
@@ -314,7 +311,6 @@ Symfony\AI\Agent\Toolbox\FiberToolExecutor::execute(): public function execute(a
 Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber: final class implements Symfony\AI\Platform\Contract\JsonSchema\Describer\ObjectDescriberInterface
 Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber::__construct(): public function __construct(Symfony\AI\Platform\Contract\JsonSchema\Describer\ObjectDescriberInterface $inner = new \Symfony\AI\Platform\Contract\JsonSchema\Describer\Describer())
 Symfony\AI\Agent\Toolbox\MapToolArgumentsDescriber::describeObject(): public function describeObject(Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject $subject, array|null &$schema): iterable
-Symfony\AI\Agent\Toolbox\MappedToolArgument: @internal class
 Symfony\AI\Agent\Toolbox\SequentialToolExecutor: final class implements Symfony\AI\Agent\Toolbox\ToolExecutorInterface
 Symfony\AI\Agent\Toolbox\SequentialToolExecutor::__construct(): public function __construct(Symfony\AI\Agent\Toolbox\ToolboxInterface $toolbox)
 Symfony\AI\Agent\Toolbox\SequentialToolExecutor::execute(): public function execute(array $toolCalls): Generator

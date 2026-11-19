@@ -23,7 +23,6 @@ Symfony\AI\Platform\Bridge\MiniMax\MiniMaxResultConverter::getTokenUsageExtracto
 Symfony\AI\Platform\Bridge\MiniMax\MiniMaxResultConverter::supports(): public function supports(Symfony\AI\Platform\Model $model): bool
 Symfony\AI\Platform\Bridge\MiniMax\ModelCatalog: final class extends Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog
 Symfony\AI\Platform\Bridge\MiniMax\ModelCatalog::__construct(): public function __construct(array $additionalModels = [])
-Symfony\AI\Platform\Bridge\MiniMax\TarArchive: @internal class
 Symfony\AI\Platform\Bridge\MiniMax\TokenUsageExtractor: final class implements Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface
 Symfony\AI\Platform\Bridge\MiniMax\TokenUsageExtractor::extract(): public function extract(Symfony\AI\Platform\Result\RawResultInterface $rawResult, array $options = []): Symfony\AI\Platform\TokenUsage\TokenUsageInterface|null
 Symfony\AI\Platform\Bridge\MiniMax\TokenUsageExtractor::extractFromArray(): public function extractFromArray(array $usage, null|string $model = null): Symfony\AI\Platform\TokenUsage\TokenUsage

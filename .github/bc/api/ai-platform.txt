@@ -549,7 +549,6 @@ Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface::getModels(): public func
 Symfony\AI\Platform\ModelClientInterface: interface
 Symfony\AI\Platform\ModelClientInterface::request(): public function request(Symfony\AI\Platform\Model $model, array|string $payload, array $options = []): Symfony\AI\Platform\Result\RawResultInterface
 Symfony\AI\Platform\ModelClientInterface::supports(): public function supports(Symfony\AI\Platform\Model $model): bool
-Symfony\AI\Platform\ModelOptionsParser: @internal class
 Symfony\AI\Platform\ModelRouterInterface: interface
 Symfony\AI\Platform\ModelRouterInterface::resolve(): public function resolve(Symfony\AI\Platform\Model|string $model, iterable $providers, array|object|string $input, array $options = []): Symfony\AI\Platform\ModelRouter\RoutingDecision
 Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter: final class implements Symfony\AI\Platform\ModelRouterInterface
@@ -867,7 +866,6 @@ Symfony\AI\Platform\Result\ToolCall::getSignature(): public function getSignatur
 Symfony\AI\Platform\Result\ToolCallResult: final class extends Symfony\AI\Platform\Result\BaseResult
 Symfony\AI\Platform\Result\ToolCallResult::__construct(): public function __construct(array $toolCalls)
 Symfony\AI\Platform\Result\ToolCallResult::getContent(): public function getContent(): array
-Symfony\AI\Platform\Result\TypedResultTrait: @internal trait
 Symfony\AI\Platform\Result\VectorResult: final class extends Symfony\AI\Platform\Result\BaseResult
 Symfony\AI\Platform\Result\VectorResult::__construct(): public function __construct(array $vectors = [])
 Symfony\AI\Platform\Result\VectorResult::getContent(): public function getContent(): array
@@ -897,7 +895,6 @@ Symfony\AI\Platform\Serializer\MessageNormalizer::setDenormalizer(): public func
 Symfony\AI\Platform\Serializer\MessageNormalizer::setNormalizer(): public function setNormalizer(Symfony\Component\Serializer\Normalizer\NormalizerInterface $normalizer): void
 Symfony\AI\Platform\Serializer\MessageNormalizer::supportsDenormalization(): public function supportsDenormalization(mixed $data, string $type, null|string $format = null, array $context = []): bool
 Symfony\AI\Platform\Serializer\MessageNormalizer::supportsNormalization(): public function supportsNormalization(mixed $data, null|string $format = null, array $context = []): bool
-Symfony\AI\Platform\Serializer\MetadataNormalizer: @internal class
 Symfony\AI\Platform\StructuredOutput\PlatformSubscriber: final class implements Symfony\Component\EventDispatcher\EventSubscriberInterface
 Symfony\AI\Platform\StructuredOutput\PlatformSubscriber::RESPONSE_FORMAT: public const
 Symfony\AI\Platform\StructuredOutput\PlatformSubscriber::__construct(): public function __construct(Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface $responseFormatFactory = new \Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory(), (Symfony\Component\Serializer\Normalizer\DenormalizerInterface&Symfony\Component\Serializer\SerializerInterface)|null $serializer = null)
@@ -924,7 +921,6 @@ Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener::getF
 Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener::onComplete(): public function onComplete(Symfony\AI\Platform\Result\Stream\CompleteEvent $event): void
 Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener::onDelta(): public function onDelta(Symfony\AI\Platform\Result\Stream\DeltaEvent $event): void
 Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener::setValidator(): public function setValidator(Symfony\Component\Validator\Validator\ValidatorInterface|null $validator): void
-Symfony\AI\Platform\StructuredOutput\Validator\ValidatorResultConverter: @internal class
 Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber: final class implements Symfony\Component\EventDispatcher\EventSubscriberInterface
 Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber::__construct(): public function __construct(Symfony\Component\Validator\Validator\ValidatorInterface|null $validator = null)
 Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber::getSubscribedEvents(): public static function getSubscribedEvents(): array
@@ -1067,7 +1063,6 @@ Symfony\AI\Platform\TraceablePlatform::getModelCatalog(): public function getMod
 Symfony\AI\Platform\TraceablePlatform::getResultCache(): public function getResultCache(): WeakMap
 Symfony\AI\Platform\TraceablePlatform::invoke(): public function invoke(Symfony\AI\Platform\Model|string $model, array|object|string $input, array $options = []): Symfony\AI\Platform\Result\DeferredResult
 Symfony\AI\Platform\TraceablePlatform::reset(): public function reset(): void
-Symfony\AI\Platform\TraceableStreamListener: @internal class
 Symfony\AI\Platform\Vector\NullVector: final class implements Symfony\AI\Platform\Vector\VectorInterface
 Symfony\AI\Platform\Vector\NullVector::getData(): public function getData(): array
 Symfony\AI\Platform\Vector\NullVector::getDimensions(): public function getDimensions(): int

@@ -14,37 +14,10 @@ Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool: class
 Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool::__construct(): public function __construct(array|string $cacheDir, Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider $provider, Symfony\AI\Mate\Bridge\Symfony\Service\ServiceArgumentResolver|null $argumentResolver = null)
 Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool::getServiceDetail(): public function getServiceDetail(string $id, null|string $context = null): string
 Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool::getServices(): public function getServices(null|string $query = null, null|string $tag = null, null|string $context = null, int $limit = self::DEFAULT_LIMIT): string
-Symfony\AI\Mate\Bridge\Symfony\Exception\ContainerNotDumpedException: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Exception\FileNotFoundException: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Exception\ServiceNotFoundException: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Exception\XmlContainerCouldNotBeLoadedException: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Exception\XmlContainerPathIsNotConfiguredException: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Model\Container: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Model\ServiceDefinition: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Model\ServiceTag: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Exception\InvalidCollectorException: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Exception\ProfileNotFoundException: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Model\CollectorData: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Model\ProfileData: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Model\ProfileIndex: @internal class
 Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorFormatterInterface: interface
 Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorFormatterInterface::format(): public function format(Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface $collector): array
 Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorFormatterInterface::getName(): public function getName(): string
 Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorFormatterInterface::getSummary(): public function getSummary(Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface $collector): array
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ConfigCollectorFormatter: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\DoctrineCollectorFormatter: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ExceptionCollectorFormatter: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\HttpClientCollectorFormatter: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\LoggerCollectorFormatter: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\MailerCollectorFormatter: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\MemoryCollectorFormatter: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\RequestCollectorFormatter: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\RouterCollectorFormatter: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\TimeCollectorFormatter: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\TranslationCollectorFormatter: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfileIndexer: @internal class
-Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider: @internal class
 Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider: class
 Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider::getContainer(): public function getContainer(string $containerXmlPath): Symfony\AI\Mate\Bridge\Symfony\Model\Container
 Symfony\AI\Mate\Bridge\Symfony\Service\ServiceArgumentResolver: class

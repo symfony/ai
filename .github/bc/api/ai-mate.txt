@@ -213,17 +213,10 @@ Symfony\AI\Mate\Encoding\ResponseEncoder::tryDecode(): public static function tr
 Symfony\AI\Mate\Exception\AmbiguousSkillException: final class extends Symfony\AI\Mate\Exception\InvalidArgumentException
 Symfony\AI\Mate\Exception\ContainerCompilationException: class extends Symfony\AI\Mate\Exception\RuntimeException
 Symfony\AI\Mate\Exception\ContainerCompilationException::__construct(): public function __construct(string $message = '', int $code = 0, Throwable|null $previous = null)
-Symfony\AI\Mate\Exception\ExceptionInterface: @internal interface
-Symfony\AI\Mate\Exception\FileWriteException: @internal class
 Symfony\AI\Mate\Exception\HandlerNotWiredException: final class extends Symfony\AI\Mate\Exception\RuntimeException
-Symfony\AI\Mate\Exception\InvalidArgumentException: @internal class
-Symfony\AI\Mate\Exception\MissingDependencyException: @internal class
 Symfony\AI\Mate\Exception\PhpVersionMismatchException: final class extends Symfony\AI\Mate\Exception\RuntimeException
-Symfony\AI\Mate\Exception\ResourceNotFoundException: @internal class
-Symfony\AI\Mate\Exception\RuntimeException: @internal class
 Symfony\AI\Mate\Exception\SkillCollisionException: final class extends Symfony\AI\Mate\Exception\InvalidArgumentException
 Symfony\AI\Mate\Exception\SkillNotFoundException: final class extends Symfony\AI\Mate\Exception\InvalidArgumentException
-Symfony\AI\Mate\Exception\UnsupportedVersionException: @internal class
 Symfony\AI\Mate\Invocation\ArgumentCaster: final class
 Symfony\AI\Mate\Invocation\ArgumentCaster::build(): public function build(ReflectionMethod $method, array $arguments): array
 Symfony\AI\Mate\Invocation\HandlerInvoker: final class
@@ -257,9 +250,6 @@ Symfony\AI\Mate\Skill\Linker: final class implements Symfony\AI\Mate\Skill\Linke
 Symfony\AI\Mate\Skill\Linker::link(): public function link(string $target, string $linkPath): bool
 Symfony\AI\Mate\Skill\LinkerInterface: interface
 Symfony\AI\Mate\Skill\LinkerInterface::link(): public function link(string $target, string $linkPath): bool
-Symfony\AI\Mate\Skill\Model\DiscoveredSkill: @internal class
-Symfony\AI\Mate\Skill\Model\SkillInstallResult: @internal class
-Symfony\AI\Mate\Skill\Model\SkillStatus: @internal class
 Symfony\AI\Mate\Skill\SkillContentHasher: final class
 Symfony\AI\Mate\Skill\SkillContentHasher::hash(): public function hash(string $directory): null|string
 Symfony\AI\Mate\Skill\SkillDiscovery: final class
