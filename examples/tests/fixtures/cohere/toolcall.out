@@ -6,6 +6,8 @@ The current time is 20:42:33 (HH:MM:SS).
 | Thinking tokens         | n/a  |
 | Tool tokens             | n/a  |
 | Cached tokens           | n/a  |
+| Cache creation tokens   | n/a  |
+| Cache read tokens       | n/a  |
 | Remaining tokens minute | n/a  |
 | Remaining tokens month  | n/a  |
 | Remaining tokens        | n/a  |
