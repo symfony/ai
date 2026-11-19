@@ -142,7 +142,7 @@ final class McpBundleClientTest extends TestCase
         $expected = $this->buildContainer($this->config(['research' => ['servers' => $servers]]));
 
         $servers['github']['http_client'] = null;
-        $servers['filesystem']['cwd'] = null;
+        $servers['filesystem'] += ['cwd' => null, 'url' => null];
         $container = $this->buildContainer($this->config(['research' => [
             'client_info' => ['name' => null, 'description' => null],
             'roots' => null,
@@ -151,7 +151,26 @@ final class McpBundleClientTest extends TestCase
             'servers' => $servers,
         ]]));
 
-        $this->assertEquals($expected->getDefinitions(), $container->getDefinitions());
+        // Serialized, as assertEquals() would take "" for null.
+        $this->assertSame(serialize($expected->getDefinitions()), serialize($container->getDefinitions()));
+    }
+
+    public function testAStringOptionSetToNullInALaterConfigurationRestoresTheDefault()
+    {
+        $server = ['transport' => 'http', 'url' => 'https://example.com/mcp'];
+
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.debug', true);
+        $container->setParameter('kernel.environment', 'test');
+        $container->setParameter('kernel.build_dir', 'public');
+        $container->setParameter('kernel.project_dir', '/path/to/project');
+
+        (new McpBundle())->getContainerExtension()->load([
+            ['clients' => ['research' => ['servers' => ['github' => $server + ['http_client' => 'app.psr18']]]]],
+            ['clients' => ['research' => ['servers' => ['github' => ['http_client' => null]]]]],
+        ], $container);
+
+        $this->assertSame('psr18.http_client', (string) $container->getDefinition('mcp.client.research.server.github.transport')->getArgument(2));
     }
 
     public function testClientInfoDefaultsToTheConfigurationKey()

@@ -1016,21 +1016,28 @@ class McpBundleTest extends TestCase
 
     public function testAStringOptionSetToNullIsTheSameAsLeavingItOut()
     {
+        $icon = ['src' => 'https://example.com/icon.png'];
+
         $expected = $this->buildContainer($this->config([
-            'default' => ['session' => ['lock' => ['enabled' => true]]],
+            'default' => ['icons' => [$icon], 'session' => ['lock' => ['enabled' => true]]],
+            'cached' => ['session' => ['store' => 'cache']],
         ]));
 
-        $container = $this->buildContainer($this->config(['default' => [
-            'name' => null,
-            'description' => null,
-            'website_url' => null,
-            'instructions' => null,
-            'http' => ['path' => null],
-            'request_state' => ['key' => null],
-            'session' => ['directory' => null, 'prefix' => null, 'lock' => ['enabled' => true, 'factory' => null]],
-        ]]));
+        $container = $this->buildContainer($this->config([
+            'default' => [
+                'name' => null,
+                'description' => null,
+                'icons' => [$icon + ['mime_type' => null]],
+                'website_url' => null,
+                'instructions' => null,
+                'http' => ['path' => null],
+                'session' => ['directory' => null, 'lock' => ['enabled' => true, 'factory' => null]],
+            ],
+            'cached' => ['session' => ['store' => 'cache', 'prefix' => null]],
+        ]));
 
-        $this->assertEquals($expected->getDefinitions(), $container->getDefinitions());
+        // Serialized, as assertEquals() would take "" for null.
+        $this->assertSame(serialize($expected->getDefinitions()), serialize($container->getDefinitions()));
         $this->assertSame($expected->getParameterBag()->all(), $container->getParameterBag()->all());
     }
 
