@@ -5,6 +5,8 @@
 | Thinking tokens         | 256                   |
 | Tool tokens             | n/a                   |
 | Cached tokens           | 0                     |
+| Cache creation tokens   | 0                     |
+| Cache read tokens       | n/a                   |
 | Remaining tokens minute | n/a                   |
 | Remaining tokens month  | n/a                   |
 | Remaining tokens        | 9999495               |

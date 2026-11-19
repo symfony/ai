@@ -313,6 +313,8 @@ function print_token_usage(?TokenUsageInterface $tokenUsage): void
         ['Thinking tokens', $tokenUsage->getThinkingTokens() ?? $na],
         ['Tool tokens', $tokenUsage->getToolTokens() ?? $na],
         ['Cached tokens', $tokenUsage->getCachedTokens() ?? $na],
+        ['Cache creation tokens', $tokenUsage->getCacheCreationTokens() ?? $na],
+        ['Cache read tokens', $tokenUsage->getCacheReadTokens() ?? $na],
         ['Remaining tokens minute', $tokenUsage->getRemainingTokensMinute() ?? $na],
         ['Remaining tokens month', $tokenUsage->getRemainingTokensMonth() ?? $na],
         ['Remaining tokens', $tokenUsage->getRemainingTokens() ?? $na],

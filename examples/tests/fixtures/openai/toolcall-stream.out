@@ -9,6 +9,8 @@ Based on the Wikipedia "History of Ireland" article: Irish history spans prehist
 | Thinking tokens         | 960                   |
 | Tool tokens             | n/a                   |
 | Cached tokens           | n/a                   |
+| Cache creation tokens   | n/a                   |
+| Cache read tokens       | n/a                   |
 | Remaining tokens minute | n/a                   |
 | Remaining tokens month  | n/a                   |
 | Remaining tokens        | n/a                   |
