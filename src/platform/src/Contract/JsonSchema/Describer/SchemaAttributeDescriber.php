@@ -50,6 +50,14 @@ final class SchemaAttributeDescriber implements PropertyDescriberInterface
                 unset($attributeSchema['provider'], $attributeSchema['context']);
             }
 
+            // Lists like "enum" replace what an earlier describer generated (e.g. the cases of a
+            // backed enum) instead of being merged by index, which would keep stale tail values.
+            foreach ($attributeSchema as $key => $value) {
+                if (\is_array($value) && array_is_list($value)) {
+                    unset($schema[$key]);
+                }
+            }
+
             $schema = array_replace_recursive($schema ?? [], $attributeSchema);
 
             if (null !== $attribute->provider) {

@@ -22,6 +22,7 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\ColorProvider;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\ContextAwareProvider;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\LongerStaticEnumDto;
+use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\NarrowedEnumDto;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\SearchQueryDto;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\StatusProvider;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
@@ -172,5 +173,19 @@ final class SchemaAttributeDescriberTest extends TestCase
         $describer->describeProperty($subject, $schema);
 
         $this->assertSame(['type' => 'string', 'enum' => ['active', 'archived']], $schema);
+    }
+
+    public function testStaticEnumReplacesEnumLeftByEarlierDescriber()
+    {
+        $describer = new SchemaAttributeDescriber();
+
+        // NarrowedEnumDto::$priority carries #[Schema(enum: ['low', 'normal'])]; the incoming enum
+        // stands in for the cases() TypeInfoDescriber generates for a backed-enum-typed property.
+        $subject = new PropertySubject('priority', new \ReflectionProperty(NarrowedEnumDto::class, 'priority'));
+        $schema = ['type' => 'string', 'enum' => ['low', 'normal', 'high']];
+
+        $describer->describeProperty($subject, $schema);
+
+        $this->assertSame(['type' => 'string', 'enum' => ['low', 'normal']], $schema);
     }
 }
