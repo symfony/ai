@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by andre-schade at 2026-11-20T04:53:09Z
+
+The "Public API" check treats the changed default value of `ToolResultConverter::__construct()` as a BC break. I added an UPGRADE.md entry; it needs the "BC Break" label, which I cannot set. If you would rather avoid the break, I can switch to another approach.
