@@ -751,7 +751,8 @@ from the visible deltas::
     so the same ``max_tokens`` case that surfaces as ``LENGTH`` on a buffered result raises an exception
     when streamed. A limit reached inside a tool call throws in both modes, since a tool call with
     partial arguments is never usable. So does a limit that Anthropic reaches before any text, for
-    example while the model is still thinking, since there is no partial answer to return. Wrap the
+    example while the model is still thinking or right after a server tool like web search or code
+    execution returned, since there is no partial answer to return. Wrap the
     consumption loop in a ``try``/``catch`` when you need to handle truncation of a streamed response.
 
 Token Usage
