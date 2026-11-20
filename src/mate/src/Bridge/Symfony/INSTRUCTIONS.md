@@ -47,6 +47,7 @@ When `symfony/http-kernel` is installed, profiler tools become available:
 | `symfony-profiler-triage`   | Triage one request in a single call (queries, duplicates, slowest statements, duration, exception, log counts) |
 | `symfony-profiler-get`      | Get profile by token                                    |
 | `symfony-profiler-summary`  | Count the latest requests and failures, failures grouped by method, status and URL |
+| `symfony-profiler-compare`  | Compare the collector summary of two profiles, or two comma-separated sets averaged (before/after a change) |
 
 **Resources:**
 - `symfony-profiler://profile/{token}` - Full profile with collector list

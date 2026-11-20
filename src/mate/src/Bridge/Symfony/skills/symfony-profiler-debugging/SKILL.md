@@ -5,12 +5,13 @@ description: Diagnose a Symfony request that failed, errored (5xx), or was slow,
 
 # Profiler debugging
 
-Reads the profiler through Mate's CLI. Four tools, two resources:
+Reads the profiler through Mate's CLI. Five tools, two resources:
 
 - `symfony-profiler-triage` triages one request: query count, duplicate queries, the most expensive statements, total duration, whether an exception occurred, and the logger error/warning counts. `--url=/checkout` picks the newest profile for that path, `--token=<t>` an exact one. With neither it takes the most recent profile. Collectors the profile does not have are omitted, so a missing key means "not collected", not "zero". Start here: it answers the first question in one call, where listing, getting and reading a collector separately takes three rounds.
 - `symfony-profiler-list` filters profiles (`method`, `url`, `ip`, `statusCode`, `context`, `from`, `to`, `limit`). Newest first, so `--limit=1` is the latest. Returns `total` and `truncated` first, then summaries with a `resource_uri` per profile. The default `limit` is 20: before aggregating over "all requests" (an average, a count, the slowest route), check `truncated`. When it is true, you saw only a sample (at most 500, also for `--limit=0`), so narrow the filters instead of listing everything.
 - `symfony-profiler-summary` answers "how many requests failed and which fails most" in one call: `requests`, `failed` (status 400+) and `failing_requests_by_count` (`METHOD STATUS path`, most frequent first, at most 20 with `failing_requests_truncated`) over the latest `limit` (default 500) top-level requests. `truncated` says older ones were left out; `--limit=0` looks at all. Start here for "what fails" questions, then list the cases with `symfony-profiler-list`.
 - `symfony-profiler-get --token=<t>` returns one profile's metadata and its `collectors`, each with a `uri`.
+- `symfony-profiler-compare --baseline=<t1> --current=<t2> [--collector=db]` diffs the `summary` of one collector across two profiles. Either side accepts several comma-separated tokens (`--baseline=<t1>,<t2>,<t3>`), averaged, when a single run is too noisy to trust.
 - `symfony-profiler://profile/{token}` lists the collectors this profile actually has, each with its URI.
 - `symfony-profiler://profile/{token}/{collector}` returns that collector, as `{name, data, summary}`. `summary` is the triage view, `data` the full detail.
 
@@ -85,6 +86,32 @@ Step 4 picks the collector. On the slow path, step 5 traces its numbers. Branch 
 A non-zero `error_count` or `warning_count` with no matching exception is the handoff signal: this request logged something the collectors do not explain. Take the message or a context key from `logs` into `monolog-search` / `monolog-context-search` (see "When the profile does not explain it") to find out whether it is a one-off or has been happening all week.
 
 Other collectors present in the profile (router, security, twig, ...) are readable at the same URI shape; they return raw dumps rather than a curated shape.
+
+## Prove the fix
+
+A performance fix is not done when the page still renders. It is done when the number moved.
+Keep the token you diagnosed on, then after the change reproduce the same request, take the new
+token from `symfony-profiler-list --limit=1`, and compare:
+
+```
+mate tools:call symfony-profiler-compare --baseline=<old> --current=<new> --collector=db
+```
+
+It returns both summaries, a `delta` per shared numeric metric, a `changed` entry (`{baseline,
+current}`) for a shared field that changed but isn't numeric, such as `exception`'s
+`has_exception`, and a `verdict` (`improved`, `unchanged`, `regressed`) built from one leading
+metric per collector. Report the delta or the changed pair, not the impression. `--collector=time`
+or `memory` works the same way for whatever metric the symptom was about. A collector with no
+field anyone can call unambiguously better when lower (`mailer`, `request`, `router`, `http_client`, `config`) has no `verdict`,
+so read `delta`/`changed` directly there. For `time` and `memory`, a change under 5 percent of the
+baseline counts as `unchanged`. For the rest, `unchanged` after a fix means the fix did not hit the
+hot path. Go back to the reading order.
+
+A single request can be noisy (cache warmup, GC, an unrelated slow query on that one run). If
+the delta looks marginal, reproduce a few times on each side and pass every token, comma-separated,
+to `--baseline`/`--current`: `symfony-profiler-compare --baseline=<t1>,<t2>,<t3> --current=<t4>,<t5>,<t6>`.
+Each side's numeric fields are then averaged before comparing, and the response reports `run_count`
+plus every token used instead of a single `token`, so a one-off outlier does not decide the verdict.
 
 ## Failure paths
 
