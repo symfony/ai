@@ -589,4 +589,24 @@ final class StoreTest extends TestCase
 
         $this->assertSame(30, json_decode($response->getRequestOptions()['body'], true)['limit']);
     }
+
+    public function testQueryRetrievesVectorsByDefault()
+    {
+        $response = new JsonMockResponse(['hits' => []]);
+        $store = new Store(new MockHttpClient($response), 'test');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3]))));
+
+        $this->assertTrue(json_decode($response->getRequestOptions()['body'], true)['retrieveVectors']);
+    }
+
+    public function testQueryCanSkipTheVectors()
+    {
+        $response = new JsonMockResponse(['hits' => []]);
+        $store = new Store(new MockHttpClient($response), 'test');
+
+        iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['retrieveVectors' => false]));
+
+        $this->assertFalse(json_decode($response->getRequestOptions()['body'], true)['retrieveVectors']);
+    }
 }
