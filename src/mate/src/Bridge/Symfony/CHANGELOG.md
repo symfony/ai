@@ -10,6 +10,7 @@ CHANGELOG
  * Add a "When the profile does not explain it" section to the `symfony-profiler-debugging` skill, so the Monolog tools are reached when a profile does not explain the symptom
  * Add an investigation loop with an explicit stop condition for slow requests to the `symfony-profiler-debugging` skill, replacing the reading order that read as a menu of single lookups
  * Add `total` and `truncated` to `symfony-profiler-list`, ahead of the `profiles`; `limit` is capped at 500 (also for `limit=0`) and a negative `limit` is rejected
+ * Add the `symfony-profiler-summary` tool: counts the latest top-level requests (500 by default, sub-requests and console commands skipped), reports how many failed (status 400 or above) and groups the failures by `METHOD STATUS path` without the query string, most frequent first, at most 20 groups, with `failing_requests_truncated`, so "what fails most" no longer takes paging through `symfony-profiler-list`. `truncated` says whether older requests were left out; `limit=0` looks at all of them
 
 0.14
 ----
