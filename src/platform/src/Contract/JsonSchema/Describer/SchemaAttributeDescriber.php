@@ -50,7 +50,7 @@ final class SchemaAttributeDescriber implements PropertyDescriberInterface
                 unset($attributeSchema['provider'], $attributeSchema['context']);
             }
 
-            $schema = array_replace_recursive($schema ?? [], $attributeSchema);
+            $schema = array_replace($schema ?? [], $attributeSchema);
 
             if (null !== $attribute->provider) {
                 if (!isset($this->providers[$attribute->provider])) {

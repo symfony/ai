@@ -22,6 +22,7 @@ use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\ColorProvider;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\ContextAwareProvider;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\LongerStaticEnumDto;
+use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\NarrowedEnumDto;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\SearchQueryDto;
 use Symfony\AI\Platform\Tests\Fixtures\JsonSchema\StatusProvider;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\ExampleDto;
@@ -172,5 +173,17 @@ final class SchemaAttributeDescriberTest extends TestCase
         $describer->describeProperty($subject, $schema);
 
         $this->assertSame(['type' => 'string', 'enum' => ['active', 'archived']], $schema);
+    }
+
+    public function testStaticEnumReplacesEnumLeftByEarlierDescriber()
+    {
+        $describer = new SchemaAttributeDescriber();
+
+        $subject = new PropertySubject('priority', new \ReflectionProperty(NarrowedEnumDto::class, 'priority'));
+        $schema = ['type' => 'string', 'enum' => ['standard', 'express', 'overnight']];
+
+        $describer->describeProperty($subject, $schema);
+
+        $this->assertSame(['type' => 'string', 'enum' => ['standard', 'express']], $schema);
     }
 }
