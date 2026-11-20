@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Tests\Toolbox;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Exception\RuntimeException;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\EnumMode;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\Platform\Result\ToolCall;
@@ -84,6 +85,10 @@ final class ToolResultConverterTest extends TestCase
             },
             '{"key":"value"}',
         ];
+
+        yield 'backed enum' => [EnumMode::OR, '"or"'];
+
+        yield 'array with backed enum' => [['mode' => EnumMode::AND], '{"mode":"and"}'];
 
         yield 'object' => [
             new UserWithConstructor(

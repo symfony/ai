@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Toolbox;
 use Symfony\AI\Agent\Exception\RuntimeException;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExceptionInterface;
+use Symfony\Component\Serializer\Normalizer\BackedEnumNormalizer;
 use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Serializer\Normalizer\JsonSerializableNormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
@@ -26,7 +27,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 final class ToolResultConverter
 {
     public function __construct(
-        private readonly SerializerInterface $serializer = new Serializer([new JsonSerializableNormalizer(), new DateTimeNormalizer(), new ObjectNormalizer()], [new JsonEncoder()]),
+        private readonly SerializerInterface $serializer = new Serializer([new JsonSerializableNormalizer(), new DateTimeNormalizer(), new BackedEnumNormalizer(), new ObjectNormalizer()], [new JsonEncoder()]),
     ) {
     }
 
