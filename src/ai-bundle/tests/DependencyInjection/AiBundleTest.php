@@ -655,6 +655,48 @@ class AiBundleTest extends TestCase
         ]);
     }
 
+    public function testMcpServerToolsCanBeFiltered()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'research' => [
+                        'model' => 'gpt-4o-mini',
+                        'tools' => [
+                            ['mcp_server' => 'filesystem.local', 'only' => ['read_file'], 'exclude' => ['write_file']],
+                            ['mcp_server' => 'web.search'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $filtered = $container->getDefinition('ai.toolbox.research.mcp.filesystem.local');
+        $this->assertSame(['read_file'], $filtered->getArgument('$only'));
+        $this->assertSame(['write_file'], $filtered->getArgument('$exclude'));
+
+        $unfiltered = $container->getDefinition('ai.toolbox.research.mcp.web.search');
+        $this->assertSame([], $unfiltered->getArgument('$only'));
+        $this->assertSame([], $unfiltered->getArgument('$exclude'));
+    }
+
+    public function testOnlyWithoutMcpServerThrows()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The "only" and "exclude" options are only supported together with "mcp_server".');
+
+        $this->buildContainer([
+            'ai' => [
+                'agent' => [
+                    'research' => [
+                        'model' => 'gpt-4o-mini',
+                        'tools' => [['service' => 'app.tool', 'only' => ['read_file']]],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
     public function testPrefixWithoutMcpServerThrows()
     {
         $this->expectException(InvalidConfigurationException::class);

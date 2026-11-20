@@ -64,6 +64,37 @@ final class McpToolboxTest extends TestCase
         $this->assertSame('fs.echo', $toolbox->getTools()[0]->getName());
     }
 
+    public function testOnlyKeepsTheNamedRemoteTools()
+    {
+        $toolbox = new McpToolbox(
+            new StaticToolset(tools: [$this->remoteTool('echo'), $this->remoteTool('sum'), $this->remoteTool('ping')]),
+            only: ['sum', 'ping'],
+        );
+
+        $this->assertSame(['demo_sum', 'demo_ping'], array_map(static fn (Tool $tool) => $tool->getName(), $toolbox->getTools()));
+    }
+
+    public function testExcludeLeavesTheNamedRemoteToolsOut()
+    {
+        $toolbox = new McpToolbox(
+            new StaticToolset(tools: [$this->remoteTool('echo'), $this->remoteTool('sum'), $this->remoteTool('ping')]),
+            exclude: ['sum'],
+        );
+
+        $this->assertSame(['demo_echo', 'demo_ping'], array_map(static fn (Tool $tool) => $tool->getName(), $toolbox->getTools()));
+    }
+
+    public function testExcludeIsAppliedAfterOnly()
+    {
+        $toolbox = new McpToolbox(
+            new StaticToolset(tools: [$this->remoteTool('echo'), $this->remoteTool('sum'), $this->remoteTool('ping')]),
+            only: ['echo', 'sum'],
+            exclude: ['sum', 'ping'],
+        );
+
+        $this->assertSame(['demo_echo'], array_map(static fn (Tool $tool) => $tool->getName(), $toolbox->getTools()));
+    }
+
     public function testToolWithoutArgumentsHasNoParameters()
     {
         $toolset = new StaticToolset(tools: [
