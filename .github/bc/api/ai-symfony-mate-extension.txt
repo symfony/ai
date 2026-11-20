@@ -8,6 +8,7 @@ Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerResourceTemplate::getCollector
 Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerResourceTemplate::getProfileResource(): public function getProfileResource(string $token): array
 Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool: final class
 Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool::__construct(): public function __construct(Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider|null $dataProvider = null)
+Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool::compare(): public function compare(string $baseline, string $current, string $collector = 'db'): string
 Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool::getProfile(): public function getProfile(string $token): string
 Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool::listProfiles(): public function listProfiles(int $limit = 20, null|string $method = null, null|string $url = null, null|string $ip = null, int|null $statusCode = null, null|string $context = null, null|string $from = null, null|string $to = null): string
 Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool::summarizeTraffic(): public function summarizeTraffic(int $limit = 500, null|string $context = null): string
