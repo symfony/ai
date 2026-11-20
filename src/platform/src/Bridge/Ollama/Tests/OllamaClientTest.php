@@ -238,6 +238,7 @@ final class OllamaClientTest extends TestCase
             $this->assertSame(0.2, $json['options']['temperature']);
             $this->assertSame(64, $json['options']['num_predict']);
             $this->assertSame(1024, $json['options']['num_ctx']);
+            $this->assertArrayNotHasKey('options', $json['options']);
 
             return new JsonMockResponse([
                 'model' => 'llama3.2',
@@ -342,6 +343,41 @@ final class OllamaClientTest extends TestCase
                 'truncate' => false,
                 'dimensions' => 512,
                 'temperature' => 0.1,
+            ]
+        );
+
+        $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testEmbedRequestMergesExplicitNestedOptionsWithFlatOptions()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame('http://127.0.0.1:1234/api/embed', $url);
+
+            $json = $this->decodeRequestJson($options);
+
+            $this->assertSame(512, $json['dimensions']);
+            $this->assertSame(0.1, $json['options']['temperature']);
+            $this->assertSame(2048, $json['options']['num_ctx']);
+            $this->assertArrayNotHasKey('options', $json['options']);
+
+            return new JsonMockResponse([
+                'model' => 'embeddinggemma',
+                'embeddings' => [[0.1, 0.2]],
+            ]);
+        }, 'http://127.0.0.1:1234');
+
+        $client = new OllamaClient($httpClient);
+
+        $client->request(
+            new Ollama('embeddinggemma', [Capability::EMBEDDINGS]),
+            'hello',
+            [
+                'dimensions' => 512,
+                'temperature' => 0.1,
+                'options' => [
+                    'num_ctx' => 2048,
+                ],
             ]
         );
 

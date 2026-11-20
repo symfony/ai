@@ -123,6 +123,10 @@ final class OllamaClient implements ModelClientInterface
         }
 
         foreach ($options as $key => $value) {
+            if ('options' === $key) {
+                continue;
+            }
+
             if (\in_array($key, $topLevelKeys, true)) {
                 $topLevelOptions[$key] = $value;
             } else {
