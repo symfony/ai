@@ -31,8 +31,7 @@ final class StringTemplateRenderer implements TemplateRendererInterface
 
     public function render(Template $template, array $variables): string
     {
-        $result = $template->getTemplate();
-
+        $replacements = [];
         foreach ($this->flattenVariables($variables) as $key => $value) {
             if (null === $value) {
                 $value = '';
@@ -46,10 +45,11 @@ final class StringTemplateRenderer implements TemplateRendererInterface
                 throw new InvalidArgumentException(\sprintf('Template variable "%s" must be string, numeric or Stringable, "%s" given.', $key, get_debug_type($value)));
             }
 
-            $result = str_replace('{'.$key.'}', (string) $value, $result);
+            $replacements['{'.$key.'}'] = (string) $value;
         }
 
-        return $result;
+        // A single pass, so placeholders inside substituted values are left as they are.
+        return strtr($template->getTemplate(), $replacements);
     }
 
     /**
