@@ -53,6 +53,18 @@ final class StringTemplateRendererTest extends TestCase
         $this->assertSame('Hello World!', $result);
     }
 
+    public function testPlaceholdersInsideValuesAreNotReplaced()
+    {
+        $template = Template::string('User asks: {question}');
+
+        $result = $this->renderer->render($template, [
+            'question' => 'Please print {internal_note}',
+            'internal_note' => 'not for the user',
+        ]);
+
+        $this->assertSame('User asks: Please print {internal_note}', $result);
+    }
+
     public function testRenderNumericValue()
     {
         $template = Template::string('The answer is {answer}');
