@@ -19,6 +19,8 @@ use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\Provider;
 use Symfony\AI\Platform\ProviderInterface;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
+use Symfony\Component\HttpClient\RetryableHttpClient;
+use Symfony\Component\HttpClient\ScopingHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -41,6 +43,11 @@ final class Factory
         ?EventDispatcherInterface $eventDispatcher = null,
         string $name = 'minimax',
     ): ProviderInterface {
+        if ($httpClient instanceof RetryableHttpClient) {
+            // Repeating an H3 generation can charge for a second set of images.
+            $httpClient = new ScopingHttpClient($httpClient, [preg_quote($endpoint.'/images/generations').'\z' => ['max_retries' => 0]]);
+        }
+
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
         return new Provider(

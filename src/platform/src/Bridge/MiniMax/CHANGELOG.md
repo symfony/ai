@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add text-to-image generation with the MiniMax H3 models
+
 0.14
 ----
 

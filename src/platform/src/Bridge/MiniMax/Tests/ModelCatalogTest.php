@@ -41,6 +41,8 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'I2V-01-live' => ['I2V-01-live', MiniMax::class, [Capability::IMAGE_TO_VIDEO]];
         yield 'T2V-01' => ['T2V-01', MiniMax::class, [Capability::TEXT_TO_VIDEO, Capability::IMAGE_TO_VIDEO]];
         yield 'S2V-01' => ['S2V-01', MiniMax::class, [Capability::VIDEO_WITH_SUBJECT]];
+        yield 'MiniMax-H3-Image' => ['MiniMax-H3-Image', MiniMax::class, [Capability::TEXT_TO_IMAGE]];
+        yield 'MiniMax-H3-Image-Highspeed' => ['MiniMax-H3-Image-Highspeed', MiniMax::class, [Capability::TEXT_TO_IMAGE]];
         yield 'image-01' => ['image-01', MiniMax::class, [Capability::TEXT_TO_IMAGE, Capability::IMAGE_TO_IMAGE]];
         yield 'image-01-live' => ['image-01-live', MiniMax::class, [Capability::IMAGE_TO_IMAGE]];
         yield 'music-1.5' => ['music-1.5', MiniMax::class, [Capability::MUSIC]];

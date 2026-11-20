@@ -1182,6 +1182,30 @@ Code Examples
 * `PDF Input with GPT`_
 * `PDF Input with Claude`_
 
+MiniMax H3 Image Generation
+---------------------------
+
+Use the MiniMax bridge to generate images with ``MiniMax-H3-Image`` or
+``MiniMax-H3-Image-Highspeed``::
+
+    use Symfony\AI\Platform\Bridge\MiniMax\Factory;
+    use Symfony\AI\Platform\Message\Content\Text;
+
+    $platform = Factory::createPlatform($apiKey);
+    $image = $platform->invoke('MiniMax-H3-Image', new Text('A cat on a kitchen table'), [
+        'output_format' => 'png',
+    ]);
+    $image->asFile('cat.png');
+
+For a key issued in China, set ``endpoint: 'https://api.minimax.cn/v1'`` when
+creating the platform. Use ``response_format: url`` to receive image URLs as text.
+When a batch partially succeeds, the result contains the successful images and
+its ``image_errors`` metadata contains the errors keyed by the original image index.
+
+Allow at least 600 seconds for generation. When supplying a custom HTTP client,
+disable retries for ``POST /v1/images/generations`` because submitting a request
+again can generate and charge for another image.
+
 .. _platform-asynchronous-jobs:
 
 Asynchronous Jobs
