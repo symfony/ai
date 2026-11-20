@@ -44,6 +44,18 @@ final class ToolConfigurationException extends InvalidArgumentException implemen
         ));
     }
 
+    public static function duplicateToolNameInToolbox(string $name, Tool $firstTool, Tool $secondTool): self
+    {
+        return new self(\sprintf(
+            'Tool "%s" is defined more than once: %s::%s and %s::%s. Tool names must be unique within a toolbox.',
+            $name,
+            $firstTool->getReference()->getClass(),
+            $firstTool->getReference()->getMethod(),
+            $secondTool->getReference()->getClass(),
+            $secondTool->getReference()->getMethod(),
+        ));
+    }
+
     public static function invalidMapToolArguments(string $toolClass, string $methodName, string $reason): self
     {
         return new self(\sprintf('Invalid #[MapToolArguments] usage on "%s::%s": %s', $toolClass, $methodName, $reason));

@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Toolbox;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
+use Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
@@ -61,14 +62,26 @@ final class Toolbox extends AbstractToolbox
         }
 
         $toolsMetadata = [];
+        $registered = [];
         foreach ($this->tools as $tool) {
+            // The same instance listed twice (e.g. a service referenced twice in the bundle config) is not ambiguous.
+            if (isset($registered[spl_object_id($tool)])) {
+                continue;
+            }
+            $registered[spl_object_id($tool)] = true;
+
             foreach ($this->toolFactory->getTool($tool) as $metadata) {
-                $this->instanceMap[$metadata->getName()] = $tool;
-                $toolsMetadata[] = $metadata;
+                $name = $metadata->getName();
+                if (isset($toolsMetadata[$name])) {
+                    throw ToolConfigurationException::duplicateToolNameInToolbox($name, $toolsMetadata[$name], $metadata);
+                }
+
+                $this->instanceMap[$name] = $tool;
+                $toolsMetadata[$name] = $metadata;
             }
         }
 
-        return $this->toolsMetadata = $toolsMetadata;
+        return $this->toolsMetadata = array_values($toolsMetadata);
     }
 
     /**
