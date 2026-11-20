@@ -81,7 +81,7 @@ final class RstToctreeLoader implements LoaderInterface
      */
     private function parseToctreeEntries(string $content, string $baseDir, string $rootDir): array
     {
-        $lines = explode(\PHP_EOL, $content);
+        $lines = preg_split('/\R/', $content);
         $count = \count($lines);
         $entries = [];
         $i = 0;
