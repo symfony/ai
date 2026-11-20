@@ -20,10 +20,20 @@ class Container
 {
     /**
      * @param array<string, ServiceDefinition> $services
+     * @param array<string, string>            $parameters scalar parameters as dumped (placeholders unresolved)
      */
     public function __construct(
         private readonly array $services,
+        private readonly array $parameters = [],
     ) {
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getParameters(): array
+    {
+        return $this->parameters;
     }
 
     /**

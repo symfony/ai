@@ -2,6 +2,10 @@
 Symfony\AI\Mate\Bridge\Symfony\Capability\DotenvTool: final class
 Symfony\AI\Mate\Bridge\Symfony\Capability\DotenvTool::__construct(): public function __construct(string $projectDir)
 Symfony\AI\Mate\Bridge\Symfony\Capability\DotenvTool::check(): public function check(null|string $key = null, int $limit = self::DEFAULT_LIMIT): string
+Symfony\AI\Mate\Bridge\Symfony\Capability\MessengerFailedTool: final class
+Symfony\AI\Mate\Bridge\Symfony\Capability\MessengerFailedTool::MAX_SCAN: public const
+Symfony\AI\Mate\Bridge\Symfony\Capability\MessengerFailedTool::__construct(): public function __construct(string $projectDir, array|string $cacheDir, Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider $provider = new \Symfony\AI\Mate\Bridge\Symfony\Service\ContainerProvider(), Symfony\AI\Mate\Bridge\Symfony\Messenger\EnvelopeDecoder $decoder = new \Symfony\AI\Mate\Bridge\Symfony\Messenger\EnvelopeDecoder(), Symfony\AI\Mate\Bridge\Symfony\Messenger\DoctrineTransportReader $doctrine = new \Symfony\AI\Mate\Bridge\Symfony\Messenger\DoctrineTransportReader())
+Symfony\AI\Mate\Bridge\Symfony\Capability\MessengerFailedTool::failed(): public function failed(null|string $transport = null, null|string $group = null, null|string $context = null): string
 Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerResourceTemplate: final class
 Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerResourceTemplate::__construct(): public function __construct(Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider|null $dataProvider = null)
 Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerResourceTemplate::getCollectorResource(): public function getCollectorResource(string $token, string $collector): array

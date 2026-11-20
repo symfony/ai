@@ -10,6 +10,7 @@
  */
 
 use Symfony\AI\Mate\Bridge\Symfony\Capability\DotenvTool;
+use Symfony\AI\Mate\Bridge\Symfony\Capability\MessengerFailedTool;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerResourceTemplate;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ServiceTool;
@@ -32,6 +33,7 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\HttpClient\DataCollector\HttpClientDataCollector;
 use Symfony\Component\HttpKernel\Profiler\Profile;
+use Symfony\Component\Messenger\Envelope;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_iterator;
@@ -58,6 +60,12 @@ return static function (ContainerConfigurator $configurator) {
     if (class_exists(Dotenv::class)) {
         $services->set(DotenvTool::class)
             ->args(['%mate.root_dir%']);
+    }
+
+    // Failed Messenger messages (optional: only if symfony/messenger is available)
+    if (class_exists(Envelope::class)) {
+        $services->set(MessengerFailedTool::class)
+            ->args(['%mate.root_dir%', '%ai_mate_symfony.cache_dir%', service(ContainerProvider::class)]);
     }
 
     // Profiler services (optional - only if profiler classes are available)
