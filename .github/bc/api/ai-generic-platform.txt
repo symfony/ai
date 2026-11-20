@@ -17,7 +17,7 @@ Symfony\AI\Platform\Bridge\Generic\Completions\ModelClient: class implements Sym
 Symfony\AI\Platform\Bridge\Generic\Completions\ModelClient::__construct(): public function __construct(Symfony\Contracts\HttpClient\HttpClientInterface $httpClient, string $baseUrl, null|string $apiKey = null, string $path = '/v1/chat/completions')
 Symfony\AI\Platform\Bridge\Generic\Completions\ModelClient::request(): public function request(Symfony\AI\Platform\Model $model, array|string $payload, array $options = []): Symfony\AI\Platform\Result\RawHttpResult
 Symfony\AI\Platform\Bridge\Generic\Completions\ModelClient::supports(): public function supports(Symfony\AI\Platform\Model $model): bool
-Symfony\AI\Platform\Bridge\Generic\Completions\ResultConverter: class implements Symfony\AI\Platform\ResultConverterInterface uses Symfony\AI\Platform\Bridge\Generic\Completions\CompletionsConversionTrait
+Symfony\AI\Platform\Bridge\Generic\Completions\ResultConverter: class implements Symfony\AI\Platform\ResultConverterInterface uses Symfony\AI\Platform\Bridge\Generic\Completions\CompletionsConversionTrait, Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait
 Symfony\AI\Platform\Bridge\Generic\Completions\ResultConverter::convert(): public function convert(Symfony\AI\Platform\Result\RawHttpResult|Symfony\AI\Platform\Result\RawResultInterface $result, array $options = []): Symfony\AI\Platform\Result\ResultInterface
 Symfony\AI\Platform\Bridge\Generic\Completions\ResultConverter::getTokenUsageExtractor(): public function getTokenUsageExtractor(): Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface|null
 Symfony\AI\Platform\Bridge\Generic\Completions\ResultConverter::supports(): public function supports(Symfony\AI\Platform\Model $model): bool

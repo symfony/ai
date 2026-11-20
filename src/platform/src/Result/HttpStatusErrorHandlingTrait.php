@@ -28,7 +28,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  * without parsing error bodies themselves.
  *
  * Error bodies are parsed leniently: the nested `error.message` shape
- * (OpenAI, Gemini, Perplexity), the flat top-level `message` shape
+ * (OpenAI, Gemini, Perplexity), the flat top-level `error` string shape
+ * (Hugging Face TGI), the flat top-level `message` shape
  * (Mistral, Cerebras, Cohere) and the FastAPI `detail` shape, a message or
  * the list of violations of a 422 (Mistral, Azure), are supported.
  *
@@ -112,12 +113,16 @@ trait HttpStatusErrorHandlingTrait
             return null;
         }
 
-        $message = $data['error']['message'] ?? $data['message'] ?? null;
+        if (\is_string($data['error'] ?? null) && '' !== $data['error']) {
+            return $data['error'];
+        }
+
+        $message = (\is_array($data['error'] ?? null) ? ($data['error']['message'] ?? null) : null) ?? $data['message'] ?? null;
         if (\is_string($message)) {
             return $message;
         }
 
-        return $this->extractDetail($data['detail'] ?? $data['message']['detail'] ?? null);
+        return $this->extractDetail($data['detail'] ?? (\is_array($data['message'] ?? null) ? ($data['message']['detail'] ?? null) : null));
     }
 
     private function extractDetail(mixed $detail): ?string

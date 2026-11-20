@@ -13,20 +13,20 @@ namespace Symfony\AI\Platform\Bridge\Generic\Completions;
 
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Exception\AuthenticationException;
-use Symfony\AI\Platform\Exception\BadRequestException;
 use Symfony\AI\Platform\Exception\ContentFilterException;
 use Symfony\AI\Platform\Exception\ExceedContextSizeException;
-use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
-use Symfony\AI\Platform\Exception\ServerException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\Result\ChoiceResult;
+use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
+use Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * This default implementation is based on the OpenAI GPT completion API.
@@ -37,6 +37,7 @@ use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 class ResultConverter implements ResultConverterInterface
 {
     use CompletionsConversionTrait;
+    use HttpStatusErrorHandlingTrait;
 
     public function supports(Model $model): bool
     {
@@ -47,45 +48,23 @@ class ResultConverter implements ResultConverterInterface
     {
         $response = $result->getObject();
 
-        if (401 === $response->getStatusCode()) {
-            $error = json_decode($response->getContent(false), true);
-            // Some gateways report the reason under "detail", which is not always a string.
-            $errorMessage = $error['error']['message'] ?? $error['message'] ?? $error['detail'] ?? null;
-            throw new AuthenticationException(\is_string($errorMessage) ? $errorMessage : 'Authentication failed.');
-        }
-
-        if (400 === $response->getStatusCode()) {
-            $error = json_decode($response->getContent(false), true);
-            $errorCode = $error['error']['code'] ?? $error['code'] ?? null;
-            $errorMessage = $error['error']['message'] ?? $error['message'] ?? null;
-            if (!\is_string($errorMessage)) {
-                $errorMessage = 'Bad Request';
+        if ($response instanceof ResponseInterface) {
+            if (400 === $response->getStatusCode()) {
+                $this->throwOnContextLengthExceeded($response);
             }
 
-            if ('context_length_exceeded' === $errorCode || preg_match('/context[_ ]length[_ ]exceeded/i', $errorMessage)) {
-                throw new ExceedContextSizeException($errorMessage);
+            if (403 === $response->getStatusCode()) {
+                throw new AuthenticationException($this->buildHttpErrorMessage($response));
             }
 
-            throw new BadRequestException($errorMessage);
-        }
+            $this->throwOnHttpError($response);
 
-        if (429 === $response->getStatusCode()) {
-            $error = json_decode($response->getContent(false), true);
-            $errorMessage = $error['error']['message'] ?? $error['message'] ?? null;
-            throw new RateLimitExceededException(null, \is_string($errorMessage) ? $errorMessage : null);
-        }
-
-        if (($code = $response->getStatusCode()) >= 500) {
-            $error = json_decode($response->getContent(false), true);
-            $errorMessage = $error['error']['message'] ?? $error['message'] ?? null;
-            throw new ServerException($code, \is_string($errorMessage) ? $errorMessage : null);
+            if ($response->getStatusCode() >= 400) {
+                throw new RuntimeException($this->buildHttpErrorMessage($response));
+            }
         }
 
         if ($options['stream'] ?? false) {
-            if (($code = $response->getStatusCode()) >= 400) {
-                throw new RuntimeException(\sprintf('Unexpected response code %d: "%s"', $code, $response->getContent(false)));
-            }
-
             return new StreamResult($this->convertStream($result));
         }
 
@@ -93,6 +72,10 @@ class ResultConverter implements ResultConverterInterface
 
         if (isset($data['error']['code']) && 'content_filter' === $data['error']['code']) {
             throw new ContentFilterException($data['error']['message']);
+        }
+
+        if (\is_string($data['error'] ?? null)) {
+            throw new RuntimeException($data['error']);
         }
 
         if (isset($data['error'])) {
@@ -111,5 +94,21 @@ class ResultConverter implements ResultConverterInterface
     public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
     {
         return new TokenUsageExtractor();
+    }
+
+    private function throwOnContextLengthExceeded(ResponseInterface $response): void
+    {
+        try {
+            $error = $response->toArray(false);
+        } catch (DecodingExceptionInterface) {
+            return;
+        }
+
+        $errorCode = (\is_array($error['error'] ?? null) ? ($error['error']['code'] ?? null) : null) ?? $error['code'] ?? null;
+        $errorMessage = $this->extractErrorMessage($response) ?? '';
+
+        if ('context_length_exceeded' === $errorCode || 1 === preg_match('/context[_ ]length[_ ]exceeded/i', $errorMessage)) {
+            throw new ExceedContextSizeException('' !== $errorMessage ? $errorMessage : $this->buildHttpErrorMessage($response));
+        }
     }
 }
