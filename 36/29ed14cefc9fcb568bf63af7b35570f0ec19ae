@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by BackEndTea at 2026-09-24T07:11:47Z
+
+One potential issue i'm seeing here is that the AI may reach for this, while a deeper inspection is needed.
+
+E.g. in my work i had the following:
+
+The baseline was 800ms. Then after a few improvements one of the runs the actual work was cut down by about 300ms to 500ms. But one of the runs had an initialization outlier of 1 second, which basically killed all 'gains'.
+
+So i'm wondering how/if we could bring attention to these outliers, or if we should let it inspect the different profiles manually
