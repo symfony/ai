@@ -4,6 +4,10 @@ UPGRADE FROM 0.15 to 1.0
 Agent
 -----
 
+ * The default serializer of `Toolbox\ToolResultConverter` includes `BackedEnumNormalizer`, so a backed enum in a tool
+   result is serialized as its value (`"open"`) instead of an object with name and value (`{"name":"Open","value":"open"}`).
+   To keep the previous output, pass a serializer without `BackedEnumNormalizer` to the constructor.
+
  * `Bridge\SimilaritySearch\SimilaritySearch::getUsedDocuments()` is removed. The retrieved documents are added as
    `Bridge\SimilaritySearch\DocumentSource` sources of the tool instead, enable `includeSources` on the agent to read
    them from the result metadata:
