@@ -18,14 +18,16 @@ use Symfony\AI\Agent\Execution\Execution;
 use Symfony\AI\Agent\Execution\ExecutionInterface;
 use Symfony\AI\Agent\Execution\Runner;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
+use Symfony\AI\Agent\MessageStore\ConversationInput;
 use Symfony\AI\Agent\MessageStore\MessageStoreInterface;
+use Symfony\AI\Agent\MessageStore\ReplaceableMessageStoreInterface;
 use Symfony\AI\Agent\Toolbox\SequentialToolExecutor;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolExecutorInterface;
 use Symfony\AI\Agent\Toolbox\ToolResultConverter;
 use Symfony\AI\Platform\Exception\ExceptionInterface;
 use Symfony\AI\Platform\Message\MessageBag;
-use Symfony\AI\Platform\Message\MessageInterface;
+use Symfony\AI\Platform\Message\SystemMessage;
 use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
@@ -72,6 +74,7 @@ final class Agent implements AgentInterface
             $includeSources,
             $eventDispatcher,
             $toolResultConverter,
+            $name,
         );
     }
 
@@ -107,23 +110,13 @@ final class Agent implements AgentInterface
         $factory = function () use ($input, $options, $cancellation): \Generator {
             $input = InputNormalizer::toMessageBag($input);
             if (null !== $this->messageStore) {
-                $input = $this->continueStored($input, $this->messageStore);
+                $input = $this->messageStore instanceof ReplaceableMessageStoreInterface
+                    ? $this->messageStore->resume($input)
+                    : ConversationInput::appendNew($this->messageStore->load($input->getId()), $input);
                 $this->messageStore->save($input);
             }
 
-            $request = new Input($this->getModel(), $input, $options);
-            foreach ($this->inputProcessors as $inputProcessor) {
-                if (!$inputProcessor instanceof InputProcessorInterface) {
-                    throw new InvalidArgumentException(\sprintf('Input processor "%s" must implement "%s".', $inputProcessor::class, InputProcessorInterface::class));
-                }
-
-                if ($inputProcessor instanceof AgentAwareInterface) {
-                    $inputProcessor->setAgent($this);
-                }
-
-                $inputProcessor->processInput($request);
-            }
-
+            $request = $this->prepareRequest($input, $options);
             $model = $request->getModel();
             $messages = $request->getMessageBag();
             $processedOptions = $request->getOptions();
@@ -133,10 +126,35 @@ final class Agent implements AgentInterface
             $onToolRound = null;
             if (null !== $this->messageStore) {
                 $store = $this->messageStore;
-                $onToolRound = static fn (MessageBag $round) => $store->save($input->merge(new MessageBag(...\array_slice($round->getMessages(), \count($messages)))));
+                $onToolRound = $store->save(...);
             }
 
-            foreach ($this->runner->run($model, $messages, $processedOptions, $cancellation, $onToolRound) as $update) {
+            $onChange = function (MessageBag $previous, MessageBag $next, MessageBag $prepared): MessageBag {
+                if ($previous->getMessages() === \array_slice($next->getMessages(), 0, \count($previous))) {
+                    $this->messageStore?->save($next);
+
+                    return $prepared->merge(new MessageBag(...\array_slice($next->getMessages(), \count($previous))));
+                }
+
+                $request = $next;
+                if ($prepared->getMessages() !== $previous->getMessages()) {
+                    $system = $prepared->getSystemMessage();
+                    if (null === $system || $previous->withSystemMessage($system)->getMessages() !== $prepared->getMessages() || self::systemMessages($previous) !== self::systemMessages($next)) {
+                        throw new RuntimeException('Cannot replace the conversation while preserving the changes made by its input processors.');
+                    }
+                    $request = $next->withSystemMessage($system);
+                }
+
+                if ($this->messageStore instanceof ReplaceableMessageStoreInterface) {
+                    $this->messageStore->replace($previous, $next);
+                } else {
+                    $this->messageStore?->save($next);
+                }
+
+                return $request;
+            };
+
+            foreach ($this->runner->run($model, $messages, $processedOptions, $cancellation, $onToolRound, $input, $onChange) as $update) {
                 if ($update instanceof ResultUpdate) {
                     $result = $update->getResult();
                     $resultUpdate = $update;
@@ -167,13 +185,11 @@ final class Agent implements AgentInterface
             }
 
             $finalResult = $output->getResult();
-            $conversation = static function () use ($resultUpdate, $messages, $input, $result, $finalResult): MessageBag {
-                $runMessages = $resultUpdate->getMessages($finalResult !== $result ? $finalResult : null);
+            $conversation = static function () use ($resultUpdate, $result, $finalResult): MessageBag {
+                $conversation = $resultUpdate->getMessages($finalResult !== $result ? $finalResult : null);
+                \assert(null !== $conversation);
 
-                // the runner appended to the processed request, the caller's input only gets the new messages
-                $newMessages = \array_slice($runMessages?->getMessages() ?? [], \count($messages));
-
-                return $input->merge(new MessageBag(...$newMessages));
+                return $conversation;
             };
 
             if (null !== $this->messageStore) {
@@ -187,20 +203,35 @@ final class Agent implements AgentInterface
         return new Execution($factory, true === ($options['stream'] ?? false), $cancellation);
     }
 
-    /**
-     * The stored conversation followed by the given messages it doesn't contain yet.
-     */
-    private function continueStored(MessageBag $input, MessageStoreInterface $store): MessageBag
+    /** @return list<SystemMessage> */
+    private static function systemMessages(MessageBag $bag): array
     {
-        $stored = $store->load($input->getId());
-        $storedIds = array_flip(array_map(static fn (MessageInterface $message): string => $message->getId()->toRfc4122(), $stored->getMessages()));
-
-        $messages = $stored->merge(new MessageBag(...array_filter(
-            $input->getMessages(),
-            static fn (MessageInterface $message): bool => !isset($storedIds[$message->getId()->toRfc4122()]),
-        )));
-        $messages->getMetadata()->set(array_replace($stored->getMetadata()->all(), $input->getMetadata()->all()));
+        $messages = [];
+        foreach ($bag as $message) {
+            if ($message instanceof SystemMessage) {
+                $messages[] = $message;
+            }
+        }
 
         return $messages;
+    }
+
+    /** @param array<string, mixed> $options */
+    private function prepareRequest(MessageBag $input, array $options): Input
+    {
+        $request = new Input($this->getModel(), $input, $options);
+        foreach ($this->inputProcessors as $inputProcessor) {
+            if (!$inputProcessor instanceof InputProcessorInterface) {
+                throw new InvalidArgumentException(\sprintf('Input processor "%s" must implement "%s".', $inputProcessor::class, InputProcessorInterface::class));
+            }
+
+            if ($inputProcessor instanceof AgentAwareInterface) {
+                $inputProcessor->setAgent($this);
+            }
+
+            $inputProcessor->processInput($request);
+        }
+
+        return $request;
     }
 }

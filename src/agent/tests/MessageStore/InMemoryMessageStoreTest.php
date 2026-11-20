@@ -76,6 +76,18 @@ final class InMemoryMessageStoreTest extends TestCase
         $store->save($messages);
     }
 
+    public function testSaveCannotRestoreAPrunedMessage()
+    {
+        $store = new InMemoryMessageStore();
+        $prefix = new MessageBag(Message::ofUser('Hello'));
+        $original = $prefix->with(Message::ofAssistant('Hi'));
+        $store->save($original);
+        $store->replace($original, $prefix);
+
+        $this->expectException(ConflictException::class);
+        $store->save($original->with(Message::ofUser('Next')));
+    }
+
     public function testDeleteRemovesOnlyTheGivenConversation()
     {
         $store = new InMemoryMessageStore();

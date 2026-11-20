@@ -27,12 +27,17 @@ final class ConflictDetector
      */
     public static function assertContinues(MessageBag $stored, MessageBag $messages): void
     {
+        if (!self::continues($stored, $messages)) {
+            throw ConflictException::forMessages($messages);
+        }
+    }
+
+    public static function continues(MessageBag $stored, MessageBag $messages): bool
+    {
         $storedIds = array_map(self::id(...), $stored->getMessages());
         $ids = array_map(self::id(...), \array_slice($messages->getMessages(), 0, \count($storedIds)));
 
-        if ($storedIds !== $ids) {
-            throw ConflictException::forMessages($messages);
-        }
+        return $storedIds === $ids;
     }
 
     /**

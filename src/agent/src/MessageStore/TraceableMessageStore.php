@@ -11,6 +11,7 @@
 
 namespace Symfony\AI\Agent\MessageStore;
 
+use Symfony\AI\Agent\Exception\LogicException;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Uid\AbstractUid;
@@ -25,7 +26,7 @@ use Symfony\Contracts\Service\ResetInterface;
  *      saved_at: \DateTimeImmutable,
  *  }
  */
-final class TraceableMessageStore implements ManagedMessageStoreInterface, MessageStoreInterface, ResetInterface
+final class TraceableMessageStore implements ManagedMessageStoreInterface, MessageStoreInterface, ReplaceableMessageStoreInterface, ResetInterface
 {
     /**
      * @var MessageStoreData[]
@@ -53,11 +54,26 @@ final class TraceableMessageStore implements ManagedMessageStoreInterface, Messa
     public function save(MessageBag $messages): void
     {
         $this->messageStore->save($messages);
+        $this->trace($messages);
+    }
 
-        $this->calls[] = [
-            'bag' => $messages,
-            'saved_at' => $this->clock->now(),
-        ];
+    public function resume(MessageBag $input): MessageBag
+    {
+        if ($this->messageStore instanceof ReplaceableMessageStoreInterface) {
+            return $this->messageStore->resume($input);
+        }
+
+        return ConversationInput::appendNew($this->load($input->getId()), $input);
+    }
+
+    public function replace(MessageBag $expected, MessageBag $replacement): void
+    {
+        if (!$this->messageStore instanceof ReplaceableMessageStoreInterface) {
+            throw new LogicException('The decorated message store does not support replacing conversations.');
+        }
+
+        $this->messageStore->replace($expected, $replacement);
+        $this->trace($replacement);
     }
 
     public function delete(AbstractUid&TimeBasedUidInterface $id): void
@@ -87,5 +103,13 @@ final class TraceableMessageStore implements ManagedMessageStoreInterface, Messa
         }
 
         $this->calls = [];
+    }
+
+    private function trace(MessageBag $messages): void
+    {
+        $this->calls[] = [
+            'bag' => $messages,
+            'saved_at' => $this->clock->now(),
+        ];
     }
 }
