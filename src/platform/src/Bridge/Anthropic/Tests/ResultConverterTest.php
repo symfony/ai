@@ -971,6 +971,26 @@ final class ResultConverterTest extends TestCase
         $this->assertTrue($result->getMetadata()->get('finish_reason')->is(FinishReasonCase::LENGTH));
     }
 
+    public function testConvertKeepsTextWhenTruncatedAtMaxTokensAfterAServerToolResult()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                ['type' => 'text', 'text' => 'Let me search.'],
+                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'web_search', 'input' => ['query' => 'symfony ai']],
+                ['type' => 'web_search_tool_result', 'tool_use_id' => 'srvtoolu_01ABC123', 'content' => []],
+            ],
+            'stop_reason' => 'max_tokens',
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $this->assertInstanceOf(TextResult::class, $result->getContent()[0]);
+        $this->assertSame('Let me search.', $result->getContent()[0]->getContent());
+        $this->assertTrue($result->getMetadata()->get('finish_reason')->is(FinishReasonCase::LENGTH));
+    }
+
     public function testConvertWithoutStopReasonOmitsFinishReasonMetadata()
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([

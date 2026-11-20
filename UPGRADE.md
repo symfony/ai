@@ -423,20 +423,24 @@ Platform
    +$platform->invoke('gpt-5.4', $messages);
    ```
 
- * The Anthropic result converter throws `Exception\MaxOutputTokensException` when the output token limit cuts a
-   buffered response before any text, as the streamed converter already did. Before, such a response came back with
-   the `LENGTH` finish reason and no text: a `ThinkingResult` when the model was still thinking, or the result of a
-   server tool like web search or code execution, alone or in a `MultiPartResult`. A response cut after the text
-   started still returns the partial text with the `LENGTH` finish reason. Code reading the finish reason to handle
-   this case has to catch the exception instead:
+ * The Anthropic result converter, also used for the Messages API of Bedrock Mantle, throws
+   `Exception\MaxOutputTokensException` when the output token limit cuts a buffered response that holds no text, as
+   the streamed converter already did. Before, such a response came back with the `LENGTH` finish reason: a
+   `ThinkingResult` when the model was still thinking, or the result of a server tool like web search or code
+   execution, alone or in a `MultiPartResult`. A response with only redacted thinking threw a generic
+   `Exception\RuntimeException`. A response cut after the text started still returns the partial text with the
+   `LENGTH` finish reason, so keep reading it and catch the exception in addition:
 
    ```diff
    -$result = $platform->invoke($model, $messages)->getResult();
-   -if ($result->getMetadata()->get('finish_reason')?->is(FinishReasonCase::LENGTH)) {
    +try {
    +    $result = $platform->invoke($model, $messages)->getResult();
    +} catch (MaxOutputTokensException $e) {
-        // raise the output token budget or reduce the request scope
+   +    // nothing to read: raise the output token budget or reduce the request scope
+   +}
+   +
+    if ($result->getMetadata()->get('finish_reason')?->is(FinishReasonCase::LENGTH)) {
+        // partial text
     }
    ```
 
