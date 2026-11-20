@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------
+
+by abp002 at 2026-11-16T06:40:25Z
+
+Rebased on main. #2917 already covers the OCR part, including a test that goes through `Factory::createPlatform()` with a custom `baseUrl`, so I dropped those changes from here. What's left is the bundle option and its tests.
+
+---------------------------------------------------------------------------
+
+by tacman at 2026-11-20T12:35:48Z
+
+The EU endpoint (`https://api.eu.mistral.ai`) is a real need for EU-hosted users, and this option covers it. For reference, #2917 (merged) already makes the Mistral OCR path honor the configured base URL, so this option takes effect there too. The checks pass and there are no conflicts. Could a maintainer take a look?
