@@ -231,6 +231,9 @@ HELP
 
         $io->newLine();
         $io->text(\sprintf('Total: <info>%d</info> tool(s)', \count($tools)));
+        // tools:call-batch is a command, not a #[MateTool], so it needs a pointer here
+        // rather than a row of its own.
+        $io->text('Need several of these for one question? Run them in a single call with <info>tools:call-batch</info>.');
     }
 
     /**
@@ -238,7 +241,7 @@ HELP
      *
      * @return array{
      *     tools: array<string, ToolData>,
-     *     summary: array{total: int}
+     *     summary: array{total: int, batch_hint: string}
      * }
      */
     private function getArrayResult(array $tools): array
@@ -247,6 +250,8 @@ HELP
             'tools' => $tools,
             'summary' => [
                 'total' => \count($tools),
+                // Mirrors the table footer, so the JSON output carries the same hint.
+                'batch_hint' => 'Several tools needed for one question can be run in a single call with tools:call-batch.',
             ],
         ];
     }

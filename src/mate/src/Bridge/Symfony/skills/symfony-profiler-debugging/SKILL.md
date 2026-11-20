@@ -85,6 +85,14 @@ Step 4 picks the collector. On the slow path, step 5 traces its numbers. Branch 
 
 A non-zero `error_count` or `warning_count` with no matching exception is the handoff signal: this request logged something the collectors do not explain. Take the message or a context key from `logs` into `monolog-search` / `monolog-context-search` (see "When the profile does not explain it") to find out whether it is a one-off or has been happening all week.
 
+Need more than `logger` captured: a wider time window, a channel outside this request, or entries from before it started? Fetch the profile and search the logs together in one call instead of two separate `tools:call` round-trips (see the `mate-tools-call-batch` skill):
+
+```bash
+vendor/bin/mate tools:call-batch --json='[{"tool": "symfony-profiler-get", "params": {"token": "<t>"}}, {"tool": "monolog-search", "params": {"level": "ERROR", "from": "-1 hour"}}]'
+```
+
+`from` counts back from now, not from the request, so choose a window that still reaches the request.
+
 Other collectors present in the profile (router, security, twig, ...) are readable at the same URI shape; they return raw dumps rather than a curated shape.
 
 ## Prove the fix

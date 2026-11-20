@@ -61,7 +61,7 @@ Setup
 Tools and Resources
 -------------------
 
-These are the four commands a coding agent uses.
+These are the five commands a coding agent uses.
 
 ``mate tools:list``
     List all tools with their description and arguments.
@@ -142,6 +142,45 @@ These are the four commands a coding agent uses.
 
         # Nested values
         $ vendor/bin/mate tools:call <tool-name> --json='{"filters": {"level": "error"}}'
+
+``mate tools:call-batch``
+    Execute several tools and resource reads in one command call. Useful when one investigation needs
+    results from multiple tools or resources together (e.g. correlating a profiler request with logs
+    from the same time window): a single call replaces one ``tools:call`` or ``resources:read`` per item. Calls run sequentially, in array
+    order, and one call failing does not abort the others.
+
+    The named tools run exactly as given. The batch makes no read-only promise, so only batch
+    tools you would also call one by one. The command exits with a non-zero code when any call
+    failed. A call object is either a tool call (``tool`` and optional ``params``) or a
+    resource read (``resource`` with a URI). Any other key is rejected.
+
+    **Options:**
+
+    ``--json=JSON``
+        A JSON array of ``{"tool": "...", "params": {...}}`` or ``{"resource": "<uri>"}`` call objects
+        (``params`` is optional for a tool that takes none).
+
+    ``--format=FORMAT``
+        ``pretty`` (default, one section per tool), ``json`` or ``toon``.
+
+    **Result shape:**
+
+    A JSON array, one entry per call, in the same order as the request:
+    ``{"tool": "...", "ok": true|false, "result": <decoded tool output>|null, "error": "..."|null}``.
+    A resource read reports ``resource`` with the URI instead of ``tool``.
+
+    **Examples:**
+
+    .. code-block:: terminal
+
+        # Correlate a slow request with logs from the same time window
+        $ vendor/bin/mate tools:call-batch --json='[{"tool": "symfony-profiler-get", "params": {"token": "abc123"}}, {"tool": "monolog-search", "params": {"level": "ERROR"}}]'
+
+        # Read several resources of one profile together with a tool call
+        $ vendor/bin/mate tools:call-batch --json='[{"tool": "symfony-profiler-list", "params": {"limit": 1}}, {"resource": "symfony-profiler://profile/abc123/db"}, {"resource": "symfony-profiler://profile/abc123/time"}]'
+
+        # JSON output format
+        $ vendor/bin/mate tools:call-batch --json='[{"tool": "server-info"}]' --format=json
 
 ``mate resources:read <uri>``
     Read a resource by its URI. The URI may belong to a static resource or match a resource
