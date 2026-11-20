@@ -37,6 +37,9 @@ final class ProfilerTool
     // Relative change below which a time or memory difference is run-to-run noise.
     private const NOISE_THRESHOLD = 0.05;
 
+    // A run further than this fraction from the median of its side is an outlier.
+    private const OUTLIER_THRESHOLD = 0.5;
+
     /**
      * The field that decides a comparison's verdict, per collector: a lower value on
      * `current` than on `baseline` counts as improved. A collector mapped to null has no
@@ -268,18 +271,18 @@ final class ProfilerTool
     }
 
     /**
-     * @param string $baseline  The profiler token measured before the change, or several comma-separated tokens averaged to smooth out run-to-run noise
-     * @param string $current   The profiler token measured after the change, or several comma-separated tokens averaged to smooth out run-to-run noise
+     * @param string $baseline  The profiler token measured before the change, or several comma-separated tokens reduced to their median to smooth out run-to-run noise
+     * @param string $current   The profiler token measured after the change, or several comma-separated tokens reduced to their median to smooth out run-to-run noise
      * @param string $collector The collector to compare (e.g. db, time, memory, logger)
      */
-    #[MateTool(name: 'symfony-profiler-compare', title: 'Symfony Profiler Compare', description: 'Compare the collector summary of two profiler profiles to prove whether a change actually improved a measurement. Reproduce the request after your fix, then compare the new token against the token you captured before. Pass several comma-separated tokens on either side to average multiple runs, which is more reliable than a single run when the measurement has any noise. Returns both summaries, the numeric difference for every shared numeric field, the raw before/after pair for every shared field that changed but is not numeric, and, for collectors with a leading metric, a verdict (improved, unchanged, regressed).')]
+    #[MateTool(name: 'symfony-profiler-compare', title: 'Symfony Profiler Compare', description: 'Compare the collector summary of two profiler profiles to prove whether a change actually improved a measurement. Reproduce the request after your fix, then compare the new token against the token you captured before. Pass several comma-separated tokens on either side to take the median of multiple runs, which is more reliable than a single run when the measurement has any noise. Runs that stray far from their median are listed per field under outliers, and the verdict is then inconclusive. Returns both summaries, the numeric difference for every shared numeric field, the raw before/after pair for every shared field that changed but is not numeric, and, for collectors with a leading metric, a verdict (improved, unchanged, regressed, inconclusive).')]
     public function compare(string $baseline, string $current, string $collector = 'db'): string
     {
         $baselineTokens = $this->splitTokens($baseline);
         $currentTokens = $this->splitTokens($current);
 
-        $baselineSummary = $this->averagedSummary($baselineTokens, $collector);
-        $currentSummary = $this->averagedSummary($currentTokens, $collector);
+        ['summary' => $baselineSummary, 'outliers' => $baselineOutliers] = $this->aggregatedSummary($baselineTokens, $collector);
+        ['summary' => $currentSummary, 'outliers' => $currentOutliers] = $this->aggregatedSummary($currentTokens, $collector);
 
         $delta = [];
         $changed = [];
@@ -290,7 +293,7 @@ final class ProfilerTool
 
             $baselineValue = $baselineSummary[$key];
 
-            // A single run keeps a bool, several runs average to a float: compare them as numbers.
+            // A single run keeps a bool, several runs reduce to a number: compare them as numbers.
             if (\is_bool($currentValue) && (\is_int($baselineValue) || \is_float($baselineValue))) {
                 $currentValue = (int) $currentValue;
             } elseif (\is_bool($baselineValue) && (\is_int($currentValue) || \is_float($currentValue))) {
@@ -321,8 +324,20 @@ final class ProfilerTool
             'changed' => $changed,
         ];
 
+        $outliers = array_filter(['baseline' => $baselineOutliers, 'current' => $currentOutliers]);
+        if ([] !== $outliers) {
+            $result['outliers'] = $outliers;
+        }
+
         $verdict = $this->buildVerdict($collector, $baselineSummary, $currentSummary);
         if (null !== $verdict) {
+            $leadingMetric = self::LEADING_METRICS[$collector] ?? null;
+            // One odd run can flip a verdict, so the agent has to look at the runs itself.
+            if (null !== $leadingMetric && (isset($baselineOutliers[$leadingMetric]) || isset($currentOutliers[$leadingMetric]))) {
+                $verdict = 'inconclusive';
+                $result['note'] = \sprintf('The runs of "%s" differ too much from each other to trust a verdict. Read the profiles in "outliers" with symfony-profiler-get, or measure again.', $leadingMetric);
+            }
+
             $result['verdict'] = $verdict;
         }
 
@@ -358,45 +373,75 @@ final class ProfilerTool
     }
 
     /**
-     * A single token's summary is returned as-is. Several are averaged field by field, so
-     * one slow or flaky run does not decide the comparison: a numeric field (a bool counts
-     * as 0/1, so a flakiness rate like "has_exception: 0.4" is a legitimate answer) becomes
-     * its mean across the runs. A field every run agrees on, such as a fixed collector name,
-     * is kept as-is; one the runs disagree on has no single representative value and is
-     * dropped rather than guessed from whichever run happened to be averaged last.
+     * A single token's summary is returned as-is. Several are reduced field by field to their
+     * median, so one slow or flaky run (an initialization outlier, a cold cache) does not move the
+     * result: a numeric field (a bool counts as 0/1, so a flakiness rate like "has_exception: 0.4"
+     * is a legitimate answer) becomes its median across the runs. A field every run agrees on,
+     * such as a fixed collector name, is kept as-is. One the runs disagree on has no single
+     * representative value and is dropped rather than guessed from whichever run came last.
+     *
+     * A run further than OUTLIER_THRESHOLD from the median is reported per field with the value
+     * of every run, so the outlier is visible instead of being absorbed.
      *
      * @param list<string> $tokens
      *
-     * @return array<string, mixed>
+     * @return array{summary: array<string, mixed>, outliers: array<string, array<string, int|float>>}
      */
-    private function averagedSummary(array $tokens, string $collector): array
+    private function aggregatedSummary(array $tokens, string $collector): array
     {
         $summaries = array_map(fn (string $token): array => $this->getCollectorSummary($token, $collector), $tokens);
 
         if (1 === \count($summaries)) {
-            return $summaries[0];
+            return ['summary' => $summaries[0], 'outliers' => []];
         }
 
         $keys = array_unique(array_merge(...array_map(array_keys(...), $summaries)));
 
-        $averaged = [];
+        $aggregated = [];
+        $outliers = [];
         foreach ($keys as $key) {
             $values = array_map(static fn (array $summary): mixed => $summary[$key] ?? null, $summaries);
             $numbers = array_map($this->toComparableNumber(...), $values);
 
             if (!\in_array(null, $numbers, true)) {
-                $averaged[$key] = round(array_sum($numbers) / \count($numbers), 2);
+                $median = $this->median($numbers);
+                $aggregated[$key] = round($median, 2);
+
+                if (0.0 !== (float) $median) {
+                    $perRun = [];
+                    $isOutlier = false;
+                    foreach ($numbers as $index => $number) {
+                        $perRun[$tokens[$index]] = $number;
+                        $isOutlier = $isOutlier || abs($number - $median) > self::OUTLIER_THRESHOLD * abs($median);
+                    }
+
+                    if ($isOutlier) {
+                        $outliers[$key] = $perRun;
+                    }
+                }
 
                 continue;
             }
 
             $first = $values[0];
             if ([] === array_filter($values, static fn (mixed $value): bool => $value !== $first)) {
-                $averaged[$key] = $first;
+                $aggregated[$key] = $first;
             }
         }
 
-        return $averaged;
+        return ['summary' => $aggregated, 'outliers' => $outliers];
+    }
+
+    /**
+     * @param non-empty-list<int|float> $numbers
+     */
+    private function median(array $numbers): int|float
+    {
+        sort($numbers);
+        $count = \count($numbers);
+        $middle = intdiv($count, 2);
+
+        return 1 === $count % 2 ? $numbers[$middle] : ($numbers[$middle - 1] + $numbers[$middle]) / 2;
     }
 
     /**

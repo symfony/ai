@@ -11,7 +11,7 @@ Reads the profiler through Mate's CLI. Five tools, two resources:
 - `symfony-profiler-list` filters profiles (`method`, `url`, `ip`, `statusCode`, `context`, `from`, `to`, `limit`). Newest first, so `--limit=1` is the latest. Returns `total` and `truncated` first, then summaries with a `resource_uri` per profile. The default `limit` is 20: before aggregating over "all requests" (an average, a count, the slowest route), check `truncated`. When it is true, you saw only a sample (at most 500, also for `--limit=0`), so narrow the filters instead of listing everything.
 - `symfony-profiler-summary` answers "how many requests failed and which fails most" in one call: `requests`, `failed` (status 400+) and `failing_requests_by_count` (`METHOD STATUS path`, most frequent first, at most 20 with `failing_requests_truncated`) over the latest `limit` (default 500) top-level requests. `truncated` says older ones were left out; `--limit=0` looks at all. Start here for "what fails" questions, then list the cases with `symfony-profiler-list`.
 - `symfony-profiler-get --token=<t>` returns one profile's metadata and its `collectors`, each with a `uri`.
-- `symfony-profiler-compare --baseline=<t1> --current=<t2> [--collector=db]` diffs the `summary` of one collector across two profiles. Either side accepts several comma-separated tokens (`--baseline=<t1>,<t2>,<t3>`), averaged, when a single run is too noisy to trust.
+- `symfony-profiler-compare --baseline=<t1> --current=<t2> [--collector=db]` diffs the `summary` of one collector across two profiles. Either side accepts several comma-separated tokens (`--baseline=<t1>,<t2>,<t3>`), reduced to their median, when a single run is too noisy to trust.
 - `symfony-profiler://profile/{token}` lists the collectors this profile actually has, each with its URI.
 - `symfony-profiler://profile/{token}/{collector}` returns that collector, as `{name, data, summary}`. `summary` is the triage view, `data` the full detail.
 
@@ -110,8 +110,11 @@ hot path. Go back to the reading order.
 A single request can be noisy (cache warmup, GC, an unrelated slow query on that one run). If
 the delta looks marginal, reproduce a few times on each side and pass every token, comma-separated,
 to `--baseline`/`--current`: `symfony-profiler-compare --baseline=<t1>,<t2>,<t3> --current=<t4>,<t5>,<t6>`.
-Each side's numeric fields are then averaged before comparing, and the response reports `run_count`
-plus every token used instead of a single `token`, so a one-off outlier does not decide the verdict.
+Each side's numeric fields are then reduced to their median before comparing, and the response reports `run_count`
+plus every token used instead of a single `token`. The median ignores one odd run. A run further than 50 percent
+from its side's median is listed under `outliers` with the value of every run, and the `verdict` for that metric
+becomes `inconclusive`. Do not claim a gain then. Read the listed profiles with `symfony-profiler-get`, find out
+why that run differs (cold cache, initialization), and measure again.
 
 ## Failure paths
 

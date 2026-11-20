@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Change `symfony-profiler-compare` to reduce several runs per side to their median, list runs far from the median under `outliers`, and report an `inconclusive` verdict when the leading metric has one
  * Add `symfony-profiler-triage` answering query count, duplicates, the most expensive statements, duration, exception state and logger counts for one request in a single call
  * Add `symfony-profiler-compare` tool that diffs the collector summary of two profiler profiles and returns a delta and a verdict
  * Add `RouterCollectorFormatter` to report redirects, redirecting route names, target hosts and paths without URL credentials, query strings or fragments
