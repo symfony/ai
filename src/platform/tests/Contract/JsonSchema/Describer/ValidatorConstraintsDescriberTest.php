@@ -70,11 +70,13 @@ final class ValidatorConstraintsDescriberTest extends TestCase
         yield 'AtLeastOneOf' => ['atLeastOneOf', null, ['anyOf' => [['const' => 'a'], ['type' => 'integer']]]];
         yield 'All' => ['all', null, ['type' => 'array', 'items' => ['maxLength' => 255]]];
         yield 'All, non-array type' => ['all', ['type' => 'string'], ['type' => 'string']];
+        yield 'All, map' => ['all', ['type' => 'object', 'additionalProperties' => ['type' => 'string']], ['type' => 'object', 'additionalProperties' => ['type' => 'string', 'maxLength' => 255]]];
         yield 'Blank string' => ['blankString', ['type' => 'string'], ['type' => 'string', 'nullable' => true, 'maxLength' => 0]];
         yield 'Cidr' => ['cidr', null, ['description' => 'Any IP address.']];
         yield 'Collection' => ['collection', null, ['type' => 'object', 'properties' => ['a' => ['const' => 'hello'], 'b' => ['const' => 5]], 'required' => ['a', 'b']]];
         yield 'Collection, non-object type ' => ['collection', ['type' => 'array'], ['type' => 'array']];
         yield 'Count and unique array' => ['countedArray', null, ['minItems' => 2, 'maxItems' => 4, 'uniqueItems' => true]];
+        yield 'Count map' => ['countedArray', ['type' => 'object'], ['type' => 'object', 'minProperties' => 2, 'maxProperties' => 4, 'uniqueItems' => true]];
         yield 'CssColor' => ['cssColor', ['description' => 'Background color.'], ['description' => "Background color.\nCSS color in one of the following formats: hex_short, hex_long"]];
         yield 'Choice string' => ['choiceString', null, ['enum' => ['a', 'b']]];
         yield 'Choice array' => ['choiceArray', ['type' => 'array', 'items' => ['type' => 'string']], ['type' => 'array', 'items' => ['type' => 'string', 'enum' => ['x', 'y']], 'minItems' => 1, 'maxItems' => 2]];
