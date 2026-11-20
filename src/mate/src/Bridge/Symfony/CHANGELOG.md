@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add `symfony-profiler-triage` answering query count, duplicates, the most expensive statements, duration, exception state and logger counts for one request in a single call
  * Add `RouterCollectorFormatter` to report redirects, redirecting route names, target hosts and paths without URL credentials, query strings or fragments
  * Add a config profiler collector formatter exposing PHP and Symfony versions, environment, debug mode and runtime diagnostics
  * Add `HttpClientCollectorFormatter` to list traced outbound calls of the `http_client` profiler collector without headers, bodies or secret-looking URL parts

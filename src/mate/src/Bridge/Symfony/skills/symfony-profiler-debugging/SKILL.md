@@ -5,8 +5,9 @@ description: Diagnose a Symfony request that failed, errored (5xx), or was slow,
 
 # Profiler debugging
 
-Reads the profiler through Mate's CLI. Three tools, two resources:
+Reads the profiler through Mate's CLI. Four tools, two resources:
 
+- `symfony-profiler-triage` triages one request: query count, duplicate queries, the most expensive statements, total duration, whether an exception occurred, and the logger error/warning counts. `--url=/checkout` picks the newest profile for that path, `--token=<t>` an exact one. With neither it takes the most recent profile. Collectors the profile does not have are omitted, so a missing key means "not collected", not "zero". Start here: it answers the first question in one call, where listing, getting and reading a collector separately takes three rounds.
 - `symfony-profiler-list` filters profiles (`method`, `url`, `ip`, `statusCode`, `context`, `from`, `to`, `limit`). Newest first, so `--limit=1` is the latest. Returns `total` and `truncated` first, then summaries with a `resource_uri` per profile. The default `limit` is 20: before aggregating over "all requests" (an average, a count, the slowest route), check `truncated`. When it is true, you saw only a sample (at most 500, also for `--limit=0`), so narrow the filters instead of listing everything.
 - `symfony-profiler-summary` answers "how many requests failed and which fails most" in one call: `requests`, `failed` (status 400+) and `failing_requests_by_count` (`METHOD STATUS path`, most frequent first, at most 20 with `failing_requests_truncated`) over the latest `limit` (default 500) top-level requests. `truncated` says older ones were left out; `--limit=0` looks at all. Start here for "what fails" questions, then list the cases with `symfony-profiler-list`.
 - `symfony-profiler-get --token=<t>` returns one profile's metadata and its `collectors`, each with a `uri`.
@@ -23,15 +24,16 @@ For a slow request, one collector read is never enough. A single read shows *tha
 
 For slow, many-query or memory-heavy requests, investigate in a loop. Do not answer from the first read.
 
-1. Find the profile. Do not scroll all profiles.
+1. Triage first: `vendor/bin/mate tools:call symfony-profiler-triage` for the latest request, `--url=/checkout` for a known path. The numbers it returns usually already name the subsystem to look at.
+2. Only when triage is not enough, find the exact profile. Do not scroll all profiles.
    - Error: `vendor/bin/mate tools:call symfony-profiler-list --statusCode=500 --limit=5`
    - Known URL: `--url=/checkout`. Latest request: `--limit=1`.
-2. `vendor/bin/mate resources:read symfony-profiler://profile/<token>` to see which collectors exist. Apps differ; only read what is present.
-3. Read the collector the symptom points at (reading order below).
-4. Take **every** number in it that is out of proportion and trace it to a named source: which
+3. `vendor/bin/mate resources:read symfony-profiler://profile/<token>` to see which collectors exist. Apps differ, only read what is present.
+4. Read the collector the symptom points at (reading order below).
+5. Take **every** number in it that is out of proportion and trace it to a named source: which
    statement, which event, which code path emitted it. One number, one source, named.
-5. Account for the total. Subtract what you just explained: if any of the load is still
-   unattributed, go back to step 3 (next collector, or next number in this one).
+6. Account for the total. Subtract what you just explained: if any of the load is still
+   unattributed, go back to step 4 (next collector, or next number in this one).
 
 **Stop condition (slow path):** done means every source of the load is named, not that one was found.
 "The N+1 in the product listing" is one source. If it accounts for 40 of 54 queries, 14 queries
@@ -46,9 +48,25 @@ Continue in the logs instead of stopping at the profile boundary. Trigger cases:
 
 The profiler sees exactly one request. The logs see every request, including the one that swallowed the exception. Follow the skill for log investigation from there and come back with what it names.
 
+## Commands, workers, cron
+
+The profiler is not HTTP-only. `--profile` is a standard Symfony option that
+`FrameworkBundle`'s console `Application` registers on *every* command, and
+`ConsoleProfilerListener` then writes an ordinary profile into the same profiler storage,
+with `method: BATCH` instead of an HTTP method. So a command, a worker or a cron job is
+debugged with exactly the tools above:
+
+```
+bin/console app:import --profile
+vendor/bin/mate tools:call symfony-profiler-triage
+```
+
+Without `--url`/`--token`, triage takes the most recent profile, which is the command that
+just ran. From there the reading order below applies unchanged.
+
 ## Reading order
 
-Step 3 picks the collector. On the slow path, step 4 traces its numbers. Branch on the symptom.
+Step 4 picks the collector. On the slow path, step 5 traces its numbers. Branch on the symptom.
 
 **Errored (5xx / exception):** read `exception` first.
 `data.class`, `message` (secrets scrubbed), `file`, `line`, and `trace` (top 10 frames) are the fix. If `has_exception` is false on an error response, the failure is upstream and this profile will not name it: check `request` for the status and `logger` for what was logged, then follow it into the logs (see "When the profile does not explain it"). A swallowed exception leaves a log line even when it leaves no collector entry.
