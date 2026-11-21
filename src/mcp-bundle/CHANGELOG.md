@@ -8,6 +8,8 @@ CHANGELOG
  * Add the `none` value for `servers.<name>.session.store` to serve handshake-era HTTP clients without sessions
  * Bind handshake-era sessions to the user identifier of the authenticated user, or to the `mcp.principal`
    request attribute
+ * Register the reference handler of each server as the `mcp.server.<name>.reference_handler` service, so
+   applications can decorate the calls to tools, prompts and resources
 
 0.15
 ----
