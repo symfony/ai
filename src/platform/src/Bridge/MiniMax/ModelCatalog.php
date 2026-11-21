@@ -168,6 +168,14 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::VIDEO_WITH_SUBJECT,
                 ],
             ],
+            'MiniMax-H3-Image' => [
+                'class' => MiniMax::class,
+                'capabilities' => [Capability::TEXT_TO_IMAGE],
+            ],
+            'MiniMax-H3-Image-Highspeed' => [
+                'class' => MiniMax::class,
+                'capabilities' => [Capability::TEXT_TO_IMAGE],
+            ],
             'image-01' => [
                 'class' => MiniMax::class,
                 'capabilities' => [
