@@ -36,6 +36,22 @@ final class TypeInfoDescriberTest extends TestCase
         $this->assertSame($expectedSchema, $schema);
     }
 
+    /**
+     * @param array<string, mixed> $expectedSchema
+     */
+    #[TestWith([['type' => 'object', 'additionalProperties' => ['type' => 'string']], TypeInfoFixture::class, 'labels'], 'string keyed map')]
+    #[TestWith([['type' => 'object'], TypeInfoFixture::class, 'values'], 'string keyed map of mixed')]
+    #[TestWith([['type' => 'array', 'items' => ['type' => 'string']], TypeInfoFixture::class, 'names'], 'int keyed array')]
+    public function testDescribeStringKeyedArrayAsObject(array $expectedSchema, string $class, string $property)
+    {
+        $describer = new TypeInfoDescriber();
+        $schema = null;
+
+        $describer->describeProperty(new PropertySubject($property, new \ReflectionProperty($class, $property)), $schema);
+
+        $this->assertSame($expectedSchema, $schema);
+    }
+
     public function testDescribeThrowsForBuiltinObjectType()
     {
         $describer = new TypeInfoDescriber();
