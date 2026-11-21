@@ -310,6 +310,43 @@ final class ToolboxTest extends TestCase
         $conversionAgent->assertCallCount(1);
     }
 
+    public function testDuplicateToolNamesThrow()
+    {
+        $factory = (new MemoryToolFactory())
+            ->addTool(ToolNoParams::class, 'lookup', 'First lookup')
+            ->addTool(ToolRequiredParams::class, 'lookup', 'Second lookup', 'bar');
+
+        $toolbox = new Toolbox([new ToolNoParams(), new ToolRequiredParams()], $factory);
+
+        $this->expectException(ToolConfigurationException::class);
+        $this->expectExceptionMessage(\sprintf('Tool "lookup" is defined more than once: %s::__invoke and %s::bar. Tool names must be unique within a toolbox.', ToolNoParams::class, ToolRequiredParams::class));
+
+        $toolbox->getTools();
+    }
+
+    public function testTheSameInstanceListedTwiceIsRegisteredOnce()
+    {
+        $tool = new ToolNoParams();
+        $factory = (new MemoryToolFactory())
+            ->addTool(ToolNoParams::class, 'lookup', 'Lookup');
+
+        $toolbox = new Toolbox([$tool, $tool], $factory);
+
+        $this->assertCount(1, $toolbox->getTools());
+    }
+
+    public function testTwoInstancesOfTheSameClassThrow()
+    {
+        $factory = (new MemoryToolFactory())
+            ->addTool(ToolNoParams::class, 'lookup', 'Lookup');
+
+        $toolbox = new Toolbox([new ToolNoParams(), new ToolNoParams()], $factory);
+
+        $this->expectException(ToolConfigurationException::class);
+
+        $toolbox->getTools();
+    }
+
     public function testToolboxMapWithOverrideViaChain()
     {
         $factory1 = (new MemoryToolFactory())
