@@ -24,8 +24,12 @@ final class SimilaritySearch implements HasSourcesInterface
 {
     use HasSourcesTrait;
 
+    /**
+     * @param array<string, mixed> $options Options to pass to the retriever retrieve (e.g., limit, filters)
+     */
     public function __construct(
         private readonly RetrieverInterface $retriever,
+        private readonly array $options = [],
     ) {
     }
 
@@ -36,7 +40,7 @@ final class SimilaritySearch implements HasSourcesInterface
     {
         // taken before retrieving, since a suspending retriever lets a parallel call replace the collection
         $sources = $this->getSourceCollection();
-        $documents = iterator_to_array($this->retriever->retrieve($searchTerm), false);
+        $documents = iterator_to_array($this->retriever->retrieve($searchTerm, $this->options), false);
 
         foreach ($documents as $document) {
             $sources->add(new DocumentSource($document));
