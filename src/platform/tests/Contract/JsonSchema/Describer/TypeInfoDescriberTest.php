@@ -36,6 +36,21 @@ final class TypeInfoDescriberTest extends TestCase
         $this->assertSame($expectedSchema, $schema);
     }
 
+    /**
+     * @param array<string, mixed> $expectedSchema
+     */
+    #[TestWith([['type' => 'object', 'properties' => ['age' => ['type' => 'integer'], 'email' => ['type' => ['string', 'null']], 'name' => ['type' => 'string']], 'required' => ['email', 'name'], 'additionalProperties' => false], TypeInfoFixture::class, 'person'], 'array shape')]
+    #[TestWith([['type' => 'array', 'items' => ['type' => 'object', 'properties' => ['id' => ['type' => 'integer']], 'required' => ['id'], 'additionalProperties' => false]], TypeInfoFixture::class, 'rows'], 'list of array shapes')]
+    public function testDescribeArrayShapeAsObject(array $expectedSchema, string $class, string $property)
+    {
+        $describer = new TypeInfoDescriber();
+        $schema = null;
+
+        $describer->describeProperty(new PropertySubject($property, new \ReflectionProperty($class, $property)), $schema);
+
+        $this->assertSame($expectedSchema, $schema);
+    }
+
     public function testDescribeThrowsForBuiltinObjectType()
     {
         $describer = new TypeInfoDescriber();
