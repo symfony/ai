@@ -1,0 +1,5 @@
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-11-20T22:03:34Z
+
+@BackEndTea thanks for the hint in https://github.com/symfony/ai/pull/2590#issuecomment-5809527768. Your case is what this PR addresses: several runs are now reduced to their median, runs far from it are listed under `outliers`, and the verdict becomes `inconclusive` when the leading metric has one.
