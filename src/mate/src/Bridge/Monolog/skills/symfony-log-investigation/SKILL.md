@@ -31,6 +31,8 @@ Hand back to the profiler as soon as it is one request. A log line gives you a t
 
 The profile only exists if the request was recorded (usually dev) and the storage has not been cleared. If there is none, stay in the logs and say so.
 
+**Messenger worker failures** (`messenger` channel, "Error thrown while handling message ... Removing from transport after N retries"): the failed messages are in the failure transport. Go to `symfony-messenger-failed` (skill `symfony-messenger-failures`), which groups all of them by cause in one call, instead of reading the log lines one by one.
+
 ## Reading
 
 - Correlate `channel` + `level` + `datetime`. The channel tells you the subsystem (`doctrine` = DB, `security` = auth, `request`/`php` = framework), the level tells you severity, the timestamp anchors it to a deploy or an incident.
