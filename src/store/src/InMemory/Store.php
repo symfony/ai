@@ -12,7 +12,6 @@
 namespace Symfony\AI\Store\InMemory;
 
 use Symfony\AI\Store\Distance\DistanceCalculator;
-use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
@@ -173,44 +172,41 @@ final class Store implements ManagedStoreInterface, StoreInterface, ResetInterfa
      */
     private function queryHybrid(HybridQuery $query, array $options): iterable
     {
+        $texts = array_map('strtolower', $query->getTexts());
+        $semanticRatio = $query->getSemanticRatio();
+
         $vectorResults = iterator_to_array($this->queryVector(
             new VectorQuery($query->getVector()),
-            $options
-        ));
+            array_diff_key($options, ['limit' => true]),
+        ), false);
 
-        $textResults = iterator_to_array($this->queryText(
-            new TextQuery($query->getTexts()),
-            $options
-        ));
+        $distances = array_map(static fn (VectorDocumentInterface $doc): float => $doc->getScore() ?? 0.0, $vectorResults);
+        $minDistance = [] !== $distances ? min($distances) : 0.0;
+        $distanceRange = [] !== $distances ? max($distances) - $minDistance : 0.0;
 
         $mergedResults = [];
-        $seenIds = [];
-
         foreach ($vectorResults as $doc) {
-            $id = (string) $doc->getId();
-            if (!isset($seenIds[$id])) {
-                $mergedResults[] = new VectorDocument(
-                    id: $doc->getId(),
-                    vector: $doc->getVector(),
-                    metadata: $doc->getMetadata(),
-                    score: null !== $doc->getScore() ? $doc->getScore() * $query->getSemanticRatio() : null,
-                );
-                $seenIds[$id] = true;
+            $docText = strtolower($doc->getMetadata()->getText() ?? '');
+            $matchedTexts = 0;
+            foreach ($texts as $text) {
+                if (str_contains($docText, $text)) {
+                    ++$matchedTexts;
+                }
             }
-        }
 
-        foreach ($textResults as $doc) {
-            $id = (string) $doc->getId();
-            if (!isset($seenIds[$id])) {
-                $mergedResults[] = $doc;
-                $seenIds[$id] = true;
+            if (0.0 === $semanticRatio && 0 === $matchedTexts) {
+                continue;
             }
+
+            $vectorDistance = $distanceRange > 0.0 ? (($doc->getScore() ?? 0.0) - $minDistance) / $distanceRange : 0.0;
+            $textDistance = [] !== $texts ? 1.0 - $matchedTexts / \count($texts) : 1.0;
+
+            $mergedResults[] = $doc->withScore($semanticRatio * $vectorDistance + $query->getKeywordRatio() * $textDistance);
         }
 
-        if (isset($options['filter'])) {
-            $mergedResults = array_values(array_filter($mergedResults, $options['filter']));
-        }
+        usort($mergedResults, static fn (VectorDocumentInterface $a, VectorDocumentInterface $b): int => $a->getScore() <=> $b->getScore());
 
-        yield from $mergedResults;
+        $limit = $options['limit'] ?? null;
+        yield from null !== $limit ? \array_slice($mergedResults, 0, $limit) : $mergedResults;
     }
 }

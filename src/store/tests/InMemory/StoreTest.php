@@ -455,6 +455,80 @@ final class StoreTest extends TestCase
         $this->assertNotEmpty($resultLowSemantic);
     }
 
+    public function testHybridQueryCombinesVectorDistanceAndTextMatch()
+    {
+        $store = new Store();
+        $store->add([
+            new VectorDocument('same', new Vector([1.0, 0.0]), new Metadata(['_text' => 'cafe'])),
+            new VectorDocument('orthogonal', new Vector([0.0, 1.0]), new Metadata(['_text' => 'dentist'])),
+        ]);
+
+        $result = iterator_to_array($store->query(new HybridQuery(new Vector([1.0, 0.0]), 'dentist', 0.1)), false);
+
+        $this->assertSame('orthogonal', $result[0]->getId());
+        $this->assertEqualsWithDelta(0.1, $result[0]->getScore(), 0.0001);
+        $this->assertSame('same', $result[1]->getId());
+        $this->assertEqualsWithDelta(0.9, $result[1]->getScore(), 0.0001);
+    }
+
+    public function testHybridQueryWithLimit()
+    {
+        $store = new Store();
+        $store->add([
+            new VectorDocument('same', new Vector([1.0, 0.0]), new Metadata(['_text' => 'cafe'])),
+            new VectorDocument('orthogonal', new Vector([0.0, 1.0]), new Metadata(['_text' => 'dentist'])),
+        ]);
+
+        $result = iterator_to_array($store->query(new HybridQuery(new Vector([1.0, 0.0]), 'dentist', 0.1), ['limit' => 1]), false);
+
+        $this->assertCount(1, $result);
+        $this->assertSame('orthogonal', $result[0]->getId());
+    }
+
+    public function testHybridQueryWithFilter()
+    {
+        $store = new Store();
+        $store->add([
+            new VectorDocument('same', new Vector([1.0, 0.0]), new Metadata(['_text' => 'cafe', 'category' => 'food'])),
+            new VectorDocument('orthogonal', new Vector([0.0, 1.0]), new Metadata(['_text' => 'dentist', 'category' => 'health'])),
+        ]);
+
+        $result = iterator_to_array($store->query(new HybridQuery(new Vector([1.0, 0.0]), 'dentist', 0.1), [
+            'filter' => static fn (VectorDocumentInterface $doc) => 'food' === $doc->getMetadata()['category'],
+        ]), false);
+
+        $this->assertCount(1, $result);
+        $this->assertSame('same', $result[0]->getId());
+    }
+
+    public function testHybridQueryKeepsVectorRankingWhenDistancesAreClose()
+    {
+        $store = new Store();
+        $store->add([
+            new VectorDocument('near', new Vector([1.0, 0.0]), new Metadata(['_text' => 'cafe'])),
+            new VectorDocument('far', new Vector([1.0, 0.9]), new Metadata(['_text' => 'dentist'])),
+            new VectorDocument('farther', new Vector([1.0, 1.0]), new Metadata(['_text' => 'cafe'])),
+        ]);
+
+        $result = iterator_to_array($store->query(new HybridQuery(new Vector([1.0, 0.0]), 'dentist', 0.9)), false);
+
+        $this->assertSame(['near', 'far', 'farther'], array_map(static fn (VectorDocumentInterface $doc) => $doc->getId(), $result));
+    }
+
+    public function testHybridQueryWithoutSemanticRatioOnlyReturnsTextMatches()
+    {
+        $store = new Store();
+        $store->add([
+            new VectorDocument('same', new Vector([1.0, 0.0]), new Metadata(['_text' => 'cafe'])),
+            new VectorDocument('orthogonal', new Vector([0.0, 1.0]), new Metadata(['_text' => 'dentist'])),
+        ]);
+
+        $result = iterator_to_array($store->query(new HybridQuery(new Vector([1.0, 0.0]), 'dentist', 0.0)), false);
+
+        $this->assertCount(1, $result);
+        $this->assertSame('orthogonal', $result[0]->getId());
+    }
+
     public function testHybridQueryThrowsExceptionForInvalidSemanticRatio()
     {
         $this->expectException(InvalidArgumentException::class);
