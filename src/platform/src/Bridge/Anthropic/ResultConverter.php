@@ -28,7 +28,9 @@ use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Result\ServerToolCallResult;
 use Symfony\AI\Platform\Result\Stream\Delta\MetadataDelta;
+use Symfony\AI\Platform\Result\Stream\Delta\ServerToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -52,6 +54,21 @@ use Symfony\AI\Platform\ResultConverterInterface;
 class ResultConverter implements ResultConverterInterface
 {
     use FinishReasonAwareTrait;
+
+    /**
+     * Server tools whose calls are kept as {@see ServerToolCallResult}, by the name Anthropic gives the call.
+     */
+    private const SERVER_TOOLS = [
+        'tool_search_tool_bm25' => 'tool_search',
+        'tool_search_tool_regex' => 'tool_search',
+    ];
+
+    /**
+     * The result block types of those server tools.
+     */
+    private const SERVER_TOOL_RESULTS = [
+        'tool_search_tool_result' => 'tool_search',
+    ];
 
     public function supports(Model $model): bool
     {
@@ -127,6 +144,8 @@ class ResultConverter implements ResultConverterInterface
         $results = [];
         /** @var array<string, array{index: int, blocks: list<array<string, mixed>>}> $webSearchCalls */
         $webSearchCalls = [];
+        /** @var array<string, array{index: int, blocks: list<array<string, mixed>>}> $serverToolCalls */
+        $serverToolCalls = [];
         foreach ($data['content'] as $content) {
             if ('tool_use' === $content['type']) {
                 $results[] = new ToolCallResult([new ToolCall($content['id'], $content['name'], $content['input'])]);
@@ -140,6 +159,12 @@ class ResultConverter implements ResultConverterInterface
                     $results[] = new ExecutableCodeResult($content['input']['command'], 'bash', $content['id']);
                 } elseif ('text_editor_code_execution' === $content['name']) {
                     $results[] = new ExecutableCodeResult($content['input']['file_text'] ?? $content['input']['command'], null, $content['id']);
+                } elseif (isset(self::SERVER_TOOLS[$content['name']])) {
+                    if (\is_string($content['id'] ?? null)) {
+                        $serverToolCalls[$content['id']] = ['index' => \count($results), 'blocks' => [$content]];
+                    }
+
+                    $results[] = self::serverToolCall([$content]);
                 } elseif ('web_search' === $content['name']) {
                     $query = \is_string($content['input']['query'] ?? null) ? $content['input']['query'] : null;
                     $id = \is_string($content['id'] ?? null) ? $content['id'] : null;
@@ -190,6 +215,15 @@ class ResultConverter implements ResultConverterInterface
                         signature: self::encodeWebSearchBlocks([$content]),
                     );
                 }
+            } elseif (isset(self::SERVER_TOOL_RESULTS[$content['type']])) {
+                $call = \is_string($content['tool_use_id'] ?? null) ? ($serverToolCalls[$content['tool_use_id']] ?? null) : null;
+                $serverToolCall = self::serverToolCall([...$call['blocks'] ?? [], $content]);
+
+                if (null !== $call) {
+                    $results[$call['index']] = $serverToolCall;
+                } else {
+                    $results[] = $serverToolCall;
+                }
             } elseif ('thinking' === $content['type']) {
                 $results[] = new ThinkingResult($content['thinking'], $content['signature'] ?? null);
             }
@@ -220,6 +254,61 @@ class ResultConverter implements ResultConverterInterface
     private static function encodeWebSearchBlocks(array $blocks): string
     {
         return json_encode($blocks, \JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Builds one result out of a server tool call block and, when present, its result block.
+     * Anthropic rejects either block without the other on the next turn, so both travel as the replay payload.
+     *
+     * @param list<array<string, mixed>> $blocks
+     */
+    private static function serverToolCall(array $blocks): ServerToolCallResult
+    {
+        $name = null;
+        $id = null;
+        $status = null;
+        $details = [];
+
+        foreach ($blocks as $block) {
+            if ('server_tool_use' === ($block['type'] ?? null)) {
+                $name = self::SERVER_TOOLS[$block['name'] ?? ''] ?? null;
+                $id = \is_string($block['id'] ?? null) ? $block['id'] : null;
+                // The BM25 search sends a natural language "query", the regex search a "pattern"
+                $query = $block['input']['query'] ?? $block['input']['pattern'] ?? null;
+                if (\is_string($query)) {
+                    $details['query'] = $query;
+                }
+
+                continue;
+            }
+
+            $name ??= self::SERVER_TOOL_RESULTS[$block['type'] ?? ''] ?? null;
+            $id ??= \is_string($block['tool_use_id'] ?? null) ? $block['tool_use_id'] : null;
+
+            if ('tool_search_tool_result_error' === ($block['content']['type'] ?? null)) {
+                $status = \is_string($block['content']['error_code'] ?? null) ? $block['content']['error_code'] : null;
+            } else {
+                $status = 'completed';
+            }
+
+            $tools = [];
+            foreach ($block['content']['tool_references'] ?? [] as $reference) {
+                if (\is_array($reference) && \is_string($reference['tool_name'] ?? null)) {
+                    $tools[] = $reference['tool_name'];
+                }
+            }
+            $details['tools'] = $tools;
+        }
+
+        return new ServerToolCallResult($name ?? 'unknown', $id, $status, $details, json_encode($blocks, \JSON_THROW_ON_ERROR));
+    }
+
+    /**
+     * @param list<array<string, mixed>> $blocks
+     */
+    private static function serverToolCallComplete(array $blocks): ServerToolCallComplete
+    {
+        return new ServerToolCallComplete(self::serverToolCall($blocks));
     }
 
     /**
@@ -293,6 +382,11 @@ class ResultConverter implements ResultConverterInterface
         $currentWebSearchJson = '';
         /** @var array{id: string|null, query: string|null, queries: list<string>, blocks: list<array<string, mixed>>}|null $pendingWebSearch */
         $pendingWebSearch = null;
+        /** @var array{id: string|null, block: array<string, mixed>}|null $currentServerTool */
+        $currentServerTool = null;
+        $currentServerToolJson = '';
+        /** @var array{id: string|null, blocks: list<array<string, mixed>>}|null $pendingServerTool */
+        $pendingServerTool = null;
         $currentThinking = null;
         $currentThinkingSignature = null;
         $inMessage = false;
@@ -364,6 +458,15 @@ class ResultConverter implements ResultConverterInterface
                 $pendingWebSearch = null;
             }
 
+            // Same for a tool search call: its result follows right away or not at all
+            if ('content_block_start' === $type
+                && null !== $pendingServerTool
+                && !isset(self::SERVER_TOOL_RESULTS[$data['content_block']['type'] ?? ''])
+            ) {
+                yield self::serverToolCallComplete($pendingServerTool['blocks']);
+                $pendingServerTool = null;
+            }
+
             // Handle thinking content block start
             if ('content_block_start' === $type
                 && isset($data['content_block']['type'])
@@ -394,6 +497,39 @@ class ResultConverter implements ResultConverterInterface
                 $signature = $data['delta']['signature'] ?? '';
                 $currentThinkingSignature = ($currentThinkingSignature ?? '').$signature;
                 yield new ThinkingSignature($signature);
+                continue;
+            }
+
+            if ('content_block_start' === $type
+                && 'server_tool_use' === ($data['content_block']['type'] ?? null)
+                && isset(self::SERVER_TOOLS[$data['content_block']['name'] ?? ''])
+            ) {
+                $currentServerTool = [
+                    'id' => \is_string($data['content_block']['id'] ?? null) ? $data['content_block']['id'] : null,
+                    'block' => $data['content_block'],
+                ];
+                $currentServerToolJson = '';
+                continue;
+            }
+
+            if ('content_block_start' === $type
+                && isset(self::SERVER_TOOL_RESULTS[$data['content_block']['type'] ?? ''])
+            ) {
+                $id = \is_string($data['content_block']['tool_use_id'] ?? null) ? $data['content_block']['tool_use_id'] : null;
+
+                if (null !== $pendingServerTool && (null === $id || $pendingServerTool['id'] === $id)) {
+                    yield self::serverToolCallComplete([...$pendingServerTool['blocks'], $data['content_block']]);
+                    $pendingServerTool = null;
+
+                    continue;
+                }
+
+                if (null !== $pendingServerTool) {
+                    yield self::serverToolCallComplete($pendingServerTool['blocks']);
+                    $pendingServerTool = null;
+                }
+
+                yield self::serverToolCallComplete([$data['content_block']]);
                 continue;
             }
 
@@ -462,6 +598,8 @@ class ResultConverter implements ResultConverterInterface
                     yield new ToolInputDelta($currentToolCall['id'], $currentToolCall['name'], $partialJson);
                 } elseif (null !== $currentWebSearch) {
                     $currentWebSearchJson .= $partialJson;
+                } elseif (null !== $currentServerTool) {
+                    $currentServerToolJson .= $partialJson;
                 }
                 continue;
             }
@@ -479,6 +617,26 @@ class ResultConverter implements ResultConverterInterface
                     // Decoded at message_stop, once stop_reason tells a max_tokens cut from malformed JSON
                     $toolCalls[] = $currentToolCall;
                     $currentToolCall = null;
+                    continue;
+                }
+
+                if (null !== $currentServerTool) {
+                    $input = \is_array($currentServerTool['block']['input'] ?? null) ? $currentServerTool['block']['input'] : [];
+                    if ('' !== $currentServerToolJson) {
+                        try {
+                            $input = json_decode($currentServerToolJson, true, flags: \JSON_THROW_ON_ERROR);
+                        } catch (\JsonException $e) {
+                            throw new MalformedToolCallException(\sprintf('Anthropic returned malformed JSON arguments for the "%s" tool: "%s"', $currentServerTool['block']['name'], $e->getMessage()), 0, $e);
+                        }
+                    }
+                    $currentServerTool['block']['input'] = \is_array($input) ? $input : [];
+
+                    $pendingServerTool = [
+                        'id' => $currentServerTool['id'],
+                        'blocks' => [$currentServerTool['block']],
+                    ];
+                    $currentServerTool = null;
+                    $currentServerToolJson = '';
                     continue;
                 }
 
@@ -519,6 +677,11 @@ class ResultConverter implements ResultConverterInterface
                 if (null !== $pendingWebSearch) {
                     yield self::webSearchComplete($pendingWebSearch);
                     $pendingWebSearch = null;
+                }
+
+                if (null !== $pendingServerTool) {
+                    yield self::serverToolCallComplete($pendingServerTool['blocks']);
+                    $pendingServerTool = null;
                 }
 
                 if ([] !== $toolCalls) {

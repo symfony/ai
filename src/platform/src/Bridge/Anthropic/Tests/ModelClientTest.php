@@ -330,7 +330,7 @@ class ModelClientTest extends TestCase
         $this->modelClient = new ModelClient(new MockHttpClient(), 'test-api-key');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unsupported Anthropic server tool "web_fetch". Supported server tools are "web_search", "code_execution". Use the "tools" option to pass an unmapped tool through verbatim.');
+        $this->expectExceptionMessage('Unsupported Anthropic server tool "web_fetch". Supported server tools are "web_search", "code_execution", "tool_search_tool_bm25", "tool_search_tool_regex". Use the "tools" option to pass an unmapped tool through verbatim.');
 
         $this->modelClient->request($this->model, ['message' => 'test'], [
             'server_tools' => ['web_fetch' => true],

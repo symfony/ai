@@ -9,6 +9,7 @@ Anthropic Documentation
  * [Messages API](https://platform.claude.com/docs/en/api/messages)
  * [Streaming events](https://platform.claude.com/docs/en/api/messages-streaming)
  * [Tool use](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview)
+ * [Tool search](https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool)
  * [Prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
  * [Extended thinking](https://platform.claude.com/docs/en/build-with-claude/extended-thinking)
 
