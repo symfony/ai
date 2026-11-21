@@ -70,16 +70,13 @@ See the `RAG Implementation cookbook`_ for more advanced usage in combination wi
 Loading PDFs
 ------------
 
-Install the optional parser dependency before using ``PdfLoader``:
+Install the optional dependencies required by ``PdfLoader``:
 
 .. code-block:: terminal
 
-    $ composer require smalot/pdfparser
+    $ composer require smalot/pdfparser symfony/filesystem
 
-The loader accepts one readable local file, parses it once and yields a ``TextDocument``
-for every nonempty page in document order. Surrounding whitespace is trimmed; internal
-line breaks are retained as returned by the parser. Directory traversal belongs to
-``DirectoryLoader``::
+Load a local PDF directly, or register it with ``DirectoryLoader`` for a directory::
 
     use Symfony\AI\Store\Document\Loader\DirectoryLoader;
     use Symfony\AI\Store\Document\Loader\PdfLoader;
@@ -90,109 +87,51 @@ line breaks are retained as returned by the parser. Directory traversal belongs 
     $directoryLoader = new DirectoryLoader(['pdf' => $loader]);
     $pages = $directoryLoader->load('/srv/public/files');
 
-You can inject a configured ``Smalot\PdfParser\Parser`` as the constructor's first
-argument. Missing files, directories and unreadable files raise a Store
-``RuntimeException``; missing sources and URLs raise ``InvalidArgumentException``.
-Parser failures raise ``RuntimeException`` with the source path and original exception.
-Empty pages are skipped without renumbering later pages. A file with no extractable
-text logs a warning and yields no documents, including image-only scans. This lets
-``DirectoryLoader`` continue with subsequent files. No metadata-only documents are
-emitted. Inject a PSR-3 logger using the ``logger`` constructor argument to record these
-warnings; by default, the loader uses ``NullLogger``. Unreadable files and
-parsing/extraction failures still raise exceptions.
+The loader yields one ``TextDocument`` per nonempty page, retaining original page
+numbers and the total page count, including blank pages. Metadata includes ``_source``
+(the supplied local path), ``_title`` (embedded title or filename), ``page_number`` and
+``page_count``. Available PDF properties or XMP alternatives populate ``pdf_author``,
+``pdf_subject``, ``pdf_keywords``, ``pdf_creation_date`` and ``pdf_modification_date``
+as strings. Dates retain the parser's representation; they are not publication dates.
+Metadata is separate from page text. You can inject a configured ``Smalot\PdfParser\Parser``.
 
-Pages with invalid UTF-8, any NUL character, or more than 5% unexpected Unicode
-control characters are skipped and never indexed. The 5% threshold tolerates occasional
-extraction artifacts while rejecting dense control-character corruption. The ratio counts
-Unicode characters, not UTF-8 bytes, before trimming. Unicode control characters (``Cc``)
-exclude tabs, line feeds, vertical tabs, form feeds, carriage returns and next-line (U+0085)
-for this check. Script formatting characters (``Cf``), accents and non-Latin text are retained.
-Each rejected page logs its source, original page number, reason and relevant counts,
-never its text. Text is not repaired by stripping characters. Page numbers and total
-page counts remain unchanged. Files with only empty or rejected pages yield nothing;
-page rejection warnings replace the final no-text warning when any page was rejected.
-This narrow safeguard cannot detect every extraction defect or readable-looking gibberish.
+Unreadable files, parser failures, PDFs with no extractable text, and pages containing
+clearly invalid extracted text raise a Store ``RuntimeException``. Missing sources and
+URLs raise ``InvalidArgumentException``. The text checks cannot detect every extraction
+defect. Iteration stops on failure; pages yielded before a later failure remain yielded.
+``DirectoryLoader`` propagates these exceptions; it does not recover from failed files.
 
+Page IDs are stable for the normalized absolute local path and original page number.
+Moving a file changes its identity; changing its public URL does not. Split chunks use
+random IDs, so stable page IDs do not guarantee idempotent re-indexing.
 
-Page IDs are UUIDv5 values derived from the absolute local path normalized by Symfony
-Filesystem ``Path`` and the original 1-based page number. Relative paths are resolved
-against the current working directory, and dot segments are collapsed. Symlinks are
-not resolved by ``PdfLoader`` itself. Moving a file changes its identity; changing its
-public URL does not. ``TextSplitTransformer`` generates random IDs for split chunks,
-so stable page IDs do not guarantee idempotent re-indexing or remove stale chunks.
-
-PDF Metadata
-~~~~~~~~~~~~
-
-Every page has its own ``Metadata`` instance. Metadata is kept separate from extracted
-text, and ``_parent_id`` is reserved for the splitter. Only these properties are copied:
-
-========================= =============================================
-Metadata key              Value / PDF property, then XMP alternatives
-========================= =============================================
-``_source``               Original local path supplied to ``load()``
-``_title``                ``Title``, ``dc:title``, then filename
-``page_number``           Original 1-based page number (integer)
-``page_count``            Physical page count, including blanks (integer)
-``pdf_author``            ``Author``, ``dc:creator``
-``pdf_subject``           ``Subject``, ``dc:description``
-``pdf_keywords``          ``Keywords``, ``pdf:keywords``, ``dc:subject``
-``pdf_creation_date``     ``CreationDate``, ``xmp:createdate``
-``pdf_modification_date`` ``ModDate``, ``xmp:modifydate``
-========================= =============================================
-
-All properties except page numbers/counts are strings. The first usable property wins.
-Strings are trimmed. For list values, nonempty string elements are trimmed and joined
-with ``; `` in their original order. Nested arrays, associative arrays and non-string
-values are ignored; no arbitrary parser metadata is copied. Unavailable optional values
-are omitted, and an unusable title falls back to the filename including its extension.
-The parser lowercases XMP property names and unwraps RDF collections. Date strings are
-retained as exposed by the parser (which may already format PDF dates as ISO 8601);
-the loader performs no further date conversion. They are not publication dates.
+The parser loads the PDF in memory; yielding pages does not make parsing memory-streaming.
+Text order depends on the PDF. OCR, image interpretation, table reconstruction,
+form-field extraction and secured PDFs are not supported. See the
+`Smalot PDF parser usage documentation`_ for parser capabilities.
 
 Mapping Sources to Public URLs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``SourceUrlTransformer`` works with any text document that has local ``_source``
-metadata, independently of PDFs::
+``SourceUrlTransformer`` requires ``symfony/filesystem`` and works with any text document
+whose ``_source`` is a local path. Apply it before splitting pages into chunks::
 
     use Symfony\AI\Store\Document\Transformer\SourceUrlTransformer;
-    use Symfony\AI\Store\Document\Transformer\TextSplitTransformer;
-    use Symfony\AI\Store\Document\Transformer\TextTrimTransformer;
 
     $urls = new SourceUrlTransformer('/srv/public/files', 'https://example.com/files');
     $documents = $urls->transform($pages);
-    $documents = (new TextSplitTransformer())->transform($documents);
-    $documents = (new TextTrimTransformer())->transform($documents);
+    // _source: /srv/public/files/report.pdf
+    // source_url: https://example.com/files/report.pdf
 
-The path prefix must be an absolute local directory path. Source paths use the same
-``Path`` normalization as PDF page IDs, including resolution of relative paths against
-the current working directory. Matching respects directory boundaries: ``/files`` does
-not match ``/files-other`` or ``/files/../private``. Matching is lexical and does not
-resolve symlinks or verify public accessibility. ``DirectoryLoader`` currently supplies
-resolved file paths, so choose the target directory prefix when loading through a symlink.
+The transformer returns a new document with copied metadata when adding ``source_url``,
+preserving its ID, content and local source. Existing URLs and unmatched sources remain
+unchanged. Prefixes must be an absolute local directory and an HTTP(S) URL without a
+query or fragment. Directory boundaries are respected, trailing slashes are normalized,
+and relative path segments are percent-encoded. It does not publish or fetch files.
 
-The URL prefix must be an absolute HTTP(S) URL without a query string or fragment.
-Trailing slashes on either prefix are normalized to one directory separator. Relative
-path segments are percent-encoded separately, preserving directory separators and
-encoding spaces, Unicode, ``#``, ``?`` and literal percent signs.
-
-When adding ``source_url``, the transformer returns a new document with copied metadata,
-preserving the ID, content, ``_source`` and unrelated metadata. Missing, remote and
-unmatched sources remain unchanged, as do documents with an existing ``source_url``.
-The transformer neither fetches nor publishes files. Configure a URL under which the
-files are actually served. A retrieval client may build a PDF citation by appending
-``#page=N`` using ``page_number``. Splitting preserves the title, URL and page metadata.
-
-Extraction Limitations
-~~~~~~~~~~~~~~~~~~~~~~
-
-Yielding one page at a time does not make the underlying parser memory-streaming: it
-loads and parses the PDF in memory. Large documents can require substantial memory.
-Text order and whitespace depend on the PDF and parser. Tables and landscape pages
-receive no layout reconstruction. Form-field values, OCR, image interpretation and
-secured PDFs are not supported. Image-heavy PDFs may still yield their embedded text.
-Consult the `Smalot PDF parser usage documentation`_ for parser capabilities.
+``DirectoryLoader`` supplies resolved file paths: use the resolved directory prefix
+when loading through symlinks. A PDF citation may append ``#page=N`` using ``page_number``;
+splitting preserves the title, URL and page metadata.
 
 Retrieving
 ----------
@@ -326,6 +265,7 @@ To help loading documents and integrate them into your RAG system, you can use t
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\InMemoryLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\JsonFileLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\MarkdownLoader`
+* :class:`Symfony\\AI\\Store\\Document\\Loader\\PdfLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\RssFeedLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\RstLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\RstToctreeLoader`

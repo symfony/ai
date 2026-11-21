@@ -11,8 +11,6 @@
 
 namespace Symfony\AI\Store\Document\Loader;
 
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Smalot\PdfParser\Parser;
 use Symfony\AI\Store\Document\LoaderInterface;
 use Symfony\AI\Store\Document\Metadata;
@@ -31,10 +29,12 @@ final class PdfLoader implements LoaderInterface
 
     private readonly Parser $parser;
 
-    public function __construct(
-        ?Parser $parser = null,
-        private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
+    public function __construct(?Parser $parser = null)
+    {
+        if (!class_exists(Path::class)) {
+            throw new RuntimeException('For using the PDF loader, the Symfony Filesystem component is required. Try running "composer require symfony/filesystem".');
+        }
+
         if (!class_exists(Parser::class)) {
             throw new RuntimeException('For using the PDF loader, the Smalot PDF parser is required. Try running "composer require smalot/pdfparser".');
         }
@@ -54,16 +54,12 @@ final class PdfLoader implements LoaderInterface
 
         $path = Path::makeAbsolute($source, getcwd());
         $hasText = false;
-        $hasRejectedPages = false;
 
         try {
-            // Parse PDF and metadata
             $pdf = $this->parser->parseFile($source);
             $pages = $pdf->getPages();
             $details = $pdf->getDetails();
 
-            // PDF properties and XMP metadata use different names for the same fields.
-            // Determine which we have and use the appropriate fields
             $metadata = [
                 Metadata::KEY_SOURCE => $source,
                 Metadata::KEY_TITLE => $this->resolveMetadataValue($details, ['Title', 'dc:title']) ?? basename($path),
@@ -81,7 +77,7 @@ final class PdfLoader implements LoaderInterface
                 }
             }
         } catch (\Throwable $exception) {
-            throw new RuntimeException(\sprintf('Unable to parse PDF file "%s": %s', $source, $exception->getMessage()), previous: $exception);
+            throw new RuntimeException(\sprintf('Unable to parse PDF file "%s": "%s".', $source, $exception->getMessage()), previous: $exception);
         }
 
         $pageNumber = 0;
@@ -90,17 +86,11 @@ final class PdfLoader implements LoaderInterface
             try {
                 $text = $page->getText();
             } catch (\Throwable $exception) {
-                throw new RuntimeException(\sprintf('Unable to extract text from PDF file "%s": %s', $source, $exception->getMessage()), previous: $exception);
+                throw new RuntimeException(\sprintf('Unable to extract text from PDF file "%s": "%s".', $source, $exception->getMessage()), previous: $exception);
             }
 
             if (null !== $rejection = $this->textRejection($text)) {
-                $hasRejectedPages = true;
-                $this->logger->warning(
-                    'PDF file "{source}" page {page_number} has unusable extracted text ({reason}); skipping.',
-                    ['source' => $source, 'page_number' => $pageNumber, ...$rejection],
-                );
-
-                continue;
+                throw new RuntimeException(\sprintf('PDF file "%s" page %d has unusable extracted text: "%s".', $source, $pageNumber, $rejection));
             }
 
             $text = trim($text);
@@ -116,39 +106,31 @@ final class PdfLoader implements LoaderInterface
             );
         }
 
-        if (!$hasText && !$hasRejectedPages) {
-            $this->logger->warning(
-                'PDF file "{source}" contains no extractable text; skipping.',
-                ['source' => $source],
-            );
+        if (!$hasText) {
+            throw new RuntimeException(\sprintf('PDF file "%s" contains no extractable text.', $source));
         }
     }
 
-    /**
-     * @return array{reason: string, nul_count?: int, control_count?: int, character_count?: int}|null
-     */
-    private function textRejection(string $text): ?array
+    private function textRejection(string $text): ?string
     {
         if (!mb_check_encoding($text, 'UTF-8')) {
-            return ['reason' => 'invalid UTF-8'];
+            return 'invalid UTF-8';
         }
 
         if (0 < $nulCount = substr_count($text, "\0")) {
-            return ['reason' => 'NUL characters', 'nul_count' => $nulCount];
+            return \sprintf('NUL characters (%d)', $nulCount);
         }
 
         $characterCount = mb_strlen($text, 'UTF-8');
         $controlCount = preg_match_all('/[^\P{Cc}\x{0009}-\x{000D}\x{0085}]/u', $text);
         if ($controlCount > $characterCount * self::MAX_UNEXPECTED_CONTROL_RATIO) {
-            return ['reason' => 'excessive control characters', 'control_count' => $controlCount, 'character_count' => $characterCount];
+            return \sprintf('excessive control characters (%d of %d characters)', $controlCount, $characterCount);
         }
 
         return null;
     }
 
     /**
-     * Return the first Metadata item that has values
-     * 
      * @param array<string, mixed> $details
      * @param list<string>         $properties
      */
@@ -164,7 +146,6 @@ final class PdfLoader implements LoaderInterface
                 continue;
             }
 
-            // Turn multi-valued metadata, such as authors, into a single string.
             $values = [];
             foreach ($value as $item) {
                 if (\is_string($item) && '' !== trim($item)) {

@@ -15,6 +15,7 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\TransformerInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\Component\Filesystem\Path;
 
 /**
@@ -27,6 +28,10 @@ final class SourceUrlTransformer implements TransformerInterface
 
     public function __construct(string $pathPrefix, string $urlPrefix)
     {
+        if (!class_exists(Path::class)) {
+            throw new RuntimeException('For using the source URL transformer, the Symfony Filesystem component is required. Try running "composer require symfony/filesystem".');
+        }
+
         $pathPrefix = Path::canonicalize($pathPrefix);
         if (!Path::isLocal($pathPrefix) || !Path::isAbsolute($pathPrefix)) {
             throw new InvalidArgumentException('The path prefix must be an absolute local directory path.');

@@ -12,8 +12,9 @@
 namespace Symfony\AI\Store\Tests\Document\Loader;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use Smalot\PdfParser\Document;
 use Smalot\PdfParser\Page;
 use Smalot\PdfParser\Parser;
@@ -57,7 +58,6 @@ final class PdfLoaderTest extends TestCase
         yield ['sample-form.pdf', 1];
         yield ['sample-table.pdf', 1];
         yield ['sample-landscape.pdf', 1];
-        yield ['sample-heavy.pdf', 18];
     }
 
     public function testMetadataAndEmptyPageNumbering()
@@ -181,13 +181,9 @@ final class PdfLoaderTest extends TestCase
     public function testEmptyExtraction(string $file)
     {
         $source = self::FIXTURES.$file;
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->once())->method('warning')->with(
-            'PDF file "{source}" contains no extractable text; skipping.',
-            ['source' => $source],
-        );
-
-        $this->assertSame([], iterator_to_array((new PdfLoader(logger: $logger))->load($source)));
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(\sprintf('PDF file "%s" contains no extractable text.', $source));
+        iterator_to_array((new PdfLoader())->load($source));
     }
 
     /**
@@ -196,7 +192,6 @@ final class PdfLoaderTest extends TestCase
     public static function emptyFiles(): iterable
     {
         yield ['sample-empty.pdf'];
-        yield ['sample-scanned.pdf'];
     }
 
     #[DataProvider('brokenFiles')]
@@ -239,7 +234,7 @@ final class PdfLoaderTest extends TestCase
         }
     }
 
-    public function testDirectoryContinuesAfterEmptyPdf()
+    public function testDirectoryFailsOnEmptyPdf()
     {
         $directory = sys_get_temp_dir().'/pdf-loader-'.bin2hex(random_bytes(8));
         mkdir($directory);
@@ -247,12 +242,9 @@ final class PdfLoaderTest extends TestCase
         copy(self::FIXTURES.'sample1.pdf', $directory.'/02-text.pdf');
         try {
             $loader = new DirectoryLoader(['pdf' => new PdfLoader()]);
-            $documents = iterator_to_array($loader->load($directory));
-
-            $this->assertCount(1, $documents);
-            $this->assertSame(realpath($directory.'/02-text.pdf'), $documents[0]->getMetadata()->getSource());
-            $this->assertStringContainsString('Lorem ipsum', $documents[0]->getContent());
-            $this->assertSame(1, $documents[0]->getMetadata()['page_number']);
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('01-empty.pdf');
+            iterator_to_array($loader->load($directory));
         } finally {
             unlink($directory.'/01-empty.pdf');
             unlink($directory.'/02-text.pdf');
@@ -269,7 +261,9 @@ final class PdfLoaderTest extends TestCase
         try {
             $pages = iterator_to_array((new DirectoryLoader(['pdf' => new PdfLoader()]))->load($directory));
             $this->assertCount(2, $pages);
-            $mapped = iterator_to_array((new SourceUrlTransformer($directory, 'https://example.com/pdf'))->transform($pages));
+            $resolvedDirectory = realpath($directory);
+            $this->assertNotFalse($resolvedDirectory);
+            $mapped = iterator_to_array((new SourceUrlTransformer($resolvedDirectory, 'https://example.com/pdf'))->transform($pages));
             $this->assertSame($pages[0]->getId(), $mapped[0]->getId());
             $chunks = iterator_to_array((new TextSplitTransformer(8, 0))->transform($mapped));
             $this->assertGreaterThan(2, \count($chunks));
@@ -289,43 +283,33 @@ final class PdfLoaderTest extends TestCase
         }
     }
 
-    /**
-     * @param array{reason: string, nul_count?: int, control_count?: int, character_count?: int} $context
-     */
     #[DataProvider('rejectedText')]
-    public function testRejectsUnusableText(string $text, array $context)
+    public function testRejectsUnusableText(string $text, string $reason)
     {
         $source = self::FIXTURES.'sample1.pdf';
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->once())->method('warning')->with(
-            'PDF file "{source}" page {page_number} has unusable extracted text ({reason}); skipping.',
-            ['source' => $source, 'page_number' => 1, ...$context],
-        );
-        $loader = new PdfLoader($this->parserWithTexts([$text]), $logger);
-
-        $this->assertSame([], iterator_to_array($loader->load($source)));
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(\sprintf('PDF file "%s" page 1 has unusable extracted text: "%s".', $source, $reason));
+        iterator_to_array((new PdfLoader($this->parserWithTexts([$text])))->load($source));
     }
 
     /**
-     * @return iterable<string, array{string, array{reason: string, nul_count?: int, control_count?: int, character_count?: int}}>
+     * @return iterable<string, array{string, string}>
      */
     public static function rejectedText(): iterable
     {
-        yield 'observed NUL counts' => [str_repeat("\0", 3078).str_repeat('a', 3716), ['reason' => 'NUL characters', 'nul_count' => 3078]];
-        yield 'NUL at edges' => ["\0Readable text\0", ['reason' => 'NUL characters', 'nul_count' => 2]];
-        yield 'only NUL' => ["\0", ['reason' => 'NUL characters', 'nul_count' => 1]];
-        yield 'invalid UTF-8' => ["private text\xC3\x28", ['reason' => 'invalid UTF-8']];
-        yield 'above boundary' => [str_repeat('a', 18)."\x01", ['reason' => 'excessive control characters', 'control_count' => 1, 'character_count' => 19]];
-        yield 'Unicode character denominator' => [str_repeat('界', 18)."\u{0080}", ['reason' => 'excessive control characters', 'control_count' => 1, 'character_count' => 19]];
-        yield 'DEL' => ["a\x7F", ['reason' => 'excessive control characters', 'control_count' => 1, 'character_count' => 2]];
+        yield 'observed NUL counts' => [str_repeat("\0", 3078).str_repeat('a', 3716), 'NUL characters (3078)'];
+        yield 'NUL at edges' => ["\0Readable text\0", 'NUL characters (2)'];
+        yield 'only NUL' => ["\0", 'NUL characters (1)'];
+        yield 'invalid UTF-8' => ["private text\xC3\x28", 'invalid UTF-8'];
+        yield 'above boundary' => [str_repeat('a', 18)."\x01", 'excessive control characters (1 of 19 characters)'];
+        yield 'Unicode character denominator' => [str_repeat('界', 18)."\u{0080}", 'excessive control characters (1 of 19 characters)'];
+        yield 'DEL' => ["a\x7F", 'excessive control characters (1 of 2 characters)'];
     }
 
     #[DataProvider('usableText')]
     public function testPreservesUsableText(string $text)
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->never())->method('warning');
-        $documents = iterator_to_array((new PdfLoader($this->parserWithTexts([$text]), $logger))->load(self::FIXTURES.'sample1.pdf'));
+        $documents = iterator_to_array((new PdfLoader($this->parserWithTexts([$text])))->load(self::FIXTURES.'sample1.pdf'));
 
         $this->assertCount(1, $documents);
         $this->assertSame(trim($text), $documents[0]->getContent());
@@ -343,36 +327,31 @@ final class PdfLoaderTest extends TestCase
         yield 'multilingual and formatting' => ["Café e\u{0301} 中文 日本語 한국어 العربية فارسی می\u{200C}روم हिन्दी क्\u{200D}ष עברית \u{200F}שלום\u{200E} \u{2067}العربية\u{2069}"];
     }
 
-    public function testRejectedPageDoesNotChangeOtherPages()
+    public function testLaterRejectedPageThrowsAfterEarlierPageWasYielded()
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->once())->method('warning')->with(
-            $this->anything(),
-            ['source' => self::FIXTURES.'sample1.pdf', 'page_number' => 2, 'reason' => 'NUL characters', 'nul_count' => 1],
-        );
-        $documents = iterator_to_array((new PdfLoader($this->parserWithTexts(['First', "bad\0", 'Third']), $logger))->load(self::FIXTURES.'sample1.pdf'));
-        $baseline = iterator_to_array((new PdfLoader($this->parserWithTexts(['First', 'Second', 'Third'])))->load(self::FIXTURES.'sample1.pdf'));
+        $source = self::FIXTURES.'sample1.pdf';
+        $pages = (new PdfLoader($this->parserWithTexts(['First', "private text\0", 'Third'])))->load($source);
+        $baseline = iterator_to_array((new PdfLoader($this->parserWithTexts(['First', 'Second', 'Third'])))->load($source));
+        $this->assertInstanceOf(\Iterator::class, $pages);
+        $pages->rewind();
+        $this->assertSame($baseline[0]->getId(), $pages->current()->getId());
+        $this->assertSame('First', $pages->current()->getContent());
+        $this->assertSame($baseline[0]->getMetadata()->getArrayCopy(), $pages->current()->getMetadata()->getArrayCopy());
 
-        $this->assertCount(2, $documents);
-        foreach ([0 => 0, 1 => 2] as $index => $original) {
-            $this->assertSame($baseline[$original]->getId(), $documents[$index]->getId());
-            $this->assertSame($baseline[$original]->getContent(), $documents[$index]->getContent());
-            $this->assertSame($baseline[$original]->getMetadata()->getArrayCopy(), $documents[$index]->getMetadata()->getArrayCopy());
-        }
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage(\sprintf('PDF file "%s" page 2 has unusable extracted text: "NUL characters (1)".', $source));
+        iterator_to_array($pages);
     }
 
-    public function testOnlyRejectedAndEmptyPagesDoNotProduceDuplicateWarnings()
+    public function testEmptyPagesBeforeRejectionRetainPageNumber()
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects($this->exactly(2))->method('warning')->with(
-            'PDF file "{source}" page {page_number} has unusable extracted text ({reason}); skipping.',
-            $this->callback(static fn (array $context): bool => \in_array($context['page_number'], [1, 3], true)),
-        );
-        $loader = new PdfLoader($this->parserWithTexts(["\0", '', "\xFF"]), $logger);
-        $this->assertSame([], iterator_to_array($loader->load(self::FIXTURES.'sample1.pdf')));
+        $loader = new PdfLoader($this->parserWithTexts(['', "\0", "\xFF"]));
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('page 2 has unusable extracted text: "NUL characters (1)".');
+        iterator_to_array($loader->load(self::FIXTURES.'sample1.pdf'));
     }
 
-    public function testDirectoryContinuesAfterRejectedPdf()
+    public function testDirectoryFailsOnRejectedPdf()
     {
         $directory = sys_get_temp_dir().'/pdf-loader-'.bin2hex(random_bytes(8));
         mkdir($directory);
@@ -381,18 +360,48 @@ final class PdfLoaderTest extends TestCase
         try {
             $rejectedParser = $this->parserWithTexts(["\0", "\xFF"]);
             $parser = $this->createMock(Parser::class);
-            $parser->expects($this->exactly(2))->method('parseFile')->willReturnCallback(
-                static fn (string $source): Document => str_ends_with($source, '01-rejected.pdf') ? $rejectedParser->parseFile($source) : (new Parser())->parseFile($source),
-            );
-            $documents = iterator_to_array((new DirectoryLoader(['pdf' => new PdfLoader($parser)]))->load($directory));
-            $this->assertCount(1, $documents);
-            $this->assertSame(realpath($directory.'/02-valid.pdf'), $documents[0]->getMetadata()->getSource());
-            $this->assertStringContainsString('Lorem ipsum', $documents[0]->getContent());
+            $parser->expects($this->once())->method('parseFile')->with(realpath($directory.'/01-rejected.pdf'))->willReturn($rejectedParser->parseFile($directory.'/01-rejected.pdf'));
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('01-rejected.pdf" page 1 has unusable extracted text: "NUL characters (1)".');
+            iterator_to_array((new DirectoryLoader(['pdf' => new PdfLoader($parser)]))->load($directory));
         } finally {
             unlink($directory.'/01-rejected.pdf');
             unlink($directory.'/02-valid.pdf');
             rmdir($directory);
         }
+    }
+
+    #[DataProvider('missingDependencies')]
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function testMissingDependency(string $class, string $package)
+    {
+        $this->assertFalse(class_exists($class, false));
+        $autoloaders = spl_autoload_functions();
+        foreach ($autoloaders as $autoloader) {
+            spl_autoload_unregister($autoloader);
+        }
+        spl_autoload_register(static function (string $requested) use ($class, $autoloaders): void {
+            if ($class === $requested) {
+                return;
+            }
+            foreach ($autoloaders as $autoloader) {
+                $autoloader($requested);
+            }
+        });
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('composer require '.$package);
+        new PdfLoader();
+    }
+
+    /**
+     * @return iterable<array{class-string, string}>
+     */
+    public static function missingDependencies(): iterable
+    {
+        yield [\Symfony\Component\Filesystem\Path::class, 'symfony/filesystem'];
+        yield [Parser::class, 'smalot/pdfparser'];
     }
 
     /**

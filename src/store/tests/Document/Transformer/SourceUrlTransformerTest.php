@@ -12,11 +12,15 @@
 namespace Symfony\AI\Store\Tests\Document\Transformer;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\TextDocument;
 use Symfony\AI\Store\Document\Transformer\SourceUrlTransformer;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
+use Symfony\Component\Filesystem\Path;
 
 /**
  * @author Christopher X. Candreva <chris@westnet.com>
@@ -106,5 +110,28 @@ final class SourceUrlTransformerTest extends TestCase
         yield ['/files', 'https://example.com?'];
         yield ['/files', 'https://example.com#'];
         yield ['/files', 'https://'];
+    }
+
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function testMissingFilesystem()
+    {
+        $this->assertFalse(class_exists(Path::class, false));
+        $autoloaders = spl_autoload_functions();
+        foreach ($autoloaders as $autoloader) {
+            spl_autoload_unregister($autoloader);
+        }
+        spl_autoload_register(static function (string $class) use ($autoloaders): void {
+            if (Path::class === $class) {
+                return;
+            }
+            foreach ($autoloaders as $autoloader) {
+                $autoloader($class);
+            }
+        });
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('composer require symfony/filesystem');
+        new SourceUrlTransformer('/files', 'https://example.com/files');
     }
 }
