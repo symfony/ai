@@ -417,6 +417,65 @@ final class ProfilerToolTest extends TestCase
         $this->assertEquals(-37.0, $result['delta']['query_count']);
     }
 
+    public function testCompareUsesTheMedianSoOneSlowRunDoesNotDecideTheResult()
+    {
+        [$tool, $baseline, $current] = $this->createComparableToolWithRuns(
+            [['duration_ms' => 800.0], ['duration_ms' => 805.0], ['duration_ms' => 795.0]],
+            [['duration_ms' => 500.0], ['duration_ms' => 505.0], ['duration_ms' => 1500.0]],
+            'time',
+        );
+
+        $result = $this->decodeUntrusted($tool->compare($baseline, $current, 'time'));
+
+        $this->assertEquals(505.0, $result['current']['duration_ms']);
+        $this->assertEquals(-295.0, $result['delta']['duration_ms']);
+    }
+
+    public function testCompareListsAnOutlierRunAndMakesTheVerdictInconclusive()
+    {
+        [$tool, $baseline, $current] = $this->createComparableToolWithRuns(
+            [['duration_ms' => 800.0], ['duration_ms' => 805.0], ['duration_ms' => 795.0]],
+            [['duration_ms' => 500.0], ['duration_ms' => 505.0], ['duration_ms' => 1500.0]],
+            'time',
+        );
+
+        $result = $this->decodeUntrusted($tool->compare($baseline, $current, 'time'));
+
+        $this->assertSame('inconclusive', $result['verdict']);
+        $this->assertArrayNotHasKey('baseline', $result['outliers']);
+        $this->assertEquals(1500.0, $result['outliers']['current']['duration_ms']['current3']);
+        $this->assertCount(3, $result['outliers']['current']['duration_ms']);
+        $this->assertStringContainsString('duration_ms', $result['note']);
+    }
+
+    public function testCompareKeepsTheVerdictWhenOnlyANonLeadingFieldHasAnOutlier()
+    {
+        [$tool, $baseline, $current] = $this->createComparableToolWithRuns(
+            [['duration_ms' => 800.0, 'init_time_ms' => 10.0], ['duration_ms' => 802.0, 'init_time_ms' => 10.0], ['duration_ms' => 798.0, 'init_time_ms' => 10.0]],
+            [['duration_ms' => 500.0, 'init_time_ms' => 10.0], ['duration_ms' => 502.0, 'init_time_ms' => 10.0], ['duration_ms' => 498.0, 'init_time_ms' => 1000.0]],
+            'time',
+        );
+
+        $result = $this->decodeUntrusted($tool->compare($baseline, $current, 'time'));
+
+        $this->assertSame('improved', $result['verdict']);
+        $this->assertArrayHasKey('init_time_ms', $result['outliers']['current']);
+        $this->assertArrayNotHasKey('note', $result);
+    }
+
+    public function testCompareReportsNoOutliersWhenTheRunsAgree()
+    {
+        [$tool, $baseline, $current] = $this->createComparableToolWithRuns(
+            [['query_count' => 40], ['query_count' => 44], ['query_count' => 42]],
+            [['query_count' => 4], ['query_count' => 6], ['query_count' => 5]],
+        );
+
+        $result = $this->decodeUntrusted($tool->compare($baseline, $current));
+
+        $this->assertArrayNotHasKey('outliers', $result);
+        $this->assertSame('improved', $result['verdict']);
+    }
+
     public function testCompareWithASingleRunPerSideKeepsTheSingularTokenShape()
     {
         [$tool, $baseline, $current] = $this->createComparableToolWithRuns(
