@@ -24,10 +24,22 @@ class DocumentNormalizer extends ModelContractNormalizer
     /**
      * @param Document $data
      *
-     * @return array{type: 'document', source: array{type: 'base64', media_type: string, data: string}}
+     * @return array{type: 'document', source: array{type: 'base64'|'text', media_type: string, data: string}}
      */
     public function normalize(mixed $data, ?string $format = null, array $context = []): array
     {
+        // Anthropic takes a base64 source for PDF only, a text document is sent as plain text
+        if (str_starts_with($data->getFormat(), 'text/')) {
+            return [
+                'type' => 'document',
+                'source' => [
+                    'type' => 'text',
+                    'media_type' => 'text/plain',
+                    'data' => $data->asBinary(),
+                ],
+            ];
+        }
+
         return [
             'type' => 'document',
             'source' => [
