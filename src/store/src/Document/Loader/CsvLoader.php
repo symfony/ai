@@ -65,6 +65,11 @@ final class CsvLoader implements LoaderInterface
             throw new RuntimeException(\sprintf('Unable to open file "%s".', $source));
         }
 
+        // Excel and other tools start UTF-8 files with a byte order mark
+        if ("\xEF\xBB\xBF" !== fread($handle, 3)) {
+            rewind($handle);
+        }
+
         $contentColumn = $options[self::OPTION_CONTENT_COLUMN] ?? $this->contentColumn;
         $idColumn = $options[self::OPTION_ID_COLUMN] ?? $this->idColumn;
         $metadataColumns = $options[self::OPTION_METADATA_COLUMNS] ?? $this->metadataColumns;

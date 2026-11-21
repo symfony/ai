@@ -58,6 +58,24 @@ final class CsvLoaderTest extends TestCase
         $this->assertSame('Third document for testing purposes', $documents[2]->getContent());
     }
 
+    public function testLoadSkipsTheUtf8ByteOrderMark()
+    {
+        $file = tempnam(sys_get_temp_dir(), 'csv');
+        file_put_contents($file, "\xEF\xBB\xBFcontent,title\nFirst row,One\n");
+
+        try {
+            $documents = iterator_to_array((new CsvLoader(metadataColumns: ['title']))->load($file));
+            $headerless = iterator_to_array((new CsvLoader(contentColumn: 0, hasHeader: false))->load($file));
+        } finally {
+            unlink($file);
+        }
+
+        $this->assertCount(1, $documents);
+        $this->assertSame('First row', $documents[0]->getContent());
+        $this->assertSame('One', $documents[0]->getMetadata()['title']);
+        $this->assertSame('content', $headerless[0]->getContent());
+    }
+
     public function testSourceIsPresentInMetadata()
     {
         $loader = new CsvLoader();
