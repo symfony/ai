@@ -146,6 +146,73 @@ final class StoreTest extends TestCase
         $this->assertSame(['deleteAll' => true, 'namespace' => 'test-namespace'], $this->requests[0]['body']);
     }
 
+    public function testFindFetchesTheVectorById()
+    {
+        $store = $this->createStore([new JsonMockResponse([
+            'vectors' => [
+                'vector-id' => ['id' => 'vector-id', 'values' => [0.1, 0.2, 0.3], 'metadata' => ['title' => 'Test Document']],
+            ],
+            'namespace' => 'test-namespace',
+            'usage' => ['readUnits' => 1],
+        ])], namespace: 'test-namespace');
+
+        $document = $store->find('vector-id');
+
+        $this->assertCount(1, $this->requests);
+        $this->assertSame('GET', $this->requests[0]['method']);
+        $this->assertSame(self::INDEX_HOST.'/vectors/fetch?ids=vector-id&namespace=test-namespace', $this->requests[0]['url']);
+        $this->assertNull($this->requests[0]['body']);
+
+        $this->assertNotNull($document);
+        $this->assertSame('vector-id', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['title' => 'Test Document'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindWithoutNamespaceFetchesFromTheDefaultNamespace()
+    {
+        $store = $this->createStore([new JsonMockResponse([
+            'vectors' => ['vector-id' => ['id' => 'vector-id', 'values' => [0.1, 0.2, 0.3]]],
+        ])]);
+
+        $document = $store->find('vector-id');
+
+        $this->assertSame(self::INDEX_HOST.'/vectors/fetch?ids=vector-id', $this->requests[0]['url']);
+        $this->assertNotNull($document);
+        $this->assertCount(0, $document->getMetadata());
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $store = $this->createStore([new JsonMockResponse(['vectors' => new \stdClass(), 'usage' => ['readUnits' => 1]])]);
+
+        $this->assertNull($store->find('unknown-id'));
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $store = $this->createStore([
+            new JsonMockResponse([
+                'vectors' => ['vector-id' => ['id' => 'vector-id', 'values' => [0.1, 0.2, 0.3]]],
+            ]),
+            new JsonMockResponse([
+                'matches' => [
+                    ['id' => 'vector-id', 'metadata' => ['title' => 'Itself'], 'score' => 1.0],
+                    ['id' => 'other-id', 'metadata' => ['title' => 'Other Document'], 'score' => 0.9],
+                ],
+            ]),
+        ]);
+
+        $results = iterator_to_array($store->findSimilar('vector-id', ['limit' => 1]), false);
+
+        $this->assertSame(self::INDEX_HOST.'/query', $this->requests[1]['url']);
+        $this->assertSame([0.1, 0.2, 0.3], $this->requests[1]['body']['vector']);
+        $this->assertSame(2, $this->requests[1]['body']['topK']);
+        $this->assertCount(1, $results);
+        $this->assertSame('other-id', $results[0]->getId());
+    }
+
     public function testQueryReturnsDocuments()
     {
         $uuid1 = Uuid::v4();

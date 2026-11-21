@@ -18,6 +18,7 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -29,6 +30,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly string $collectionName,
@@ -106,6 +109,21 @@ final class Store implements ManagedStoreInterface, StoreInterface
             ],
             ['wait' => $this->async ? 'false' : 'true'],
         );
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $response = $this->request('POST', \sprintf('collections/%s/points', $this->collectionName), [
+            'ids' => [$id],
+            'with_payload' => true,
+            'with_vector' => true,
+        ]);
+
+        if ([] === $response['result']) {
+            return null;
+        }
+
+        return $this->convertToVectorDocument($response['result'][0]);
     }
 
     public function supports(string $queryClass): bool

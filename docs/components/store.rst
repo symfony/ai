@@ -322,17 +322,21 @@ Implementing a Bridge
 ---------------------
 
 The main extension points of the Store component is the :class:`Symfony\\AI\\Store\\StoreInterface`, that defines the methods
-for adding, removing, querying and counting vectorized documents in the store. It extends ``\Countable``, so a store
+for adding, removing, finding, querying and counting vectorized documents in the store. It extends ``\Countable``, so a store
 reports the number of documents it holds and can be handed to ``count()`` directly.
 
-This leads to a store implementing the following methods::
+This leads to a store implementing the following methods, where :class:`Symfony\\AI\\Store\\FindSimilarTrait` provides
+``findSimilar()`` on top of ``find()`` and ``query()``::
 
     use Symfony\AI\Store\Document\VectorDocumentInterface;
+    use Symfony\AI\Store\FindSimilarTrait;
     use Symfony\AI\Store\Query\QueryInterface;
     use Symfony\AI\Store\StoreInterface;
 
     class MyStore implements StoreInterface
     {
+        use FindSimilarTrait;
+
         public function add(VectorDocumentInterface|array $documents): void
         {
             // Implementation to add a document to the store
@@ -346,6 +350,12 @@ This leads to a store implementing the following methods::
         public function clear(array $options = []): void
         {
             // Implementation to remove all documents from the store
+        }
+
+        public function find(string $id): ?VectorDocumentInterface
+        {
+            // Implementation to read a document, with its vector, by id
+            return null;
         }
 
         public function query(QueryInterface $query, array $options = []): iterable
@@ -421,6 +431,25 @@ can be changed with the ``batch_size`` option::
 
 The only exception is Vektor, which supports neither removing documents in bulk nor listing them.
 Its index is the storage directory itself, which is simply recreated.
+
+Finding documents
+-----------------
+
+To read a document back by its id, with its vector and metadata, use
+:method:`Symfony\\AI\\Store\\StoreInterface::find`. It returns ``null`` when the store has no document with
+this id::
+
+    $document = $store->find($id);
+
+To find the documents nearest to a stored one, for example the products similar to the one displayed on a page,
+use :method:`Symfony\\AI\\Store\\StoreInterface::findSimilar`. The document itself is left out of the results,
+and there are no similar documents to a document the store does not have::
+
+    $documents = $store->findSimilar((string) $product->getId(), ['limit' => 5]);
+
+It accepts the same options as a vector query of the store, and the ``limit`` option does not count the document
+itself. Most stores look the document up with ``find()`` and then run a vector query on its vector, while the
+Postgres store reads the vector in the same SQL query as the neighbors.
 
 Counting documents
 ------------------

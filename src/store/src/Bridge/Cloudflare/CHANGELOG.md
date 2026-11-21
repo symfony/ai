@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add the `limit` option to `Store::query()`, up to 50
+ * Add `find` and `findSimilar` methods
 
 0.14
 ----

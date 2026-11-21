@@ -21,7 +21,9 @@ use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
+use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -34,6 +36,8 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     private const BATCH_SIZE = 500;
     private const DELETE_MAX_KEYS = 500;
 
@@ -208,6 +212,34 @@ final class Store implements ManagedStoreInterface, StoreInterface
         } while ([] !== $keys);
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $result = $this->client->getVectors([
+            'vectorBucketName' => $this->vectorBucketName,
+            'indexName' => $this->indexName,
+            'keys' => [$id],
+            'returnData' => true,
+            'returnMetadata' => true,
+        ]);
+
+        $outputVector = $result->getVectors()[0] ?? null;
+        if (null === $outputVector) {
+            return null;
+        }
+
+        $data = $outputVector->getData();
+        if (!$data instanceof VectorDataMemberFloat32) {
+            throw new RuntimeException(\sprintf('The S3 Vectors data of the vector "%s" is not float32.', $id));
+        }
+
+        return new VectorDocument(
+            id: $outputVector->getKey(),
+            // @phpstan-ignore argument.type (async-aws types the float32 data as float[] but always builds it as a list)
+            vector: new Vector($data->getFloat32()),
+            metadata: $this->createMetadata($outputVector->getMetadata()),
+        );
+    }
+
     /**
      * @param array{
      *     filter?: array<string, mixed>,
@@ -234,15 +266,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         // the result set is already bounded by topK, so only the current page is iterated to avoid auto-pagination
         foreach ($result->getVectors(true) as $outputVector) {
-            $metadata = $outputVector->getMetadata();
-
-            /** @var array<string, mixed> $metadataArray */
-            $metadataArray = \is_array($metadata) ? $metadata : [];
-
             yield new VectorDocument(
                 id: $outputVector->getKey(),
                 vector: $query->getVector(),
-                metadata: new Metadata($metadataArray),
+                metadata: $this->createMetadata($outputVector->getMetadata()),
                 score: $outputVector->getDistance(),
             );
         }
@@ -268,6 +295,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'vectorBucketName' => $this->vectorBucketName,
             'indexName' => $this->indexName,
         ])->getVectors());
+    }
+
+    /**
+     * @param bool|string|int|float|list<mixed>|array<string, mixed>|null $metadata
+     */
+    private function createMetadata(bool|string|int|float|array|null $metadata): Metadata
+    {
+        /** @var array<string, mixed> $metadataArray */
+        $metadataArray = \is_array($metadata) ? $metadata : [];
+
+        return new Metadata($metadataArray);
     }
 
     /**

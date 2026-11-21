@@ -22,6 +22,7 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\TextQuery;
@@ -33,6 +34,8 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     private const BATCH_SIZE = 1000;
     private const DEFAULT_QUERY_LIMIT = 10;
 
@@ -126,6 +129,20 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
             $collection->delete(ids: $items->ids);
         } while ($batchSize === \count($items->ids));
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $collection = $this->client->getOrCreateCollection($this->collectionName);
+
+        // the text of the document is stored as the Chroma document, not in the metadata
+        $items = $collection->get(ids: [$id], include: ['embeddings', 'metadatas', 'documents']);
+
+        if ([] === $items->ids) {
+            return null;
+        }
+
+        return $this->createDocument($items->ids[0], $items->metadatas[0] ?? null, $items->embeddings[0] ?? null, $items->documents[0] ?? null, null);
     }
 
     public function supports(string $queryClass): bool
@@ -246,53 +263,54 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $distances = $this->extractRow($queryResponse->distances);
 
         foreach ($metadatas as $i => $rawMetadata) {
-            if (!\is_array($rawMetadata)) {
-                throw new RuntimeException('ChromaDB returned an invalid metadata entry.');
-            }
-
-            $metadata = [];
-            foreach ($rawMetadata as $key => $value) {
-                if (!\is_string($key)) {
-                    throw new RuntimeException('ChromaDB returned a non-string metadata key.');
-                }
-                $metadata[$key] = $value;
-            }
-            $metaData = new Metadata($metadata);
-
-            $document = $documents[$i] ?? null;
-            if (\is_string($document)) {
-                $metaData->setText($document);
-            }
-
-            $id = $ids[$i] ?? null;
-            if (!\is_string($id) && !\is_int($id)) {
-                throw new RuntimeException('ChromaDB returned an invalid document id.');
-            }
-
-            $rawVector = $embeddings[$i] ?? null;
-            if (!\is_array($rawVector)) {
-                throw new RuntimeException('ChromaDB returned an invalid embedding entry.');
-            }
-            $vector = [];
-            foreach ($rawVector as $component) {
-                if (!\is_float($component) && !\is_int($component)) {
-                    throw new RuntimeException('ChromaDB returned a non-numeric embedding component.');
-                }
-                $vector[] = (float) $component;
-            }
-
-            $score = $distances[$i] ?? null;
-            if (null !== $score && !\is_float($score) && !\is_int($score)) {
-                throw new RuntimeException('ChromaDB returned a non-numeric distance.');
-            }
-
-            yield new VectorDocument(
-                id: $id,
-                vector: new Vector($vector),
-                metadata: $metaData,
-                score: null === $score ? null : (float) $score,
-            );
+            yield $this->createDocument($ids[$i] ?? null, $rawMetadata, $embeddings[$i] ?? null, $documents[$i] ?? null, $distances[$i] ?? null);
         }
+    }
+
+    private function createDocument(mixed $id, mixed $rawMetadata, mixed $rawVector, mixed $document, mixed $score): VectorDocument
+    {
+        if (!\is_array($rawMetadata)) {
+            throw new RuntimeException('ChromaDB returned an invalid metadata entry.');
+        }
+
+        $metadata = [];
+        foreach ($rawMetadata as $key => $value) {
+            if (!\is_string($key)) {
+                throw new RuntimeException('ChromaDB returned a non-string metadata key.');
+            }
+            $metadata[$key] = $value;
+        }
+        $metaData = new Metadata($metadata);
+
+        if (\is_string($document)) {
+            $metaData->setText($document);
+        }
+
+        if (!\is_string($id) && !\is_int($id)) {
+            throw new RuntimeException('ChromaDB returned an invalid document id.');
+        }
+
+        if (!\is_array($rawVector)) {
+            throw new RuntimeException('ChromaDB returned an invalid embedding entry.');
+        }
+        $vector = [];
+        foreach ($rawVector as $component) {
+            if (!\is_float($component) && !\is_int($component)) {
+                throw new RuntimeException('ChromaDB returned a non-numeric embedding component.');
+            }
+            $vector[] = (float) $component;
+        }
+
+        if (null !== $score && !\is_float($score) && !\is_int($score)) {
+            throw new RuntimeException('ChromaDB returned a non-numeric distance.');
+        }
+
+        return new VectorDocument(
+            id: $id,
+            vector: new Vector($vector),
+            metadata: $metaData,
+            score: null === $score ? null : (float) $score,
+        );
     }
 
     /**

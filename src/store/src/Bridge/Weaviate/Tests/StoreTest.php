@@ -23,6 +23,7 @@ use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
+use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\Uid\Uuid;
 
 final class StoreTest extends TestCase
@@ -324,6 +325,120 @@ final class StoreTest extends TestCase
         $this->expectExceptionMessage('Failed to delete 1 object(s) while clearing the "test" collection.');
 
         $store->clear();
+    }
+
+    public function testStoreCanFind()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): JsonMockResponse {
+            $this->assertSame('GET', $method);
+            $this->assertSame('http://127.0.0.1:8080/v1/objects/test/123e4567-e89b-12d3-a456-426614174000', $url);
+            $this->assertArrayNotHasKey('body', $options);
+
+            return new JsonMockResponse([
+                'class' => 'test',
+                'id' => '123e4567-e89b-12d3-a456-426614174000',
+                'properties' => [
+                    'uuid' => '123e4567-e89b-12d3-a456-426614174000',
+                    'vector' => [0.1, 0.2, 0.3],
+                    '_metadata' => json_encode(['foo' => 'bar']),
+                ],
+            ], [
+                'http_code' => 200,
+            ]);
+        }, 'http://127.0.0.1:8080');
+
+        $store = new Store($httpClient, 'test');
+
+        $document = $store->find('123e4567-e89b-12d3-a456-426614174000');
+
+        $this->assertNotNull($document);
+        $this->assertSame('123e4567-e89b-12d3-a456-426614174000', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['foo' => 'bar'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testStoreReturnsNullWhenFindingAnUnknownDocument()
+    {
+        $httpClient = new MockHttpClient([
+            new MockResponse('', [
+                'http_code' => 404,
+            ]),
+        ], 'http://127.0.0.1:8080');
+
+        $store = new Store($httpClient, 'test');
+
+        $this->assertNull($store->find('123e4567-e89b-12d3-a456-426614174000'));
+    }
+
+    public function testStoreCannotFindOnInvalidResponse()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'code' => 601,
+                'message' => 'id in path must be of type uuid: "foo"',
+            ], [
+                'http_code' => 422,
+            ]),
+        ], 'http://127.0.0.1:8080');
+
+        $store = new Store($httpClient, 'test');
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 422 returned for "http://127.0.0.1:8080/v1/objects/test/foo".');
+        $this->expectExceptionCode(422);
+        $store->find('foo');
+    }
+
+    public function testStoreCanFindSimilarDocuments()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'class' => 'test',
+                'id' => '123e4567-e89b-12d3-a456-426614174000',
+                'properties' => [
+                    'uuid' => '123e4567-e89b-12d3-a456-426614174000',
+                    'vector' => [0.1, 0.2, 0.3],
+                    '_metadata' => json_encode([]),
+                ],
+            ], [
+                'http_code' => 200,
+            ]),
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame('http://127.0.0.1:8080/v1/graphql', $url);
+                $this->assertStringContainsString('vector: [0.1, 0.2, 0.3]', $options['body']);
+                $this->assertStringContainsString('limit: 2', $options['body']);
+
+                return new JsonMockResponse([
+                    'data' => [
+                        'Get' => [
+                            'test' => [
+                                [
+                                    'uuid' => '123e4567-e89b-12d3-a456-426614174000',
+                                    'vector' => [0.1, 0.2, 0.3],
+                                    '_metadata' => json_encode([]),
+                                ],
+                                [
+                                    'uuid' => 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+                                    'vector' => [0.2, 0.1, 0.3],
+                                    '_metadata' => json_encode([]),
+                                ],
+                            ],
+                        ],
+                    ],
+                ], [
+                    'http_code' => 200,
+                ]);
+            },
+        ], 'http://127.0.0.1:8080');
+
+        $store = new Store($httpClient, 'test');
+
+        $documents = iterator_to_array($store->findSimilar('123e4567-e89b-12d3-a456-426614174000', ['limit' => 1]), false);
+
+        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertCount(1, $documents);
+        $this->assertSame('f47ac10b-58cc-4372-a567-0e02b2c3d479', $documents[0]->getId());
     }
 
     public function testStoreSupportsVectorQuery()

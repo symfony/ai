@@ -608,6 +608,7 @@ final class StoreTest extends TestCase
         yield 'add' => [static fn (Store $store) => $store->add(new VectorDocument('a1', new Vector([0.1, 0.2, 0.3]))), 'http://127.0.0.1:8000/key/movies'];
         yield 'query' => [static fn (Store $store) => iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])))), 'http://127.0.0.1:8000/sql'];
         yield 'remove' => [static fn (Store $store) => $store->remove('a1'), 'http://127.0.0.1:8000/sql'];
+        yield 'find' => [static fn (Store $store) => $store->find('a1'), 'http://127.0.0.1:8000/sql'];
     }
 
     public function testStoreReturnsTheDistanceAsScore()
@@ -735,6 +736,120 @@ final class StoreTest extends TestCase
         $this->assertSame(2, $httpClient->getRequestsCount());
         $this->assertSame('http://127.0.0.1:8000/sql', $requests[1]['url']);
         $this->assertSame('DELETE vectors;', $requests[1]['body']);
+    }
+
+    public function testStoreCanFind()
+    {
+        $requests = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requests): JsonMockResponse {
+            $requests[] = ['method' => $method, 'url' => $url, 'body' => $options['body'] ?? null];
+
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]);
+            }
+
+            return new JsonMockResponse([
+                [
+                    'result' => [
+                        [
+                            'id' => 'movies:`123e4567-e89b-12d3-a456-426614174000`',
+                            '_vectors' => [0.1, 0.2, 0.3],
+                            '_metadata' => ['_id' => '123e4567-e89b-12d3-a456-426614174000', 'title' => 'First'],
+                        ],
+                    ],
+                    'status' => 'OK',
+                ],
+            ], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies');
+
+        $document = $store->find('123e4567-e89b-12d3-a456-426614174000');
+
+        $this->assertCount(2, $requests);
+        $this->assertSame('POST', $requests[1]['method']);
+        $this->assertSame('http://127.0.0.1:8000/sql', $requests[1]['url']);
+        $this->assertSame('SELECT id, _vectors, _metadata FROM movies:`123e4567-e89b-12d3-a456-426614174000`;', $requests[1]['body']);
+        $this->assertNotNull($document);
+        $this->assertSame('123e4567-e89b-12d3-a456-426614174000', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['title' => 'First'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testStoreFindReturnsNullForAnUnknownId()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]),
+            new JsonMockResponse([['result' => [], 'status' => 'OK']], ['http_code' => 200]),
+        ], 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies');
+
+        $this->assertNull($store->find('unknown'));
+    }
+
+    public function testStoreFindNeutralizesInjectedId()
+    {
+        $body = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
+            $body = $options['body'] ?? null;
+
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]);
+            }
+
+            return new JsonMockResponse([['result' => [], 'status' => 'OK']], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test');
+        $store->find('a\\`; DELETE vectors; --');
+
+        $this->assertSame('SELECT id, _vectors, _metadata FROM vectors:`a\\\\\\`; DELETE vectors; --`;', $body);
+    }
+
+    public function testStoreFindSimilarLeavesTheDocumentOut()
+    {
+        $bodies = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$bodies): JsonMockResponse {
+            if (str_ends_with($url, '/signin')) {
+                return new JsonMockResponse(['token' => 'bar'], ['http_code' => 200]);
+            }
+
+            $bodies[] = $options['body'] ?? null;
+
+            if (1 === \count($bodies)) {
+                return new JsonMockResponse([
+                    [
+                        'result' => [
+                            ['id' => 'movies:first', '_vectors' => [0.1, 0.2, 0.3], '_metadata' => ['_id' => 'first']],
+                        ],
+                        'status' => 'OK',
+                    ],
+                ], ['http_code' => 200]);
+            }
+
+            return new JsonMockResponse([
+                [
+                    'result' => [
+                        ['id' => 'movies:first', '_vectors' => [0.1, 0.2, 0.3], '_metadata' => ['_id' => 'first'], 'distance' => 0.0],
+                        ['id' => 'movies:second', '_vectors' => [0.1, 0.2, 0.4], '_metadata' => ['_id' => 'second'], 'distance' => 0.01],
+                        ['id' => 'movies:third', '_vectors' => [0.1, 0.3, 0.4], '_metadata' => ['_id' => 'third'], 'distance' => 0.02],
+                    ],
+                    'status' => 'OK',
+                ],
+            ], ['http_code' => 200]);
+        }, 'http://127.0.0.1:8000');
+
+        $store = new Store($httpClient, 'test', 'test', 'test', 'test', 'movies');
+
+        $ids = [];
+        foreach ($store->findSimilar('first', ['limit' => 2]) as $document) {
+            $ids[] = $document->getId();
+        }
+
+        $this->assertSame(['second', 'third'], $ids);
+        $this->assertSame('SELECT id, _vectors, _metadata, vector::distance::knn() AS distance FROM movies WHERE _vectors <|3,40|> [0.1,0.2,0.3] ORDER BY distance;', $bodies[1]);
     }
 
     public function testStoreSupportsVectorQuery()

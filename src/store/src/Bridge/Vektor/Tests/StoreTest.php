@@ -14,6 +14,7 @@ namespace Symfony\AI\Store\Bridge\Vektor\Tests;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\Vektor\Store;
+use Symfony\AI\Store\Document\Metadata;
 use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -136,6 +137,78 @@ final class StoreTest extends TestCase
         $results = $store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])), ['limit' => 2]);
 
         $this->assertCount(2, iterator_to_array($results));
+
+        $store->drop();
+    }
+
+    public function testFindReturnsTheDocumentWithItsVectorAndMetadata()
+    {
+        $store = new Store(sys_get_temp_dir(), 3);
+        $store->setup();
+
+        $id = Uuid::v4()->toRfc4122();
+
+        $store->add([
+            new VectorDocument(Uuid::v4(), new Vector([0.7, 0.8, 0.9])),
+            new VectorDocument($id, new Vector([0.1, 0.2, 0.3]), new Metadata(['title' => 'Found'])),
+        ]);
+
+        $document = $store->find($id);
+
+        $this->assertNotNull($document);
+        $this->assertSame($id, $document->getId());
+        $this->assertEqualsWithDelta([0.1, 0.2, 0.3], $document->getVector()->getData(), 0.0001);
+        $this->assertSame(['title' => 'Found'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+
+        $store->drop();
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $store = new Store(sys_get_temp_dir(), 3);
+        $store->setup();
+
+        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.2, 0.3])));
+
+        $this->assertNull($store->find(Uuid::v4()->toRfc4122()));
+
+        $store->drop();
+    }
+
+    public function testFindReturnsNullForARemovedDocument()
+    {
+        $store = new Store(sys_get_temp_dir(), 3);
+        $store->setup();
+
+        $id = Uuid::v4()->toRfc4122();
+
+        $store->add(new VectorDocument($id, new Vector([0.1, 0.2, 0.3])));
+        $store->remove($id);
+
+        $this->assertNull($store->find($id));
+
+        $store->drop();
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $store = new Store(sys_get_temp_dir(), 3);
+        $store->setup();
+
+        $id = Uuid::v4()->toRfc4122();
+        $nearestId = Uuid::v4()->toRfc4122();
+
+        $store->add([
+            new VectorDocument($id, new Vector([0.1, 0.2, 0.3])),
+            new VectorDocument(Uuid::v4(), new Vector([0.9, -0.5, 0.0])),
+            new VectorDocument($nearestId, new Vector([0.1, 0.2, 0.35])),
+        ]);
+
+        $results = iterator_to_array($store->findSimilar($id, ['limit' => 1]), false);
+
+        $this->assertCount(1, $results);
+        $this->assertSame($nearestId, $results[0]->getId());
 
         $store->drop();
     }

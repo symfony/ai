@@ -19,6 +19,7 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -30,6 +31,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     private const BATCH_SIZE = 1000;
 
     public function __construct(
@@ -156,6 +159,29 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 ? $result['nextCursor']
                 : null;
         } while (null !== $cursor);
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $response = $this->request('POST', \sprintf('vectorize/v2/indexes/%s/get_by_ids', $this->index), [
+            'ids' => [$id],
+        ]);
+
+        $vectors = $response['result'] ?? null;
+        if (!\is_array($vectors)) {
+            throw new RuntimeException('The Cloudflare get by ids response is malformed.');
+        }
+
+        $vector = $vectors[0] ?? null;
+        if (null === $vector) {
+            return null;
+        }
+
+        if (!\is_array($vector)) {
+            throw new RuntimeException('The Cloudflare get by ids response contains an invalid vector.');
+        }
+
+        return $this->convertToVectorDocument($vector);
     }
 
     public function supports(string $queryClass): bool

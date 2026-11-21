@@ -18,6 +18,7 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -29,6 +30,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     /**
      * @param HttpClientInterface $httpClient HTTP client scoped to the ManticoreSearch instance, see {@see StoreFactory}
      */
@@ -138,6 +141,22 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->request('cli', \sprintf('TRUNCATE TABLE %s', $this->table));
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $documents = $this->request('search', [
+            'table' => $this->table,
+            'query' => ['equals' => ['uuid' => $id]],
+            'limit' => 1,
+        ]);
+
+        $document = $documents['hits']['hits'][0] ?? null;
+        if (null === $document) {
+            return null;
+        }
+
+        return $this->convertToVectorDocument($document);
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
@@ -209,7 +228,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
      * @param array{
      *     _id: int,
      *     _score: int,
-     *     _knn_dist: float,
+     *     _knn_dist?: float,
      *     _source: array<string, mixed>,
      * } $data
      */

@@ -8,6 +8,7 @@ Supabase Documentation
 
  * [Vector columns guide (pgvector, `match_documents` RPC)](https://supabase.com/docs/guides/ai/vector-columns)
  * [pgvector](https://github.com/pgvector/pgvector)
+ * [PostgREST tables and views (filtering and selecting rows)](https://docs.postgrest.org/en/v12/references/api/tables_views.html)
 
 Resources
 ---------

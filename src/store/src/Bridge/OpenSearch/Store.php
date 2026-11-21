@@ -19,6 +19,7 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -30,6 +31,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     /**
      * @param HttpClientInterface $httpClient HTTP client scoped to the OpenSearch instance, see {@see StoreFactory}
      */
@@ -155,6 +158,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $response = $this->httpClient->request('GET', \sprintf('%s/_doc/%s', $this->indexName, rawurlencode($id)));
+
+        if (404 === $response->getStatusCode() && false === ($response->toArray(false)['found'] ?? null)) {
+            return null;
+        }
+
+        return $this->convertToVectorDocument($response->toArray());
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
@@ -263,7 +277,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
      * @param array{
      *     '_id'?: string,
      *     '_source': array<string, mixed>,
-     *     '_score': float,
+     *     '_score'?: float,
      * } $document
      */
     private function convertToVectorDocument(array $document): VectorDocumentInterface

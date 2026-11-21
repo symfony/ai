@@ -174,6 +174,96 @@ final class StoreTest extends TestCase
         $store->clear(['foo' => 'bar']);
     }
 
+    public function testStoreCanFind()
+    {
+        $response = new JsonMockResponse([
+            'data' => [
+                'fields' => ['n'],
+                'values' => [
+                    [
+                        [
+                            'elementId' => '4:c0a8f0b2-3f1e-4b7a-9d2c-5e6f7a8b9c0d:0',
+                            'labels' => ['document'],
+                            'properties' => [
+                                'embeddings' => [0.1, 0.2, 0.3],
+                                'metadata' => json_encode(['foo' => 'bar']),
+                                'id' => '123e4567-e89b-12d3-a456-426614174000',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ], [
+            'http_code' => 202,
+        ]);
+
+        $store = new Store(ScopingHttpClient::forBaseUri(new MockHttpClient($response), 'http://127.0.0.1:7474/'), 'symfony', 'symfony', 'document');
+
+        $document = $store->find('123e4567-e89b-12d3-a456-426614174000');
+
+        $this->assertSame('POST', $response->getRequestMethod());
+        $this->assertSame('http://127.0.0.1:7474/db/symfony/query/v2', $response->getRequestUrl());
+        $this->assertSame([
+            'statement' => 'MATCH (n:document {id: $id}) RETURN n LIMIT 1',
+            'parameters' => ['id' => '123e4567-e89b-12d3-a456-426614174000'],
+        ], json_decode($response->getRequestOptions()['body'], true));
+        $this->assertNotNull($document);
+        $this->assertSame('123e4567-e89b-12d3-a456-426614174000', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['foo' => 'bar'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testStoreFindReturnsNullForAnUnknownId()
+    {
+        $response = new JsonMockResponse(['data' => ['fields' => ['n'], 'values' => []]], ['http_code' => 202]);
+        $store = new Store(ScopingHttpClient::forBaseUri(new MockHttpClient($response), 'http://127.0.0.1:7474/'), 'symfony', 'symfony', 'document');
+
+        $this->assertNull($store->find('unknown'));
+    }
+
+    public function testStoreFindSimilarLeavesTheDocumentOut()
+    {
+        $node = static fn (string $id, array $embeddings): array => [
+            'elementId' => '4:c0a8f0b2-3f1e-4b7a-9d2c-5e6f7a8b9c0d:0',
+            'labels' => ['document'],
+            'properties' => [
+                'embeddings' => $embeddings,
+                'metadata' => json_encode([]),
+                'id' => $id,
+            ],
+        ];
+
+        $queryResponse = new JsonMockResponse([
+            'data' => [
+                'fields' => ['node', 'score'],
+                'values' => [
+                    [$node('first', [0.1, 0.2, 0.3]), 1.0],
+                    [$node('second', [0.1, 0.2, 0.4]), 0.99],
+                    [$node('third', [0.1, 0.3, 0.4]), 0.98],
+                ],
+            ],
+        ], [
+            'http_code' => 202,
+        ]);
+
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['data' => ['fields' => ['n'], 'values' => [[$node('first', [0.1, 0.2, 0.3])]]]], ['http_code' => 202]),
+            $queryResponse,
+        ]);
+
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:7474/'), 'symfony', 'symfony', 'document');
+
+        $ids = [];
+        foreach ($store->findSimilar('first', ['limit' => 2]) as $document) {
+            $ids[] = $document->getId();
+        }
+
+        $this->assertSame(['second', 'third'], $ids);
+        $body = json_decode($queryResponse->getRequestOptions()['body'], true);
+        $this->assertSame(['limit' => 3, 'vectors' => [0.1, 0.2, 0.3]], $body['parameters']);
+    }
+
     public function testStoreCanAdd()
     {
         $httpClient = new MockHttpClient([

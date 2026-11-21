@@ -19,6 +19,7 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\QueryInterface;
@@ -31,6 +32,7 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
     use PdoConnectionTrait;
 
     private const RRF_K = 60;
@@ -203,6 +205,28 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
             throw $e;
         }
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $statement = $this->getConnection()->prepare(\sprintf(
+            'SELECT id, vector, metadata FROM %s WHERE id = :id',
+            $this->tableName,
+        ));
+        $statement->bindValue(':id', $id);
+        $statement->execute();
+
+        $row = $statement->fetch(\PDO::FETCH_ASSOC);
+
+        if (false === $row) {
+            return null;
+        }
+
+        return new VectorDocument(
+            id: $row['id'],
+            vector: new Vector(json_decode($row['vector'], true)),
+            metadata: new Metadata(json_decode($row['metadata'] ?? '{}', true)),
+        );
     }
 
     public function supports(string $queryClass): bool

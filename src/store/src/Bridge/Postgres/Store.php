@@ -175,6 +175,41 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->getConnection()->exec(\sprintf('TRUNCATE TABLE "%s"', $this->tableName));
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $statement = $this->getConnection()->prepare(\sprintf(
+            'SELECT id, "%s" AS embedding, metadata FROM "%s" WHERE id = :id',
+            $this->vectorFieldName,
+            $this->tableName,
+        ));
+        $statement->bindValue(':id', $id);
+        $statement->execute();
+
+        $result = $statement->fetch(\PDO::FETCH_ASSOC);
+
+        if (false === $result) {
+            return null;
+        }
+
+        return new VectorDocument(
+            id: $result['id'],
+            vector: new Vector($this->fromPgvector($result['embedding'])),
+            metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true, 512, \JSON_THROW_ON_ERROR)),
+        );
+    }
+
+    /**
+     * Reads the vector of the document in the same query as its neighbors.
+     *
+     * @param array{limit?: positive-int, maxScore?: float, where?: string, params?: array<string, mixed>} $options
+     */
+    public function findSimilar(string $id, array $options = []): iterable
+    {
+        $vector = \sprintf('(SELECT "%s" FROM "%s" WHERE id = :source_id)', $this->vectorFieldName, $this->tableName);
+
+        return $this->queryNearest($vector, ['source_id' => $id], [$vector.' IS NOT NULL', 'id != :source_id'], $options);
+    }
+
     public function supports(string $queryClass): bool
     {
         return \in_array($queryClass, [
@@ -204,11 +239,21 @@ final class Store implements ManagedStoreInterface, StoreInterface
      */
     private function queryVector(VectorQuery $query, array $options): iterable
     {
-        $whereClauses = [];
-        $params = ['embedding' => $this->toPgvector($query->getVector())];
+        return $this->queryNearest(':embedding', ['embedding' => $this->toPgvector($query->getVector())], [], $options);
+    }
 
+    /**
+     * @param string                                                                                       $vector       the SQL expression of the vector to rank the documents by
+     * @param array<string, mixed>                                                                         $params
+     * @param list<string>                                                                                 $whereClauses
+     * @param array{limit?: positive-int, maxScore?: float, where?: string, params?: array<string, mixed>} $options
+     *
+     * @return iterable<VectorDocumentInterface>
+     */
+    private function queryNearest(string $vector, array $params, array $whereClauses, array $options): iterable
+    {
         if (isset($options['maxScore'])) {
-            $whereClauses[] = \sprintf('("%s" %s :embedding) <= :maxScore', $this->vectorFieldName, $this->metric->getComparisonSign());
+            $whereClauses[] = \sprintf('("%s" %s %s) <= :maxScore', $this->vectorFieldName, $this->metric->getComparisonSign(), $vector);
             $params['maxScore'] = $options['maxScore'];
         }
 
@@ -224,7 +269,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $where = [] !== $whereClauses ? 'WHERE '.implode(' AND ', $whereClauses) : '';
 
         $sql = \sprintf(<<<SQL
-            SELECT id, "%s" AS embedding, metadata, ("%s" %s :embedding) AS score
+            SELECT id, "%s" AS embedding, metadata, ("%s" %s %s) AS score
             FROM "%s"
             %s
             ORDER BY score ASC
@@ -233,6 +278,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $this->vectorFieldName,
             $this->vectorFieldName,
             $this->metric->getComparisonSign(),
+            $vector,
             $this->tableName,
             $where,
             $options['limit'] ?? 5,

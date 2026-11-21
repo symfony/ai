@@ -35,6 +35,7 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
     private const DOCUMENT_ID_2 = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
     private const DOCUMENT_ID_3 = '123e4567-e89b-12d3-a456-426614174000';
     private const DOCUMENT_ID_WITHOUT_TEXT = '9a1f0c2e-7b3d-4e5a-8c6f-2d4b6a8c0e1f';
+    private const UNKNOWN_DOCUMENT_ID = '5d3c8f0a-1e2b-4c6d-9a7f-0b8e6d4c2a1f';
 
     private static ?StoreInterface $store = null;
 
@@ -240,6 +241,42 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
         $this->assertCount(3, self::$store);
     }
 
+    #[Depends('testAddDocuments')]
+    public function testFindDocument()
+    {
+        $document = self::$store->find(self::DOCUMENT_ID_3);
+
+        $this->assertNotNull($document);
+        $this->assertSame(self::DOCUMENT_ID_3, (string) $document->getId());
+        $this->assertEqualsWithDelta([0.0, 0.0, 1.0], $document->getVector()->getData(), 0.001);
+        $this->assertSame('third document', $document->getMetadata()['name']);
+    }
+
+    #[Depends('testAddDocuments')]
+    public function testFindUnknownDocument()
+    {
+        $this->assertNull(self::$store->find(self::UNKNOWN_DOCUMENT_ID));
+    }
+
+    #[Depends('testAddDocuments')]
+    public function testFindSimilarDocuments()
+    {
+        $ids = [];
+        foreach (self::$store->findSimilar(self::DOCUMENT_ID_3, ['limit' => 2]) as $document) {
+            $ids[] = (string) $document->getId();
+        }
+
+        sort($ids);
+
+        $this->assertSame([self::DOCUMENT_ID_1, self::DOCUMENT_ID_2], $ids);
+    }
+
+    #[Depends('testAddDocuments')]
+    public function testFindSimilarDocumentsToAnUnknownDocument()
+    {
+        $this->assertCount(0, iterator_to_array(self::$store->findSimilar(self::UNKNOWN_DOCUMENT_ID), false));
+    }
+
     #[Depends('testQueryDocuments')]
     #[Depends('testQueryDocumentsWithLimit')]
     #[Depends('testQueryDocumentsWithTextQuery')]
@@ -247,6 +284,10 @@ abstract class AbstractStoreIntegrationTestCase extends TestCase
     #[Depends('testQueryDocumentsWithHybridQueryFindsVectorMatchesSharingNoKeyword')]
     #[Depends('testQueryDocumentsWithHybridQueryRanksDocumentsWithoutTextByTheirVector')]
     #[Depends('testCountDocumentsAfterInsert')]
+    #[Depends('testFindDocument')]
+    #[Depends('testFindUnknownDocument')]
+    #[Depends('testFindSimilarDocuments')]
+    #[Depends('testFindSimilarDocumentsToAnUnknownDocument')]
     public function testRemoveDocuments()
     {
         try {

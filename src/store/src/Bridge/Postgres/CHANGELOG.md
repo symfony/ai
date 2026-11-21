@@ -8,6 +8,7 @@ CHANGELOG
  * Allow passing a DSN instead of a `\PDO` instance to `Store`, with the `connectionOptions` argument for the credentials; the connection is opened on the first query
  * [BC BREAK] Replace the `vector_size`, `vector_type`, `index_method` and `index_opclass` options of `Store::setup()` by the `dimensions`, `vectorType`, `indexMethod` and `indexOpclass` arguments of `Store` and `StoreFactory`
  * [BC BREAK] Rename the `Distance` enum to `Metric`, and the `distance` argument of `Store` and `StoreFactory` to `metric`
+ * Add `find` and `findSimilar` methods, `findSimilar` reading the vector of the document in the same query as its neighbors
 
 0.14
 ----

@@ -6,6 +6,7 @@ CHANGELOG
 
  * [BC BREAK] Remove the `max_items` option of `Store::query()`, use `limit` instead
  * [BC BREAK] Rename the `vectorDimension` argument of `Store` and `StoreFactory` to `dimensions`
+ * Add `find` and `findSimilar` methods
 
 0.14
 ----

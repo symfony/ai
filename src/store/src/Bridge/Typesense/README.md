@@ -7,6 +7,7 @@ Typesense Documentation
 -----------------------
 
  * [Vector search](https://typesense.org/docs/29.0/api/vector-search.html)
+ * [Retrieve a document](https://typesense.org/docs/29.0/api/documents.html#retrieve-a-document)
 
 Resources
 ---------

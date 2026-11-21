@@ -22,6 +22,7 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -52,6 +53,10 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
+    private const TYPE_MAP = ['root' => 'array', 'document' => 'array', 'array' => 'array'];
+
     /**
      * @param string       $databaseName    The name of the database
      * @param string       $collectionName  The name of the collection
@@ -193,6 +198,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $this->getCollection()->deleteMany([]);
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $result = $this->getCollection()->findOne(['_id' => $id], ['typeMap' => self::TYPE_MAP]);
+
+        if (null === $result) {
+            return null;
+        }
+
+        return $this->convertToVectorDocument($result);
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
@@ -248,17 +264,25 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $results = $this->getCollection()->aggregate(
             $pipeline,
-            ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']]
+            ['typeMap' => self::TYPE_MAP]
         );
 
         foreach ($results as $result) {
-            yield new VectorDocument(
-                id: $result['_id'],
-                vector: new Vector($result[$this->vectorFieldName]),
-                metadata: new Metadata($result['metadata'] ?? []),
-                score: $result['score'],
-            );
+            yield $this->convertToVectorDocument($result, $result['score']);
         }
+    }
+
+    /**
+     * @param array<string, mixed> $result
+     */
+    private function convertToVectorDocument(array $result, ?float $score = null): VectorDocument
+    {
+        return new VectorDocument(
+            id: $result['_id'],
+            vector: new Vector($result[$this->vectorFieldName]),
+            metadata: new Metadata($result['metadata'] ?? []),
+            score: $score,
+        );
     }
 
     private function getCollection(): Collection

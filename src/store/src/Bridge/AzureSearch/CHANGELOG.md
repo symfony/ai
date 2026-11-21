@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add `find` and `findSimilar` methods
+
 0.15
 ----
 

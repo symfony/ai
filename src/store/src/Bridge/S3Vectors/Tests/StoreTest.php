@@ -16,11 +16,14 @@ use AsyncAws\S3Vectors\Enum\DataType;
 use AsyncAws\S3Vectors\Enum\DistanceMetric;
 use AsyncAws\S3Vectors\Input\ListVectorsInput;
 use AsyncAws\S3Vectors\Result\DeleteVectorsOutput;
+use AsyncAws\S3Vectors\Result\GetVectorsOutput;
 use AsyncAws\S3Vectors\Result\ListVectorsOutput;
 use AsyncAws\S3Vectors\Result\QueryVectorsOutput;
 use AsyncAws\S3Vectors\S3VectorsClient;
+use AsyncAws\S3Vectors\ValueObject\GetOutputVector;
 use AsyncAws\S3Vectors\ValueObject\ListOutputVector;
 use AsyncAws\S3Vectors\ValueObject\QueryOutputVector;
+use AsyncAws\S3Vectors\ValueObject\VectorDataMemberFloat32;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\AI\Store\Bridge\S3Vectors\Store;
@@ -305,6 +308,84 @@ final class StoreTest extends TestCase
             ->method('deleteVectors');
 
         self::createStore($client)->clear();
+    }
+
+    public function testFindGetsTheVectorWithItsDataAndMetadata()
+    {
+        $client = $this->createMock(S3VectorsClient::class);
+
+        $client->expects($this->once())
+            ->method('getVectors')
+            ->with([
+                'vectorBucketName' => 'test-bucket',
+                'indexName' => 'test-index',
+                'keys' => ['vector-id'],
+                'returnData' => true,
+                'returnMetadata' => true,
+            ])
+            ->willReturn(ResultMockFactory::create(GetVectorsOutput::class, [
+                'vectors' => [
+                    new GetOutputVector([
+                        'key' => 'vector-id',
+                        'data' => new VectorDataMemberFloat32(['float32' => [0.1, 0.2, 0.3]]),
+                        'metadata' => ['title' => 'Test Document'],
+                    ]),
+                ],
+            ]));
+
+        $document = self::createStore($client)->find('vector-id');
+
+        $this->assertNotNull($document);
+        $this->assertSame('vector-id', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['title' => 'Test Document'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $client = $this->createMock(S3VectorsClient::class);
+
+        $client->expects($this->once())
+            ->method('getVectors')
+            ->willReturn(ResultMockFactory::create(GetVectorsOutput::class, ['vectors' => []]));
+
+        $this->assertNull(self::createStore($client)->find('unknown-id'));
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $client = $this->createMock(S3VectorsClient::class);
+
+        $client->expects($this->once())
+            ->method('getVectors')
+            ->willReturn(ResultMockFactory::create(GetVectorsOutput::class, [
+                'vectors' => [
+                    new GetOutputVector([
+                        'key' => 'vector-id',
+                        'data' => new VectorDataMemberFloat32(['float32' => [0.1, 0.2, 0.3]]),
+                    ]),
+                ],
+            ]));
+
+        $client->expects($this->once())
+            ->method('queryVectors')
+            ->with($this->callback(static function ($input) {
+                return [0.1, 0.2, 0.3] === $input['queryVector']->requestBody()['float32']
+                    && 2 === $input['topK'];
+            }))
+            ->willReturn(ResultMockFactory::create(QueryVectorsOutput::class, [
+                'vectors' => [
+                    new QueryOutputVector(['key' => 'vector-id', 'distance' => 0.0]),
+                    new QueryOutputVector(['key' => 'other-id', 'distance' => 0.1]),
+                ],
+                'distanceMetric' => DistanceMetric::COSINE,
+            ]));
+
+        $results = iterator_to_array(self::createStore($client)->findSimilar('vector-id', ['limit' => 1]), false);
+
+        $this->assertCount(1, $results);
+        $this->assertSame('other-id', $results[0]->getId());
     }
 
     public function testQueryReturnsDocuments()

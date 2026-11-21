@@ -106,6 +106,50 @@ final class TraceableStoreTest extends TestCase
         $this->assertSame([], iterator_to_array($store->query(new VectorQuery(new Vector([0.1, 0.2, 0.3])))));
     }
 
+    public function testStoreCanRetrieveDataOnFind()
+    {
+        $clock = new MockClock('2020-01-01 10:00:00');
+
+        $store = new Store();
+        $document = new VectorDocument(Uuid::v7()->toRfc4122(), new Vector([0.1, 0.2, 0.3]));
+        $store->add($document);
+
+        $traceableStore = new TraceableStore($store, $clock);
+
+        $this->assertSame($document, $traceableStore->find($document->getId()));
+        $this->assertEquals([
+            [
+                'method' => 'find',
+                'ids' => $document->getId(),
+                'called_at' => $clock->now(),
+            ],
+        ], $traceableStore->getCalls());
+    }
+
+    public function testStoreCanRetrieveDataOnFindSimilar()
+    {
+        $clock = new MockClock('2020-01-01 10:00:00');
+
+        $store = new Store();
+        $document = new VectorDocument(Uuid::v7()->toRfc4122(), new Vector([0.1, 0.2, 0.3]));
+        $similarDocument = new VectorDocument(Uuid::v7()->toRfc4122(), new Vector([0.1, 0.2, 0.4]));
+        $store->add([$document, $similarDocument]);
+
+        $traceableStore = new TraceableStore($store, $clock);
+
+        $results = iterator_to_array($traceableStore->findSimilar($document->getId(), ['limit' => 1]), false);
+
+        $this->assertSame([$similarDocument->getId()], array_map(static fn (VectorDocumentInterface $result) => $result->getId(), $results));
+        $this->assertEquals([
+            [
+                'method' => 'findSimilar',
+                'ids' => $document->getId(),
+                'options' => ['limit' => 1],
+                'called_at' => $clock->now(),
+            ],
+        ], $traceableStore->getCalls());
+    }
+
     public function testSetupDelegatesToManagedStore()
     {
         $innerStore = new class implements StoreInterface, ManagedStoreInterface {
@@ -125,6 +169,16 @@ final class TraceableStoreTest extends TestCase
 
             public function add(VectorDocumentInterface|array $documents): void
             {
+            }
+
+            public function find(string $id): ?VectorDocumentInterface
+            {
+                return null;
+            }
+
+            public function findSimilar(string $id, array $options = []): iterable
+            {
+                return [];
             }
 
             public function query(QueryInterface $query, array $options = []): iterable
@@ -189,6 +243,16 @@ final class TraceableStoreTest extends TestCase
 
             public function add(VectorDocumentInterface|array $documents): void
             {
+            }
+
+            public function find(string $id): ?VectorDocumentInterface
+            {
+                return null;
+            }
+
+            public function findSimilar(string $id, array $options = []): iterable
+            {
+                return [];
             }
 
             public function query(QueryInterface $query, array $options = []): iterable

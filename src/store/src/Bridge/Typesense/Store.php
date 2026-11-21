@@ -19,6 +19,7 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -30,6 +31,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly string $collection,
@@ -107,6 +110,20 @@ final class Store implements ManagedStoreInterface, StoreInterface
         // "truncate" removes all documents while keeping the collection and its schema in place,
         // in contrast to "filter_by" it does not walk the filter index.
         $this->request('DELETE', \sprintf('collections/%s/documents?truncate=true', $this->collection), []);
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $response = $this->httpClient->request('GET', \sprintf('collections/%s/documents/%s', $this->collection, rawurlencode($id)));
+
+        if (404 === $response->getStatusCode()) {
+            // a missing collection is answered with a 404 too, looking it up throws in that case
+            $this->request('GET', \sprintf('collections/%s', $this->collection), []);
+
+            return null;
+        }
+
+        return $this->convertToVectorDocument(['document' => $response->toArray()]);
     }
 
     public function supports(string $queryClass): bool

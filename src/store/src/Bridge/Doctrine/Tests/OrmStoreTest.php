@@ -252,6 +252,41 @@ final class OrmStoreTest extends TestCase
         $this->assertSame(['Fish', 'Dogs'], $this->titles($documents));
     }
 
+    public function testFindsTheDocumentOfAnEntity()
+    {
+        [$article] = $this->persist(new Article('Cats'));
+        $this->store()->add(new VectorDocument($article->getId(), new Vector([0.25, 0.5, 0.75])));
+
+        $document = $this->store()->find((string) $article->getId());
+
+        $this->assertInstanceOf(EntityVectorDocument::class, $document);
+        $this->assertSame($article, $document->getEntity());
+        $this->assertSame((string) $article->getId(), $document->getId());
+        $this->assertSame([0.25, 0.5, 0.75], $document->getVector()->getData());
+    }
+
+    public function testFindsNothingForAnUnknownEntity()
+    {
+        $this->assertNull($this->store()->find('42'));
+    }
+
+    public function testFindsNothingForAnEntityWithoutVector()
+    {
+        [$article] = $this->persist(new Article('Cats'));
+
+        $this->assertNull($this->store()->find((string) $article->getId()));
+    }
+
+    public function testFindsTheEntitiesSimilarToAnEntity()
+    {
+        $articles = $this->persist(new Article('Cats'), new Article('Fish'), new Article('Cats and dogs'));
+        $this->embed(...$articles);
+
+        $documents = $this->store()->findSimilar((string) $articles[0]->getId(), ['limit' => 1]);
+
+        $this->assertSame(['Cats and dogs'], $this->titles($documents));
+    }
+
     public function testOnlyAnswersVectorQueries()
     {
         $this->assertTrue($this->store()->supports(VectorQuery::class));

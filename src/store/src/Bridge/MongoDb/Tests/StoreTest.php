@@ -887,4 +887,131 @@ final class StoreTest extends TestCase
 
         $store->clear();
     }
+
+    public function testFindReturnsTheDocumentWithItsVector()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getCollection')
+            ->with('test-db', 'test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('findOne')
+            ->with(
+                ['_id' => '123e4567-e89b-12d3-a456-426614174000'],
+                ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']],
+            )
+            ->willReturn([
+                '_id' => '123e4567-e89b-12d3-a456-426614174000',
+                'vector' => [0.1, 0.2, 0.3],
+                'metadata' => ['title' => 'First Document'],
+            ]);
+
+        $store = new Store(
+            $client,
+            'test-db',
+            'test-collection',
+            'test-index',
+        );
+
+        $document = $store->find('123e4567-e89b-12d3-a456-426614174000');
+
+        $this->assertNotNull($document);
+        $this->assertSame('123e4567-e89b-12d3-a456-426614174000', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['title' => 'First Document'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getCollection')
+            ->with('test-db', 'test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('findOne')
+            ->willReturn(null);
+
+        $store = new Store(
+            $client,
+            'test-db',
+            'test-collection',
+            'test-index',
+        );
+
+        $this->assertNull($store->find('unknown'));
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->exactly(2))
+            ->method('getCollection')
+            ->with('test-db', 'test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('findOne')
+            ->willReturn(['_id' => 'first', 'vector' => [0.1, 0.2, 0.3], 'metadata' => []]);
+
+        $results = [
+            ['_id' => 'first', 'vector' => [0.1, 0.2, 0.3], 'metadata' => [], 'score' => 1.0],
+            ['_id' => 'second', 'vector' => [0.1, 0.2, 0.4], 'metadata' => [], 'score' => 0.99],
+            ['_id' => 'third', 'vector' => [0.1, 0.3, 0.4], 'metadata' => [], 'score' => 0.98],
+        ];
+
+        $cursor = $this->createMock(CursorInterface::class);
+        $cursor->method('rewind'); // void return type
+        $cursor->method('valid')->willReturnOnConsecutiveCalls(true, true, true, false);
+        $cursor->method('current')->willReturnOnConsecutiveCalls(...$results);
+        $cursor->method('next'); // void return type
+        $cursor->method('key')->willReturnOnConsecutiveCalls(0, 1, 2);
+
+        $collection->expects($this->once())
+            ->method('aggregate')
+            ->with(
+                [
+                    [
+                        '$vectorSearch' => [
+                            'index' => 'test-index',
+                            'path' => 'vector',
+                            'queryVector' => [0.1, 0.2, 0.3],
+                            'numCandidates' => 200,
+                            'limit' => 3,
+                        ],
+                    ],
+                    [
+                        '$addFields' => [
+                            'score' => ['$meta' => 'vectorSearchScore'],
+                        ],
+                    ],
+                ],
+                ['typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']],
+            )
+            ->willReturn($cursor);
+
+        $store = new Store(
+            $client,
+            'test-db',
+            'test-collection',
+            'test-index',
+        );
+
+        $ids = [];
+        foreach ($store->findSimilar('first', ['limit' => 2]) as $document) {
+            $ids[] = $document->getId();
+        }
+
+        $this->assertSame(['second', 'third'], $ids);
+    }
 }

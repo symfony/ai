@@ -860,6 +860,98 @@ final class StoreTest extends TestCase
         $store->clear();
     }
 
+    public function testFindReturnsTheDocumentWithItsVector()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('get')
+            ->with(['01234567-89ab-cdef-0123-456789abcdef'], null, null, null, null, ['embeddings', 'metadatas', 'documents'])
+            ->willReturn(new GetItemsResponse(
+                ids: ['01234567-89ab-cdef-0123-456789abcdef'],
+                metadatas: [['title' => 'Doc 1']],
+                embeddings: [[0.1, 0.2, 0.3]],
+                documents: ['The text of the first document'],
+            ));
+
+        $store = StoreFactory::create($client, 'test-collection');
+        $document = $store->find('01234567-89ab-cdef-0123-456789abcdef');
+
+        $this->assertNotNull($document);
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame('Doc 1', $document->getMetadata()['title']);
+        $this->assertSame('The text of the first document', $document->getMetadata()->getText());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->once())
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('get')
+            ->willReturn(new GetItemsResponse(ids: [], metadatas: [], embeddings: [], documents: []));
+
+        $store = StoreFactory::create($client, 'test-collection');
+
+        $this->assertNull($store->find('01234567-89ab-cdef-0123-456789abcdef'));
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+
+        $client->expects($this->exactly(2))
+            ->method('getOrCreateCollection')
+            ->with('test-collection')
+            ->willReturn($collection);
+
+        $collection->expects($this->once())
+            ->method('get')
+            ->willReturn(new GetItemsResponse(
+                ids: ['01234567-89ab-cdef-0123-456789abcdef'],
+                metadatas: [['title' => 'Doc 1']],
+                embeddings: [[0.1, 0.2, 0.3]],
+                documents: [''],
+            ));
+
+        $collection->expects($this->once())
+            ->method('query')
+            ->with([[0.1, 0.2, 0.3]], null, 3, null, null, null)
+            ->willReturn(new QueryItemsResponse(
+                ids: [['01234567-89ab-cdef-0123-456789abcdef', 'fedcba98-7654-3210-fedc-ba9876543210', 'abcdef01-2345-6789-abcd-ef0123456789']],
+                embeddings: [[[0.1, 0.2, 0.3], [0.1, 0.2, 0.4], [0.1, 0.3, 0.4]]],
+                metadatas: [[['title' => 'Doc 1'], ['title' => 'Doc 2'], ['title' => 'Doc 3']]],
+                documents: null,
+                data: null,
+                uris: null,
+                distances: [[0.0, 0.01, 0.02]],
+            ));
+
+        $store = StoreFactory::create($client, 'test-collection');
+
+        $ids = [];
+        foreach ($store->findSimilar('01234567-89ab-cdef-0123-456789abcdef', ['limit' => 2]) as $document) {
+            $ids[] = $document->getId();
+        }
+
+        $this->assertSame(['fedcba98-7654-3210-fedc-ba9876543210', 'abcdef01-2345-6789-abcd-ef0123456789'], $ids);
+    }
+
     public function testQueryWithTextQuery()
     {
         $queryResponse = new QueryItemsResponse(
