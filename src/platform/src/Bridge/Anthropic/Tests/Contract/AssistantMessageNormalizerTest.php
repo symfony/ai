@@ -42,6 +42,24 @@ final class AssistantMessageNormalizerTest extends TestCase
         $this->assertSame([AssistantMessage::class => true], $normalizer->getSupportedTypes(null));
     }
 
+    public function testNormalizeLeavesOutEmptyTextBlocks()
+    {
+        $normalized = (new AssistantMessageNormalizer())->normalize(new AssistantMessage(
+            new Thinking('The user wants the weather.', 'sig'),
+            new Text(''),
+            new Text(" \n"),
+            new ToolCall('toolu_1', 'weather', ['city' => 'Paris']),
+        ));
+
+        $this->assertSame([
+            'role' => 'assistant',
+            'content' => [
+                ['type' => 'thinking', 'thinking' => 'The user wants the weather.', 'signature' => 'sig'],
+                ['type' => 'tool_use', 'id' => 'toolu_1', 'name' => 'weather', 'input' => ['city' => 'Paris']],
+            ],
+        ], $normalized);
+    }
+
     public function testNormalizeReplaysBothBlocksOfAWebSearch()
     {
         $call = ['type' => 'server_tool_use', 'id' => 'srvtoolu_1', 'name' => 'web_search', 'input' => ['query' => 'Symfony AI']];
