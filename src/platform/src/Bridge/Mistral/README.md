@@ -9,6 +9,8 @@ Mistral Documentation
  * [API reference](https://docs.mistral.ai/api/)
  * [Chat completions](https://docs.mistral.ai/api/endpoint/chat)
  * [OCR](https://docs.mistral.ai/api/endpoint/ocr)
+ * [Moderation](https://docs.mistral.ai/studio/safety-moderation)
+ * [Moderation endpoints](https://docs.mistral.ai/api/endpoint/classifiers)
  * [Speech to Text (Voxtral)](https://docs.mistral.ai/api/endpoint/audio_transcriptions)
  * [Text to Speech (Voxtral)](https://docs.mistral.ai/studio/audio/text-to-speech/overview)
  * [Speech endpoint](https://docs.mistral.ai/api/endpoint/audio/speech)

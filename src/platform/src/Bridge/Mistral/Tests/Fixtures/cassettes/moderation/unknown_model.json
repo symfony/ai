@@ -1,0 +1,49 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://api.mistral.ai/v1/moderations",
+                "signature": "41aa2fda174bcdb60fdb38341d88168e",
+                "signature_v2": "130dbcb61b56183de1d9b354637ed70c",
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": "{\"model\":\"mistral-moderation-nope\",\"input\":\"Hello\"}"
+            },
+            "response": {
+                "status": 400,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "141"
+                    ],
+                    "server": [
+                        "cloudflare"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "set-cookie": [
+                        "[redacted]"
+                    ],
+                    "strict-transport-security": [
+                        "max-age=15552000; includeSubDomains; preload"
+                    ],
+                    "x-content-type-options": [
+                        "nosniff"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"object\":\"error\",\"message\":\"Invalid model: mistral-moderation-nope\",\"type\":\"invalid_model\",\"param\":null,\"code\":\"1500\",\"raw_status_code\":400}"
+            }
+        }
+    ]
+}
