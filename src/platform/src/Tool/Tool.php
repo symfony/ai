@@ -63,6 +63,17 @@ final class Tool
         return $this->parameters;
     }
 
+    /**
+     * The schema of the structured result, when the tool announced one. Set by the MCP bridge from the remote tool's
+     * "outputSchema"; a tool declared with the AsTool attribute has none.
+     *
+     * @return JsonSchema|null
+     */
+    public function getOutputSchema(): ?array
+    {
+        return \is_array($this->metadata['outputSchema'] ?? null) ? $this->metadata['outputSchema'] : null;
+    }
+
     public function getEffectHints(): ToolEffectHints
     {
         return new ToolEffectHints(

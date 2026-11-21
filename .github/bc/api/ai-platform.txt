@@ -1043,6 +1043,7 @@ Symfony\AI\Platform\Tool\Tool::getEffectHints(): public function getEffectHints(
 Symfony\AI\Platform\Tool\Tool::getMetadata(): public function getMetadata(): array
 Symfony\AI\Platform\Tool\Tool::getMetadataValue(): public function getMetadataValue(string $key, mixed $default = null): mixed
 Symfony\AI\Platform\Tool\Tool::getName(): public function getName(): string
+Symfony\AI\Platform\Tool\Tool::getOutputSchema(): public function getOutputSchema(): array|null
 Symfony\AI\Platform\Tool\Tool::getParameters(): public function getParameters(): array|null
 Symfony\AI\Platform\Tool\Tool::getReference(): public function getReference(): Symfony\AI\Platform\Tool\ExecutionReference
 Symfony\AI\Platform\Tool\Tool::isDestructive(): public function isDestructive(): bool
