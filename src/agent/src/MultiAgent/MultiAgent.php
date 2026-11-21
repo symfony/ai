@@ -180,8 +180,19 @@ final class MultiAgent implements AgentInterface
                 return null;
             }
 
-            // the agent may have been called with a part of the input only
-            return $input->merge(new MessageBag(...\array_slice($agentMessages->getMessages(), \count($messages))));
+            if ($input === $messages) {
+                return $agentMessages;
+            }
+
+            // A handoff owns only its question; keep the parent transcript and append the delegate's work.
+            $question = $messages->getUserMessage();
+            foreach ($agentMessages as $message) {
+                if (null === $question || !$message->getId()->equals($question->getId())) {
+                    $input = $input->with($message);
+                }
+            }
+
+            return $input;
         });
     }
 

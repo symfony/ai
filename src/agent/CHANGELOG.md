@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add `BeforeToolRoundContinuation` to update the resumable conversation between tool rounds
  * Allow the `#[AsTool]` attribute on public methods, making the tool call the method it is placed on
  * [BC BREAK] Accept a `Symfony\AI\Platform\Model` instance as model of `Agent`, `Input`, `Output` and as `model` option of `ModelOverrideInputProcessor`, widening the return type of their `getModel()` methods to `string|Model`
  * Add an optional reason to `ExecutionInterface::cancel()` and `Exception\CancellationException` carrying it, thrown by `getResult()` of a canceled execution

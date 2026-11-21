@@ -193,6 +193,12 @@ The agent loads the stored messages and adds the given messages it doesn't know 
 message ID, so passing the whole conversation or only the new message is the same. A message you create again from
 its text gets a new ID, and the agent adds it a second time.
 
+Stores implementing :class:`Symfony\\AI\\Agent\\MessageStore\\ReplaceableMessageStoreInterface` receive the
+original input in ``resume()`` instead. The agent uses the returned conversation without merging the input
+again. The store decides how to handle snapshots from before a replacement. The in-memory store rejects
+input containing a removed message ID with :class:`Symfony\\AI\\Agent\\Exception\\ConflictException`;
+continue with the conversation ID and any new messages instead.
+
 The agent saves the conversation after adding the input, after each round of tool calls and with the answer. A
 failed run therefore keeps its tool results.
 
@@ -1253,12 +1259,25 @@ They are provided while instantiating the agent instance::
 
 .. note::
 
-    Processors run once per ``call()``: input processors before the first model request, output processors on
-    the final result. When the agent calls tools, the assistant messages and tool results of each round are sent
-    to the model without passing through the input processors. For a change that must apply to every model request,
+    Input processors run once before the first model request. Output processors run on the final result.
+    For a change that must apply to every model request,
     for example redacting personal data, listen to the platform's
     :class:`Symfony\\AI\\Platform\\Event\\InvocationEvent` and
     :class:`Symfony\\AI\\Platform\\Event\\ResultConvertedEvent` instead.
+
+To change the resumable conversation after a completed tool round, listen to
+:class:`Symfony\\AI\\Agent\\Toolbox\\Event\\BeforeToolRoundContinuation`. Use ``getMessageBag()`` to inspect
+the conversation including all tool results, and ``setMessageBag()`` to replace it. For example, a listener can
+append a steering message or replace older exchanges with a summary. The replacement becomes the returned conversation
+and is saved before the next request. Replacing older messages requires a store supporting replacement;
+ordinary stores only accept appended messages. Appends preserve the prepared request. A replacement keeps the
+model, options and request-only system prompt (including retrieved memory) for this call. If input processors
+changed other messages, or the replacement changes the instructions underlying that prompt, the agent rejects
+the replacement rather than dropping processor changes. The event is skipped when a tool listener supplies the final result.
+
+The event exposes the agent name for listeners on a shared dispatcher. It does not run before the first
+model request. Compaction policies should check that request separately, account for new tool results not
+included in the preceding model's usage, and keep tool calls together with all of their results.
 
 InputProcessor
 ~~~~~~~~~~~~~~
