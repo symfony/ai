@@ -68,6 +68,19 @@ final class MarkdownLoaderTest extends TestCase
         $this->assertSame("Hello\n\nThis is bold and a link.", $document->getContent());
     }
 
+    public function testStripFormattingKeepsUnderscoresInsideWords()
+    {
+        $file = $this->createTempFile('Set `max_retry_count` in config_file.yaml, it is _important_ and __required__.');
+
+        $loader = new MarkdownLoader();
+        $documents = iterator_to_array($loader->load($file, [
+            'strip_formatting' => true,
+        ]));
+
+        $this->assertCount(1, $documents);
+        $this->assertSame('Set max_retry_count in config_file.yaml, it is important and required.', $documents[0]->getContent());
+    }
+
     public function testLoadEmptyFileYieldsNothing()
     {
         $file = $this->createTempFile('   ');
