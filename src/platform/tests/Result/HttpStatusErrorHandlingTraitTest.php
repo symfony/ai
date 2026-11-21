@@ -313,6 +313,45 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         }
     }
 
+    /**
+     * Hugging Face TGI returns errors as a flat top-level string under `error`.
+     *
+     * @param class-string<\Throwable> $exception
+     */
+    #[DataProvider('stringErrorStatusCodes')]
+    public function testReadsFlatStringErrorMessage(int $status, string $exception, string $expectedMessage)
+    {
+        $response = $this->response('{"error":"Model is loading"}', $status);
+
+        $this->expectException($exception);
+        $this->expectExceptionMessage($expectedMessage);
+
+        $this->subject()->throwOnHttpError($response);
+    }
+
+    /**
+     * @return iterable<string, array{int, class-string<\Throwable>, string}>
+     */
+    public static function stringErrorStatusCodes(): iterable
+    {
+        yield '400 Bad Request' => [400, BadRequestException::class, 'HTTP 400 returned for "https://example.test/": Model is loading'];
+        yield '401 Unauthorized' => [401, AuthenticationException::class, 'HTTP 401 returned for "https://example.test/": Model is loading'];
+        yield '404 Not Found' => [404, ModelNotFoundException::class, 'HTTP 404 returned for "https://example.test/": Model is loading'];
+        yield '422 Unprocessable Entity' => [422, BadRequestException::class, 'HTTP 422 returned for "https://example.test/": Model is loading'];
+        yield '429 Too Many Requests' => [429, RateLimitExceededException::class, 'Rate limit exceeded. HTTP 429 returned for "https://example.test/": Model is loading'];
+        yield '503 Service Unavailable' => [503, ServerException::class, 'Server error (HTTP 503). HTTP 503 returned for "https://example.test/": Model is loading'];
+    }
+
+    public function testFallsBackToMessageWhenStringErrorIsEmpty()
+    {
+        $response = $this->response('{"error":"","message":"Fallback reason"}', 503);
+
+        $this->expectException(ServerException::class);
+        $this->expectExceptionMessage('Server error (HTTP 503). HTTP 503 returned for "https://example.test/": Fallback reason');
+
+        $this->subject()->throwOnHttpError($response);
+    }
+
     public function testThrowsRateLimitExceededExceptionOn429WithRetryAfter()
     {
         $response = $this->response('{"message":"Too many requests"}', 429, ['retry-after' => '42']);
