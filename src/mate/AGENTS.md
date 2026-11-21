@@ -90,6 +90,13 @@ parallel) and one failing call does not abort the others. Each result is reporte
 `ok`/`result`/`error`, and the command exits non-zero when any call failed. The batch runs the named
 tools as given and makes no read-only check.
 
+A call may add `id`, `output` and `pick`. `{{id.path}}` in `params` or a `resource` URI takes a value
+from an earlier call with that id (`[0]`, `[*]` and `[:n]` select list elements, and the
+`untrusted_data` envelope is skipped automatically). A string that is exactly one expression keeps the
+type of the value. An unresolvable reference skips only that call and its error lists the available
+keys. `output: false` hides an entry (a failure is still shown). `pick: ["path", ...]` trims a result
+to those paths and lists the empty ones in `missing_paths`. References always see the full result.
+
 ## Agent Instructions Materialization
 
 Running `bin/mate discover` generates `mate/AGENT_INSTRUCTIONS.md` with extension-specific instructions and maintains a managed block in `AGENTS.md` with a summary of installed extensions. AI agents should read these files to learn about the available `mate` tools rather than relying on hardcoded tool lists.

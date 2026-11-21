@@ -158,7 +158,8 @@ These are the five commands a coding agent uses.
 
     ``--json=JSON``
         A JSON array of ``{"tool": "...", "params": {...}}`` or ``{"resource": "<uri>"}`` call objects
-        (``params`` is optional for a tool that takes none).
+        (``params`` is optional for a tool that takes none). A call may also carry ``id``,
+        ``output`` and ``pick`` (see below).
 
     ``--format=FORMAT``
         ``pretty`` (default, one section per tool), ``json`` or ``toon``.
@@ -167,7 +168,43 @@ These are the five commands a coding agent uses.
 
     A JSON array, one entry per call, in the same order as the request:
     ``{"tool": "...", "ok": true|false, "result": <decoded tool output>|null, "error": "..."|null}``.
-    A resource read reports ``resource`` with the URI instead of ``tool``.
+    A resource read reports ``resource`` with the URI instead of ``tool``. An entry also has ``id``
+    when the call had one, and ``missing_paths`` when a ``pick`` path found nothing.
+
+    **Chaining calls:**
+
+    ``id``
+        Names a call so later calls can use its result. Lowercase letters, digits and ``_``, starting
+        with a letter, unique in the batch.
+
+    ``{{id.path}}``
+        Anywhere inside ``params`` (any depth) or inside a ``resource`` URI, a string like this is
+        replaced by a value of an earlier call. If the string is exactly one expression, the value
+        keeps its type (a number stays a number, a list stays a list). Inside a longer string the
+        value is inserted as text, which only works for scalars. Write ``\{{`` for a literal ``{{``.
+        A reference may only point to an earlier call that has an ``id``. An unknown id or a forward
+        reference is rejected before anything runs.
+
+    Paths use ``a.b`` for fields, ``[0]`` for one list element, ``[*]`` for all elements (the rest of
+    the path is applied to each) and ``[:3]`` for the first three. Paths are resolved against
+    the full result of the earlier call, also when that call uses ``pick`` or ``output: false``. If a
+    result is wrapped in ``untrusted_data``, paths start inside it, so ``list.profiles[0].token``
+    needs no ``untrusted_data`` prefix.
+
+    When a reference cannot be resolved (empty list, missing field, the referenced call failed), the
+    dependent call does not run. Its entry is ``ok: false`` and the error names the path, the reason
+    and the keys available at that level. Other calls continue. A call that depends on such a call
+    fails with ``depends on failed call <id>``.
+
+    ``output``
+        ``false`` hides the entry from the output. The call still runs and can be referenced. A failed
+        call is shown anyway and still makes the exit code non-zero.
+
+    ``pick``
+        A non-empty list of paths. Only these values are kept: the result becomes an object keyed
+        by the path strings. With an ``untrusted_data`` envelope, ``_security_notice`` stays and
+        the content of ``untrusted_data`` is replaced. Paths without a value are null and listed
+        in ``missing_paths``. Works for tool calls and resource reads.
 
     **Examples:**
 
@@ -178,6 +215,9 @@ These are the five commands a coding agent uses.
 
         # Read several resources of one profile together with a tool call
         $ vendor/bin/mate tools:call-batch --json='[{"tool": "symfony-profiler-list", "params": {"limit": 1}}, {"resource": "symfony-profiler://profile/abc123/db"}, {"resource": "symfony-profiler://profile/abc123/time"}]'
+
+        # Chain: list a profile, fetch it by the token from the list, keep two fields
+        $ vendor/bin/mate tools:call-batch --json='[{"id": "list", "tool": "symfony-profiler-list", "params": {"limit": 1}, "output": false}, {"tool": "symfony-profiler-get", "params": {"token": "{{list.profiles[0].token}}"}, "pick": ["request.status_code", "request.path"]}]'
 
         # JSON output format
         $ vendor/bin/mate tools:call-batch --json='[{"tool": "server-info"}]' --format=json
