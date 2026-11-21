@@ -199,6 +199,7 @@ To help loading documents and integrate them into your RAG system, you can use t
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\InMemoryLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\JsonFileLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\MarkdownLoader`
+* :class:`Symfony\\AI\\Store\\Document\\Loader\\PdfLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\RssFeedLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\RstLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\RstToctreeLoader`
