@@ -12,14 +12,17 @@
 namespace Symfony\AI\Mate\Tests\Command;
 
 use HelgeSverre\Toon\Toon;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\AI\Mate\Command\ToolsCallBatchCommand;
 use Symfony\AI\Mate\Discovery\CapabilityRegistry;
 use Symfony\AI\Mate\Discovery\ReflectionDiscoverer;
+use Symfony\AI\Mate\Encoding\ResponseEncoder;
 use Symfony\AI\Mate\Invocation\HandlerInvoker;
 use Symfony\AI\Mate\Invocation\ResourceReader;
 use Symfony\AI\Mate\Invocation\ToolInvoker;
+use Symfony\AI\Mate\Tests\Command\BatchFixtures\ChainTool;
 use Symfony\AI\Mate\Tests\Command\Fixtures\SampleResources;
 use Symfony\AI\Mate\Tests\Command\Fixtures\SampleTool;
 use Symfony\Component\Console\Command\Command;
@@ -305,15 +308,279 @@ final class ToolsCallBatchCommandTest extends TestCase
         $this->assertStringContainsString('2 of 2 calls succeeded.', $output);
     }
 
+    public function testThreeStepChainUsesTokenFromTheListAndHidesTheFirstStep()
+    {
+        $results = $this->runJson([
+            ['id' => 'list', 'tool' => 'chain-list', 'params' => ['count' => 2], 'output' => false],
+            ['id' => 'one', 'tool' => 'chain-get', 'params' => ['token' => '{{list.profiles[0].token}}']],
+            ['tool' => 'chain-search', 'params' => ['limit' => '{{list.total}}', 'query' => 'for {{one.token}}']],
+        ], $status);
+
+        $this->assertSame(Command::SUCCESS, $status);
+        $this->assertCount(2, $results);
+        $this->assertSame('one', $results[0]['id']);
+        $this->assertSame('tok1', $results[0]['result']['untrusted_data']['token']);
+        $this->assertArrayNotHasKey('id', $results[1]);
+        $this->assertSame(2, $results[1]['result']['limit']);
+        $this->assertSame('int', $results[1]['result']['limit_type']);
+        $this->assertSame('for tok1', $results[1]['result']['query']);
+    }
+
+    public function testWholeExpressionKeepsArraysInNestedParams()
+    {
+        $results = $this->runJson([
+            ['id' => 'list', 'tool' => 'chain-list', 'output' => false],
+            ['tool' => 'chain-items', 'params' => ['items' => '{{list.profiles[*].token}}']],
+        ]);
+
+        $this->assertSame(['tok1', 'tok2'], $results[0]['result']['items']);
+    }
+
+    public function testEscapeKeepsLiteralBraces()
+    {
+        $results = $this->runJson([['tool' => 'sample-echo', 'params' => ['text' => 'a \\{{b.c}}']]]);
+
+        $this->assertSame('a {{b.c}}', $results[0]['result']);
+    }
+
+    public function testResolvedReferenceInResourceUri()
+    {
+        $results = $this->runJson([
+            ['id' => 'list', 'tool' => 'chain-list', 'output' => false],
+            ['resource' => 'chain://profile/{{list.profiles[1].token}}'],
+        ]);
+
+        $this->assertSame('chain://profile/tok2', $results[0]['resource']);
+        $this->assertSame('tok2', $results[0]['result']['untrusted_data']['token']);
+    }
+
+    public function testHiddenFailedCallIsStillShownAndFailsTheExitCode()
+    {
+        $results = $this->runJson([
+            ['id' => 'boom', 'tool' => 'sample-fail', 'output' => false],
+            ['tool' => 'sample-add', 'params' => ['a' => 1]],
+        ], $status);
+
+        $this->assertSame(Command::FAILURE, $status);
+        $this->assertCount(2, $results);
+        $this->assertSame('boom', $results[0]['id']);
+        $this->assertFalse($results[0]['ok']);
+    }
+
+    public function testPickOnToolResultKeepsNoticeAndFillsMissingPaths()
+    {
+        $results = $this->runJson([
+            ['tool' => 'chain-list', 'pick' => ['profiles[0].token', 'total', 'profiles[*].status', 'nope.x']],
+        ]);
+
+        $this->assertSame(ResponseEncoder::UNTRUSTED_NOTICE, $results[0]['result']['_security_notice']);
+        $this->assertSame(['_security_notice', 'untrusted_data'], array_keys($results[0]['result']));
+        $this->assertSame([
+            'profiles[0].token' => 'tok1',
+            'total' => 2,
+            'profiles[*].status' => [201, 202],
+            'nope.x' => null,
+        ], $results[0]['result']['untrusted_data']);
+        $this->assertSame(['nope.x'], $results[0]['missing_paths']);
+    }
+
+    public function testPickWithoutEnvelopeReplacesTheResult()
+    {
+        $results = $this->runJson([['tool' => 'sample-add', 'params' => ['a' => 2, 'b' => 3], 'pick' => ['sum']]]);
+
+        $this->assertSame(['sum' => 5], $results[0]['result']);
+        $this->assertArrayNotHasKey('missing_paths', $results[0]);
+    }
+
+    public function testPickOnResourceRead()
+    {
+        $results = $this->runJson([['resource' => 'chain://profile/abc', 'pick' => ['db.queries', 'db.slow']]]);
+
+        $this->assertSame(['db.queries' => 7, 'db.slow' => null], $results[0]['result']['untrusted_data']);
+        $this->assertSame(['db.slow'], $results[0]['missing_paths']);
+    }
+
+    public function testReferenceSeesTheFullResultNotThePickedOne()
+    {
+        $results = $this->runJson([
+            ['id' => 'list', 'tool' => 'chain-list', 'pick' => ['total']],
+            ['tool' => 'chain-get', 'params' => ['token' => '{{list.profiles[1].token}}']],
+        ]);
+
+        $this->assertSame(['total' => 2], $results[0]['result']['untrusted_data']);
+        $this->assertSame('tok2', $results[1]['result']['untrusted_data']['token']);
+    }
+
+    public function testEmptyListSkipsTheDependentCallButRunsTheRest()
+    {
+        $results = $this->runJson([
+            ['id' => 'list', 'tool' => 'chain-list', 'params' => ['count' => 0], 'output' => false],
+            ['id' => 'one', 'tool' => 'chain-get', 'params' => ['token' => '{{list.profiles[0].token}}']],
+            ['tool' => 'sample-add', 'params' => ['a' => 1, 'b' => 1]],
+        ], $status);
+
+        $this->assertSame(Command::FAILURE, $status);
+        $this->assertFalse($results[0]['ok']);
+        $this->assertNull($results[0]['result']);
+        $this->assertSame('chain-get', $results[0]['tool']);
+        $this->assertStringContainsString('{{list.profiles[0].token}}', $results[0]['error']);
+        $this->assertStringContainsString('"profiles" is empty', $results[0]['error']);
+        $this->assertStringContainsString('empty list', $results[0]['error']);
+        $this->assertTrue($results[1]['ok']);
+    }
+
+    public function testMissingFieldListsAvailableKeys()
+    {
+        $results = $this->runJson([
+            ['id' => 'list', 'tool' => 'chain-list', 'output' => false],
+            ['tool' => 'chain-get', 'params' => ['token' => '{{list.profiles[0].nope}}']],
+        ]);
+
+        $this->assertFalse($results[0]['ok']);
+        $this->assertStringContainsString('has no field "nope"', $results[0]['error']);
+        $this->assertStringContainsString('Available: token, status, id', $results[0]['error']);
+    }
+
+    public function testReferenceToFailedCallNamesTheCauseAndTransitiveDependentsFail()
+    {
+        $results = $this->runJson([
+            ['id' => 'boom', 'tool' => 'sample-fail', 'output' => false],
+            ['id' => 'next', 'tool' => 'chain-get', 'params' => ['token' => '{{boom.x}}']],
+            ['tool' => 'chain-get', 'params' => ['token' => '{{next.token}}']],
+        ], $status);
+
+        $this->assertSame(Command::FAILURE, $status);
+        $this->assertCount(3, $results);
+        $this->assertStringContainsString('call boom failed: Sample tool failure', $results[1]['error']);
+        $this->assertSame('Depends on failed call "next".', $results[2]['error']);
+        $this->assertFalse($results[2]['ok']);
+    }
+
+    public function testArrayInsideLongerStringFailsTheCall()
+    {
+        $results = $this->runJson([
+            ['id' => 'list', 'tool' => 'chain-list', 'output' => false],
+            ['tool' => 'sample-echo', 'params' => ['text' => 'x {{list.profiles}}']],
+        ]);
+
+        $this->assertFalse($results[0]['ok']);
+        $this->assertStringContainsString('cannot be inserted into a longer string', $results[0]['error']);
+    }
+
+    public function testForwardReferenceIsRejectedBeforeAnythingRuns()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['--json' => json_encode([
+            ['tool' => 'sample-fail'],
+            ['tool' => 'chain-get', 'params' => ['token' => '{{later.token}}']],
+            ['id' => 'later', 'tool' => 'chain-list'],
+        ])]);
+
+        $this->assertSame(Command::FAILURE, $tester->getStatusCode());
+        $this->assertStringContainsString('earlier call', $tester->getDisplay());
+        $this->assertStringNotContainsString('Sample tool failure', $tester->getDisplay());
+    }
+
+    public function testUnknownIdIsRejected()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['--json' => json_encode([
+            ['id' => 'a', 'tool' => 'chain-list'],
+            ['resource' => 'chain://profile/{{zzz.token}}'],
+        ])]);
+
+        $this->assertSame(Command::FAILURE, $tester->getStatusCode());
+        $this->assertStringContainsString('no call has the id "zzz"', $tester->getDisplay());
+        $this->assertStringContainsString('Earlier ids: a', $tester->getDisplay());
+    }
+
+    /**
+     * @param array<string, mixed> $call
+     */
+    #[DataProvider('provideInvalidCallKeys')]
+    public function testInvalidIdOutputOrPickIsRejected(array $call, string $message)
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['--json' => json_encode([$call])]);
+
+        $this->assertSame(Command::FAILURE, $tester->getStatusCode());
+        $this->assertStringContainsString($message, $tester->getDisplay());
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, string}>
+     */
+    public static function provideInvalidCallKeys(): iterable
+    {
+        yield 'uppercase id' => [['id' => 'Abc', 'tool' => 'sample-fail'], 'invalid "id"'];
+        yield 'numeric id' => [['id' => 5, 'tool' => 'sample-fail'], 'invalid "id"'];
+        yield 'non-bool output' => [['output' => 'no', 'tool' => 'sample-fail'], 'non-boolean "output"'];
+        yield 'empty pick' => [['pick' => [], 'tool' => 'sample-fail'], 'invalid "pick"'];
+        yield 'pick with bad path' => [['pick' => ['a[x]'], 'tool' => 'sample-fail'], 'Invalid path'];
+        yield 'pick with non-string' => [['pick' => [1], 'tool' => 'sample-fail'], 'non-string entry'];
+        yield 'unknown key' => [['name' => 'a', 'tool' => 'sample-fail'], 'unknown key "name"'];
+    }
+
+    public function testDuplicateIdIsRejected()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['--json' => json_encode([
+            ['id' => 'a', 'tool' => 'chain-list'],
+            ['id' => 'a', 'tool' => 'chain-list'],
+        ])]);
+
+        $this->assertSame(Command::FAILURE, $tester->getStatusCode());
+        $this->assertStringContainsString('reuses the id "a"', $tester->getDisplay());
+    }
+
+    public function testPrettyFormatHidesHiddenCallsAndCountsAllOfThem()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['--json' => json_encode([
+            ['id' => 'list', 'tool' => 'chain-list', 'output' => false],
+            ['tool' => 'chain-get', 'params' => ['token' => '{{list.profiles[0].token}}'], 'pick' => ['nope']],
+        ])]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $this->assertStringNotContainsString('chain-list', $tester->getDisplay());
+        $this->assertStringContainsString('Paths without a value: nope', $tester->getDisplay());
+        $this->assertStringContainsString('2 of 2 calls succeeded.', $tester->getDisplay());
+    }
+
+    /**
+     * @param list<array<string, mixed>> $calls
+     *
+     * @param-out int                    $status
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function runJson(array $calls, ?int &$status = null): array
+    {
+        $tester = new CommandTester($this->createCommand());
+        $tester->execute(['--json' => json_encode($calls), '--format' => 'json']);
+        $status = $tester->getStatusCode();
+
+        $decoded = json_decode($tester->getDisplay(), true);
+        $this->assertIsArray($decoded, $tester->getDisplay());
+
+        return $decoded;
+    }
+
     private function createCommand(): ToolsCallBatchCommand
     {
         $container = new ContainerBuilder();
         $container->set(SampleTool::class, new SampleTool());
         $container->set(SampleResources::class, new SampleResources());
+        $container->set(ChainTool::class, new ChainTool());
 
         $logger = new NullLogger();
         $discoverer = new ReflectionDiscoverer($logger);
-        $registry = new CapabilityRegistry(__DIR__.'/../..', ['_custom' => ['dirs' => ['tests/Command/Fixtures'], 'includes' => []]], [], $discoverer, $logger);
+        $registry = new CapabilityRegistry(__DIR__.'/../..', ['_custom' => ['dirs' => ['tests/Command/Fixtures', 'tests/Command/BatchFixtures'], 'includes' => []]], [], $discoverer, $logger);
         $handlerInvoker = new HandlerInvoker($container);
         $invoker = new ToolInvoker($handlerInvoker);
         $reader = new ResourceReader($registry, $handlerInvoker);
