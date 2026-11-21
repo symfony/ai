@@ -66,6 +66,8 @@ final class McpPass implements CompilerPassInterface
         'mcp.resource_template' => 'addResourceTemplate',
     ];
 
+    private const FORMER_ATTRIBUTE_NAMESPACE = 'Mcp\\Capability\\Attribute\\';
+
     public function process(ContainerBuilder $container): void
     {
         /** @var array<string, array<string, list<string>>> $servers */
@@ -180,7 +182,7 @@ final class McpPass implements CompilerPassInterface
             $matcher->match('apps', $serviceId, $class);
         }
 
-        $this->assertPatternsAreUsed($matcher);
+        $this->assertPatternsAreUsed($matcher, $container);
 
         $container->setParameter('mcp.servers.unassigned', $unassigned);
 
@@ -205,7 +207,7 @@ final class McpPass implements CompilerPassInterface
         }
     }
 
-    private function assertPatternsAreUsed(ElementMatcher $matcher): void
+    private function assertPatternsAreUsed(ElementMatcher $matcher, ContainerBuilder $container): void
     {
         $unused = $matcher->getUnusedPatterns();
         if ([] === $unused) {
@@ -217,7 +219,59 @@ final class McpPass implements CompilerPassInterface
             $unused,
         );
 
-        throw new LogicException(\sprintf('The following MCP element patterns do not match any registered service: "%s". Elements are collected from container services carrying an MCP attribute, so check for a typo or make sure the class is registered as a service.', implode(', ', $messages)));
+        $message = \sprintf('The following MCP element patterns do not match any registered service: %s. Elements are collected from container services carrying an MCP attribute, so check for a typo or make sure the class is registered as a service.', implode(', ', $messages));
+
+        if ([] !== $classes = $this->classesWithFormerAttributes($container, array_column($unused, 1))) {
+            $message .= \sprintf(' mcp/sdk 0.10 moved the attributes from "%s" to "Mcp\\Server\\Capability\\Attribute\\", and the former ones are still used by: "%s".', self::FORMER_ATTRIBUTE_NAMESPACE, implode('", "', $classes));
+        }
+
+        throw new LogicException($message);
+    }
+
+    /**
+     * The classes under the given patterns that carry an attribute of the namespace the SDK
+     * used before 0.10. PHP ignores an attribute whose class does not exist, so such a class
+     * is never tagged and its pattern looks like a typo.
+     *
+     * @param list<string> $patterns
+     *
+     * @return list<string>
+     */
+    private function classesWithFormerAttributes(ContainerBuilder $container, array $patterns): array
+    {
+        $matcher = new ElementMatcher(['default' => ['tools' => $patterns]]);
+        $classes = [];
+
+        foreach ($container->getDefinitions() as $serviceId => $definition) {
+            if ($definition->isAbstract()) {
+                continue;
+            }
+
+            try {
+                $class = $container->getParameterBag()->resolveValue($definition->getClass() ?? $serviceId);
+            } catch (\Throwable) {
+                continue;
+            }
+
+            // Not autoloaded on purpose: attribute autoconfiguration already loaded the classes it
+            // looked at, and loading one here could fail in place of the error being reported.
+            if (!\is_string($class) || [] === $matcher->match('tools', $serviceId, $class) || !class_exists($class, false)) {
+                continue;
+            }
+
+            $reflection = new \ReflectionClass($class);
+            foreach ([$reflection, ...$reflection->getMethods()] as $reflector) {
+                foreach ($reflector->getAttributes() as $attribute) {
+                    if (str_starts_with($attribute->getName(), self::FORMER_ATTRIBUTE_NAMESPACE)) {
+                        $classes[$class] = $class;
+
+                        continue 3;
+                    }
+                }
+            }
+        }
+
+        return array_values($classes);
     }
 
     /**
