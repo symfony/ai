@@ -32,6 +32,12 @@ movies:
         template:  'chat.html.twig'
         context: { chat: 'movies' }
 
+party_game:
+    path: '/party-game'
+    controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
+    defaults:
+        template: 'party_game.html.twig'
+
 crop:
     path: '/crop'
     controller: 'Symfony\Bundle\FrameworkBundle\Controller\TemplateController'
