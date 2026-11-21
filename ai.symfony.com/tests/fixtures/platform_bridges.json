@@ -1,0 +1,177 @@
+{
+    "updatedAt": "2026-09-30T08:09:17+00:00",
+    "bridges": {
+        "AiMlApi": {
+            "package": "symfony/ai-ai-ml-api-platform",
+            "downloads": 5944
+        },
+        "Albert": {
+            "package": "symfony/ai-albert-platform",
+            "downloads": 6207
+        },
+        "AmazeeAi": {
+            "package": "symfony/ai-amazee-ai-platform",
+            "downloads": 299
+        },
+        "Anthropic": {
+            "package": "symfony/ai-anthropic-platform",
+            "downloads": 441388
+        },
+        "Azure": {
+            "package": "symfony/ai-azure-platform",
+            "downloads": 74892
+        },
+        "Bedrock": {
+            "package": "symfony/ai-bedrock-platform",
+            "downloads": 147174
+        },
+        "Cache": {
+            "package": "symfony/ai-cache-platform",
+            "downloads": 26883
+        },
+        "Cartesia": {
+            "package": "symfony/ai-cartesia-platform",
+            "downloads": 5943
+        },
+        "Cerebras": {
+            "package": "symfony/ai-cerebras-platform",
+            "downloads": 6365
+        },
+        "ClaudeCode": {
+            "package": "symfony/ai-claude-code-platform",
+            "downloads": 1361
+        },
+        "Codex": {
+            "package": "symfony/ai-codex-platform",
+            "downloads": 107
+        },
+        "Cohere": {
+            "package": "symfony/ai-cohere-platform",
+            "downloads": 313
+        },
+        "Decart": {
+            "package": "symfony/ai-decart-platform",
+            "downloads": 5938
+        },
+        "DeepSeek": {
+            "package": "symfony/ai-deep-seek-platform",
+            "downloads": 15090
+        },
+        "Deepgram": {
+            "package": "symfony/ai-deepgram-platform",
+            "downloads": 113
+        },
+        "DockerModelRunner": {
+            "package": "symfony/ai-docker-model-runner-platform",
+            "downloads": 5998
+        },
+        "EdenAi": {
+            "package": "symfony/ai-eden-ai-platform",
+            "downloads": 10
+        },
+        "ElevenLabs": {
+            "package": "symfony/ai-eleven-labs-platform",
+            "downloads": 9829
+        },
+        "Failover": {
+            "package": "symfony/ai-failover-platform",
+            "downloads": 13258
+        },
+        "Fireworks": {
+            "package": "symfony/ai-fireworks-platform",
+            "downloads": 3
+        },
+        "Gemini": {
+            "package": "symfony/ai-gemini-platform",
+            "downloads": 433965
+        },
+        "Generic": {
+            "package": "symfony/ai-generic-platform",
+            "downloads": 280193
+        },
+        "Higgsfield": {
+            "package": "symfony/ai-higgsfield-platform",
+            "downloads": 3
+        },
+        "HuggingFace": {
+            "package": "symfony/ai-hugging-face-platform",
+            "downloads": 11504
+        },
+        "LmStudio": {
+            "package": "symfony/ai-lm-studio-platform",
+            "downloads": 27063
+        },
+        "Meta": {
+            "package": "symfony/ai-meta-platform",
+            "downloads": 219332
+        },
+        "MiniMax": {
+            "package": "symfony/ai-mini-max-platform",
+            "downloads": 149
+        },
+        "Mistral": {
+            "package": "symfony/ai-mistral-platform",
+            "downloads": 87716
+        },
+        "ModelsDev": {
+            "package": "symfony/ai-models-dev-platform",
+            "downloads": 9547
+        },
+        "Ollama": {
+            "package": "symfony/ai-ollama-platform",
+            "downloads": 210381
+        },
+        "OpenAi": {
+            "package": "symfony/ai-open-ai-platform",
+            "downloads": 734480
+        },
+        "OpenResponses": {
+            "package": "symfony/ai-open-responses-platform",
+            "downloads": 551973
+        },
+        "OpenRouter": {
+            "package": "symfony/ai-open-router-platform",
+            "downloads": 83123
+        },
+        "Ovh": {
+            "package": "symfony/ai-ovh-platform",
+            "downloads": 2230
+        },
+        "Perplexity": {
+            "package": "symfony/ai-perplexity-platform",
+            "downloads": 10414
+        },
+        "Replicate": {
+            "package": "symfony/ai-replicate-platform",
+            "downloads": 5931
+        },
+        "Scaleway": {
+            "package": "symfony/ai-scaleway-platform",
+            "downloads": 22563
+        },
+        "Together": {
+            "package": "symfony/ai-together-platform",
+            "downloads": 9
+        },
+        "TransformersPhp": {
+            "package": "symfony/ai-transformers-php-platform",
+            "downloads": 6013
+        },
+        "TypeSafe": {
+            "package": "symfony/ai-type-safe-platform",
+            "downloads": 374
+        },
+        "Venice": {
+            "package": "symfony/ai-venice-platform",
+            "downloads": 3
+        },
+        "VertexAi": {
+            "package": "symfony/ai-vertex-ai-platform",
+            "downloads": 169544
+        },
+        "Voyage": {
+            "package": "symfony/ai-voyage-platform",
+            "downloads": 13493
+        }
+    }
+}

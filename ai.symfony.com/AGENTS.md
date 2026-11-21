@@ -25,15 +25,26 @@ bin/console debug:asset-map
 bin/console importmap:require <package>
 ```
 
-There is no test suite for this application.
+```bash
+# Run the test suite
+vendor/bin/phpunit
+```
 
 ## Architecture
 
-- **Single route**: `DefaultController::homepage()` serves `/` rendering `homepage.html.twig`
+- **Routes**: `DefaultController` serves `/` rendering `homepage.html.twig`, `CookbookController` the cookbook articles and `PlatformBridgeController` the platform bridges page
 - **Asset Mapper** (not Webpack): Frontend assets managed via Symfony's importmap system (`importmap.php`). No npm/node required.
-- **Stimulus controllers** in `assets/controllers/`: `typed_controller.js` (typing animation for hero code example), `hero_slider_controller.js`, `feature_tabs_controller.js`, `clipboard_controller.js`, `csrf_protection_controller.js`
+- **Stimulus controllers** in `assets/controllers/`: `typed_controller.js` (typing animation for hero code example), `hero_slider_controller.js`, `feature_tabs_controller.js`, `clipboard_controller.js`, `csrf_protection_controller.js`, `search_clear_controller.js` and `sticky_offset_controller.js` (platform bridges page)
 - **Bootstrap 5** for layout/styling, with custom CSS variables in `assets/styles/app.css` supporting light/dark theme toggle
 - **Templates**: `templates/base.html.twig` (layout), `templates/homepage.html.twig` (page content), `templates/_header.html.twig` (navigation partial)
+
+## Platform Bridges Page
+
+`/bridges/platforms` lists every platform bridge of `src/platform/src/Bridge` with faceted filters (Live Component `PlatformBridgeList`, filters kept in the query string). It only reads local files:
+
+- `config/platform_bridges.json`: the bridges listed in `splitsh.json` and their downloads on Packagist, written by `bin/console app:platform-bridges:update`. The `Update Platform Bridges` GitHub workflow runs it every morning and opens a pull request with the changes; nothing runs on Upsun. Without the file, the bridges come from the curation only.
+- `config/platform_bridges.yaml` classifies each bridge (kind, regions, hosting, capabilities...). Add an entry for every new bridge, only with facts documented by the provider; a test, run on pull requests by the `Platform Bridges` workflow, checks that every bridge of `splitsh.json` has one.
+- `assets/icons/brands/` holds the logos of the providers, referenced as `brands:<name>` in the curation, see its README for their sources and licences.
 
 ## Key Files
 
