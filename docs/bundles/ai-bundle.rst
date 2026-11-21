@@ -1286,6 +1286,18 @@ bundles share one connection:
                 tools:
                     - { mcp_server: 'research.filesystem' } # tools reach the model as "filesystem_<name>", change it with "prefix"
 
+To give an agent only some of the tools of a server, list them with ``only``, or leave some out with
+``exclude`` (applied after ``only``). Both take the names the server advertises, without the prefix:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        agent:
+            my_agent:
+                tools:
+                    - { mcp_server: 'research.filesystem', only: ['read_file', 'list_directory'] }
+
 The list stays explicit: an agent listing only ``mcp_server`` entries gets only the tools of those
 servers. To offer local tools next to them, list those tools as well. A server that cannot be reached
 contributes no tools; lower its ``init_timeout`` and ``max_retries`` to notice that sooner.

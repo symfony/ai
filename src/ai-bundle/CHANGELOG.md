@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add the `only` and `exclude` options to the `mcp_server` tools, to give an agent a subset of the tools of a server
  * Autoconfigure services with the `#[AsTool]` attribute on public methods
  * Register `ModelOverrideInputProcessor` for every agent, so the `model` option of `AgentInterface::call()` selects the model of that call
  * Add the `base_url` option to the `mistral` platform
