@@ -57,6 +57,24 @@ final class StoreTest extends TestCase
         $this->assertCount(0, $result);
     }
 
+    public function testDropKeepsTheOtherItemsOfThePool()
+    {
+        $cache = new ArrayAdapter();
+        $cache->save($cache->getItem('app_item')->set('value'));
+
+        $otherStore = new Store($cache, cacheKey: 'other_store');
+        $otherStore->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.1, 0.5])));
+
+        $store = new Store($cache);
+        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.7, -0.3, 0.0])));
+
+        $store->drop();
+
+        $this->assertFalse($cache->hasItem('_vectors'));
+        $this->assertSame('value', $cache->getItem('app_item')->get());
+        $this->assertSame(1, $otherStore->count());
+    }
+
     public function testStoreCanSearchUsingCosineDistance()
     {
         $store = new Store(new ArrayAdapter());
