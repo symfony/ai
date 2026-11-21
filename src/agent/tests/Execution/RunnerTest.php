@@ -220,6 +220,49 @@ final class RunnerTest extends TestCase
         $this->drive($this->createRunner($platform, $toolbox), new MessageBag(), ['tools' => ['tool1']]);
     }
 
+    public function testToolsChangedDuringTheRunAreExposedToTheNextModelCall()
+    {
+        $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);
+        $tool2 = new Tool(new ExecutionReference('ClassTool2', 'method1'), 'tool2', 'description2', null);
+        $toolCall = new ToolCall('id1', 'tool1');
+
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturnOnConsecutiveCalls([$tool1], [$tool2]);
+        $toolbox->method('execute')->willReturn(new ToolResult($toolCall, 'Tool1 response'));
+
+        $invokedOptions = [];
+        $platform = MockPlatformFactory::createPlatform(static function (mixed $model, mixed $input, array $options) use (&$invokedOptions, $toolCall): ResultInterface {
+            $invokedOptions[] = $options;
+
+            return 1 === \count($invokedOptions) ? new ToolCallResult([$toolCall]) : new TextResult('Final response');
+        });
+
+        $this->drive($this->createRunner($platform, $toolbox), new MessageBag());
+
+        $this->assertEquals([
+            ['tools' => [$this->functionTool('tool1', 'description1')]],
+            ['tools' => [$this->functionTool('tool2', 'description2')]],
+        ], $invokedOptions);
+    }
+
+    public function testToolsOptionKeepsRestrictingAfterTheFirstModelCall()
+    {
+        $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);
+        $tool2 = new Tool(new ExecutionReference('ClassTool2', 'method1'), 'tool2', 'description2', null);
+        $toolCall = new ToolCall('id1', 'tool1');
+
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([$tool1, $tool2]);
+        $toolbox->method('execute')->willReturn(new ToolResult($toolCall, 'Tool1 response'));
+
+        $platform = $this->platform(new ToolCallResult([$toolCall]), new ToolCallResult([new ToolCall('id2', 'tool2')]));
+
+        $this->expectException(ToolNotFoundException::class);
+        $this->expectExceptionMessage('Tool not found for call: tool2.');
+
+        $this->drive($this->createRunner($platform, $toolbox), new MessageBag(), ['tools' => ['tool1']]);
+    }
+
     public function testStreamedToolCallOmittedFromTheToolsOptionIsNotExecuted()
     {
         $tool1 = new Tool(new ExecutionReference('ClassTool1', 'method1'), 'tool1', 'description1', null);

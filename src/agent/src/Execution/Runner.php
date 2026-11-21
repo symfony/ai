@@ -77,14 +77,14 @@ final class Runner
      */
     public function run(string|Model $model, MessageBag $messages, array $options, ?Cancellation $cancellation = null, ?\Closure $onToolRound = null): \Generator
     {
-        [$options, $allowedTools] = $this->exposeTools($options);
-
         $sources = new SourceCollection();
         $metadata = new Metadata();
         $iterations = 0;
 
         while (true) {
-            $deferredResult = $this->platform->invoke($model, $messages, $options);
+            [$roundOptions, $allowedTools] = $this->exposeTools($options);
+
+            $deferredResult = $this->platform->invoke($model, $messages, $roundOptions);
             $cancellation?->activate($deferredResult->getRawResult());
 
             try {
