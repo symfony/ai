@@ -208,6 +208,12 @@ The tool list is fetched on first use and kept. Call ``reset()`` on the toolbox 
 the next use, e.g. between the messages of a long-running worker. In a Symfony application the bundle
 tags the toolbox with ``kernel.reset``, so this happens after every request and message.
 
+What the server announces about a tool beyond its name, description and input schema lands in the
+tool's metadata: the annotations under their MCP field names (the effect hints described in
+:doc:`/components/agent`), and the ``outputSchema`` of a tool with structured results, readable
+through ``Tool::getOutputSchema()``. The platform bridges never send metadata to a provider, so the schema
+is yours to check a result against.
+
 `MCP Example`_
 
 .. note::

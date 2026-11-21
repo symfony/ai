@@ -74,6 +74,31 @@ final class McpToolboxTest extends TestCase
         $this->assertNull((new McpToolbox($toolset))->getTools()[0]->getParameters());
     }
 
+    public function testOutputSchemaBecomesToolMetadata()
+    {
+        $outputSchema = ['type' => 'object', 'properties' => ['fee' => ['type' => 'number']], 'required' => ['fee']];
+        $toolset = new StaticToolset(tools: [
+            new McpTool(
+                name: 'get_shipping',
+                title: null,
+                inputSchema: ['type' => 'object', 'properties' => new \stdClass(), 'required' => []],
+                description: null,
+                annotations: new ToolAnnotations(readOnlyHint: true),
+                outputSchema: $outputSchema,
+            ),
+            $this->remoteTool('echo'),
+        ]);
+
+        $tools = (new McpToolbox($toolset))->getTools();
+
+        $this->assertSame($outputSchema, $tools[0]->getOutputSchema());
+        $this->assertSame(['readOnlyHint' => true, 'outputSchema' => $outputSchema], $tools[0]->getMetadata());
+
+        // A tool without an announced result shape has no "outputSchema" key at all, not a null one.
+        $this->assertNull($tools[1]->getOutputSchema());
+        $this->assertSame([], $tools[1]->getMetadata());
+    }
+
     public function testAnnotationsBecomeToolMetadata()
     {
         $toolset = new StaticToolset(tools: [
