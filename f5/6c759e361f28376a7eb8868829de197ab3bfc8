@@ -1,0 +1,13 @@
+---------------------------------------------------------------------------
+
+by BackEndTea at 2026-09-24T07:08:28Z
+
+This seems nice, but from my experience (Codex with Sol 5.6, Sol 6 or Astra 6), the agent is pretty good at writing bash loops/combining calls into one.
+
+For my work so far it was a combining of resource reads, rather than tool calls
+
+---------------------------------------------------------------------------
+
+by wachterjohannes at 2026-11-20T22:05:49Z
+
+@BackEndTea thanks for the feedback in https://github.com/symfony/ai/pull/2591#issuecomment-5809476685. You are right that an agent can combine tool calls with a bash loop itself, and that the resource reads were the real case. The command now takes `{"resource": "<uri>"}` next to `{"tool": ...}`, so one call can read several collectors of a profile. Each entry reports its own `ok` and `error`, and the exit code is non-zero when any call failed.
