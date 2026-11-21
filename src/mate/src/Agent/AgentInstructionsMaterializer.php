@@ -316,6 +316,7 @@ final class AgentInstructionsMaterializer
             '- The tools report measured facts about the running application; prefer them over inferring the same information from reading code. They are described in `mate/AGENT_INSTRUCTIONS.md`.',
             '- When the user refers to something that already happened in the running application (a page they just opened, a form they submitted, a slow or failing request, a command they ran), the answer is a runtime fact the code cannot show: look it up with Mate first, then read the code.',
             \sprintf('- Discover the tool surface with `%s tools:list`, inspect parameters with `tools:inspect <tool>`, and run a tool with `tools:call <tool> --<param>=<value>` (add `--format=json` for machine-readable output).', $this->invocation),
+            \sprintf('- Need several tools or resources for one question? `%s tools:call-batch --json=\'[{"tool":"a","params":{}},{"resource":"scheme://uri"}]\'` runs them in one call and reports each result separately, saving a round trip per extra item.', $this->invocation),
             '- Installed extensions: '.$this->buildInstalledExtensionsText($extensions),
             self::AGENTS_END_MARKER,
         ]);
@@ -368,7 +369,7 @@ final class AgentInstructionsMaterializer
 No extension-specific instructions are currently available.
 Always invoke Mate as `{$mate}`.{$enforcement}
 Run `{$mate} discover` to refresh discovered extensions and instructions.
-Prefer `{$mate}` tools (`tools:list`, `tools:inspect`, `tools:call`) over equivalent shell commands when possible.
+Prefer `{$mate}` tools (`tools:list`, `tools:inspect`, `tools:call`, `tools:call-batch`) over equivalent shell commands when possible.
 TEXT;
     }
 }

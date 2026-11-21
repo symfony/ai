@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Tests\Command\Fixtures;
 
 use Symfony\AI\Mate\Attribute\MateTool;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
+use Symfony\AI\Mate\Exception\RuntimeException;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
@@ -61,5 +62,11 @@ final class SampleTool
     public function blob(int $size): string
     {
         return ResponseEncoder::encode(['blob' => str_repeat('x', $size)]);
+    }
+
+    #[MateTool(name: 'sample-fail', title: 'Sample Fail', description: 'Always throws')]
+    public function fail(): string
+    {
+        throw new RuntimeException('Sample tool failure');
     }
 }
