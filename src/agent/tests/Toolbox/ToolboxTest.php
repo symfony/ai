@@ -19,6 +19,7 @@ use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolDate;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolException;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolMisconfigured;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoAttribute1;
+use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoAttribute2;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolNoParams;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolOptionalParam;
 use Symfony\AI\Agent\Tests\Fixtures\Tool\ToolRequiredParams;
@@ -167,6 +168,37 @@ final class ToolboxTest extends TestCase
         $toolbox = new Toolbox([new ToolMisconfigured()], new ReflectionToolFactory());
 
         $toolbox->execute(new ToolCall('call_1234', 'tool_misconfigured'));
+    }
+
+    public function testAToolNameRegisteredByTwoToolsIsRefusedWhenListing()
+    {
+        $toolbox = new Toolbox([new ToolNoAttribute1(), new ToolNoAttribute2()], $this->factoryWithSharedName());
+
+        $this->expectException(ToolConfigurationException::class);
+        $this->expectExceptionMessage(\sprintf('Tool "shop" is registered more than once in the toolbox: %s::__invoke and %s::buy.', ToolNoAttribute1::class, ToolNoAttribute2::class));
+
+        $toolbox->getTools();
+    }
+
+    public function testAToolNameRegisteredByTwoToolsIsRefusedWhenExecuting()
+    {
+        $toolbox = new Toolbox([new ToolNoAttribute1(), new ToolNoAttribute2()], $this->factoryWithSharedName());
+
+        $this->expectException(ToolConfigurationException::class);
+
+        $toolbox->execute(new ToolCall('call_1234', 'shop', ['id' => 1, 'amount' => 2]));
+    }
+
+    public function testAToolListedTwiceIsNotRefused()
+    {
+        $tool = new ToolNoAttribute2();
+        $memoryFactory = (new MemoryToolFactory())
+            ->addTool($tool, 'buy', 'Buys a product', 'buy')
+            ->addTool($tool, 'cancel', 'Cancels an order', 'cancel');
+
+        $toolbox = new Toolbox([$tool, $tool], $memoryFactory);
+
+        $this->assertSame('You canceled order 42.', $toolbox->execute(new ToolCall('call_1234', 'cancel', ['orderId' => '42']))->getResult());
     }
 
     public function testExecuteWithException()
@@ -448,5 +480,12 @@ final class ToolboxTest extends TestCase
             $this->assertSame('Tool not found for call: tool_xyz.', $ex->getMessage());
             $this->assertSame('4321_ABC', $ex->getToolCall()->getId());
         }
+    }
+
+    private function factoryWithSharedName(): MemoryToolFactory
+    {
+        return (new MemoryToolFactory())
+            ->addTool(ToolNoAttribute1::class, 'shop', 'Generates birthday message')
+            ->addTool(ToolNoAttribute2::class, 'shop', 'Buys a product', 'buy');
     }
 }

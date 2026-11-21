@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Toolbox;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallArgumentsResolved;
+use Symfony\AI\Agent\Toolbox\Exception\ToolConfigurationException;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\Source\HasSourcesInterface;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
@@ -61,12 +62,24 @@ final class Toolbox extends AbstractToolbox
         }
 
         $toolsMetadata = [];
+        $instanceMap = [];
+        $firstMetadata = [];
         foreach ($this->tools as $tool) {
             foreach ($this->toolFactory->getTool($tool) as $metadata) {
-                $this->instanceMap[$metadata->getName()] = $tool;
+                $name = $metadata->getName();
+
+                if (!isset($instanceMap[$name])) {
+                    $instanceMap[$name] = $tool;
+                    $firstMetadata[$name] = $metadata;
+                } elseif ($instanceMap[$name] !== $tool) {
+                    throw ToolConfigurationException::duplicateToolNameInToolbox($name, $firstMetadata[$name], $metadata);
+                }
+
                 $toolsMetadata[] = $metadata;
             }
         }
+
+        $this->instanceMap = $instanceMap;
 
         return $this->toolsMetadata = $toolsMetadata;
     }
