@@ -1,55 +1,42 @@
 ---
 name: tools-call-batch
-description: Run several Mate tools and resource reads as one command call instead of one `tools:call` or `resources:read` per item. Reach for it when an investigation genuinely needs results from multiple tools together (e.g. correlating a profiler request with logs from the same time window), since each `tools:call` round-trip has a roughly fixed cost regardless of response size. Not for a single tool call, and not for tools that write or change state.
+description: Run several Mate tools and resource reads as one command call, and chain them so a later call uses a value from an earlier result (for example the token of the latest failed request). Reach for it when one investigation needs several results together, since each round trip costs about the same regardless of response size. Copy a ready JSON chain from references/recipes.md and change only the filter values. Not for a single tool call.
 ---
 
 # tools:call-batch
 
-`tools:call-batch --json='[...]'` runs several tools and resource reads in one command call. Each round-trip an
-agent makes back to Mate costs roughly the same regardless of how much a single tool response
-shrinks, because the whole conversation is resent every turn. When one investigation genuinely
-needs multiple tool results, one batched call replaces N individual `tools:call` invocations and
-saves the (N-1) extra round-trips.
+`tools:call-batch --json='[...]'` runs several tools and resource reads in one command call. A round trip back to Mate costs about the same however small the answer is, because the whole conversation is resent every turn. One batch replaces N separate calls.
 
-## When to reach for it
+## Start from a recipe
 
-Use it when the results of two or more tools answer **one** question together, not when you
-happen to be calling tools in sequence for unrelated reasons.
+Do not write a chain from scratch. Open `references/recipes.md` next to this file, copy the recipe that matches your question and change the filter values (status code, URL, search term). The paths inside the recipes are already correct.
 
-- Correlating a slow request with logs from the same time window: fetch the profiler profile and
-  search the logs for that window in one call.
-- Reading several collectors of one profile (`symfony-profiler://profile/<t>/db`, `/time`, `/logger`) in one call.
+`references/result-shapes.md` lists what each tool and resource returns, in case you need a field the recipes do not use.
 
-Do not reach for it for a single tool call (`tools:call` is simpler) or when later calls in the
-sequence depend on the result of an earlier one (e.g. reading a profiler token you don't have yet):
-those cannot be expressed as one JSON array up front and must stay separate `tools:call` calls.
+## The four building blocks
 
-## Usage
-
-```bash
-bin/mate tools:call-batch --json='[
-  {"tool": "symfony-profiler-get", "params": {"token": "abc123"}},
-  {"tool": "monolog-search", "params": {"level": "ERROR", "from": "2026-01-01T12:00:00"}}
-]'
+```json
+[
+  {"id": "list", "tool": "symfony-profiler-list", "params": {"statusCode": 500, "limit": 1}, "output": false},
+  {"id": "p", "tool": "symfony-profiler-get", "params": {"token": "{{list.profiles[0].token}}"}, "pick": ["url", "time_formatted"]},
+  {"tool": "monolog-search", "params": {"term": "{{p.url}}", "limit": 5}, "pick": ["entries[*].message"]}
+]
 ```
 
-Each entry is `{"tool": "<name>", "params": {...}}` (`params` is optional for a tool that takes
-none) or `{"resource": "<uri>"}` for a resource read. The result is a JSON array, one entry per call, in the same order:
-`{"tool": "...", "ok": true|false, "result": <decoded tool output>|null, "error": "..."|null}`.
-A resource read has `resource` (the URI) in place of `tool`.
+- **`id`** names a call so later calls can read its result.
+- **`{{id.path}}`** inside `params` or a `resource` URI is replaced by a value from the earlier call `id`. Write only the path inside the result. The `untrusted_data` wrapper is skipped for you. A reference may only point to an earlier call.
+- **`output: false`** hides a step you only need for its value.
+- **`pick`** keeps only the listed paths of the result. Use it on large results: profile details, log searches, collectors.
 
-Supports `--format=json` (default is a human-readable `pretty` rendering, one section per tool)
-and `--format=toon` when `helgesverre/toon` is installed, same as `tools:call`.
+Paths: `field.field` for fields, `[0]` for one list element, `[*]` for all elements, `[:5]` for the first five. A `{{ }}` around a whole value keeps its type, so a number stays a number.
 
-## What it does not do
+## Reading the answer
 
-- **No concurrency.** Calls run sequentially, in array order. The saving is the collapsed number
-  of agent-visible round-trips, not wall-clock parallelism; do not expect it to run faster than
-  the sum of the individual tool calls.
-- **No partial abort.** One call throwing or targeting an unknown tool name does not stop the
-  rest of the batch; every entry gets its own `ok`/`result`/`error`, so read the whole array.
-- **Runs tools as given.** There is no read-only check. Batch only tools you would also call
-  one by one.
-- **Exit code.** The command exits non-zero when any call failed. Call objects accept only the
-  keys `tool`, `params` and `resource`. A call has exactly one of `tool` and `resource`, and a
-  resource read takes no `params`.
+One entry per call, in order. `ok: false` carries an `error`. When a reference cannot be resolved, that call does not run and the error names the path, says why (for example "profiles is empty") and lists the fields that exist there. Fix the path from that list. Calls that depend on it fail with "depends on failed call". Paths that `pick` could not find are listed in `missing_paths`.
+
+## Limits
+
+- Calls run one after the other, not in parallel.
+- One failing call does not stop the others. The exit code is non-zero when any call failed.
+- Nothing checks whether a tool only reads. Batch only tools you would also call one by one.
+- A call is exactly one of `tool` or `resource`. A resource read takes no `params`.
