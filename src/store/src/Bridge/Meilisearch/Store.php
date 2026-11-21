@@ -131,7 +131,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'q' => $text,
             'vector' => $vector->getData(),
             'showRankingScore' => true,
-            'retrieveVectors' => true,
+            'retrieveVectors' => $options['retrieveVectors'] ?? true,
             'hybrid' => [
                 'embedder' => $this->embedder,
                 'semanticRatio' => $semanticRatio,
