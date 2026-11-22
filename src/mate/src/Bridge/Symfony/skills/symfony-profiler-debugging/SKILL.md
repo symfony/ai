@@ -93,6 +93,8 @@ vendor/bin/mate tools:call-batch --json='[{"tool": "symfony-profiler-get", "para
 
 `from` counts back from now, not from the request, so choose a window that still reaches the request.
 
+To start from the latest failed or slow request without knowing its token, chain the calls instead: copy a recipe from `references/recipes.md` of the `mate-tools-call-batch` skill (failed request with exception and logs, slowest part of a request, before and after a fix) and change only the filter values.
+
 Other collectors present in the profile (router, security, twig, ...) are readable at the same URI shape; they return raw dumps rather than a curated shape.
 
 ## Prove the fix

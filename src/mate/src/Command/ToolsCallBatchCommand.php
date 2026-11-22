@@ -12,11 +12,15 @@
 namespace Symfony\AI\Mate\Command;
 
 use HelgeSverre\Toon\Toon;
+use Symfony\AI\Mate\Command\Batch\PathResolver;
+use Symfony\AI\Mate\Command\Batch\ReferenceResolver;
 use Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait;
 use Symfony\AI\Mate\Command\Trait\RendersToolResultTrait;
 use Symfony\AI\Mate\Discovery\CapabilityRegistry;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
+use Symfony\AI\Mate\Exception\InvalidArgumentException;
 use Symfony\AI\Mate\Exception\ResourceNotFoundException;
+use Symfony\AI\Mate\Exception\RuntimeException;
 use Symfony\AI\Mate\Invocation\ResourceReader;
 use Symfony\AI\Mate\Invocation\ToolInvoker;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -35,8 +39,12 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  * call failing (unknown tool or resource, thrown exception) does not abort the others; each result
  * is reported independently so partial results are still useful.
  *
- * @phpstan-type BatchCall array{tool?: string, params?: array<string, mixed>, resource?: string}
- * @phpstan-type BatchResult array{tool?: string, resource?: string, ok: bool, result: mixed, error: string|null}
+ * A call may carry an `id` so later calls can use its result as `{{id.path}}` in their params or
+ * resource URI, `output: false` to keep it out of the output and `pick` to trim its result.
+ * References always resolve against the full result of the earlier call.
+ *
+ * @phpstan-type BatchCall array{id?: string, tool?: string, params?: array<string, mixed>, resource?: string, output?: bool, pick?: list<string>}
+ * @phpstan-type BatchResult array{id?: string, tool?: string, resource?: string, ok: bool, result: mixed, error: string|null, missing_paths?: list<string>}
  *
  * @author Johannes Wachter <johannes@sulu.io>
  */
@@ -69,7 +77,7 @@ class ToolsCallBatchCommand extends Command
         $script = $_SERVER['PHP_SELF'] ?? 'vendor/bin/mate';
 
         $this
-            ->addOption('json', null, InputOption::VALUE_REQUIRED, 'A JSON array of {"tool": "...", "params": {...}} or {"resource": "<uri>"} call objects')
+            ->addOption('json', null, InputOption::VALUE_REQUIRED, 'A JSON array of {"tool": "...", "params": {...}} or {"resource": "<uri>"} call objects. Optional per call: "id" (name for later references), "output": false (hide the entry), "pick": ["path", ...] (keep only these paths). Params and resource URIs may use "{{id.path}}" to read from an earlier call with an id, e.g. {{list.profiles[0].token}}, paths support a.b, [0], [*] and [:3]')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (json, pretty, toon)', 'pretty')
             ->setHelp(
                 <<<HELP
@@ -84,6 +92,9 @@ failing call does not abort the others.
 
   <comment># Mix tool calls and resource reads</comment>
   %command.full_name% --json='[{"tool": "symfony-profiler-list", "params": {"limit": 1}}, {"resource": "symfony-profiler://profile/abc123/db"}]'
+
+  <comment># Chain calls: name a call with "id", use its result as {{id.path}}, hide it with "output": false, trim with "pick"</comment>
+  %command.full_name% --json='[{"id": "list", "tool": "symfony-profiler-list", "params": {"limit": 1}, "output": false}, {"tool": "symfony-profiler-get", "params": {"token": "{{list.profiles[0].token}}"}, "pick": ["request.status_code"]}]'
 
   <comment># JSON output format for scripting</comment>
   %command.full_name% --json='[{"tool": "server-info"}]' --format=json
@@ -129,12 +140,19 @@ HELP
         /** @var list<BatchCall> $decoded */
         $results = $this->dispatch($decoded);
 
+        $shown = [];
+        foreach ($results as $index => $result) {
+            if (false !== ($decoded[$index]['output'] ?? true) || !$result['ok']) {
+                $shown[] = $result;
+            }
+        }
+
         if ('json' === $format) {
-            $output->writeln(json_encode($results, \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
+            $output->writeln(json_encode($shown, \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
         } elseif ('toon' === $format) {
-            $output->writeln(Toon::encode($results));
+            $output->writeln(Toon::encode($shown));
         } else {
-            $this->renderResultsPretty($results, $io, $output);
+            $this->renderResultsPretty($shown, \count($results), \count(array_filter($results, static fn (array $r): bool => !$r['ok'])), $io, $output);
         }
 
         foreach ($results as $result) {
@@ -160,41 +178,111 @@ HELP
             return 'The batch must contain at least one call.';
         }
 
+        $allIds = [];
+        foreach ($decoded as $call) {
+            if (\is_array($call) && isset($call['id']) && \is_string($call['id'])) {
+                $allIds[] = $call['id'];
+            }
+        }
+
+        $earlierIds = [];
         foreach ($decoded as $index => $call) {
             if (!\is_array($call)) {
                 return \sprintf('Call at index %d must be an object with a "tool" or a "resource".', $index);
             }
 
-            if ([] !== $unknown = array_diff(array_keys($call), ['tool', 'params', 'resource'])) {
-                return \sprintf('Call at index %d has unknown key "%s", only "tool", "params" and "resource" are allowed.', $index, implode('", "', array_map(strval(...), $unknown)));
+            if (null !== $error = $this->validateCall($index, $call)) {
+                return $error;
             }
 
-            $hasTool = isset($call['tool']);
-            $hasResource = isset($call['resource']);
-
-            if ($hasTool === $hasResource) {
-                return \sprintf('Call at index %d needs exactly one of "tool" or "resource".', $index);
+            if (isset($call['id']) && \in_array($call['id'], $earlierIds, true)) {
+                return \sprintf('Call at index %d reuses the id "%s", ids must be unique.', $index, $call['id']);
             }
 
-            if ($hasResource) {
-                if (!\is_string($call['resource']) || '' === $call['resource']) {
-                    return \sprintf('Call at index %d has an empty "resource" URI.', $index);
+            try {
+                $references = [...ReferenceResolver::collect($call['params'] ?? []), ...ReferenceResolver::collect($call['resource'] ?? '')];
+            } catch (InvalidArgumentException $e) {
+                return \sprintf('Call at index %d: %s', $index, $e->getMessage());
+            }
+
+            foreach ($references as $reference) {
+                if (\in_array($reference['id'], $earlierIds, true)) {
+                    continue;
                 }
 
-                if (isset($call['params'])) {
-                    return \sprintf('Call at index %d ("%s") is a resource read and cannot have "params".', $index, $call['resource']);
+                return \in_array($reference['id'], $allIds, true)
+                    ? \sprintf('Call at index %d uses %s, but call "%s" does not run before it. A reference may only point to an earlier call.', $index, $reference['expression'], $reference['id'])
+                    : \sprintf('Call at index %d uses %s, but no call has the id "%s". Earlier ids: %s.', $index, $reference['expression'], $reference['id'], [] === $earlierIds ? 'none' : implode(', ', $earlierIds));
+            }
+
+            if (isset($call['id'])) {
+                $earlierIds[] = $call['id'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<mixed> $call
+     */
+    private function validateCall(int $index, array $call): ?string
+    {
+        if ([] !== $unknown = array_diff(array_keys($call), ['id', 'tool', 'params', 'resource', 'output', 'pick'])) {
+            return \sprintf('Call at index %d has unknown key "%s", only "id", "tool", "params", "resource", "output" and "pick" are allowed.', $index, implode('", "', array_map(strval(...), $unknown)));
+        }
+
+        if (\array_key_exists('id', $call)) {
+            if (!\is_string($call['id']) || 1 !== preg_match('/^[a-z][a-z0-9_]*$/', $call['id'])) {
+                return \sprintf('Call at index %d has an invalid "id", it must match [a-z][a-z0-9_]*.', $index);
+            }
+        }
+
+        if (isset($call['output']) && !\is_bool($call['output'])) {
+            return \sprintf('Call at index %d has a non-boolean "output" value.', $index);
+        }
+
+        if (\array_key_exists('pick', $call)) {
+            if (!\is_array($call['pick']) || [] === $call['pick'] || !array_is_list($call['pick'])) {
+                return \sprintf('Call at index %d has an invalid "pick", it must be a non-empty list of paths.', $index);
+            }
+            foreach ($call['pick'] as $path) {
+                if (!\is_string($path)) {
+                    return \sprintf('Call at index %d has a non-string entry in "pick".', $index);
                 }
+                try {
+                    PathResolver::assertValid($path);
+                } catch (InvalidArgumentException $e) {
+                    return \sprintf('Call at index %d: %s', $index, $e->getMessage());
+                }
+            }
+        }
 
-                continue;
+        $hasTool = isset($call['tool']);
+        $hasResource = isset($call['resource']);
+
+        if ($hasTool === $hasResource) {
+            return \sprintf('Call at index %d needs exactly one of "tool" or "resource".', $index);
+        }
+
+        if ($hasResource) {
+            if (!\is_string($call['resource']) || '' === $call['resource']) {
+                return \sprintf('Call at index %d has an empty "resource" URI.', $index);
             }
 
-            if (!\is_string($call['tool']) || '' === $call['tool']) {
-                return \sprintf('Call at index %d is missing a "tool" name.', $index);
+            if (isset($call['params'])) {
+                return \sprintf('Call at index %d ("%s") is a resource read and cannot have "params".', $index, $call['resource']);
             }
 
-            if (isset($call['params']) && !\is_array($call['params'])) {
-                return \sprintf('Call at index %d ("%s") has a non-object "params" value.', $index, $call['tool']);
-            }
+            return null;
+        }
+
+        if (!\is_string($call['tool']) || '' === $call['tool']) {
+            return \sprintf('Call at index %d is missing a "tool" name.', $index);
+        }
+
+        if (isset($call['params']) && !\is_array($call['params'])) {
+            return \sprintf('Call at index %d ("%s") has a non-object "params" value.', $index, $call['tool']);
         }
 
         return null;
@@ -208,13 +296,104 @@ HELP
     private function dispatch(array $calls): array
     {
         $results = [];
+        // Full results of the earlier calls, so a pick never changes what a reference sees.
+        $raw = [];
+        $failed = [];
+        $skipped = [];
+
         foreach ($calls as $call) {
-            $results[] = isset($call['resource'])
-                ? $this->readResource($call['resource'])
-                : $this->dispatchOne($call['tool'] ?? '', $call['params'] ?? []);
+            $id = $call['id'] ?? null;
+            $label = isset($call['resource']) ? ['resource' => $call['resource']] : ['tool' => $call['tool'] ?? ''];
+
+            try {
+                $dependency = $this->findSkippedDependency($call, $skipped);
+                if (null !== $dependency) {
+                    throw new RuntimeException(\sprintf('Depends on failed call "%s".', $dependency));
+                }
+
+                $resource = isset($call['resource']) ? ReferenceResolver::resolve($call['resource'], $raw, $failed) : null;
+                if (isset($call['resource']) && !\is_string($resource)) {
+                    throw new RuntimeException(\sprintf('The resource URI "%s" did not resolve to a string.', $call['resource']));
+                }
+                $params = isset($call['resource']) ? [] : ReferenceResolver::resolve($call['params'] ?? [], $raw, $failed);
+            } catch (RuntimeException $e) {
+                $entry = $label + ['ok' => false, 'result' => null, 'error' => $e->getMessage()];
+                if (null !== $id) {
+                    $skipped[$id] = true;
+                }
+                $results[] = null !== $id ? ['id' => $id] + $entry : $entry;
+
+                continue;
+            }
+
+            /** @var array<string, mixed> $params */
+            $entry = \is_string($resource) ? $this->readResource($resource) : $this->dispatchOne($call['tool'] ?? '', $params);
+            if (null !== $id) {
+                if ($entry['ok']) {
+                    $raw[$id] = $entry['result'];
+                } else {
+                    $failed[$id] = \sprintf('call %s failed: %s', $id, $entry['error']);
+                }
+            }
+
+            if ($entry['ok'] && isset($call['pick'])) {
+                $entry = $this->applyPick($entry, $call['pick']);
+            }
+
+            $results[] = null !== $id ? ['id' => $id] + $entry : $entry;
         }
 
         return $results;
+    }
+
+    /**
+     * @param BatchCall           $call
+     * @param array<string, true> $skipped
+     */
+    private function findSkippedDependency(array $call, array $skipped): ?string
+    {
+        foreach ([...ReferenceResolver::collect($call['params'] ?? []), ...ReferenceResolver::collect($call['resource'] ?? '')] as $reference) {
+            if (isset($skipped[$reference['id']])) {
+                return $reference['id'];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param BatchResult  $entry
+     * @param list<string> $paths
+     *
+     * @return BatchResult
+     */
+    private function applyPick(array $entry, array $paths): array
+    {
+        $result = $entry['result'];
+        $content = PathResolver::unwrap($result);
+
+        $picked = [];
+        $missing = [];
+        foreach ($paths as $path) {
+            try {
+                $picked[$path] = PathResolver::resolve($content, $path);
+            } catch (RuntimeException) {
+                $picked[$path] = null;
+                $missing[] = $path;
+            }
+        }
+
+        if (\is_array($result) && \array_key_exists('untrusted_data', $result)) {
+            $entry['result'] = (isset($result['_security_notice']) ? ['_security_notice' => $result['_security_notice']] : []) + ['untrusted_data' => $picked];
+        } else {
+            $entry['result'] = $picked;
+        }
+
+        if ([] !== $missing) {
+            $entry['missing_paths'] = $missing;
+        }
+
+        return $entry;
     }
 
     /**
@@ -266,10 +445,11 @@ HELP
     /**
      * @param list<BatchResult> $results
      */
-    private function renderResultsPretty(array $results, SymfonyStyle $io, OutputInterface $output): void
+    private function renderResultsPretty(array $results, int $total, int $failedCount, SymfonyStyle $io, OutputInterface $output): void
     {
         foreach ($results as $result) {
-            $io->section($result['tool'] ?? $result['resource'] ?? '');
+            $name = $result['tool'] ?? $result['resource'] ?? '';
+            $io->section(isset($result['id']) ? \sprintf('%s (%s)', $name, $result['id']) : $name);
 
             if (!$result['ok']) {
                 $io->error($result['error'] ?? 'Unknown error');
@@ -278,10 +458,13 @@ HELP
             } else {
                 $this->renderPretty($result['result'], $io);
             }
+
+            if (isset($result['missing_paths'])) {
+                $io->warning(\sprintf('Paths without a value: %s', implode(', ', $result['missing_paths'])));
+            }
         }
 
-        $failed = array_filter($results, static fn (array $result): bool => !$result['ok']);
         $io->newLine();
-        $io->text(\sprintf('%d of %d calls succeeded.', \count($results) - \count($failed), \count($results)));
+        $io->text(\sprintf('%d of %d calls succeeded.', $total - $failedCount, $total));
     }
 }
