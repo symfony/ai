@@ -15,7 +15,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform(env('HUGGINGFACE_API_KEY'), httpClient: http_client());
 
 $messages = new MessageBag(Message::ofUser('What is the eighth prime number?'));
 $result = $platform->invoke('openai/gpt-oss-120b', $messages, [

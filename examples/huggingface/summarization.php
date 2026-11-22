@@ -13,7 +13,7 @@ use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform(env('HUGGINGFACE_API_KEY'), httpClient: http_client());
 
 $longText = <<<TEXT
     The tower is 324 metres (1,063 ft) tall, about the same height as an 81-storey building, and the tallest structure

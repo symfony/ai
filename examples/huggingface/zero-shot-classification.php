@@ -13,7 +13,7 @@ use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform(env('HUGGINGFACE_API_KEY'), httpClient: http_client());
 
 $text = 'Hi, I recently bought a device from your company but it is not working as advertised and I would like to get reimbursed!';
 $result = $platform->invoke('facebook/bart-large-mnli', $text, [

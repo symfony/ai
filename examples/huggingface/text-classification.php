@@ -13,7 +13,7 @@ use Symfony\AI\Platform\Bridge\HuggingFace\Factory;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform(env('HUGGINGFACE_API_KEY'), httpClient: http_client());
 
 $result = $platform->invoke('ProsusAI/finbert', 'I like you. I love you.');
 
