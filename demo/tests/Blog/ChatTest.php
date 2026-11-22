@@ -98,6 +98,6 @@ final class ChatTest extends TestCase
         $requestStack = new RequestStack();
         $requestStack->push($request);
 
-        return new Chat(new ConversationIds($requestStack), $this->messageStore, new Agent($platform, 'gpt-4.1', messageStore: $this->messageStore));
+        return new Chat(new ConversationIds($requestStack), $this->messageStore, new Agent($platform, 'gpt-6-luna', messageStore: $this->messageStore));
     }
 }

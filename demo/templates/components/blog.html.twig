@@ -15,9 +15,7 @@
         </div>
     </div>
     <div class="chat-composer" data-controller="chat-prompt">
-        {% if messages is empty %}
-            {{ include('_chat_prompts.html.twig', { prompts: ['What happened in the last Week of Symfony?', 'Which Symfony version is the latest?', 'When is the next SymfonyCon?'] }) }}
-        {% endif %}
+        {{ include('_chat_prompts.html.twig', { prompts: ['What happened in the last Week of Symfony?', 'Which Symfony version is the latest?', 'When is the next SymfonyCon?'] }) }}
         <form class="chat-form" {{ live_action('submit:prevent') }}>
             <input autofocus id="chat-message" data-model="norender|message" type="text" class="chat-input" placeholder="Ask about Symfony releases, features or events ..." autocomplete="off">
             <span class="chat-hint">↵ send</span>

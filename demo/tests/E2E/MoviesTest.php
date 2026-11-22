@@ -35,7 +35,7 @@ final class MoviesTest extends E2ETestCase
 
         // Two calls of the agent, plus the vectorization of the search query by the movie search.
         $panel->assertMetrics(platformCalls: 3, tools: 3, toolCalls: 1);
-        $panel->assertPlatformCall('gpt-4.1');
+        $panel->assertPlatformCall('gpt-6-luna');
         $panel->assertToolRegistered('movie_search');
         $panel->assertToolRegistered('search_by_director');
         $this->assertStringContainsString('movie_search', $panel->platformCalls()[0]['result']);
@@ -49,6 +49,13 @@ final class MoviesTest extends E2ETestCase
         $this->client->waitForVisibility('.movie-modal-panel');
 
         $this->assertSelectorTextContains('.movie-modal-panel', 'Inception');
+
+        // The director in the details asks for their movies as the next prompt, which closes the details.
+        $this->click('.movie-modal-panel .movie-name');
+        $this->waitForRemoval('.movie-modal-overlay');
+        $this->waitForBotMessage(2);
+
+        $this->assertSame('Christopher Nolan', $this->textOf('#chat-body .user-message:not(.loading)', 1));
     }
 
     #[Before]

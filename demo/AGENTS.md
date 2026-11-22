@@ -10,7 +10,7 @@ Symfony 8.0 demo application showcasing the Symfony AI components: RAG over the 
 
 ### Setup
 ```bash
-docker compose up -d                          # Start PostgreSQL (pgvector)
+docker compose up -d                          # Start PostgreSQL (pgvector) and Mercure, `symfony serve` does it as well
 composer install
 echo "OPENAI_API_KEY='sk-...'" > .env.local   # HUGGINGFACE_API_KEY only if you wire HF agents
 
@@ -52,9 +52,9 @@ symfony console app:blog:stream               # Streams the blog agent to the te
 ## Architecture
 
 ### AI Platforms
-`config/packages/ai.yaml` registers two platforms: `openai` and `huggingface`. Every agent currently routes to OpenAI — `blog` and `stream` on `gpt-4.1`, `wikipedia` on `gpt-6-luna` (it needs the commentary phase of gpt-5.4+), everything else (`youtube`, `recipe`, `mcp`, `speech`, `orchestrator`, `technical`, `fallback`) on `gpt-5-mini`. Speech also uses OpenAI `whisper-1` for STT and `tts-1` for TTS; the vectorizer uses `text-embedding-ada-002`. Hugging Face is configured but unused by any agent — wire it in explicitly if needed.
+`config/packages/ai.yaml` registers two platforms: `openai` and `huggingface`. Every agent except `document` (Mistral `mistral-medium-latest`) routes to OpenAI `gpt-6-luna` (`wikipedia` needs it for the commentary phase of gpt-5.4+). Speech also uses OpenAI `whisper-1` for STT and `gpt-4o-mini-tts` for TTS; the vectorizer uses `text-embedding-ada-002`. Hugging Face is configured but unused by any agent — wire it in explicitly if needed.
 
-The `Video` feature is the exception: `src/Video/TwigComponent.php` calls `PlatformInterface::invoke('gpt-5.2', ...)` directly (no agent in `ai.yaml`, no session, no tools) for one-shot webcam frame captioning.
+The `Video` feature is the exception: `src/Video/TwigComponent.php` calls `PlatformInterface::invoke('gpt-6-luna', ...)` directly (no agent in `ai.yaml`, no session, no tools) for one-shot webcam frame captioning.
 
 ### Chat Feature Pattern
 Most user-facing features under `src/<Feature>/` are a trio:
@@ -72,7 +72,7 @@ Retrieval: `SimilaritySearch` is constructed with `$retriever: '@ai.retriever.bl
 The `blog` agent also attaches `App\Blog\SymfonyVersionsMemory` under `memory:` — memories are distinct from tools and are merged into context automatically.
 
 ### Multi-Agent Orchestration (`support`)
-`ai.multi_agent.support` defines an `orchestrator` that hands off to `technical` on keyword match (`bug`, `problem`, `technical`, `error`, `code`, `debug`) and otherwise falls through to `fallback`. All three are OpenAI `gpt-5-mini` single agents under `ai.agent.*`. Routing changes go under `ai.multi_agent`, model/prompt changes under `ai.agent`.
+`ai.multi_agent.support` defines an `orchestrator` that hands off to `technical` on keyword match (`bug`, `problem`, `technical`, `error`, `code`, `debug`) and otherwise falls through to `fallback`. All three are OpenAI `gpt-6-luna` single agents under `ai.agent.*`. Routing changes go under `ai.multi_agent`, model/prompt changes under `ai.agent`.
 
 ### Speech Agent + Subagent Pattern
 The `speech` agent demonstrates two composition features:

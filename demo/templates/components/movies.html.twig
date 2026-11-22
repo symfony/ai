@@ -11,18 +11,12 @@
                 {% if suggestions is not empty %}
                     <div class="movie-suggestions d-flex flex-wrap gap-3">
                         {% for suggestion in suggestions %}
-                            <figure class="movie-suggestion mb-0 text-center">
-                                <button type="button"
-                                        class="movie-poster-btn"
-                                        title="{{ suggestion.reason }}"
-                                        {{ live_action('showDetails', { slug: suggestion.movie.slug }) }}>
-                                    {% include 'components/_movie_poster.html.twig' with { movie: suggestion.movie, aspect: '1 / 1', showText: false } only %}
-                                </button>
-                                <figcaption class="movie-poster-caption small mt-2">
-                                    <span class="fw-semibold d-block">{{ suggestion.movie.title }}</span>
-                                    {% if suggestion.movie.year %}<span class="text-muted">{{ suggestion.movie.year }}</span>{% endif %}
-                                </figcaption>
-                            </figure>
+                            <button type="button"
+                                    class="movie-suggestion movie-poster-btn text-start"
+                                    title="{{ suggestion.reason }}"
+                                    {{ live_action('showDetails', { slug: suggestion.movie.slug }) }}>
+                                {% include 'components/_movie_poster.html.twig' with { movie: suggestion.movie, aspect: '1 / 1' } only %}
+                            </button>
                         {% endfor %}
                     </div>
                 {% endif %}
@@ -46,9 +40,7 @@
         </div>
     {% endif %}
     <div class="chat-composer" data-controller="chat-prompt">
-        {% if messages is empty %}
-            {{ include('_chat_prompts.html.twig', { prompts: ['Movies by Christopher Nolan', 'Something with Tom Hanks', 'Something for a cozy evening'] }) }}
-        {% endif %}
+        {{ include('_chat_prompts.html.twig', { prompts: ['Movies by Christopher Nolan', 'Something with Tom Hanks', 'Something about the mafia'] }) }}
         <form class="chat-form" {{ live_action('submit:prevent') }}>
             <input autofocus id="chat-message" data-model="norender|message" type="text" class="chat-input" placeholder="What kind of movie are you looking for?" autocomplete="off">
             <span class="chat-hint">↵ send</span>

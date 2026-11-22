@@ -38,7 +38,7 @@ final class RecipeTest extends E2ETestCase
         $panel = $this->openAiPanel();
 
         $panel->assertMetrics(platformCalls: 1, toolCalls: 0);
-        $panel->assertPlatformCall('gpt-5-mini');
+        $panel->assertPlatformCall('gpt-6-luna');
 
         // Without tools, the agent answers in a single call.
         $calls = $panel->platformCalls();

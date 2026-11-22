@@ -99,6 +99,7 @@ final class TwigComponent
         $this->chat->submitMessage($this->message);
 
         $this->message = null;
+        $this->detailSlug = null;
     }
 
     #[LiveAction]

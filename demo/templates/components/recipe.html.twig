@@ -1,5 +1,4 @@
 {% import '_message.html.twig' as message %}
-{% set idle = not this.awaitingRecipe and not this.recipe %}
 
 <section class="chat" {{ attributes.defaults(stimulus_controller('recipe')) }}>
     {{ include('_chat_header.html.twig', { demo: demos.recipe }) }}
@@ -44,9 +43,7 @@
         </div>
     </div>
     <div class="chat-composer" data-controller="chat-prompt">
-        {% if idle %}
-            {{ include('_chat_prompts.html.twig', { prompts: ['Something quick with eggs and spinach', 'A vegan dinner for four', 'Fluffy pancakes for breakfast'] }) }}
-        {% endif %}
+        {{ include('_chat_prompts.html.twig', { prompts: ['Something quick with eggs and spinach', 'A vegan dinner for four', 'Fluffy pancakes for breakfast'] }) }}
         <form class="chat-form" {{ live_action('submit:prevent') }}>
             <input autofocus id="chat-message" data-model="norender|message" type="text" class="chat-input" placeholder="What would you like to cook?" autocomplete="off">
             <span class="chat-hint">↵ send</span>

@@ -15,6 +15,7 @@ export default class extends Controller {
                 .getElementById('loading-message')
                 .getElementsByClassName('user-message')[0].innerHTML = this.component.getData('message');
             document.getElementById('welcome')?.remove();
+            this.element.querySelector('.movie-modal-overlay')?.remove();
             document.getElementById('loading-message').removeAttribute('class');
             document.getElementById('chat-message').value = '';
             this.scrollToBottom();
@@ -28,6 +29,14 @@ export default class extends Controller {
             this.scrollToBottom();
         });
     };
+
+    ask({ params: { prompt } }) {
+        const input = document.getElementById('chat-message');
+
+        input.value = prompt;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.form.requestSubmit();
+    }
 
     scrollToBottom() {
         const chatBody = document.getElementById('chat-body');

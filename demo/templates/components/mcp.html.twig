@@ -26,9 +26,7 @@
         </div>
     </div>
     <div class="chat-composer" data-controller="chat-prompt">
-        {% if messages is empty %}
-            {{ include('_chat_prompts.html.twig', { prompts: ['Which subway trains leave Times Square right now?', 'What is the weather in Berlin right now?', 'Which football matches are live right now?'] }) }}
-        {% endif %}
+        {{ include('_chat_prompts.html.twig', { prompts: ['Which subway trains leave Times Square right now?', 'What is the weather in Berlin right now?', 'Which football matches are live right now?'] }) }}
         <form class="chat-form" {{ live_action('submit:prevent') }}>
             <input autofocus id="chat-message" data-model="norender|message" type="text" class="chat-input" placeholder="Ask about football, the subway or the weather ..." autocomplete="off">
             <span class="chat-hint">↵ send</span>

@@ -1,25 +1,15 @@
-{% set showText = showText|default(true) %}
 {% set aspect = aspect|default('4/3') %}
 {% set hue = movie.hue() %}
 {% set accent = (hue + 35) % 360 %}
 <div class="movie-poster d-flex flex-column justify-content-between p-3 text-white h-100"
      style="aspect-ratio: {{ aspect }}; background: linear-gradient(135deg, hsl({{ hue }}, 65%, 42%) 0%, hsl({{ accent }}, 55%, 22%) 100%); text-shadow: 0 1px 2px rgba(0,0,0,.35);">
-    {% if showText %}
-        <div class="small fw-semibold text-uppercase" style="letter-spacing: .08em; opacity: .8;">
-            {% if movie.year %}{{ movie.year }}{% endif %}
-        </div>
-        <div>
-            <div class="fw-bold" style="font-size: 1.35rem; line-height: 1.15;">{{ movie.title }}</div>
-            {% if movie.director %}
-                <div class="small mt-1" style="opacity: .85;">{{ movie.director }}</div>
-            {% endif %}
-        </div>
-    {% else %}
-        <div class="display-6 fw-bold" style="opacity: .35; line-height: 1;">
-            {{ movie.title|slice(0, 1)|upper }}
-        </div>
-        {% if movie.year %}
-            <div class="small fw-semibold text-uppercase text-end" style="letter-spacing: .08em; opacity: .85;">{{ movie.year }}</div>
+    <div class="small fw-semibold text-uppercase" style="letter-spacing: .08em; opacity: .8;">
+        {% if movie.year %}{{ movie.year }}{% endif %}
+    </div>
+    <div>
+        <div class="movie-poster-title fw-bold">{{ movie.title }}</div>
+        {% if movie.director %}
+            <div class="small mt-1" style="opacity: .85;">{{ movie.director }}</div>
         {% endif %}
-    {% endif %}
+    </div>
 </div>

@@ -40,7 +40,7 @@ final class VideoTest extends E2ETestCase
 
         // This use case has no agent, but calls the platform directly - hence no tools either.
         $panel->assertMetrics(platformCalls: 1, toolCalls: 0);
-        $panel->assertPlatformCall('gpt-5.2');
+        $panel->assertPlatformCall('gpt-6-luna');
 
         // The frame is captioned in a single, one-shot call.
         $calls = $panel->platformCalls();

@@ -34,7 +34,7 @@ final class BlogTest extends E2ETestCase
 
         // Two calls of the agent, plus the vectorization of the query by the similarity search.
         $panel->assertMetrics(platformCalls: 3, tools: 2, toolCalls: 1);
-        $panel->assertPlatformCall('gpt-4.1');
+        $panel->assertPlatformCall('gpt-6-luna');
         $panel->assertToolRegistered('similarity_search');
         $panel->assertToolRegistered('clock');
 

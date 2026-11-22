@@ -24,9 +24,7 @@
         </div>
     </div>
     <div class="chat-composer" data-controller="chat-prompt">
-        {% if messages is empty %}
-            {{ include('_chat_prompts.html.twig', { prompts: ['Who created Symfony?', 'What is the Model Context Protocol?', 'Who is the current pope?'] }) }}
-        {% endif %}
+        {{ include('_chat_prompts.html.twig', { prompts: ['Who created Symfony?', 'What is the Model Context Protocol?', 'Who is the current pope?'] }) }}
         <form class="chat-form" {{ live_action('submit:prevent') }}>
             <input autofocus id="chat-message" data-model="norender|message" type="text" class="chat-input" placeholder="What do you want to research?" autocomplete="off">
             <span class="chat-hint">↵ send</span>
