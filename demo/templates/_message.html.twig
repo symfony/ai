@@ -16,7 +16,7 @@
                 <i>{{ content }}</i>
             </div>
         {% else %}
-            <div class="bot-message"{% if contentId %} id="{{ contentId }}"{% endif %}>
+            <div class="bot-message"{% if contentId %} id="{{ contentId }}" data-skip-morph{% endif %}>
                 {% if latest and app.request.xmlHttpRequest %}
                     <span
                             data-controller="typed"
