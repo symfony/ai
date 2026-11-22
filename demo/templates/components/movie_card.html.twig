@@ -5,26 +5,34 @@
     <div class="col-8 movie-card-scroll-body">
         <h5 class="card-title mb-1">
             {{ movie.title }}{% if movie.year %} <small class="text-muted">({{ movie.year }})</small>{% endif %}
+            {% if movie.imdb %}
+                <a href="{{ movie.imdb }}" title="{{ movie.title }} on IMDb.com" target="_blank" rel="noopener">
+                    {{ ux_icon('streamline-logos:imdb-logo-solid', { height: '30px', width: '30px' }) }}
+                </a>
+            {% endif %}
         </h5>
         {% if movie.director %}
-            <p class="card-text text-muted mb-2"><strong>Director:</strong> {{ movie.director }}</p>
-        {% endif %}
-        {% if movie.imdb %}
-            <p class="card-text mb-3">
-                <a href="{{ movie.imdb }}" target="_blank" rel="noopener">IMDB &rarr;</a>
+            <p class="card-text text-muted mb-2">
+                <strong>Director:</strong>
+                <button type="button" class="movie-name" title="Ask for movies of {{ movie.director }}" data-action="movies#ask" data-movies-prompt-param="{{ movie.director }}">{{ movie.director }}</button>
             </p>
         {% endif %}
         {% if movie.plot|length > 0 %}
             <h6 class="text-dark-emphasis">Plot</h6>
-            {% for paragraph in movie.plot %}
-                <p class="card-text small">{{ paragraph|markdown_to_html }}</p>
-            {% endfor %}
+            <div class="card-text small">
+                {% for paragraph in movie.plot %}
+                    {{ paragraph|markdown_to_html }}
+                {% endfor %}
+            </div>
         {% endif %}
         {% if movie.cast|length > 0 %}
             <h6 class="text-dark-emphasis mt-3">Cast</h6>
-            <ul class="list-unstyled small mb-0">
+            <ul class="cast-badges list-unstyled mb-0">
                 {% for member in movie.cast %}
-                    <li><strong>{{ member.name }}</strong> as {{ member.role }}</li>
+                    <li class="cast-badge">
+                        <button type="button" class="movie-name cast-badge-actor" title="Ask for movies with {{ member.name }}" data-action="movies#ask" data-movies-prompt-param="{{ member.name }}">{{ member.name }}</button>
+                        <span class="cast-badge-role">{{ member.role }}</span>
+                    </li>
                 {% endfor %}
             </ul>
         {% endif %}

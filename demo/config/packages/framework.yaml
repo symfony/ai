@@ -9,6 +9,12 @@ framework:
     #esi: true
     #fragments: true
 
+when@dev:
+    framework:
+        session:
+            # Keeps the session when the demo is embedded in an iframe on another site
+            cookie_samesite: none
+
 when@test:
     framework:
         test: true

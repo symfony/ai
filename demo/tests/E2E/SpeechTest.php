@@ -45,8 +45,8 @@ final class SpeechTest extends E2ETestCase
         $panel->assertMetrics(platformCalls: 3, tools: 3);
 
         $panel->assertPlatformCall('whisper-1', tokenUsage: false);
-        $panel->assertPlatformCall('gpt-5-mini');
-        $panel->assertPlatformCall('tts-1', tokenUsage: false);
+        $panel->assertPlatformCall('gpt-6-luna');
+        $panel->assertPlatformCall('gpt-4o-mini-tts', tokenUsage: false);
 
         // The blog agent is registered as subagent, next to the clock tool.
         $panel->assertToolRegistered('symfony_blog');

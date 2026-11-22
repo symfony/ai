@@ -1126,3 +1126,12 @@ body.chat-page {
         max-width: 85%;
     }
 }
+
+/* Embedded in an iframe (html.in-iframe, set in app.js): no scrollbars, scrolling still works */
+html.in-iframe,
+html.in-iframe * {
+    scrollbar-width: none;
+}
+html.in-iframe ::-webkit-scrollbar {
+    display: none;
+}

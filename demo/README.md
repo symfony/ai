@@ -37,22 +37,22 @@ The setup is split into three parts, the Symfony application, the OpenAI configu
 
 ### 1. Symfony App
 
-Checkout the repository, start the docker environment and install dependencies:
+Checkout the repository, install the dependencies and start the server:
 
 ```shell
 git clone git@github.com:symfony/ai-demo.git
 cd ai-demo
 composer install
-docker compose up -d
 symfony serve -d
 ```
 
 Now you should be able to open https://localhost:8000/ in your browser,
 and the chatbot UI should be available for you to start chatting.
 
-Docker also starts a Mercure hub, and `symfony serve` starts the Messenger worker configured in
-`.symfony.local.yaml` - the Wikipedia bot researches in that worker and pushes its progress to the
-browser via the hub. Without the Symfony CLI, run `bin/console messenger:consume async` yourself.
+`symfony serve` also starts the workers configured in `.symfony.local.yaml`: the Docker environment
+with PostgreSQL and a Mercure hub, and the Messenger worker - the Wikipedia bot researches in that
+worker and pushes its progress to the browser via the hub. Without the Symfony CLI, run
+`docker compose up -d` and `bin/console messenger:consume async` yourself.
 The updates are public, so every subscriber of the hub receives them - fine for a local demo, but in
 production, publish them as [private updates](https://symfony.com/doc/current/mercure.html#authorization).
 

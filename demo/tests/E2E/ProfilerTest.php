@@ -40,11 +40,11 @@ final class ProfilerTest extends E2ETestCase
 
         // The vectorization of the search query by the movie search is the third call.
         $this->assertCount(3, $panel->platformCalls());
-        $calls = array_values(array_filter($panel->platformCalls(), static fn (array $call) => 'gpt-4.1' === $call['model']));
+        $calls = array_values(array_filter($panel->platformCalls(), static fn (array $call) => 'gpt-6-luna' === $call['model']));
         $this->assertCount(2, $calls);
 
         // First call: the conversation, resulting in the tool call of the agent.
-        $this->assertSame('gpt-4.1', $calls[0]['model']);
+        $this->assertSame('gpt-6-luna', $calls[0]['model']);
         $this->assertStringContainsString('System:', $calls[0]['input']);
         $this->assertStringContainsString('User:', $calls[0]['input']);
         $this->assertStringContainsString('movie_search', $calls[0]['options']);

@@ -26,9 +26,9 @@ services:
       SERVER_NAME: ':80'
       # Replaces MERCURE_EXTRA_DIRECTIVES from docker-compose.yml, keep the other directives in sync
       # The playground directive enables the debug UI, anonymous lets the browser subscribe without a JWT
-      # Port 9080 is the web server of the Panther E2E tests
+      # Origins: the server of the Symfony CLI (:8000 without it) and the one of the Panther E2E tests
       MERCURE_EXTRA_DIRECTIVES: |
         playground
         anonymous
-        cors_origins http://127.0.0.1:8000 https://127.0.0.1:8000 http://localhost:8000 https://localhost:8000 http://127.0.0.1:9080
+        cors_origins ${SYMFONY_DEFAULT_ROUTE_SCHEME:-https}://${SYMFONY_DEFAULT_ROUTE_HOST:-127.0.0.1:8000} ${SYMFONY_DEFAULT_ROUTE_SCHEME:-https}://localhost:${SYMFONY_DEFAULT_ROUTE_PORT:-8000} http://127.0.0.1:9080
 ###< symfony/mercure-bundle ###

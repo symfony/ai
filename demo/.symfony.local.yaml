@@ -1,5 +1,8 @@
 workers:
+    # Starts PostgreSQL, Mercure and the mailer of compose.yaml and stops them with the server
+    docker_compose: ~
+
     # Runs the research of the Wikipedia bot, which pushes its progress to the browser via Mercure
     messenger_consume_async:
-        cmd: ['symfony', 'console', 'messenger:consume', 'async']
+        cmd: ['symfony', 'console', 'messenger:consume', 'async', '--profile']
         watch: ['config', 'src', 'templates']
