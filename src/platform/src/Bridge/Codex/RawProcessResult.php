@@ -40,7 +40,7 @@ final class RawProcessResult implements RawResultInterface
         $this->process->wait();
 
         if (!$this->process->isSuccessful()) {
-            throw new RuntimeException(\sprintf('Codex CLI process failed: "%s"', $this->process->getErrorOutput()));
+            throw $this->createFailureException();
         }
 
         $output = $this->process->getOutput();
@@ -161,13 +161,53 @@ final class RawProcessResult implements RawResultInterface
         }
 
         if (!$this->process->isSuccessful()) {
-            throw new RuntimeException(\sprintf('Codex CLI process failed: "%s"', $this->process->getErrorOutput()));
+            throw $this->createFailureException();
         }
     }
 
     public function getObject(): Process
     {
         return $this->process;
+    }
+
+    /**
+     * The CLI reports why a turn failed in the `turn.failed` or `error` events on stdout, while
+     * stderr usually only carries "Reading additional input from stdin...".
+     */
+    private function createFailureException(): RuntimeException
+    {
+        $reason = $this->extractTurnError() ?? trim($this->process->getErrorOutput());
+
+        if ('' === $reason) {
+            $reason = \sprintf('exit code %d', $this->process->getExitCode() ?? -1);
+        }
+
+        return new RuntimeException(\sprintf('Codex CLI process failed: "%s"', $reason));
+    }
+
+    private function extractTurnError(): ?string
+    {
+        $error = null;
+
+        foreach (explode(\PHP_EOL, $this->process->getOutput()) as $line) {
+            $decoded = json_decode(trim($line), true);
+
+            if (!\is_array($decoded)) {
+                continue;
+            }
+
+            $message = match ($decoded['type'] ?? null) {
+                'turn.failed' => \is_array($decoded['error'] ?? null) ? ($decoded['error']['message'] ?? null) : null,
+                'error' => $decoded['message'] ?? null,
+                default => null,
+            };
+
+            if (\is_string($message) && '' !== $message) {
+                $error = $message;
+            }
+        }
+
+        return $error;
     }
 
     /**

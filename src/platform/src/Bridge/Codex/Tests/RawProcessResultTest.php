@@ -245,6 +245,72 @@ final class RawProcessResultTest extends TestCase
         $rawResult->getData();
     }
 
+    public function testGetDataFailureReportsTurnFailedMessageInsteadOfStderr()
+    {
+        $jsonOutput = implode(\PHP_EOL, [
+            json_encode(['type' => 'turn.started']),
+            json_encode(['type' => 'error', 'message' => 'Reconnecting... 1/5']),
+            json_encode(['type' => 'turn.failed', 'error' => ['message' => 'The model is not supported when using Codex with a ChatGPT account.']]),
+        ]);
+
+        $phpCode = \sprintf('fwrite(STDERR, "Reading additional input from stdin..."); echo %s; exit(1);', escapeshellarg($jsonOutput));
+        $process = new Process(['php', '-r', $phpCode]);
+        $process->start();
+
+        $rawResult = new RawProcessResult($process);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Codex CLI process failed: "The model is not supported when using Codex with a ChatGPT account."');
+
+        $rawResult->getData();
+    }
+
+    public function testGetDataFailureFallsBackToErrorEvent()
+    {
+        $jsonOutput = json_encode(['type' => 'error', 'message' => 'stream disconnected before completion']);
+
+        $phpCode = \sprintf('echo %s; exit(1);', escapeshellarg($jsonOutput));
+        $process = new Process(['php', '-r', $phpCode]);
+        $process->start();
+
+        $rawResult = new RawProcessResult($process);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Codex CLI process failed: "stream disconnected before completion"');
+
+        $rawResult->getData();
+    }
+
+    public function testGetDataFailureFallsBackToExitCodeWithoutAnyOutput()
+    {
+        $process = new Process(['php', '-r', 'exit(3);']);
+        $process->start();
+
+        $rawResult = new RawProcessResult($process);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Codex CLI process failed: "exit code 3"');
+
+        $rawResult->getData();
+    }
+
+    public function testGetDataStreamFailureReportsTurnFailedMessage()
+    {
+        $jsonOutput = json_encode(['type' => 'turn.failed', 'error' => ['message' => 'Quota exceeded']]);
+
+        $phpCode = \sprintf('fwrite(STDERR, "Reading additional input from stdin..."); echo %s.PHP_EOL; exit(1);', escapeshellarg($jsonOutput));
+        $process = new Process(['php', '-r', $phpCode]);
+        $process->start();
+
+        $rawResult = new RawProcessResult($process);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Codex CLI process failed: "Quota exceeded"');
+
+        foreach ($rawResult->getDataStream() as $data) {
+        }
+    }
+
     public function testGetDataStreamYieldsJsonLines()
     {
         $lines = [
