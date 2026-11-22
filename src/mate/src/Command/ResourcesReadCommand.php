@@ -14,8 +14,11 @@ namespace Symfony\AI\Mate\Command;
 use HelgeSverre\Toon\Toon;
 use Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
+use Symfony\AI\Mate\Exception\InvalidArgumentException;
 use Symfony\AI\Mate\Exception\ResourceNotFoundException;
+use Symfony\AI\Mate\Invocation\PathResolver;
 use Symfony\AI\Mate\Invocation\ResourceReader;
+use Symfony\AI\Mate\Invocation\ResultPicker;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -58,6 +61,7 @@ class ResourcesReadCommand extends Command
 
         $this
             ->addArgument('uri', InputArgument::REQUIRED, 'URI of the resource to read')
+            ->addOption('pick', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Keep only this path of the resource, repeatable. Supports a.b, [0], [*] and [:3]')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (pretty, json, toon)', 'pretty')
             ->setHelp(
                 <<<HELP
@@ -76,8 +80,11 @@ Both static resource URIs and URIs matching a registered resource template are s
   <comment># JSON output format</comment>
   %command.full_name% symfony-profiler://profile/abc123 --format=json
 
-  <comment># For a list of available resource templates, use:</comment>
-  {$script} debug:capabilities --type=template
+  <comment># Keep only some paths of a large resource (paths: a.b, [0], [*], [:3], repeatable)</comment>
+  %command.full_name% symfony-profiler://profile/abc123/exception --pick=data.class --pick=data.message
+
+  <comment># For a list of available resources and templates, use:</comment>
+  {$script} resources:list
 HELP
             );
     }
@@ -97,6 +104,17 @@ HELP
             return Command::FAILURE;
         }
 
+        $picks = array_values(array_filter((array) $input->getOption('pick'), \is_string(...)));
+        foreach ($picks as $path) {
+            try {
+                PathResolver::assertValid($path);
+            } catch (InvalidArgumentException $e) {
+                $io->error($e->getMessage());
+
+                return Command::FAILURE;
+            }
+        }
+
         try {
             $result = $this->reader->read($uri);
         } catch (ResourceNotFoundException $e) {
@@ -114,6 +132,10 @@ HELP
         }
 
         $contents = $result['contents'];
+
+        if ([] !== $picks) {
+            $contents = $this->pickContents($contents, $picks, $io);
+        }
 
         if ('json' === $format) {
             $output->writeln(json_encode($this->decodeContents($contents), \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
@@ -142,6 +164,40 @@ HELP
         }
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Replaces each structured text content by the picked paths, re-encoded so every output
+     * format handles it like an untouched content.
+     *
+     * @param list<ResourceContent> $contents
+     * @param list<string>          $picks
+     *
+     * @return list<ResourceContent>
+     */
+    private function pickContents(array $contents, array $picks, SymfonyStyle $io): array
+    {
+        foreach ($contents as $i => $content) {
+            if (!isset($content['text']) || !\is_string($content['text'])) {
+                continue;
+            }
+
+            $decoded = ResponseEncoder::tryDecode($content['text']);
+            if (!\is_array($decoded)) {
+                $io->getErrorStyle()->warning(\sprintf('"%s" has no structured content, --pick was ignored.', $content['uri']));
+
+                continue;
+            }
+
+            ['result' => $picked, 'missing_paths' => $missing] = ResultPicker::pick($decoded, $picks);
+            if ([] !== $missing) {
+                $io->getErrorStyle()->warning(\sprintf('Paths without a value: %s', implode(', ', $missing)));
+            }
+
+            $contents[$i]['text'] = ResponseEncoder::encode($picked);
+        }
+
+        return $contents;
     }
 
     /**

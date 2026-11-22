@@ -143,6 +143,60 @@ final class ResourcesReadCommandTest extends TestCase
         $this->assertStringContainsString('Resource "unknown://does-not-exist" not found', $output);
     }
 
+    public function testPickKeepsOnlyTheRequestedPaths()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['uri' => 'sample://payload', '--pick' => ['nested.ok'], '--format' => 'json']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $json = json_decode($tester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertSame(['nested.ok' => true], $json[0]['text']);
+    }
+
+    public function testPickWithPrettyFormatPrintsThePickedJson()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['uri' => 'sample://payload', '--pick' => ['answer']]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $this->assertStringContainsString('answer', $tester->getDisplay());
+        $this->assertStringNotContainsString('nested', $tester->getDisplay());
+    }
+
+    public function testPickReportsPathsWithoutAValue()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['uri' => 'sample://payload', '--pick' => ['answer', 'missing.path'], '--format' => 'json'], ['capture_stderr_separately' => true]);
+
+        $json = json_decode($tester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertSame(['answer' => 42, 'missing.path' => null], $json[0]['text']);
+        $this->assertStringContainsString('Paths without a value: missing.path', $tester->getErrorOutput());
+    }
+
+    public function testPickOnPlainTextIsIgnoredWithAWarning()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['uri' => 'sample://greeting', '--pick' => ['x'], '--format' => 'json'], ['capture_stderr_separately' => true]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $this->assertStringContainsString('Hello from the Mate test fixture!', $tester->getDisplay());
+        $this->assertStringContainsString('has no structured content', $tester->getErrorOutput());
+    }
+
+    public function testInvalidPickPathFails()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['uri' => 'sample://payload', '--pick' => ['a..b']]);
+
+        $this->assertSame(Command::FAILURE, $tester->getStatusCode());
+        $this->assertStringContainsString('Invalid path "a..b"', $tester->getDisplay());
+    }
+
     private function createCommand(): ResourcesReadCommand
     {
         $rootDir = __DIR__.'/../..';

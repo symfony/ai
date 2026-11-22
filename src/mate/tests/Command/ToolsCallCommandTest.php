@@ -381,6 +381,45 @@ final class ToolsCallCommandTest extends TestCase
         $this->assertStringContainsString('takes a single value, but a list of 2 was', $output);
     }
 
+    public function testPickKeepsOnlyTheRequestedPaths()
+    {
+        $output = $this->runViaArgv(['sample-tags', '--sku=A', '--tags=x', '--tags=y', '--pick=tags[:1]', '--pick', 'sku', '--format=json']);
+
+        $this->assertSame(['tags[:1]' => ['x'], 'sku' => 'A'], json_decode($output, true, flags: \JSON_THROW_ON_ERROR));
+    }
+
+    public function testPickThroughTheDeclaredOption()
+    {
+        $tester = new CommandTester($this->createSampleToolCommand());
+
+        $tester->execute(['tool-name' => 'sample-add', '--json' => '{"a": 2, "b": 3}', '--pick' => ['sum'], '--format' => 'json']);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $this->assertSame(['sum' => 5], json_decode($tester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR));
+    }
+
+    public function testPickWithoutAValueReportsThePath()
+    {
+        $tester = new CommandTester($this->createSampleToolCommand());
+
+        $tester->execute(['tool-name' => 'sample-add', '--json' => '{"a": 2}', '--pick' => ['sum', 'nope'], '--format' => 'json'], ['capture_stderr_separately' => true]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $this->assertSame(['sum' => 2, 'nope' => null], json_decode($tester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR));
+        $this->assertStringContainsString('Paths without a value: nope', $tester->getErrorOutput());
+    }
+
+    public function testInvalidPickPathFailsBeforeTheToolRuns()
+    {
+        $tester = new CommandTester($this->createSampleToolCommand());
+
+        $tester->execute(['tool-name' => 'sample-add', '--json' => '{"a": 2}', '--pick' => ['a..b']]);
+
+        $this->assertSame(Command::FAILURE, $tester->getStatusCode());
+        $this->assertStringContainsString('Invalid path "a..b"', $tester->getDisplay());
+        $this->assertStringNotContainsString('Executing Tool', $tester->getDisplay());
+    }
+
     /**
      * Runs the command with a real ArgvInput so the dynamic `--<param>` parsing is exercised.
      *

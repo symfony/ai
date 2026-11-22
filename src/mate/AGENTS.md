@@ -74,6 +74,7 @@ bin/mate tools:list                             # List tools
 bin/mate tools:inspect server-info              # Inspect a tool with its schema
 bin/mate tools:call server-info                 # Execute a tool
 bin/mate tools:call symfony-profiler-list --limit=1   # ... with parameters as options
+bin/mate tools:call <tool> --pick=a.b --pick='items[:3]'   # keep only these paths of the result
 bin/mate tools:call-batch --json='[{"tool":"a","params":{}},{"tool":"b","params":{}}]'  # Execute several tools or resource reads in one call
 bin/mate resources:list                        # List resources and resource templates
 bin/mate resources:inspect <name-or-uri>        # Inspect a resource or template

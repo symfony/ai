@@ -20,6 +20,7 @@ Point your coding agent at the CLI (see the generated `mate/AGENT_INSTRUCTIONS.m
 vendor/bin/mate tools:list                          # list available tools
 vendor/bin/mate tools:inspect symfony-profiler-list # show a tool's parameters/schema
 vendor/bin/mate tools:call symfony-profiler-list --limit=1
+vendor/bin/mate tools:call symfony-profiler-get --token=<token> --pick=status_code --pick=url   # trim a large result
 vendor/bin/mate resources:list                      # list resources and resource templates
 vendor/bin/mate resources:inspect symfony-profile-data # show a resource's URI parameters
 vendor/bin/mate resources:read symfony-profiler://profile/<token>

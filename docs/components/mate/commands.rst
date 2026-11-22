@@ -115,8 +115,15 @@ These are the commands a coding agent uses.
     ``--json=JSON``
         Tool parameters as a JSON object. Options given as ``--<param>`` win over the same key in
         the JSON. Use this for nested or associative values. Use it also for a parameter whose
-        name is taken by a console option: ``format``, ``json``, ``help``, ``silent``, ``quiet``,
+        name is taken by a console option: ``format``, ``json``, ``pick``, ``help``, ``silent``, ``quiet``,
         ``verbose``, ``version``, ``ansi``, ``no-ansi`` and ``no-interaction``.
+
+    ``--pick=PATH``
+        Keep only this path of the result. Repeat the option for several paths. A path is
+        ``a.b`` for a field, ``[0]`` for one list element, ``[*]`` for all elements and ``[:3]``
+        for the first three. After ``[*]`` or ``[:3]`` the rest of the path applies to each
+        element. The result becomes an object keyed by path. A path without a value is ``null``
+        and listed in a warning. An invalid path is rejected before the tool runs.
 
     ``--format=FORMAT``
         ``pretty`` (default), ``json`` or ``toon``.
@@ -142,6 +149,9 @@ These are the commands a coding agent uses.
 
         # Nested values
         $ vendor/bin/mate tools:call <tool-name> --json='{"filters": {"level": "error"}}'
+
+        # Only parts of a large result
+        $ vendor/bin/mate tools:call symfony-profiler-get --token=abc123 --pick=status_code --pick='collectors[:3]'
 
 ``mate tools:call-batch``
     Execute several tools and resource reads in one command call. Useful when one investigation needs
@@ -226,6 +236,11 @@ These are the commands a coding agent uses.
 
     **Options:**
 
+    ``--pick=PATH``
+        Keep only this path of the resource. Repeat the option for several paths. The syntax is
+        the one of ``tools:call --pick``. A resource without structured content ignores the
+        option and prints a warning.
+
     ``--format=FORMAT``
         ``pretty`` (default), ``json`` or ``toon``.
 
@@ -238,6 +253,9 @@ These are the commands a coding agent uses.
 
         # One collector
         $ vendor/bin/mate resources:read symfony-profiler://profile/abc123/db
+
+        # Only the exception class and message
+        $ vendor/bin/mate resources:read symfony-profiler://profile/abc123/exception --pick=data.class --pick=data.message
 
 Skills
 ------
