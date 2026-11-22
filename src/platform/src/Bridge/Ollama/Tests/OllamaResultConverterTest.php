@@ -271,7 +271,7 @@ final class OllamaResultConverterTest extends TestCase
         $this->assertInstanceOf(TokenUsageInterface::class, $tokenUsage = $deferredResult->getMetadata()->get('token_usage'));
         $this->assertSame(42, $tokenUsage->getPromptTokens());
         $this->assertSame(17, $tokenUsage->getCompletionTokens());
-        $this->assertNull($tokenUsage->getTotalTokens());
+        $this->assertSame(59, $tokenUsage->getTotalTokens());
         $this->assertSame('deepseek-r1:latest', $tokenUsage->getModel());
     }
 
