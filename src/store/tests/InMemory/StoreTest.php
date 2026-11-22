@@ -515,6 +515,19 @@ final class StoreTest extends TestCase
         $this->assertSame(['near', 'far', 'farther'], array_map(static fn (VectorDocumentInterface $doc) => $doc->getId(), $result));
     }
 
+    public function testHybridQueryDoesNotLetOneKeywordHitOutweighACloserVector()
+    {
+        $store = new Store();
+        $store->add([
+            new VectorDocument('near', new Vector([1.0, 0.1]), new Metadata(['_text' => 'cafe'])),
+            new VectorDocument('far', new Vector([1.0, 0.3]), new Metadata(['_text' => 'dentist'])),
+        ]);
+
+        $result = iterator_to_array($store->query(new HybridQuery(new Vector([1.0, 0.0]), 'dentist', 0.75)), false);
+
+        $this->assertSame(['near', 'far'], array_map(static fn (VectorDocumentInterface $doc) => $doc->getId(), $result));
+    }
+
     public function testHybridQueryWithoutSemanticRatioOnlyReturnsTextMatches()
     {
         $store = new Store();
