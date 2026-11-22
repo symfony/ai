@@ -61,7 +61,7 @@ Setup
 Tools and Resources
 -------------------
 
-These are the five commands a coding agent uses.
+These are the commands a coding agent uses.
 
 ``mate tools:list``
     List all tools with their description and arguments.
@@ -181,6 +181,44 @@ These are the five commands a coding agent uses.
 
         # JSON output format
         $ vendor/bin/mate tools:call-batch --json='[{"tool": "server-info"}]' --format=json
+
+``mate resources:list``
+    List all resources and resource templates. A template has ``{placeholders}`` in its URI.
+
+    **Options:**
+
+    ``--filter=PATTERN``
+        Filter by name or URI. Supports wildcards like ``symfony-profiler*`` or ``symfony-profiler://*``.
+
+    ``--extension=EXTENSION``
+        Filter by extension package name.
+
+    ``--format=FORMAT``
+        ``table`` (default), ``json`` or ``toon``.
+
+    **Examples:**
+
+    .. code-block:: terminal
+
+        $ vendor/bin/mate resources:list
+        $ vendor/bin/mate resources:list --filter="symfony-profiler://*"
+        $ vendor/bin/mate resources:list --format=json
+
+``mate resources:inspect <resource>``
+    Show one resource or template with its URI, parameters and MIME type. The argument is a name,
+    a URI template or a concrete URI. A concrete URI finds the template it matches.
+
+    **Options:**
+
+    ``--format=FORMAT``
+        ``text`` (default), ``json`` or ``toon``.
+
+    **Examples:**
+
+    .. code-block:: terminal
+
+        $ vendor/bin/mate resources:inspect symfony-profile-data
+        $ vendor/bin/mate resources:inspect symfony-profiler://profile/abc123
 
 ``mate resources:read <uri>``
     Read a resource by its URI. The URI may belong to a static resource or match a resource

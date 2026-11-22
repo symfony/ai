@@ -33,7 +33,8 @@ namespace Symfony\AI\Mate\Discovery;
  *         uri_template: string,
  *         name: string|null,
  *         description: string|null,
- *         handler: string
+ *         handler: string,
+ *         mime_type: string|null
  *     }>
  * }
  *
@@ -83,6 +84,7 @@ final class CapabilityCollector
                 'name' => $template->name,
                 'description' => $template->description,
                 'handler' => $template->handlerLabel(),
+                'mime_type' => $template->mimeType,
             ];
         }
 

@@ -20,10 +20,12 @@ Point your coding agent at the CLI (see the generated `mate/AGENT_INSTRUCTIONS.m
 vendor/bin/mate tools:list                          # list available tools
 vendor/bin/mate tools:inspect symfony-profiler-list # show a tool's parameters/schema
 vendor/bin/mate tools:call symfony-profiler-list --limit=1
+vendor/bin/mate resources:list                      # list resources and resource templates
+vendor/bin/mate resources:inspect symfony-profile-data # show a resource's URI parameters
 vendor/bin/mate resources:read symfony-profiler://profile/<token>
 ```
 
-Add `--format=json` to the `tools:*`, `resources:read`, `debug:*`, `skills:install`,
+Add `--format=json` to the `tools:*`, `resources:*`, `debug:*`, `skills:install`,
 `skills:list` and `skills:validate` commands for machine-readable output.
 
 The package ships with the `symfony/ai-mate-composer-plugin`, which automatically

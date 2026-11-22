@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Add `tools:call-batch` command: executes several tools and resource reads in one call from a `--json` array of `{"tool": "...", "params": {...}}` or `{"resource": "<uri>"}` objects. Calls run sequentially and one failing call does not abort the others. It is listed in `tools:list` and in the instructions `discover` writes into `AGENTS.md`
+ * Add `resources:list` and `resources:inspect`, the resource counterparts of `tools:list` and `tools:inspect`: they show resources and resource templates with URI, type, MIME type and URI parameters, and accept `--filter`, `--extension` and `--format`
  * Change `init` and `discover` to stop creating a `CLAUDE.md`, since Claude Code falls back to `AGENTS.md` without one; an existing `CLAUDE.md` or `.claude/CLAUDE.md` still gets the managed `@AGENTS.md` import
 
 0.14

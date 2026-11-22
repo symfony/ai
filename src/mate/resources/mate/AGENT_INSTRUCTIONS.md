@@ -13,6 +13,7 @@ one.
 Discover the tools with `##MATE_INVOCATION## tools:list`, inspect a tool's parameters with
 `##MATE_INVOCATION## tools:inspect <tool>`, and run one with
 `##MATE_INVOCATION## tools:call <tool> --<param>=<value>` (add `--format=json` for
-machine-readable output). Run `##MATE_INVOCATION## discover` to replace this file with the
+machine-readable output). Resources work the same way with `resources:list`,
+`resources:inspect <name-or-uri>` and `resources:read <uri>`. Run `##MATE_INVOCATION## discover` to replace this file with the
 sections describing the installed extensions and their tools; prefer those over the equivalent
 raw shell commands when they cover what you need.
