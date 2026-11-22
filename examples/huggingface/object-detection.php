@@ -14,7 +14,7 @@ use Symfony\AI\Platform\Message\Content\Image;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), httpClient: http_client());
+$platform = Factory::createPlatform(env('HUGGINGFACE_API_KEY'), httpClient: http_client());
 
 $image = Image::fromFile(dirname(__DIR__, 2).'/fixtures/accordion.jpg');
 $result = $platform->invoke('facebook/detr-resnet-50', $image);

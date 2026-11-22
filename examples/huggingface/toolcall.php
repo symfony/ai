@@ -19,7 +19,7 @@ use Symfony\AI\Platform\Message\MessageBag;
 
 require_once dirname(__DIR__).'/bootstrap.php';
 
-$platform = Factory::createPlatform(env('HUGGINGFACE_KEY'), Provider::NSCALE, http_client());
+$platform = Factory::createPlatform(env('HUGGINGFACE_API_KEY'), Provider::NSCALE, http_client());
 
 $wikipedia = new Wikipedia(http_client());
 $toolbox = new Toolbox([$wikipedia], logger: logger());

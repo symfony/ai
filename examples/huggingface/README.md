@@ -11,10 +11,10 @@ can directly use via Symfony AI's Hugging Face Platform Bridge.
 Hugging Face offers a free tier for their Inference API, which you can use to get started. Therefore, you need to create
 an account on [Hugging Face](https://huggingface.co/join), generate an
 [access token](https://huggingface.co/settings/tokens), and add it to your `.env.local` file in the root of the
-examples' directory as `HUGGINGFACE_KEY`.
+examples' directory as `HUGGINGFACE_API_KEY`.
 
 ```bash
-echo 'HUGGINGFACE_KEY=hf_your_access_key' >> .env.local
+echo 'HUGGINGFACE_API_KEY=hf_your_access_key' >> .env.local
 ```
 
 Different to other platforms, Hugging Face provides close to 50.000 models for various AI tasks, which enables you to
