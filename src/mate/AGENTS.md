@@ -27,7 +27,7 @@ not use MCP and does not integrate with the AI Bundle.
 - `Symfony\AI\Mate\Attribute\MateResourceTemplate`: marks a method as a templated resource
 
 ### Key Directories
-- `src/Command/`: CLI commands (init, discover, clear-cache, debug:*, tools:*, resources:read)
+- `src/Command/`: CLI commands (init, discover, clear-cache, debug:*, tools:*, resources:*)
 - `src/Container/`: DI container management
 - `src/Discovery/`: Reflection-based discovery + schema generation
 - `src/Invocation/`: Tool/resource invocation and argument casting
@@ -75,10 +75,12 @@ bin/mate tools:inspect server-info              # Inspect a tool with its schema
 bin/mate tools:call server-info                 # Execute a tool
 bin/mate tools:call symfony-profiler-list --limit=1   # ... with parameters as options
 bin/mate tools:call-batch --json='[{"tool":"a","params":{}},{"tool":"b","params":{}}]'  # Execute several tools or resource reads in one call
+bin/mate resources:list                        # List resources and resource templates
+bin/mate resources:inspect <name-or-uri>        # Inspect a resource or template
 bin/mate resources:read <uri>                   # Read a resource by URI
 ```
 
-The `tools:*`, `resources:read`, `debug:*`, `skills:list` and `skills:validate` commands accept
+The `tools:*`, `resources:*`, `debug:*`, `skills:list` and `skills:validate` commands accept
 `--format=json` (also `toon` when `helgesverre/toon` is installed) for
 machine-readable output.
 

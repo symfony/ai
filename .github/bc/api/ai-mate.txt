@@ -65,6 +65,18 @@ Symfony\AI\Mate\Command\InitCommand::__construct(): public function __construct(
 Symfony\AI\Mate\Command\InitCommand::execute(): protected function execute(Symfony\Component\Console\Input\InputInterface $input, Symfony\Component\Console\Output\OutputInterface $output): int
 Symfony\AI\Mate\Command\InitCommand::getDefaultDescription(): public static function getDefaultDescription(): string
 Symfony\AI\Mate\Command\InitCommand::getDefaultName(): public static function getDefaultName(): string
+Symfony\AI\Mate\Command\ResourcesInspectCommand: class extends Symfony\Component\Console\Command\Command uses Symfony\AI\Mate\Command\Trait\CollectsResourcesTrait, Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait
+Symfony\AI\Mate\Command\ResourcesInspectCommand::__construct(): public function __construct(array $extensions, Symfony\AI\Mate\Discovery\CapabilityCollector $collector)
+Symfony\AI\Mate\Command\ResourcesInspectCommand::configure(): protected function configure(): void
+Symfony\AI\Mate\Command\ResourcesInspectCommand::execute(): protected function execute(Symfony\Component\Console\Input\InputInterface $input, Symfony\Component\Console\Output\OutputInterface $output): int
+Symfony\AI\Mate\Command\ResourcesInspectCommand::getDefaultDescription(): public static function getDefaultDescription(): string
+Symfony\AI\Mate\Command\ResourcesInspectCommand::getDefaultName(): public static function getDefaultName(): string
+Symfony\AI\Mate\Command\ResourcesListCommand: class extends Symfony\Component\Console\Command\Command uses Symfony\AI\Mate\Command\Trait\CollectsResourcesTrait, Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait
+Symfony\AI\Mate\Command\ResourcesListCommand::__construct(): public function __construct(array $extensions, Symfony\AI\Mate\Discovery\CapabilityCollector $collector)
+Symfony\AI\Mate\Command\ResourcesListCommand::configure(): protected function configure(): void
+Symfony\AI\Mate\Command\ResourcesListCommand::execute(): protected function execute(Symfony\Component\Console\Input\InputInterface $input, Symfony\Component\Console\Output\OutputInterface $output): int
+Symfony\AI\Mate\Command\ResourcesListCommand::getDefaultDescription(): public static function getDefaultDescription(): string
+Symfony\AI\Mate\Command\ResourcesListCommand::getDefaultName(): public static function getDefaultName(): string
 Symfony\AI\Mate\Command\ResourcesReadCommand: class extends Symfony\Component\Console\Command\Command uses Symfony\AI\Mate\Command\Trait\EnsuresToonFormatAvailabilityTrait
 Symfony\AI\Mate\Command\ResourcesReadCommand::__construct(): public function __construct(Symfony\AI\Mate\Invocation\ResourceReader $reader)
 Symfony\AI\Mate\Command\ResourcesReadCommand::configure(): protected function configure(): void

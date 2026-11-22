@@ -18,6 +18,8 @@ use Symfony\AI\Mate\Command\DebugCapabilitiesCommand;
 use Symfony\AI\Mate\Command\DebugExtensionsCommand;
 use Symfony\AI\Mate\Command\DiscoverCommand;
 use Symfony\AI\Mate\Command\InitCommand;
+use Symfony\AI\Mate\Command\ResourcesInspectCommand;
+use Symfony\AI\Mate\Command\ResourcesListCommand;
 use Symfony\AI\Mate\Command\ResourcesReadCommand;
 use Symfony\AI\Mate\Command\SkillsDisableCommand;
 use Symfony\AI\Mate\Command\SkillsEnableCommand;
@@ -170,6 +172,12 @@ return static function (ContainerConfigurator $container): void {
             ->public()
 
         ->set(ToolsCallBatchCommand::class)
+            ->public()
+
+        ->set(ResourcesListCommand::class)
+            ->public()
+
+        ->set(ResourcesInspectCommand::class)
             ->public()
 
         ->set(ResourcesReadCommand::class)

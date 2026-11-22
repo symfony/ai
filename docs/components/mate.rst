@@ -111,13 +111,14 @@ Using Mate from a Coding Agent
 ------------------------------
 
 There is nothing to start. The agent learns about Mate from ``AGENTS.md`` and the installed skills,
-and works with four commands:
+and works with these commands:
 
 .. code-block:: terminal
 
     $ vendor/bin/mate tools:list                          # what is available
     $ vendor/bin/mate tools:inspect symfony-profiler-list # parameters and JSON input schema
     $ vendor/bin/mate tools:call symfony-profiler-list --limit=1
+    $ vendor/bin/mate resources:list                      # available resources and their URIs
     $ vendor/bin/mate resources:read symfony-profiler://profile/<token>
 
 Tool parameters are passed as long options, one per parameter, and cast to the declared type. A

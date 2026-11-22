@@ -16,6 +16,8 @@ use Symfony\AI\Mate\Command\DebugCapabilitiesCommand;
 use Symfony\AI\Mate\Command\DebugExtensionsCommand;
 use Symfony\AI\Mate\Command\DiscoverCommand;
 use Symfony\AI\Mate\Command\InitCommand;
+use Symfony\AI\Mate\Command\ResourcesInspectCommand;
+use Symfony\AI\Mate\Command\ResourcesListCommand;
 use Symfony\AI\Mate\Command\ResourcesReadCommand;
 use Symfony\AI\Mate\Command\SkillsDisableCommand;
 use Symfony\AI\Mate\Command\SkillsEnableCommand;
@@ -62,6 +64,8 @@ final class App
             ToolsInspectCommand::class,
             ToolsCallCommand::class,
             ToolsCallBatchCommand::class,
+            ResourcesListCommand::class,
+            ResourcesInspectCommand::class,
             ResourcesReadCommand::class,
             SkillsInstallCommand::class,
             SkillsListCommand::class,
