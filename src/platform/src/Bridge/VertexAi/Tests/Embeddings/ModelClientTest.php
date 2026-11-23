@@ -88,6 +88,19 @@ final class ModelClientTest extends TestCase
         $client->request(new Model('gemini-embedding-001'), 'test payload');
     }
 
+    public function testItSendsTheApiKeyAsHeaderInsteadOfInTheUrl()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertStringNotContainsString('test-key', $url);
+            $this->assertContains('x-goog-api-key: test-key', $options['headers']);
+
+            return new JsonMockResponse(['predictions' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'eu', 'test', 'test-key');
+        $client->request(new Model('gemini-embedding-001'), 'test payload');
+    }
+
     public function testItUsesTheGlobalEndpointWhenTheProjectIdIsMissing()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url) {

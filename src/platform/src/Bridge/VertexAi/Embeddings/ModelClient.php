@@ -45,9 +45,9 @@ final class ModelClient implements ModelClientInterface
     {
         $url = self::getEndpoint($this->location, $this->projectId, $model->getName(), 'predict');
 
-        $query = [];
+        $headers = ['Content-Type' => 'application/json'];
         if (null !== $this->apiKey) {
-            $query['key'] = $this->apiKey;
+            $headers['x-goog-api-key'] = $this->apiKey;
         }
 
         $modelOptions = $model->getOptions();
@@ -70,11 +70,8 @@ final class ModelClient implements ModelClientInterface
                 'POST',
                 $url,
                 [
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                    ],
+                    'headers' => $headers,
                     'json' => array_merge($payload, $modelOptions),
-                    'query' => $query,
                 ]
             )
         );

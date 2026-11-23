@@ -57,10 +57,12 @@ final class ModelClient implements ModelClientInterface
 
         $url = self::getEndpoint($this->location, $this->projectId, $model->getName(), $method);
 
-        $query = [];
+        $headers = ['Content-Type' => 'application/json'];
         if (null !== $this->apiKey) {
-            $query['key'] = $this->apiKey;
+            $headers['x-goog-api-key'] = $this->apiKey;
         }
+
+        $query = [];
         if ($isStream) {
             $query['alt'] = 'sse';
         }
@@ -126,7 +128,7 @@ final class ModelClient implements ModelClientInterface
                 'POST',
                 $url,
                 [
-                    'headers' => ['Content-Type' => 'application/json'],
+                    'headers' => $headers,
                     'body' => $this->encodeJsonBody(array_merge($options, $payload)),
                     'query' => $query,
                 ]
