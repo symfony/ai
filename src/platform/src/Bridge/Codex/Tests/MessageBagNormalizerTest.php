@@ -15,6 +15,10 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Codex\Codex;
 use Symfony\AI\Platform\Bridge\Codex\Contract\MessageBagNormalizer;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Exception\MissingModelSupportException;
+use Symfony\AI\Platform\Message\Content\Audio;
+use Symfony\AI\Platform\Message\Content\Image;
+use Symfony\AI\Platform\Message\Content\ImageUrl;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
@@ -116,6 +120,78 @@ final class MessageBagNormalizerTest extends TestCase
         $result = $this->normalize($messageBag);
 
         $this->assertSame("The task: FIRST\n\nThe diff: SECOND", $result['prompt']);
+    }
+
+    public function testNormalizeThrowsOnImageContent()
+    {
+        $messageBag = new MessageBag(
+            Message::ofUser('What is in this image?', new Image('fake-image-data', 'image/png')),
+        );
+
+        $this->expectException(MissingModelSupportException::class);
+        $this->expectExceptionMessage('Model "gpt-5-codex" (Symfony\AI\Platform\Bridge\Codex\Codex) does not support "image input".');
+
+        $this->normalize($messageBag);
+    }
+
+    public function testNormalizeThrowsOnImageUrlContent()
+    {
+        $messageBag = new MessageBag(
+            Message::ofUser('What is in this image?', new ImageUrl('https://example.com/image.png')),
+        );
+
+        $this->expectException(MissingModelSupportException::class);
+        $this->expectExceptionMessage('Model "gpt-5-codex" (Symfony\AI\Platform\Bridge\Codex\Codex) does not support "image input".');
+
+        $this->normalize($messageBag);
+    }
+
+    public function testNormalizeThrowsOnImageOnlyUserMessage()
+    {
+        $messageBag = new MessageBag(
+            Message::ofUser(new Image('fake-image-data', 'image/png')),
+        );
+
+        $this->expectException(MissingModelSupportException::class);
+
+        $this->normalize($messageBag);
+    }
+
+    public function testNormalizeThrowsOnAudioContent()
+    {
+        $messageBag = new MessageBag(
+            Message::ofUser('Transcribe this', new Audio('fake-audio-data', 'audio/mp3')),
+        );
+
+        $this->expectException(MissingModelSupportException::class);
+        $this->expectExceptionMessage('Model "gpt-5-codex" (Symfony\AI\Platform\Bridge\Codex\Codex) does not support "audio input".');
+
+        $this->normalize($messageBag);
+    }
+
+    public function testNormalizeIgnoresImageInEarlierTurnBeforeAssistantMessage()
+    {
+        $messageBag = new MessageBag(
+            Message::ofUser('Earlier question', new Image('fake-image-data', 'image/png')),
+            Message::ofAssistant('Earlier answer'),
+            Message::ofUser('Follow-up question'),
+        );
+
+        $result = $this->normalize($messageBag);
+
+        $this->assertSame('Follow-up question', $result['prompt']);
+    }
+
+    public function testNormalizeThrowsWhenFallbackUserMessageContainsImage()
+    {
+        $messageBag = new MessageBag(
+            Message::ofUser('What is in this image?', new Image('fake-image-data', 'image/png')),
+            Message::ofAssistant('Answer'),
+        );
+
+        $this->expectException(MissingModelSupportException::class);
+
+        $this->normalize($messageBag);
     }
 
     /**
