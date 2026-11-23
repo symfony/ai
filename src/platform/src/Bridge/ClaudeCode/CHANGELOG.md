@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add structured output support through the Claude Code CLI's `--json-schema` option
+
 0.12
 ----
 

@@ -1650,6 +1650,10 @@ It throws an ``UnexpectedResultTypeException`` if the structured output is not a
 
     $reasoning = $result->asObject(MathReasoning::class); // typed as `MathReasoning`
 
+The Claude Code bridge supports the same ``response_format`` option with its ``opus``, ``sonnet`` and ``haiku`` models.
+It passes the schema to the CLI via ``--json-schema``. For a streamed structured response, the object is available
+once the CLI finishes and returns the validated result.
+
 Array Structures as Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
