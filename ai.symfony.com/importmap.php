@@ -17,13 +17,13 @@ return [
         'entrypoint' => true,
     ],
     'bootstrap' => [
-        'version' => '5.3.8',
+        'version' => '5.3.9',
     ],
     '@popperjs/core' => [
         'version' => '2.11.8',
     ],
     'bootstrap/dist/css/bootstrap.min.css' => [
-        'version' => '5.3.8',
+        'version' => '5.3.9',
         'type' => 'css',
     ],
     'typed.js' => [
