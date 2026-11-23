@@ -26,7 +26,7 @@ use Symfony\Component\Process\Process;
 final class StructuredOutputTest extends TestCase
 {
     #[DataProvider('streamModes')]
-    public function testConvertsTheFinalCliMessageIntoTheRequestedClass(bool $stream): void
+    public function testConvertsTheFinalCliMessageIntoTheRequestedClass(bool $stream)
     {
         if ('\\' === \DIRECTORY_SEPARATOR) {
             $this->markTestSkipped('This test uses an executable PHP fixture.');
@@ -48,7 +48,7 @@ final class StructuredOutputTest extends TestCase
     }
 
     #[DataProvider('streamModes')]
-    public function testTemporarySchemaIsRemovedAfterAFailedProcess(bool $stream): void
+    public function testTemporarySchemaIsRemovedAfterAFailedProcess(bool $stream)
     {
         $schemaPath = tempnam(sys_get_temp_dir(), 'codex-test-');
         $this->assertIsString($schemaPath);
