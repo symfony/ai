@@ -29,7 +29,7 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 final class StructuredOutputTest extends TestCase
 {
     #[DataProvider('streamModes')]
-    public function testReturnsTheValidatedCliResultAsTheRequestedClass(bool $stream): void
+    public function testReturnsTheValidatedCliResultAsTheRequestedClass(bool $stream)
     {
         if ('\\' === \DIRECTORY_SEPARATOR) {
             $this->markTestSkipped('This test uses an executable PHP fixture.');
@@ -50,7 +50,7 @@ final class StructuredOutputTest extends TestCase
         $this->assertSame('approve', $result->asObject(Verdict::class)->decision);
     }
 
-    public function testPreservesEmptyObjectsInTheCliJson(): void
+    public function testPreservesEmptyObjectsInTheCliJson()
     {
         if ('\\' === \DIRECTORY_SEPARATOR) {
             $this->markTestSkipped('This test uses an executable PHP fixture.');
@@ -65,7 +65,7 @@ final class StructuredOutputTest extends TestCase
         $this->assertSame('{"decision":"approve","details":{},"scores":[]}', $result->asText());
     }
 
-    public function testRejectsAFormatWithoutAJsonSchema(): void
+    public function testRejectsAFormatWithoutAJsonSchema()
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Claude Code expects a JSON Schema');
@@ -76,7 +76,7 @@ final class StructuredOutputTest extends TestCase
     }
 
     #[DataProvider('streamModes')]
-    public function testRefusesAResultWithoutValidatedOutput(bool $stream): void
+    public function testRefusesAResultWithoutValidatedOutput(bool $stream)
     {
         $event = ['type' => 'result', 'subtype' => 'success', 'result' => '{"decision":"approve"}'];
         $result = new InMemoryRawResult($event, [$event]);
