@@ -1,0 +1,103 @@
+{# Turbo Streams the worker publishes via Mercure while it answers, see App\Movies\AnswerHandler #}
+
+{% block step_added %}
+    {% import _self as movies %}
+    {% if 'tool' == step.type %}
+        <turbo-stream action="append" target="movie-steps"><template>{{ movies.step(step) }}</template></turbo-stream>
+    {% else %}
+        <turbo-stream action="replace" target="movie-status"><template>{{ movies.status(step.text) }}</template></turbo-stream>
+    {% endif %}
+{% endblock %}
+
+{% block step_updated %}
+    {% import _self as movies %}
+    <turbo-stream action="replace" target="movie-status"><template>{{ movies.status(step.text) }}</template></turbo-stream>
+{% endblock %}
+
+{% block answer_updated %}
+    {% import _self as movies %}
+    <turbo-stream action="replace" target="movie-answer"><template>
+        <div id="movie-answer" class="movie-answer">
+            <div class="bot-message">{{ answer|markdown_to_html }}</div>
+            {{ movies.suggestions(suggestions) }}
+        </div>
+    </template></turbo-stream>
+{% endblock %}
+
+{% block finished %}
+    {% import _self as movies %}
+    <turbo-stream action="replace" target="movie-answering"><template>{{ movies.answer(message, suggestions) }}</template></turbo-stream>
+{% endblock %}
+
+{% macro answering() %}
+    {% import _self as movies %}
+    <div id="movie-answering" class="message message-bot">
+        <span class="bot avatar">{{ ux_icon('bot') }}</span>
+        <div class="research">
+            <ol id="movie-steps" class="research-steps"></ol>
+            <div id="movie-answer" class="movie-answer">
+                {{ movies.status() }}
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{# The commentary of the agent replaces the placeholder, until the answer replaces both #}
+{% macro status(commentary = '') %}
+    <div id="movie-status" class="bot-message loading">
+        <span class="typing" aria-hidden="true"><span></span><span></span><span></span></span>
+        <i>{{ '' != commentary ? commentary : 'The Movie Bot is browsing the collection ...' }}</i>
+    </div>
+{% endmacro %}
+
+{% macro answer(message, suggestions) %}
+    {% import _self as movies %}
+    {% set steps = message.metadata.get('steps', []) %}
+    {% set toolCalls = steps|filter(step => 'tool' == step.type)|length %}
+    {# The id matches the answer Turbo inserted, which the next live render would otherwise keep as a duplicate #}
+    <div id="message-{{ message.id }}" class="movie-message">
+    <div class="message message-bot">
+        <span class="bot avatar">{{ ux_icon('bot') }}</span>
+        <div class="research">
+            {% if toolCalls > 0 %}
+                <details class="research-log">
+                    <summary>Called {{ toolCalls }} tool{{ toolCalls > 1 ? 's' }}</summary>
+                    <ol class="research-steps">
+                        {% for step in steps %}{{ movies.step(step) }}{% endfor %}
+                    </ol>
+                </details>
+            {% endif %}
+            <div class="movie-answer">
+                <div class="bot-message">{{ message.asText|markdown_to_html }}</div>
+                {{ movies.suggestions(suggestions) }}
+            </div>
+        </div>
+    </div>
+    </div>
+{% endmacro %}
+
+{% macro step(step) %}
+    <li class="research-step research-step-{{ step.type }}{{ 'tool' == step.type ? ' movie-tool-call' }}">
+        {% if 'tool' == step.type %}
+            {{ ux_icon('movie') }}
+            <code>{{ step.name }}({% for name, value in step.arguments %}{{ name }}: {{ value|json_encode(constant('JSON_UNESCAPED_UNICODE')) }}{{ not loop.last ? ', ' }}{% endfor %})</code>
+        {% else %}
+            <span>{{ step.text }}</span>
+        {% endif %}
+    </li>
+{% endmacro %}
+
+{% macro suggestions(suggestions) %}
+    {% if suggestions is not empty %}
+        <div class="movie-suggestions d-flex flex-wrap gap-3">
+            {% for suggestion in suggestions %}
+                <button type="button"
+                        class="movie-suggestion movie-poster-btn text-start"
+                        title="{{ suggestion.reason }}"
+                        {{ live_action('showDetails', { slug: suggestion.movie.slug }) }}>
+                    {% include 'components/_movie_poster.html.twig' with { movie: suggestion.movie, aspect: '1 / 1' } only %}
+                </button>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endmacro %}

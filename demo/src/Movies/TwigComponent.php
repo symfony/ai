@@ -35,6 +35,7 @@ final class TwigComponent
     public function __construct(
         private readonly Chat $chat,
         private readonly MovieRepository $movies,
+        private readonly Suggestions $suggestions,
     ) {
     }
 
@@ -46,26 +47,24 @@ final class TwigComponent
         return $this->chat->loadMessages()->withoutSystemMessage()->withoutToolMessages()->getMessages();
     }
 
+    public function getTopic(): string
+    {
+        return $this->chat->getTopic();
+    }
+
+    public function isAnswering(): bool
+    {
+        return $this->chat->isAnswering();
+    }
+
     /**
-     * Resolve the movie ids stored on an assistant message to real movies, ready to render as cards.
+     * Resolve the movies stored on an assistant message to real movies, ready to render as cards.
      *
      * @return list<array{movie: Movie, reason: string}>
      */
     public function getMoviesFor(MessageInterface $message): array
     {
-        if (!$message->getMetadata()->has('movies')) {
-            return [];
-        }
-
-        $suggestions = [];
-        foreach ($message->getMetadata()->get('movies') as $suggestion) {
-            $movie = $this->movies->find($suggestion->id);
-            if (null !== $movie) {
-                $suggestions[] = ['movie' => $movie, 'reason' => $suggestion->reason];
-            }
-        }
-
-        return $suggestions;
+        return $this->suggestions->resolve($message->getMetadata()->get('movies', []));
     }
 
     public function getDetailMovie(): ?Movie
@@ -92,7 +91,7 @@ final class TwigComponent
     #[LiveAction]
     public function submit(): void
     {
-        if (null === $this->message || '' === trim($this->message)) {
+        if (null === $this->message || '' === trim($this->message) || $this->chat->isAnswering()) {
             return;
         }
 

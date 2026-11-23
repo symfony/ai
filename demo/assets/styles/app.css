@@ -749,7 +749,8 @@ body.chat-page {
     }
 }
 
-.research-message {
+.research-message,
+.movie-message {
     display: flex;
     flex-direction: column;
     gap: inherit;
@@ -799,6 +800,17 @@ body.chat-page {
 .research-step-tool {
     font-family: var(--font-mono);
     font-size: .74rem;
+}
+
+.movie-tool-call code {
+    color: inherit;
+    word-break: break-word;
+}
+
+.movie-answer {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
 
 .research-log {

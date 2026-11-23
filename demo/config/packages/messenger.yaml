@@ -4,4 +4,5 @@ framework:
             async: '%env(MESSENGER_TRANSPORT_DSN)%'
 
         routing:
+            'App\Movies\Answer': async
             'App\Wikipedia\Research': async

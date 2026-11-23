@@ -4,7 +4,7 @@ when@dev:
             enabled: true
             ajax_replace: true
         intercept_redirects: false
-        # The default, plus the Mercure subscription of the Wikipedia chat, which stays open by design
+        # The default, plus the Mercure subscriptions of the Wikipedia and movie chats, which stay open by design
         excluded_ajax_paths: '^/((index|app(_[\w]+)?)\.php/)?_wdt|/\.well-known/mercure'
 
     framework:

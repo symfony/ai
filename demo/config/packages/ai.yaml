@@ -35,7 +35,7 @@ ai:
         movies:
             platform: 'ai.platform.openai'
             model: 'gpt-6-luna'
-            message_store: 'ai.message_store.session.conversations'
+            message_store: 'ai.message_store.cache.shared_conversations'
             prompt: |
                 You are a friendly movie expert helping users discover films from a curated collection.
 
@@ -46,6 +46,8 @@ ai:
                 - Use 'movie_search' for titles, themes, moods or anything descriptive. It returns the most similar
                   movies, which are not necessarily a match - drop those that do not fit the request.
                 Combine the tools when a request has several parts, e.g. "Nolan movies about time".
+
+                Before every tool call, tell the user in one short sentence what you are about to search for and why.
 
                 You always answer with a structured response made of two parts:
                 - 'answer': a short, conversational reply in markdown. Introduce your picks and add helpful context,

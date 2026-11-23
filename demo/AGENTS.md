@@ -52,7 +52,7 @@ symfony console app:blog:stream               # Streams the blog agent to the te
 ## Architecture
 
 ### AI Platforms
-`config/packages/ai.yaml` registers two platforms: `openai` and `huggingface`. Every agent except `document` (Mistral `mistral-medium-latest`) routes to OpenAI `gpt-6-luna` (`wikipedia` needs it for the commentary phase of gpt-5.4+). Speech also uses OpenAI `whisper-1` for STT and `gpt-4o-mini-tts` for TTS; the vectorizer uses `text-embedding-ada-002`. Hugging Face is configured but unused by any agent — wire it in explicitly if needed.
+`config/packages/ai.yaml` registers two platforms: `openai` and `huggingface`. Every agent except `document` (Mistral `mistral-medium-latest`) routes to OpenAI `gpt-6-luna` (`wikipedia` and `movies` need it for the commentary phase of gpt-5.4+). Speech also uses OpenAI `whisper-1` for STT and `gpt-4o-mini-tts` for TTS; the vectorizer uses `text-embedding-ada-002`. Hugging Face is configured but unused by any agent — wire it in explicitly if needed.
 
 The `Video` feature is the exception: `src/Video/TwigComponent.php` calls `PlatformInterface::invoke('gpt-6-luna', ...)` directly (no agent in `ai.yaml`, no session, no tools) for one-shot webcam frame captioning.
 
@@ -64,7 +64,7 @@ Most user-facing features under `src/<Feature>/` are a trio:
 
 Features following this trio: `Blog`, `Stream`, `YouTube`, `Recipe`, `Speech`, `Mcp`.
 
-`Wikipedia` runs its agent outside the request: `Chat` stores the conversation in the cache (`Conversations`) and dispatches a `Research` message to the `async` Messenger transport. `ResearchHandler` streams the agent in the worker and publishes Turbo Streams (`templates/wikipedia/_research.html.twig`) to the conversation's Mercure topic, which the component listens to with `turbo_stream_from()`. The worker is long-running: restart it after code changes, unless `symfony serve` runs it. Exceptions: `Video` (direct platform call, described above) and `Crop` (custom `CropForm` + `ImageCropper` rather than chat). Reset button clears the session key.
+`Wikipedia` runs its agent outside the request: `Chat` stores the conversation in the cache (`Conversations`) and dispatches a `Research` message to the `async` Messenger transport. `ResearchHandler` streams the agent in the worker and publishes Turbo Streams (`templates/wikipedia/_research.html.twig`) to the conversation's Mercure topic, which the component listens to with `turbo_stream_from()`. `Movies` works the same way with an `Answer` message: `AnswerHandler` streams the structured `MovieAnswer` and publishes its commentary, tool calls and partial objects (`templates/movies/_answer.html.twig`). The worker is long-running: restart it after code changes, unless `symfony serve` runs it. Exceptions: `Video` (direct platform call, described above) and `Crop` (custom `CropForm` + `ImageCropper` rather than chat). Reset button clears the session key.
 
 ### RAG Pipeline (Blog)
 Index: RSS feed loader → `TextContainsFilter` (keeps only "Week of Symfony" posts, wired as `app.filter.week_of_symfony`) → `TextSplitTransformer` + `TextTrimTransformer` → OpenAI `text-embedding-ada-002` → pgvector store (`symfony_blog` table, cosine distance).

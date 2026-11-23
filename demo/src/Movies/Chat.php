@@ -12,33 +12,46 @@
 namespace App\Movies;
 
 use App\Conversation\ConversationIds;
-use App\Movies\Data\MovieAnswer;
-use Symfony\AI\Agent\AgentInterface;
 use Symfony\AI\Agent\MessageStore\MessageStoreInterface;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Message\Role;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Uid\Uuid;
 
 /**
- * Movie chat that asks the agent for a structured {@see MovieAnswer}.
- *
- * The written answer is stored as the assistant message content, while the suggested movies are kept in
- * the message metadata so the UI can render them as cards next to the text.
+ * Movie chat that hands the question to a worker, see {@see AnswerHandler}.
  *
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class Chat
 {
     private const CHAT = 'movies';
+    private const TOPIC_SESSION_KEY = 'movies-topic';
 
     public function __construct(
+        private readonly RequestStack $requestStack,
         private readonly ConversationIds $conversationIds,
-        #[Autowire(service: 'ai.message_store.session.conversations')]
+        #[Autowire(service: 'ai.message_store.cache.shared_conversations')]
         private readonly MessageStoreInterface $messageStore,
-        #[Autowire(service: 'ai.agent.movies')]
-        private readonly AgentInterface $agent,
+        private readonly MessageBusInterface $bus,
     ) {
+    }
+
+    /**
+     * Stays the same after a reset, since the browser keeps its subscription to the topic.
+     */
+    public function getTopic(): string
+    {
+        $session = $this->requestStack->getSession();
+
+        if (!$session->has(self::TOPIC_SESSION_KEY)) {
+            $session->set(self::TOPIC_SESSION_KEY, 'https://symfony.com/ai/demo/movies/'.Uuid::v4()->toRfc4122());
+        }
+
+        return $session->get(self::TOPIC_SESSION_KEY);
     }
 
     public function loadMessages(): MessageBag
@@ -46,21 +59,17 @@ final class Chat
         return $this->messageStore->load($this->conversationIds->get(self::CHAT));
     }
 
+    public function isAnswering(): bool
+    {
+        return $this->loadMessages()->isLastMessageFrom(Role::User);
+    }
+
     public function submitMessage(string $message): void
     {
-        $messages = MessageBag::forId($this->conversationIds->get(self::CHAT), $message);
+        $messages = $this->loadMessages()->with(Message::ofUser($message));
 
-        $execution = $this->agent->call($messages, ['response_format' => MovieAnswer::class]);
-        $result = $execution->asObject();
-        \assert($result instanceof MovieAnswer);
-
-        // the agent stored the answer as JSON, replacing it under its ID keeps the conversation readable
-        $messages = $execution->getMessages();
-        $answerId = $messages->latestAs(Role::Assistant)->getId();
-        $assistantMessage = Message::ofAssistant($result->answer)->withId($answerId);
-        $assistantMessage->getMetadata()->add('movies', $result->movies);
-
-        $this->messageStore->save($messages->replace($answerId, $assistantMessage));
+        $this->messageStore->save($messages);
+        $this->bus->dispatch(new Answer($messages->getId()->toRfc4122(), $this->getTopic()));
     }
 
     public function reset(): void

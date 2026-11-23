@@ -27,13 +27,13 @@ twig:
             movies:
                 label: 'Movies'
                 name: 'Movie Bot'
-                tag: 'Structured Output'
-                description: 'Search for movies in our collection, with structured output rendered as cards.'
+                tag: 'Partial Objects'
+                description: 'Search for movies in our collection, with the structured answer streamed as cards via Mercure, next to the commentary and tool calls of the agent.'
                 model: 'gpt-6-luna'
                 icon: 'movie'
                 gradient: 'linear-gradient(180deg, #1D4ED8, #7F5BFF)'
-                source: 'src/Movies/Chat.php'
-                line: 51
+                source: 'src/Movies/AnswerHandler.php'
+                line: 70
             wikipedia:
                 label: 'Wikipedia'
                 name: 'Wikipedia Research Bot'
