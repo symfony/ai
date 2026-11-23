@@ -314,6 +314,18 @@ final class ValidatorConstraintsDescriber implements PropertyDescriberInterface
      */
     private function describeCount(?array &$schema, Assert\Count $constraint): void
     {
+        if ($this->containsType($schema, 'object')) {
+            if (null !== $constraint->min) {
+                $schema['minProperties'] = $constraint->min;
+            }
+
+            if (null !== $constraint->max) {
+                $schema['maxProperties'] = $constraint->max;
+            }
+
+            return;
+        }
+
         if (null !== $constraint->min) {
             $schema['minItems'] = $constraint->min;
         }
@@ -493,8 +505,16 @@ final class ValidatorConstraintsDescriber implements PropertyDescriberInterface
      */
     private function describeAll(?array &$schema, Assert\All $constraint, string $class): void
     {
-        // Since additionalProperties is not supported by all (or none?) platforms, we only support non-assoc arrays here.
-        if (!\in_array('array', (array) ($schema['type'] ??= 'array'), true)) {
+        $types = (array) ($schema['type'] ??= 'array');
+        if (\in_array('object', $types, true) && false !== ($schema['additionalProperties'] ?? null)) {
+            foreach ((array) $constraint->constraints as $constraint) {
+                $this->applyConstraints($constraint, $schema['additionalProperties'], $class);
+            }
+
+            return;
+        }
+
+        if (!\in_array('array', $types, true)) {
             return;
         }
 

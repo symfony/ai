@@ -134,6 +134,11 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
 
                 $items = $this->getTypeSchema($type->getCollectionValueType());
 
+                $keyType = $type->getCollectionKeyType();
+                if ($keyType instanceof BuiltinType && TypeIdentifier::STRING === $keyType->getTypeIdentifier()) {
+                    return ['type' => 'object'] + ($items ? ['additionalProperties' => $items] : []);
+                }
+
                 return ['type' => 'array'] + ($items ? ['items' => $items] : []);
 
             case $type->isIdentifiedBy(TypeIdentifier::OBJECT):
