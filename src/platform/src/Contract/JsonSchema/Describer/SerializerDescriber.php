@@ -22,11 +22,12 @@ use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;
  */
 final class SerializerDescriber implements ObjectDescriberInterface, ObjectDescriberAwareInterface
 {
+    private readonly ClassMetadataFactoryInterface $classMetadataFactory;
     private ObjectDescriberInterface $describer;
 
-    public function __construct(
-        private readonly ClassMetadataFactoryInterface $classMetadataFactory = new ClassMetadataFactory(new AttributeLoader()),
-    ) {
+    public function __construct(?ClassMetadataFactoryInterface $classMetadataFactory = null)
+    {
+        $this->classMetadataFactory = $classMetadataFactory ?? new ClassMetadataFactory(new AttributeLoader());
     }
 
     public function setObjectDescriber(ObjectDescriberInterface $describer): void
