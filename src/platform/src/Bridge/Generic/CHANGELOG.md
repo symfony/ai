@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add OpenAI-compatible text-to-speech through a `TextToSpeechModel`, model client and result converter, enabled with the `supportsTextToSpeech` argument of the `Factory` and posting to `/v1/audio/speech` by default (`speechPath`); the raw audio body is returned as a `BinaryResult` with the MIME type of the response
+
 0.14
 ----
 
