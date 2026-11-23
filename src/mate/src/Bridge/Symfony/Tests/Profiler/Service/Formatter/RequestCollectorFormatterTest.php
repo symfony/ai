@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\RequestCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\AssertsOutputSchemaTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\RequestDataCollector;
@@ -22,11 +23,26 @@ use Symfony\Component\HttpKernel\DataCollector\RequestDataCollector;
  */
 final class RequestCollectorFormatterTest extends TestCase
 {
+    use AssertsOutputSchemaTrait;
+
     private RequestCollectorFormatter $formatter;
 
     protected function setUp(): void
     {
         $this->formatter = new RequestCollectorFormatter();
+    }
+
+    public function testFormatMatchesOutputSchema()
+    {
+        $request = Request::create('/login?page=2', 'POST', ['username' => 'alice', 'password' => 'hunter2'], ['sid' => 'abc'], [], [], '{"a":1}');
+        $request->headers->set('Authorization', 'Bearer secret');
+
+        $this->assertMatchesOutputSchema(RequestCollectorFormatter::OUTPUT_SCHEMA, $this->format($this->collect($request)));
+    }
+
+    public function testFormatOfPlainGetMatchesOutputSchema()
+    {
+        $this->assertMatchesOutputSchema(RequestCollectorFormatter::OUTPUT_SCHEMA, $this->format($this->collect(Request::create('/'))));
     }
 
     public function testGetName()

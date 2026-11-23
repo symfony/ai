@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\TimeCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\AssertsOutputSchemaTrait;
 use Symfony\Component\HttpKernel\DataCollector\TimeDataCollector;
 use Symfony\Component\Stopwatch\StopwatchEvent;
 
@@ -21,11 +22,37 @@ use Symfony\Component\Stopwatch\StopwatchEvent;
  */
 final class TimeCollectorFormatterTest extends TestCase
 {
+    use AssertsOutputSchemaTrait;
+
     private TimeCollectorFormatter $formatter;
 
     protected function setUp(): void
     {
         $this->formatter = new TimeCollectorFormatter();
+    }
+
+    public function testFormatMatchesOutputSchema()
+    {
+        $event = $this->createMock(StopwatchEvent::class);
+        $event->method('getCategory')->willReturn('section');
+        $event->method('getDuration')->willReturn(42.5);
+        $event->method('getMemory')->willReturn(1024 * 1024);
+
+        $collector = $this->createMock(TimeDataCollector::class);
+        $collector->method('getDuration')->willReturn(120.0);
+        $collector->method('getInitTime')->willReturn(15.3);
+        $collector->method('isStopwatchInstalled')->willReturn(true);
+        $collector->method('getEvents')->willReturn(['kernel.handle' => $event, '__section__' => $event]);
+
+        $this->assertMatchesOutputSchema(TimeCollectorFormatter::OUTPUT_SCHEMA, $this->formatter->format($collector));
+    }
+
+    public function testFormatWithNoEventsMatchesOutputSchema()
+    {
+        $collector = $this->createMock(TimeDataCollector::class);
+        $collector->method('getEvents')->willReturn([]);
+
+        $this->assertMatchesOutputSchema(TimeCollectorFormatter::OUTPUT_SCHEMA, $this->formatter->format($collector));
     }
 
     public function testGetName()

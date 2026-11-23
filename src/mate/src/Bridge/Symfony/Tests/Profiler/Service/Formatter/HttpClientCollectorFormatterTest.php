@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\HttpClientCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\AssertsOutputSchemaTrait;
 use Symfony\Component\HttpClient\DataCollector\HttpClientDataCollector;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -28,11 +29,41 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
  */
 final class HttpClientCollectorFormatterTest extends TestCase
 {
+    use AssertsOutputSchemaTrait;
+
     private HttpClientCollectorFormatter $formatter;
 
     protected function setUp(): void
     {
         $this->formatter = new HttpClientCollectorFormatter();
+    }
+
+    public function testFormatMatchesOutputSchema()
+    {
+        $collector = $this->collect([
+            ['GET', 'https://api.example.com/rates', new MockResponse('{"EUR":1}', ['http_code' => 200])],
+            ['POST', 'https://api.example.com/boom', new MockResponse('', ['http_code' => 503])],
+            ['GET', 'https://api.example.com/old', new MockResponse('', ['http_code' => 200, 'redirect_count' => 2])],
+        ]);
+
+        $result = $this->formatter->format($collector);
+
+        $this->assertMatchesOutputSchema(HttpClientCollectorFormatter::OUTPUT_SCHEMA, $result);
+        $this->assertContains(2, array_column($result['calls'], 'redirect_count'));
+    }
+
+    public function testFormatTransportErrorMatchesOutputSchema()
+    {
+        $collector = $this->collectFromTraces([
+            ['method' => 'GET', 'url' => 'http://127.0.0.1:8779/shipping', 'http_code' => 0, 'info' => ['error' => 'Idle timeout reached.']],
+        ]);
+
+        $this->assertMatchesOutputSchema(HttpClientCollectorFormatter::OUTPUT_SCHEMA, $this->formatter->format($collector));
+    }
+
+    public function testFormatWithoutRequestsMatchesOutputSchema()
+    {
+        $this->assertMatchesOutputSchema(HttpClientCollectorFormatter::OUTPUT_SCHEMA, $this->formatter->format($this->collect([])));
     }
 
     public function testGetName()

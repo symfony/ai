@@ -47,6 +47,32 @@ final class ToolsInspectCommandTest extends TestCase
         $this->assertStringContainsString('Input Schema', $output);
     }
 
+    public function testOutputSchemaIsShownWhenTheToolDeclaresOne()
+    {
+        $extensions = ['_custom' => ['dirs' => ['tests/Command/Fixtures'], 'includes' => []]];
+        $tester = new CommandTester($this->createCommand(__DIR__.'/../..', $extensions));
+
+        $tester->execute(['tool-name' => 'sample-add']);
+
+        $output = $tester->getDisplay();
+        $this->assertStringContainsString('Output Schema', $output);
+        $this->assertStringContainsString('"sum"', $output);
+
+        $tester->execute(['tool-name' => 'sample-add', '--format' => 'json']);
+        $json = json_decode($tester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertSame('integer', $json['output_schema']['properties']['sum']['type']);
+    }
+
+    public function testToolWithoutOutputSchemaSaysSo()
+    {
+        $extensions = ['_custom' => ['dirs' => ['tests/Command/Fixtures'], 'includes' => []]];
+        $tester = new CommandTester($this->createCommand(__DIR__.'/../..', $extensions));
+
+        $tester->execute(['tool-name' => 'sample-echo']);
+
+        $this->assertStringContainsString('No output schema defined', $tester->getDisplay());
+    }
+
     public function testExecuteWithJsonFormat()
     {
         $rootDir = __DIR__.'/../..';

@@ -15,6 +15,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\RouterCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\AssertsOutputSchemaTrait;
 use Symfony\Bundle\FrameworkBundle\Controller\RedirectController;
 use Symfony\Bundle\FrameworkBundle\DataCollector\RouterDataCollector as FrameworkRouterDataCollector;
 use Symfony\Component\Config\FileLocator;
@@ -33,6 +34,35 @@ use Symfony\Component\Routing\Controller\RedirectController as RoutingRedirectCo
  */
 final class RouterCollectorFormatterTest extends TestCase
 {
+    use AssertsOutputSchemaTrait;
+
+    public function testFormatMatchesOutputSchema()
+    {
+        $collector = new RouterDataCollector();
+        $collector->collect(Request::create('/page'), new Response());
+
+        $this->assertMatchesOutputSchema(RouterCollectorFormatter::OUTPUT_SCHEMA, (new RouterCollectorFormatter())->format($collector));
+    }
+
+    public function testFormatOfRedirectMatchesOutputSchema()
+    {
+        $request = Request::create('/old');
+        $request->attributes->set('_route', 'old');
+        $controller = class_exists(RoutingRedirectController::class) ? new RoutingRedirectController() : new RedirectController();
+        $action = [$controller, 'urlRedirectAction'];
+        $this->assertIsCallable($action);
+        $collector = new FrameworkRouterDataCollector();
+        $collector->onKernelController(new ControllerEvent($this->createMock(HttpKernelInterface::class), $action, $request, HttpKernelInterface::MAIN_REQUEST));
+        $response = $action($request, '/page?token=secret');
+        $this->assertInstanceOf(Response::class, $response);
+        $collector->collect($request, $response);
+
+        $result = (new RouterCollectorFormatter())->format($collector);
+
+        $this->assertTrue($result['redirect']);
+        $this->assertMatchesOutputSchema(RouterCollectorFormatter::OUTPUT_SCHEMA, $result);
+    }
+
     public function testGetName()
     {
         $this->assertSame('router', (new RouterCollectorFormatter())->getName());

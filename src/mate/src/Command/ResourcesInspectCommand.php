@@ -68,6 +68,7 @@ class ResourcesInspectCommand extends Command
 The <info>%command.name%</info> command displays a resource or resource template with its URI, parameters and MIME type.
 
 The argument is a name, a URI template or a concrete URI. A concrete URI finds the template it matches.
+When the resource declares an output schema, it is shown too. For a template with one schema per variant (the profiler collectors), a concrete URI narrows it to the matching variant, or to the variant titled "other" when none matches.
 
 <info>Usage Examples:</info>
 
@@ -108,6 +109,8 @@ HELP
 
             return Command::FAILURE;
         }
+
+        $resource['output_schema'] = $this->narrowSchema($resource, $identifier);
 
         if ('json' === $format) {
             $output->writeln(json_encode($resource, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
@@ -154,10 +157,55 @@ HELP
         return null;
     }
 
+    /**
+     * A template whose schema is a `oneOf` of titled branches (the profiler collectors, for
+     * one) shows only the branch whose title equals a variable of the concrete URI.
+     *
+     * @param ResourceData $resource
+     *
+     * @return array<string, mixed>|null
+     */
+    private function narrowSchema(array $resource, string $identifier): ?array
+    {
+        $schema = $resource['output_schema'];
+        if (null === $schema || 'template' !== $resource['type'] || !isset($schema['oneOf']) || !\is_array($schema['oneOf'])) {
+            return $schema;
+        }
+
+        if (1 !== preg_match($this->templateRegex($resource['uri']), $identifier) || [] === $resource['parameters']) {
+            return $schema;
+        }
+
+        $values = $this->templateValues($resource['uri'], $identifier);
+        foreach ($schema['oneOf'] as $branch) {
+            if (\is_array($branch) && isset($branch['title']) && \in_array($branch['title'], $values, true)) {
+                return $branch;
+            }
+        }
+
+        foreach ($schema['oneOf'] as $branch) {
+            if (\is_array($branch) && 'other' === ($branch['title'] ?? null)) {
+                return $branch;
+            }
+        }
+
+        return $schema;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function templateValues(string $uriTemplate, string $uri): array
+    {
+        preg_match($this->templateRegex($uriTemplate), $uri, $matches);
+
+        return \array_slice($matches, 1);
+    }
+
     private function templateRegex(string $uriTemplate): string
     {
         $quoted = preg_quote($uriTemplate, '#');
-        $pattern = preg_replace('/\\\\\{[^}]+\\\\\}/', '[^/]+', $quoted);
+        $pattern = preg_replace('/\\\\\{[^}]+\\\\\}/', '([^/]+)', $quoted);
         \assert(\is_string($pattern));
 
         return '#^'.$pattern.'$#';
@@ -183,6 +231,9 @@ HELP
             $io->section('Parameters');
             $io->listing($resource['parameters']);
         }
+
+        $io->section('Output Schema');
+        $io->text(null !== $resource['output_schema'] ? json_encode($resource['output_schema'], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES) : '<comment>No output schema defined</comment>');
 
         $io->text(\sprintf('Read it with: <info>%s resources:read %s</info>', $_SERVER['PHP_SELF'] ?? 'vendor/bin/mate', $resource['uri']));
     }

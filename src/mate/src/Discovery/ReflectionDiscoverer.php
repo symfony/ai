@@ -161,6 +161,7 @@ final class ReflectionDiscoverer
                 $this->schemaGenerator->generate($method),
                 $className,
                 $methodName,
+                $instance->outputSchema,
             );
 
             return;
@@ -178,6 +179,7 @@ final class ReflectionDiscoverer
                 $instance->mimeType,
                 $className,
                 $methodName,
+                $instance->outputSchema,
             );
 
             return;
@@ -195,6 +197,7 @@ final class ReflectionDiscoverer
                 $instance->mimeType,
                 $className,
                 $methodName,
+                $instance->outputSchema,
             );
         }
     }

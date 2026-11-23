@@ -13,11 +13,13 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Capability;
 
 use HelgeSverre\Toon\Toon;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Mate\Attribute\MateTool;
 use Symfony\AI\Mate\Bridge\Symfony\Capability\ProfilerTool;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Exception\InvalidCollectorException;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Exception\ProfileNotFoundException;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\CollectorRegistry;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\ProfilerDataProvider;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\AssertsOutputSchemaTrait;
 use Symfony\AI\Mate\Bridge\Symfony\Tests\Fixtures\TestCollector;
 use Symfony\AI\Mate\Bridge\Symfony\Tests\Fixtures\TestCollectorFormatter;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
@@ -31,6 +33,8 @@ use Symfony\Component\HttpKernel\Profiler\Profile;
  */
 final class ProfilerToolTest extends TestCase
 {
+    use AssertsOutputSchemaTrait;
+
     private ProfilerTool $tool;
     private string $fixtureDir;
 
@@ -240,6 +244,51 @@ final class ProfilerToolTest extends TestCase
         $this->assertArrayHasKey('profiles', $result);
         $keys = array_keys($result['profiles']);
         $this->assertSame([0, 1, 2], $keys);
+    }
+
+    public function testListProfilesMatchesItsOutputSchema()
+    {
+        $schema = $this->outputSchema('listProfiles');
+
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->listProfiles()));
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->listProfiles(limit: 2)));
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->listProfiles(url: '/nothing-here')));
+    }
+
+    public function testListProfilesAndGetProfileMatchTheirOutputSchemaWithAContext()
+    {
+        $dir = sys_get_temp_dir().'/mate-profiler-schema-'.bin2hex(random_bytes(8));
+        mkdir($dir, 0755, true);
+        $this->temporaryDirs[] = $dir;
+
+        $profile = new Profile('ctx123');
+        $profile->setIp('127.0.0.1');
+        $profile->setMethod('GET');
+        $profile->setUrl('/admin');
+        $profile->setStatusCode(200);
+        $profile->setTime(time());
+        $profile->setCollectors([new TestCollector('db', [], ['query_count' => 1])]);
+        $this->assertTrue((new FileProfilerStorage('file:'.$dir))->write($profile));
+
+        $tool = new ProfilerTool(new ProfilerDataProvider(['admin' => $dir], new CollectorRegistry([])));
+
+        $list = $this->decodeUntrusted($tool->listProfiles());
+        $this->assertSame('admin', $list['profiles'][0]['context']);
+        $this->assertMatchesOutputSchema($this->outputSchema('listProfiles'), $list);
+
+        $get = $this->decodeUntrusted($tool->getProfile('ctx123'));
+        $this->assertSame('admin', $get['context']);
+        $this->assertNotEmpty($get['collectors']);
+        $this->assertMatchesOutputSchema($this->outputSchema('getProfile'), $get);
+    }
+
+    public function testGetProfileMatchesItsOutputSchema()
+    {
+        $schema = $this->outputSchema('getProfile');
+
+        foreach (['abc123', 'ghi789'] as $token) {
+            $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->getProfile($token)));
+        }
     }
 
     public function testCompareReportsImprovementWhenQueryCountDrops()
@@ -710,6 +759,18 @@ final class ProfilerToolTest extends TestCase
         $this->assertSame(ResponseEncoder::UNTRUSTED_NOTICE, $decoded['_security_notice']);
 
         return $decoded['untrusted_data'];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function outputSchema(string $method): array
+    {
+        $schema = (new \ReflectionMethod(ProfilerTool::class, $method))->getAttributes(MateTool::class)[0]->newInstance()->outputSchema;
+
+        $this->assertIsArray($schema);
+
+        return $schema;
     }
 
     /**

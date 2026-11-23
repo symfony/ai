@@ -24,6 +24,18 @@ use Symfony\Component\HttpKernel\DataCollector\RouterDataCollector;
  */
 final class RouterCollectorFormatter implements CollectorFormatterInterface
 {
+    public const OUTPUT_SCHEMA = [
+        'title' => 'router',
+        'type' => 'object',
+        'properties' => [
+            'redirect' => ['type' => 'boolean'],
+            'route' => ['type' => ['string', 'null'], 'description' => 'The route a redirect leads to. Null when unknown.'],
+            'target_host' => ['type' => ['string', 'null']],
+            'target_path' => ['type' => ['string', 'null']],
+        ],
+        'required' => ['redirect', 'route', 'target_host', 'target_path'],
+    ];
+
     public function getName(): string
     {
         return 'router';

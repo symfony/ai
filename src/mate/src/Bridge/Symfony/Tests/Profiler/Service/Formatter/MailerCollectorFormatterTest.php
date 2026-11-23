@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\MailerCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\AssertsOutputSchemaTrait;
 use Symfony\Component\Mailer\DataCollector\MessageDataCollector;
 use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\Event\MessageEvent;
@@ -27,11 +28,41 @@ use Symfony\Component\Mime\RawMessage;
  */
 final class MailerCollectorFormatterTest extends TestCase
 {
+    use AssertsOutputSchemaTrait;
+
     private MailerCollectorFormatter $formatter;
 
     protected function setUp(): void
     {
         $this->formatter = new MailerCollectorFormatter();
+    }
+
+    public function testFormatMatchesOutputSchema()
+    {
+        $email = (new Email())
+            ->from('sender@example.com')
+            ->to('recipient@example.com')
+            ->cc('cc@example.com')
+            ->subject('With everything')
+            ->text('Visit https://example.com/reset/abcdef0123456789abcdef?token=secret')
+            ->html('<a href="https://example.com/verify">Verify</a>')
+            ->attach('file content', 'document.pdf', 'application/pdf');
+
+        $collector = $this->createCollectorWithMessages([
+            $this->createMessageEvent($email, 'smtp', false),
+            $this->createMessageEvent(new RawMessage('raw email content'), 'async', true),
+        ]);
+
+        $result = $this->formatter->format($collector);
+
+        $this->assertMatchesOutputSchema(MailerCollectorFormatter::OUTPUT_SCHEMA, $result);
+        $this->assertArrayHasKey('type', $result['messages'][1]);
+        $this->assertArrayNotHasKey('subject', $result['messages'][1]);
+    }
+
+    public function testFormatWithNoMessagesMatchesOutputSchema()
+    {
+        $this->assertMatchesOutputSchema(MailerCollectorFormatter::OUTPUT_SCHEMA, $this->formatter->format($this->createCollectorWithMessages([])));
     }
 
     public function testGetName()

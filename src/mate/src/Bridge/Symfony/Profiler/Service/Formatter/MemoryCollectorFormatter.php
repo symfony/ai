@@ -29,6 +29,19 @@ use Symfony\Component\HttpKernel\DataCollector\MemoryDataCollector;
  */
 final class MemoryCollectorFormatter implements CollectorFormatterInterface
 {
+    public const OUTPUT_SCHEMA = [
+        'title' => 'memory',
+        'type' => 'object',
+        'properties' => [
+            'memory_bytes' => ['type' => 'integer'],
+            'memory_mb' => ['type' => 'number'],
+            'memory_limit_bytes' => ['type' => 'number', 'description' => '-1 when unlimited.'],
+            'memory_limit_mb' => ['type' => ['number', 'string'], 'description' => 'The string "unlimited" when there is no limit.'],
+            'usage_percent' => ['type' => ['number', 'null'], 'description' => 'Null when there is no limit.'],
+        ],
+        'required' => ['memory_bytes', 'memory_mb', 'memory_limit_bytes', 'memory_limit_mb', 'usage_percent'],
+    ];
+
     public function getName(): string
     {
         return 'memory';

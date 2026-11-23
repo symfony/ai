@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ExceptionCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\AssertsOutputSchemaTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\ExceptionDataCollector;
@@ -22,11 +23,29 @@ use Symfony\Component\HttpKernel\DataCollector\ExceptionDataCollector;
  */
 final class ExceptionCollectorFormatterTest extends TestCase
 {
+    use AssertsOutputSchemaTrait;
+
     private ExceptionCollectorFormatter $formatter;
 
     protected function setUp(): void
     {
         $this->formatter = new ExceptionCollectorFormatter();
+    }
+
+    public function testFormatMatchesOutputSchema()
+    {
+        $result = $this->formatter->format($this->collect(new \RuntimeException('Boom', 500)));
+
+        $this->assertTrue($result['has_exception']);
+        $this->assertMatchesOutputSchema(ExceptionCollectorFormatter::OUTPUT_SCHEMA, $result);
+    }
+
+    public function testFormatWithoutExceptionMatchesOutputSchema()
+    {
+        $collector = new ExceptionDataCollector();
+        $collector->collect(new Request(), new Response());
+
+        $this->assertMatchesOutputSchema(ExceptionCollectorFormatter::OUTPUT_SCHEMA, $this->formatter->format($collector));
     }
 
     public function testGetName()

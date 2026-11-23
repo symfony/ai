@@ -27,6 +27,56 @@ use Symfony\AI\Mate\Exception\RuntimeException;
  */
 final class ProfilerTool
 {
+    private const PROFILE_SCHEMA = [
+        'type' => 'object',
+        'properties' => [
+            'token' => ['type' => 'string'],
+            'ip' => ['type' => ['string', 'null']],
+            'method' => ['type' => ['string', 'null']],
+            'url' => ['type' => ['string', 'null']],
+            'time' => ['type' => 'integer', 'description' => 'Unix timestamp'],
+            'time_formatted' => ['type' => 'string', 'description' => 'ATOM formatted time'],
+            'status_code' => ['type' => ['integer', 'null']],
+            'parent_token' => ['type' => ['string', 'null'], 'description' => 'Set for sub-requests'],
+            'resource_uri' => ['type' => 'string'],
+            'context' => ['type' => 'string', 'description' => 'Kernel context, only present when multiple profiler directories are configured'],
+        ],
+        'required' => ['token', 'ip', 'method', 'url', 'time', 'time_formatted', 'status_code', 'parent_token', 'resource_uri'],
+        'additionalProperties' => false,
+    ];
+
+    private const LIST_SCHEMA = [
+        'type' => 'object',
+        'properties' => [
+            'total' => ['type' => 'integer', 'description' => 'Number of matching profiles, also beyond the returned page'],
+            'truncated' => ['type' => 'boolean', 'description' => 'True when total exceeds the profiles returned'],
+            'profiles' => ['type' => 'array', 'items' => self::PROFILE_SCHEMA],
+        ],
+        'required' => ['total', 'truncated', 'profiles'],
+        'additionalProperties' => false,
+    ];
+
+    private const GET_SCHEMA = [
+        'type' => 'object',
+        'properties' => [
+            ...self::PROFILE_SCHEMA['properties'],
+            'collectors' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'name' => ['type' => 'string'],
+                        'uri' => ['type' => 'string', 'description' => 'Read with the resources:read command'],
+                    ],
+                    'required' => ['name', 'uri'],
+                    'additionalProperties' => false,
+                ],
+            ],
+        ],
+        'required' => [...self::PROFILE_SCHEMA['required'], 'collectors'],
+        'additionalProperties' => false,
+    ];
+
     private const MAX_FAILING_GROUPS = 20;
     /**
      * Number of grouped statements the triage returns. Triage answers "where is the load",
@@ -76,7 +126,7 @@ final class ProfilerTool
      * @param string|null $from       Start date filter for profile creation time
      * @param string|null $to         End date filter for profile creation time
      */
-    #[MateTool(name: 'symfony-profiler-list', title: 'Symfony Profiler List', description: 'List and filter Symfony profiler profiles by HTTP method, URL, IP, status code, date range, or context. Returns total (the number of matching profiles) and truncated, then the profiles, newest first (limit=1 returns the latest), each with summary data and a resource_uri for the full details. At most 500 profiles are returned. When truncated is true, narrow the filters instead of listing everything to count or aggregate.')]
+    #[MateTool(name: 'symfony-profiler-list', title: 'Symfony Profiler List', description: 'List and filter Symfony profiler profiles by HTTP method, URL, IP, status code, date range, or context. Returns total (the number of matching profiles) and truncated, then the profiles, newest first (limit=1 returns the latest), each with summary data and a resource_uri for the full details. At most 500 profiles are returned. When truncated is true, narrow the filters instead of listing everything to count or aggregate.', outputSchema: self::LIST_SCHEMA)]
     public function listProfiles(
         int $limit = 20,
         ?string $method = null,
@@ -120,7 +170,7 @@ final class ProfilerTool
     /**
      * @param string $token The unique profiler token identifying the profile
      */
-    #[MateTool(name: 'symfony-profiler-get', title: 'Symfony Profiler Get', description: 'Get a specific profiler profile by its token. Returns detailed profile data including available collectors and resource_uri for accessing collector-specific data. Collector data (form, validator, request, time, db, events, cache, security, ...) is read through those URIs, with the `resources:read <uri>` command.')]
+    #[MateTool(name: 'symfony-profiler-get', title: 'Symfony Profiler Get', description: 'Get a specific profiler profile by its token. Returns detailed profile data including available collectors and resource_uri for accessing collector-specific data. Collector data (form, validator, request, time, db, events, cache, security, ...) is read through those URIs, with the `resources:read <uri>` command.', outputSchema: self::GET_SCHEMA)]
     public function getProfile(string $token): string
     {
         $profileData = $this->getDataProvider()->findProfile($token);

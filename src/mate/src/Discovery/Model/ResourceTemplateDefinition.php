@@ -20,7 +20,8 @@ namespace Symfony\AI\Mate\Discovery\Model;
 final class ResourceTemplateDefinition
 {
     /**
-     * @param class-string $handlerClass
+     * @param class-string              $handlerClass
+     * @param array<string, mixed>|null $outputSchema
      */
     public function __construct(
         public readonly string $uriTemplate,
@@ -30,6 +31,7 @@ final class ResourceTemplateDefinition
         public readonly ?string $mimeType,
         public readonly string $handlerClass,
         public readonly string $handlerMethod,
+        public readonly ?array $outputSchema = null,
     ) {
     }
 

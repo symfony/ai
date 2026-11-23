@@ -25,6 +25,35 @@ use Symfony\Component\VarDumper\Cloner\Data;
  */
 final class HttpClientCollectorFormatter implements CollectorFormatterInterface
 {
+    public const OUTPUT_SCHEMA = [
+        'title' => 'http_client',
+        'type' => 'object',
+        'properties' => [
+            'request_count' => ['type' => 'integer'],
+            'failed_count' => ['type' => 'integer'],
+            'total_time_ms' => ['type' => 'integer'],
+            'calls' => [
+                'type' => 'array',
+                'description' => 'Slowest first, capped at 50. Urls are sanitized, headers and bodies are never included.',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'client' => ['type' => 'string'],
+                        'method' => ['type' => 'string'],
+                        'url' => ['type' => 'string'],
+                        'http_code' => ['type' => 'integer', 'description' => '0 when the request failed before a response arrived.'],
+                        'total_time_ms' => ['type' => 'integer'],
+                        'failed' => ['type' => 'boolean'],
+                        'error' => ['type' => ['string', 'null']],
+                        'redirect_count' => ['type' => ['integer', 'null']],
+                    ],
+                    'required' => ['client', 'method', 'url', 'http_code', 'total_time_ms', 'failed', 'error', 'redirect_count'],
+                ],
+            ],
+            'calls_truncated' => ['type' => 'boolean'],
+        ],
+        'required' => ['request_count', 'failed_count', 'total_time_ms', 'calls', 'calls_truncated'],
+    ];
     private const MAX_CALLS = 50;
     private const MAX_ERROR_LENGTH = 300;
     private const SENSITIVE_NAME_PATTERN = '/token|key|secret|passw|pwd|auth|credential|signature|sig$|session|jwt|bearer|otp|code$/i';

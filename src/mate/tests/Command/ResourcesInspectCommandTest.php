@@ -83,6 +83,56 @@ final class ResourcesInspectCommandTest extends TestCase
         $this->assertStringContainsString('resources:list', $tester->getDisplay());
     }
 
+    public function testOutputSchemaOfAStaticResource()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['resource' => 'sample://payload', '--format' => 'json']);
+
+        $json = json_decode($tester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertSame('integer', $json['output_schema']['properties']['answer']['type']);
+    }
+
+    public function testTemplateByNameShowsAllVariants()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['resource' => 'sample-echo', '--format' => 'json']);
+
+        $json = json_decode($tester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertCount(3, $json['output_schema']['oneOf']);
+    }
+
+    public function testConcreteUriNarrowsTheSchemaToTheMatchingVariant()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['resource' => 'sample://echo/moon', '--format' => 'json']);
+
+        $json = json_decode($tester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertSame('moon', $json['output_schema']['title']);
+        $this->assertArrayNotHasKey('oneOf', $json['output_schema']);
+    }
+
+    public function testConcreteUriWithoutAMatchingVariantShowsTheOtherVariant()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['resource' => 'sample://echo/sun', '--format' => 'json']);
+
+        $json = json_decode($tester->getDisplay(), true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertSame('other', $json['output_schema']['title']);
+    }
+
+    public function testTextOutputShowsTheOutputSchemaSection()
+    {
+        $tester = new CommandTester($this->createCommand());
+
+        $tester->execute(['resource' => 'sample://greeting']);
+
+        $this->assertStringContainsString('No output schema defined', $tester->getDisplay());
+    }
+
     public function testToonFormat()
     {
         $tester = new CommandTester($this->createCommand());

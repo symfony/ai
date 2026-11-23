@@ -22,10 +22,14 @@ namespace Symfony\AI\Mate\Attribute;
 #[\Attribute(\Attribute::TARGET_METHOD)]
 final class MateTool
 {
+    /**
+     * @param array<string, mixed>|null $outputSchema JSON Schema of the decoded result, without the `untrusted_data` envelope. Shown by `tools:inspect`
+     */
     public function __construct(
         public string $name,
         public ?string $title = null,
         public ?string $description = null,
+        public ?array $outputSchema = null,
     ) {
     }
 }

@@ -27,6 +27,33 @@ use Symfony\Component\VarDumper\Cloner\Data;
  */
 final class TranslationCollectorFormatter implements CollectorFormatterInterface
 {
+    public const OUTPUT_SCHEMA = [
+        'title' => 'translation',
+        'type' => 'object',
+        'properties' => [
+            'locale' => ['type' => 'string'],
+            'fallback_locales' => ['type' => 'array', 'items' => ['type' => 'string']],
+            'count_defines' => ['type' => 'integer'],
+            'count_missings' => ['type' => 'integer'],
+            'count_fallbacks' => ['type' => 'integer'],
+            'messages' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'locale' => ['type' => ['string', 'null']],
+                        'domain' => ['type' => ['string', 'null']],
+                        'id' => ['type' => ['string', 'null']],
+                        'translation' => ['type' => ['string', 'null']],
+                        'state' => ['type' => 'string', 'enum' => ['defined', 'missing', 'fallback']],
+                        'count' => ['type' => 'integer', 'description' => 'How often the message was requested.'],
+                    ],
+                    'required' => ['locale', 'domain', 'id', 'translation', 'state', 'count'],
+                ],
+            ],
+        ],
+        'required' => ['locale', 'fallback_locales', 'count_defines', 'count_missings', 'count_fallbacks', 'messages'],
+    ];
     private const STATE_MAP = [0 => 'defined', 1 => 'missing', 2 => 'fallback'];
 
     public function getName(): string

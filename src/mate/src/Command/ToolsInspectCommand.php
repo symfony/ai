@@ -32,6 +32,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *     description: string|null,
  *     handler: string,
  *     input_schema: array<string, mixed>|null,
+ *     output_schema: array<string, mixed>|null,
  *     extension: string
  * }
  *
@@ -77,7 +78,7 @@ class ToolsInspectCommand extends Command
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (text, json, toon)', 'text')
             ->setHelp(
                 <<<HELP
-The <info>%command.name%</info> command displays detailed information about a specific tool including its full JSON input schema.
+The <info>%command.name%</info> command displays detailed information about a specific tool including its full JSON input schema and, when the tool declares one, its output schema.
 
 <info>Usage Examples:</info>
 
@@ -157,15 +158,11 @@ HELP
             ['Extension' => $toolData['extension']],
         );
 
-        if (null !== $toolData['input_schema']) {
-            $io->section('Input Schema');
-            $io->text(json_encode($toolData['input_schema'], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
-
-            return;
-        }
-
         $io->section('Input Schema');
-        $io->text('<comment>No input schema defined</comment>');
+        $io->text(null !== $toolData['input_schema'] ? json_encode($toolData['input_schema'], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES) : '<comment>No input schema defined</comment>');
+
+        $io->section('Output Schema');
+        $io->text(null !== $toolData['output_schema'] ? json_encode($toolData['output_schema'], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES) : '<comment>No output schema defined</comment>');
     }
 
     /**

@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\ConfigCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\AssertsOutputSchemaTrait;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
@@ -26,6 +27,23 @@ use Symfony\Component\HttpKernel\KernelInterface;
  */
 final class ConfigCollectorFormatterTest extends TestCase
 {
+    use AssertsOutputSchemaTrait;
+
+    public function testFormatMatchesOutputSchema()
+    {
+        $kernel = $this->createStub(KernelInterface::class);
+        $kernel->method('getEnvironment')->willReturn('test');
+        $kernel->method('isDebug')->willReturn(true);
+        $kernel->method('getBundles')->willReturn([]);
+
+        $collector = new ConfigDataCollector();
+        $collector->setKernel($kernel);
+        $collector->collect(new Request(), new Response());
+        $collector->lateCollect();
+
+        $this->assertMatchesOutputSchema(ConfigCollectorFormatter::OUTPUT_SCHEMA, (new ConfigCollectorFormatter())->format($collector));
+    }
+
     public function testFormatCollectedProfile()
     {
         $kernel = $this->createStub(KernelInterface::class);

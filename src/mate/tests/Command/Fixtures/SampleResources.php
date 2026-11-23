@@ -36,6 +36,7 @@ final class SampleResources
         name: 'sample-payload',
         description: 'A resource whose body is an encoded structure',
         mimeType: 'application/json',
+        outputSchema: ['type' => 'object', 'properties' => ['answer' => ['type' => 'integer']]],
     )]
     public function getPayload(): string
     {
@@ -50,6 +51,11 @@ final class SampleResources
         name: 'sample-echo',
         description: 'Echoes the message back as a resource',
         mimeType: 'text/plain',
+        outputSchema: ['oneOf' => [
+            ['title' => 'world', 'type' => 'object', 'properties' => ['greeting' => ['type' => 'string']]],
+            ['title' => 'moon', 'type' => 'object', 'properties' => ['crater' => ['type' => 'string']]],
+            ['title' => 'other', 'type' => 'object', 'properties' => ['anything' => ['type' => 'string']]],
+        ]],
     )]
     public function getEcho(string $message): array
     {

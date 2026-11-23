@@ -31,6 +31,32 @@ use Symfony\Component\HttpKernel\DataCollector\ExceptionDataCollector;
  */
 final class ExceptionCollectorFormatter implements CollectorFormatterInterface
 {
+    public const OUTPUT_SCHEMA = [
+        'title' => 'exception',
+        'type' => 'object',
+        'properties' => [
+            'has_exception' => ['type' => 'boolean'],
+            'message' => ['type' => 'string', 'description' => 'Secrets are scrubbed. Only present when has_exception is true, as are all keys below.'],
+            'status_code' => ['type' => 'integer'],
+            'class' => ['type' => 'string'],
+            'file' => ['type' => 'string'],
+            'line' => ['type' => 'integer'],
+            'trace' => [
+                'type' => 'array',
+                'description' => 'The first 10 frames. A frame only has the keys the original frame had.',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'file' => ['type' => 'string'],
+                        'line' => ['type' => 'integer'],
+                        'class' => ['type' => 'string'],
+                        'function' => ['type' => 'string'],
+                    ],
+                ],
+            ],
+        ],
+        'required' => ['has_exception'],
+    ];
     /**
      * Ordered regex => replacement pairs scrubbing high-confidence secret shapes
      * from free-text exception messages.
