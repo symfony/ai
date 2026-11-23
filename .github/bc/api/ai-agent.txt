@@ -228,6 +228,9 @@ Symfony\AI\Agent\Toolbox\AbstractToolbox::getMetadata(): final protected functio
 Symfony\AI\Agent\Toolbox\AbstractToolbox::invoke(): abstract protected function invoke(object $tool, Symfony\AI\Platform\Tool\Tool $metadata, array $arguments): mixed
 Symfony\AI\Agent\Toolbox\AbstractToolbox::prepareSources(): protected function prepareSources(object $tool): Symfony\AI\Agent\Toolbox\Source\SourceCollection|null
 Symfony\AI\Agent\Toolbox\AbstractToolbox::resolveArguments(): abstract protected function resolveArguments(object $tool, Symfony\AI\Platform\Tool\Tool $metadata, Symfony\AI\Platform\Result\ToolCall $toolCall): array
+Symfony\AI\Agent\Toolbox\AmpToolExecutor: final class implements Symfony\AI\Agent\Toolbox\ToolExecutorInterface
+Symfony\AI\Agent\Toolbox\AmpToolExecutor::__construct(): public function __construct(Symfony\AI\Agent\Toolbox\ToolboxInterface $toolbox)
+Symfony\AI\Agent\Toolbox\AmpToolExecutor::execute(): public function execute(array $toolCalls): Generator
 Symfony\AI\Agent\Toolbox\Attribute\AsTool: final class
 Symfony\AI\Agent\Toolbox\Attribute\AsTool::$description: public readonly string
 Symfony\AI\Agent\Toolbox\Attribute\AsTool::$effectHints: public readonly Symfony\AI\Platform\Tool\ToolEffectHints
