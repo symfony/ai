@@ -70,7 +70,8 @@ final class ValidatorConstraintsDescriberTest extends TestCase
         yield 'AtLeastOneOf' => ['atLeastOneOf', null, ['anyOf' => [['const' => 'a'], ['type' => 'integer']]]];
         yield 'All' => ['all', null, ['type' => 'array', 'items' => ['maxLength' => 255]]];
         yield 'All, non-array type' => ['all', ['type' => 'string'], ['type' => 'string']];
-        yield 'Blank string' => ['blankString', ['type' => 'string'], ['type' => 'string', 'nullable' => true, 'maxLength' => 0]];
+        yield 'Blank string' => ['blankString', ['type' => 'string'], ['type' => 'string', 'maxLength' => 0]];
+        yield 'Blank nullable string' => ['blankString', ['type' => ['string', 'null']], ['type' => ['string', 'null'], 'maxLength' => 0]];
         yield 'Cidr' => ['cidr', null, ['description' => 'Any IP address.']];
         yield 'Collection' => ['collection', null, ['type' => 'object', 'properties' => ['a' => ['const' => 'hello'], 'b' => ['const' => 5]], 'required' => ['a', 'b']]];
         yield 'Collection, non-object type ' => ['collection', ['type' => 'array'], ['type' => 'array']];
@@ -99,9 +100,15 @@ final class ValidatorConstraintsDescriberTest extends TestCase
         yield 'LessThan' => ['lessThanNumber', null, ['exclusiveMaximum' => 50]];
         yield 'Negative' => ['strictlyNegativeNumber', null, ['exclusiveMaximum' => 0]];
         yield 'Negative or zero' => ['negativeNumber', null, ['maximum' => 0]];
-        yield 'NotBlank string' => ['notBlankString', ['type' => 'string'], ['type' => 'string', 'nullable' => false, 'minLength' => 1]];
-        yield 'NotNull nullable false' => ['notNull', null, ['nullable' => false]];
-        yield 'NotNull with null type' => ['notNull', ['type' => ['string', 'null']], ['type' => 'string', 'nullable' => false]];
+        yield 'NotBlank string' => ['notBlankString', ['type' => 'string'], ['type' => 'string', 'minLength' => 1]];
+        yield 'NotBlank nullable string removes null type' => ['notBlankString', ['type' => ['string', 'null']], ['type' => 'string', 'minLength' => 1]];
+        yield 'NotBlank allowNull preserves null type' => ['notBlankAllowNull', ['type' => ['string', 'null']], ['type' => ['string', 'null'], 'minLength' => 1]];
+        yield 'NotNull without type' => ['notNull', null, ['not' => ['type' => 'null']]];
+        yield 'NotNull with null type' => ['notNull', ['type' => ['string', 'null']], ['type' => 'string']];
+        yield 'NotNull with nullable union anyOf' => ['notNull', ['anyOf' => [['type' => 'string'], ['type' => 'integer'], ['type' => 'null']]], ['anyOf' => [['type' => 'string'], ['type' => 'integer']]]];
+        yield 'NotNull unwraps single remaining anyOf branch' => ['notNull', ['anyOf' => [['type' => 'string'], ['type' => 'null']]], ['type' => 'string']];
+        yield 'NotNull with nullable enum' => ['notNull', ['type' => ['string', 'null'], 'enum' => ['a', 'b', null]], ['type' => 'string', 'enum' => ['a', 'b']]];
+        yield 'NotNull with untyped nullable enum' => ['notNull', ['enum' => ['a', 'b', null]], ['enum' => ['a', 'b']]];
         yield 'NotEqualTo' => ['notEqualTo', null, ['not' => ['enum' => ['bar']]]];
         yield 'Numeric range' => ['numberRange', null, ['multipleOf' => 3, 'exclusiveMinimum' => 10, 'maximum' => 100]];
         yield 'Positive' => ['positiveNumber', null, ['exclusiveMinimum' => 0]];
