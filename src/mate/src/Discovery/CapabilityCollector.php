@@ -20,21 +20,24 @@ namespace Symfony\AI\Mate\Discovery;
  *         name: string,
  *         description: string|null,
  *         handler: string,
- *         input_schema: array<string, mixed>|null
+ *         input_schema: array<string, mixed>|null,
+ *         output_schema: array<string, mixed>|null
  *     }>,
  *     resources: array<string, array{
  *         uri: string,
  *         name: string|null,
  *         description: string|null,
  *         handler: string,
- *         mime_type: string|null
+ *         mime_type: string|null,
+ *         output_schema: array<string, mixed>|null
  *     }>,
  *     resource_templates: array<string, array{
  *         uri_template: string,
  *         name: string|null,
  *         description: string|null,
  *         handler: string,
- *         mime_type: string|null
+ *         mime_type: string|null,
+ *         output_schema: array<string, mixed>|null
  *     }>
  * }
  *
@@ -63,6 +66,7 @@ final class CapabilityCollector
                 'description' => $tool->description,
                 'handler' => $tool->handlerLabel(),
                 'input_schema' => $tool->inputSchema,
+                'output_schema' => $tool->outputSchema,
             ];
         }
 
@@ -74,6 +78,7 @@ final class CapabilityCollector
                 'description' => $resource->description,
                 'handler' => $resource->handlerLabel(),
                 'mime_type' => $resource->mimeType,
+                'output_schema' => $resource->outputSchema,
             ];
         }
 
@@ -85,6 +90,7 @@ final class CapabilityCollector
                 'description' => $template->description,
                 'handler' => $template->handlerLabel(),
                 'mime_type' => $template->mimeType,
+                'output_schema' => $template->outputSchema,
             ];
         }
 

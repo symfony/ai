@@ -34,6 +34,32 @@ use Symfony\Component\HttpKernel\DataCollector\RequestDataCollector;
  */
 final class RequestCollectorFormatter implements CollectorFormatterInterface
 {
+    public const OUTPUT_SCHEMA = [
+        'title' => 'request',
+        'type' => 'object',
+        'description' => 'The raw collected request data with sensitive values redacted. Which keys exist depends on the request, so none is required.',
+        'properties' => [
+            'format' => ['type' => ['string', 'null']],
+            'content' => ['type' => ['string', 'null'], 'description' => 'The raw body is always replaced by a redaction notice.'],
+            'content_type' => ['type' => ['string', 'null']],
+            'status_text' => ['type' => 'string'],
+            'status_code' => ['type' => 'integer'],
+            'path_info' => ['type' => 'string'],
+            'locale' => ['type' => 'string'],
+            'route' => ['type' => ['string', 'null']],
+            'request_query' => ['type' => ['array', 'object']],
+            'request_request' => ['type' => ['array', 'object']],
+            'request_attributes' => ['type' => ['array', 'object']],
+            'request_headers' => ['type' => ['array', 'object'], 'description' => 'Sensitive headers are redacted.'],
+            'request_cookies' => ['type' => ['array', 'object'], 'description' => 'Every value is redacted.'],
+            'request_server' => ['type' => ['array', 'object']],
+            'response_headers' => ['type' => ['array', 'object']],
+            'response_cookies' => ['type' => ['array', 'object']],
+            'session_attributes' => ['type' => ['array', 'object'], 'description' => 'Every value is redacted.'],
+            'dotenv_vars' => ['type' => ['array', 'object']],
+            'curlCommand' => ['type' => 'string', 'description' => 'Replaced by a redaction notice.'],
+        ],
+    ];
     /**
      * @var array<string>
      */

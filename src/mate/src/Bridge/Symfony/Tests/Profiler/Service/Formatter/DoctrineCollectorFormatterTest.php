@@ -14,17 +14,44 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 use Doctrine\Bundle\DoctrineBundle\DataCollector\DoctrineDataCollector;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\DoctrineCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\AssertsOutputSchemaTrait;
 
 /**
  * @author Johannes Wachter <johannes@sulu.io>
  */
 final class DoctrineCollectorFormatterTest extends TestCase
 {
+    use AssertsOutputSchemaTrait;
+
     private DoctrineCollectorFormatter $formatter;
 
     protected function setUp(): void
     {
         $this->formatter = new DoctrineCollectorFormatter();
+    }
+
+    public function testFormatMatchesOutputSchema()
+    {
+        $collector = $this->createCollector(
+            ['default' => 'doctrine.default'],
+            [
+                'default' => [
+                    ['sql' => 'SELECT * FROM users', 'params' => [], 'executionMS' => 0.0012, 'types' => []],
+                    ['sql' => 'SELECT * FROM posts WHERE user_id = ?', 'params' => [1], 'executionMS' => 0.0008, 'types' => []],
+                    ['sql' => 'SELECT * FROM posts WHERE user_id = ?', 'params' => [2], 'executionMS' => 0.0008, 'types' => []],
+                    ['sql' => 'SELECT * FROM tags WHERE name = :name', 'params' => ['name' => 'php'], 'executionMS' => 0.0005, 'types' => []],
+                ],
+            ],
+        );
+
+        $this->assertMatchesOutputSchema(DoctrineCollectorFormatter::OUTPUT_SCHEMA, $this->formatter->format($collector));
+    }
+
+    public function testFormatWithoutQueriesMatchesOutputSchema()
+    {
+        $collector = $this->createCollector([], []);
+
+        $this->assertMatchesOutputSchema(DoctrineCollectorFormatter::OUTPUT_SCHEMA, $this->formatter->format($collector));
     }
 
     public function testGetName()

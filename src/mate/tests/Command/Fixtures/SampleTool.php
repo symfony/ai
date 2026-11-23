@@ -25,7 +25,7 @@ final class SampleTool
      * @param int  $b      Second addend
      * @param bool $negate Negate the result
      */
-    #[MateTool(name: 'sample-add', title: 'Sample Add', description: 'Add two integers')]
+    #[MateTool(name: 'sample-add', title: 'Sample Add', description: 'Add two integers', outputSchema: ['type' => 'object', 'properties' => ['sum' => ['type' => 'integer']], 'required' => ['sum']])]
     public function add(int $a, int $b = 0, bool $negate = false): string
     {
         $sum = $a + $b;

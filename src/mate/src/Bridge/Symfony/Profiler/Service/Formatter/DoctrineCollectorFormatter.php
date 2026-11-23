@@ -27,6 +27,32 @@ use Symfony\Component\VarDumper\Cloner\Data;
  */
 final class DoctrineCollectorFormatter implements CollectorFormatterInterface
 {
+    public const OUTPUT_SCHEMA = [
+        'title' => 'db',
+        'type' => 'object',
+        'properties' => [
+            'query_count' => ['type' => 'integer'],
+            'total_time_ms' => ['type' => 'number'],
+            'connections' => ['type' => 'array', 'items' => ['type' => 'string']],
+            'queries' => [
+                'type' => 'array',
+                'description' => 'Identical SQL grouped into one entry, slowest first, capped at 50.',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'sql' => ['type' => 'string'],
+                        'count' => ['type' => 'integer'],
+                        'total_time_ms' => ['type' => 'number'],
+                        'avg_time_ms' => ['type' => 'number'],
+                        'sample_params' => ['type' => ['array', 'object', 'string', 'null'], 'description' => 'Parameters of the first execution. Every value is redacted, the shape is kept.'],
+                    ],
+                    'required' => ['sql', 'count', 'total_time_ms', 'avg_time_ms', 'sample_params'],
+                ],
+            ],
+            'queries_truncated' => ['type' => 'boolean'],
+        ],
+        'required' => ['query_count', 'total_time_ms', 'connections', 'queries', 'queries_truncated'],
+    ];
     private const MAX_QUERIES = 50;
     private const REDACTED = '***REDACTED***';
 

@@ -22,6 +22,7 @@ use Symfony\AI\Mate\Discovery\CapabilityCollector;
  *     name: string|null,
  *     description: string|null,
  *     mime_type: string|null,
+ *     output_schema: array<string, mixed>|null,
  *     handler: string,
  *     parameters: list<string>,
  *     extension: string
@@ -49,6 +50,7 @@ trait CollectsResourcesTrait
                     'name' => $resource['name'],
                     'description' => $resource['description'],
                     'mime_type' => $resource['mime_type'],
+                    'output_schema' => $resource['output_schema'],
                     'handler' => $resource['handler'],
                     'parameters' => [],
                     'extension' => $extensionName,
@@ -62,6 +64,7 @@ trait CollectsResourcesTrait
                     'name' => $template['name'],
                     'description' => $template['description'],
                     'mime_type' => $template['mime_type'],
+                    'output_schema' => $template['output_schema'],
                     'handler' => $template['handler'],
                     'parameters' => $this->templateParameters($template['uri_template']),
                     'extension' => $extensionName,

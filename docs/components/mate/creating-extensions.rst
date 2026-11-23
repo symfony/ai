@@ -71,17 +71,29 @@ input schema from the method signature plus the ``@param`` PHPDoc::
 Three attributes are available, all in ``Symfony\AI\Mate\Attribute``:
 
 ``#[MateTool]``
-    A method the agent calls with arguments. Parameters: ``name``, ``title``, ``description``.
+    A method the agent calls with arguments. Parameters: ``name``, ``title``, ``description``,
+    ``outputSchema``.
 
 ``#[MateResource]``
     Data the agent addresses by a fixed URI. Parameters: ``uri``, ``name``, ``title``,
-    ``description``, ``mimeType``.
+    ``description``, ``mimeType``, ``outputSchema``.
 
 ``#[MateResourceTemplate]``
     Data addressed by a URI pattern. The variables of ``uriTemplate`` are passed to the method.
-    Parameters: ``uriTemplate``, ``name``, ``title``, ``description``, ``mimeType``.
+    Parameters: ``uriTemplate``, ``name``, ``title``, ``description``, ``mimeType``,
+    ``outputSchema``.
 
 A tool must return a scalar value or an array. An object fails when the result is encoded.
+
+``outputSchema`` is an optional JSON Schema array that describes the decoded result. It is the
+shape of the data itself, without the ``untrusted_data`` envelope. ``tools:inspect`` and
+``resources:inspect`` show it, so an agent can pick the paths it needs (``--pick``) without
+reading a whole result first. Keep it next to the code that builds the result and check it in a
+test.
+
+For a resource template whose result differs per variable (the profiler collectors), make the
+schema a ``oneOf`` and give each branch a ``title`` equal to the variable value. Inspecting a
+concrete URI then shows only the matching branch.
 
 .. note::
 

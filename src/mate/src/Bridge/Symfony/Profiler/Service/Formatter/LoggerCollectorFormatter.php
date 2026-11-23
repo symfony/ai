@@ -30,6 +30,36 @@ use Symfony\Component\VarDumper\Cloner\Data;
  */
 final class LoggerCollectorFormatter implements CollectorFormatterInterface
 {
+    public const OUTPUT_SCHEMA = [
+        'title' => 'logger',
+        'type' => 'object',
+        'properties' => [
+            'error_count' => ['type' => 'integer'],
+            'warning_count' => ['type' => 'integer'],
+            'deprecation_count' => ['type' => 'integer'],
+            'scream_count' => ['type' => 'integer'],
+            'logs' => [
+                'type' => 'array',
+                'description' => 'Capped at 100 entries.',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'type' => ['type' => ['string', 'null']],
+                        'timestamp' => ['type' => ['integer', 'string', 'null']],
+                        'priority' => ['type' => ['integer', 'null']],
+                        'priority_name' => ['type' => ['string', 'null']],
+                        'channel' => ['type' => ['string', 'null']],
+                        'message' => ['description' => 'Usually a string.'],
+                        'context' => ['type' => ['array', 'object', 'string', 'null'], 'description' => 'Values under sensitive keys are redacted.'],
+                        'error_count' => ['type' => ['integer', 'null'], 'description' => 'How often an identical log entry repeated.'],
+                    ],
+                    'required' => ['type', 'timestamp', 'priority', 'priority_name', 'channel', 'message', 'context', 'error_count'],
+                ],
+            ],
+            'logs_truncated' => ['type' => 'boolean'],
+        ],
+        'required' => ['error_count', 'warning_count', 'deprecation_count', 'scream_count', 'logs', 'logs_truncated'],
+    ];
     private const MAX_LOGS = 100;
 
     /**

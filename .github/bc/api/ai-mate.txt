@@ -20,21 +20,24 @@ Symfony\AI\Mate\Attribute\MateResource: final class
 Symfony\AI\Mate\Attribute\MateResource::$description: public null|string
 Symfony\AI\Mate\Attribute\MateResource::$mimeType: public null|string
 Symfony\AI\Mate\Attribute\MateResource::$name: public null|string
+Symfony\AI\Mate\Attribute\MateResource::$outputSchema: public array|null
 Symfony\AI\Mate\Attribute\MateResource::$title: public null|string
 Symfony\AI\Mate\Attribute\MateResource::$uri: public string
-Symfony\AI\Mate\Attribute\MateResource::__construct(): public function __construct(string $uri, null|string $name = null, null|string $title = null, null|string $description = null, null|string $mimeType = null)
+Symfony\AI\Mate\Attribute\MateResource::__construct(): public function __construct(string $uri, null|string $name = null, null|string $title = null, null|string $description = null, null|string $mimeType = null, array|null $outputSchema = null)
 Symfony\AI\Mate\Attribute\MateResourceTemplate: final class
 Symfony\AI\Mate\Attribute\MateResourceTemplate::$description: public null|string
 Symfony\AI\Mate\Attribute\MateResourceTemplate::$mimeType: public null|string
 Symfony\AI\Mate\Attribute\MateResourceTemplate::$name: public null|string
+Symfony\AI\Mate\Attribute\MateResourceTemplate::$outputSchema: public array|null
 Symfony\AI\Mate\Attribute\MateResourceTemplate::$title: public null|string
 Symfony\AI\Mate\Attribute\MateResourceTemplate::$uriTemplate: public string
-Symfony\AI\Mate\Attribute\MateResourceTemplate::__construct(): public function __construct(string $uriTemplate, null|string $name = null, null|string $title = null, null|string $description = null, null|string $mimeType = null)
+Symfony\AI\Mate\Attribute\MateResourceTemplate::__construct(): public function __construct(string $uriTemplate, null|string $name = null, null|string $title = null, null|string $description = null, null|string $mimeType = null, array|null $outputSchema = null)
 Symfony\AI\Mate\Attribute\MateTool: final class
 Symfony\AI\Mate\Attribute\MateTool::$description: public null|string
 Symfony\AI\Mate\Attribute\MateTool::$name: public string
+Symfony\AI\Mate\Attribute\MateTool::$outputSchema: public array|null
 Symfony\AI\Mate\Attribute\MateTool::$title: public null|string
-Symfony\AI\Mate\Attribute\MateTool::__construct(): public function __construct(string $name, null|string $title = null, null|string $description = null)
+Symfony\AI\Mate\Attribute\MateTool::__construct(): public function __construct(string $name, null|string $title = null, null|string $description = null, array|null $outputSchema = null)
 Symfony\AI\Mate\Capability\ServerInfo: class
 Symfony\AI\Mate\Capability\ServerInfo::getInfo(): public function getInfo(): string
 Symfony\AI\Mate\Command\ClearCacheCommand: class extends Symfony\Component\Console\Command\Command
@@ -190,9 +193,10 @@ Symfony\AI\Mate\Discovery\Model\ResourceDefinition::$handlerClass: public readon
 Symfony\AI\Mate\Discovery\Model\ResourceDefinition::$handlerMethod: public readonly string
 Symfony\AI\Mate\Discovery\Model\ResourceDefinition::$mimeType: public readonly null|string
 Symfony\AI\Mate\Discovery\Model\ResourceDefinition::$name: public readonly null|string
+Symfony\AI\Mate\Discovery\Model\ResourceDefinition::$outputSchema: public readonly array|null
 Symfony\AI\Mate\Discovery\Model\ResourceDefinition::$title: public readonly null|string
 Symfony\AI\Mate\Discovery\Model\ResourceDefinition::$uri: public readonly string
-Symfony\AI\Mate\Discovery\Model\ResourceDefinition::__construct(): public function __construct(string $uri, null|string $name, null|string $title, null|string $description, null|string $mimeType, string $handlerClass, string $handlerMethod)
+Symfony\AI\Mate\Discovery\Model\ResourceDefinition::__construct(): public function __construct(string $uri, null|string $name, null|string $title, null|string $description, null|string $mimeType, string $handlerClass, string $handlerMethod, array|null $outputSchema = null)
 Symfony\AI\Mate\Discovery\Model\ResourceDefinition::handlerLabel(): public function handlerLabel(): string
 Symfony\AI\Mate\Discovery\Model\ResourceTemplateDefinition: final class
 Symfony\AI\Mate\Discovery\Model\ResourceTemplateDefinition::$description: public readonly null|string
@@ -200,9 +204,10 @@ Symfony\AI\Mate\Discovery\Model\ResourceTemplateDefinition::$handlerClass: publi
 Symfony\AI\Mate\Discovery\Model\ResourceTemplateDefinition::$handlerMethod: public readonly string
 Symfony\AI\Mate\Discovery\Model\ResourceTemplateDefinition::$mimeType: public readonly null|string
 Symfony\AI\Mate\Discovery\Model\ResourceTemplateDefinition::$name: public readonly null|string
+Symfony\AI\Mate\Discovery\Model\ResourceTemplateDefinition::$outputSchema: public readonly array|null
 Symfony\AI\Mate\Discovery\Model\ResourceTemplateDefinition::$title: public readonly null|string
 Symfony\AI\Mate\Discovery\Model\ResourceTemplateDefinition::$uriTemplate: public readonly string
-Symfony\AI\Mate\Discovery\Model\ResourceTemplateDefinition::__construct(): public function __construct(string $uriTemplate, null|string $name, null|string $title, null|string $description, null|string $mimeType, string $handlerClass, string $handlerMethod)
+Symfony\AI\Mate\Discovery\Model\ResourceTemplateDefinition::__construct(): public function __construct(string $uriTemplate, null|string $name, null|string $title, null|string $description, null|string $mimeType, string $handlerClass, string $handlerMethod, array|null $outputSchema = null)
 Symfony\AI\Mate\Discovery\Model\ResourceTemplateDefinition::extractVariables(): public function extractVariables(string $uri): array|null
 Symfony\AI\Mate\Discovery\Model\ResourceTemplateDefinition::handlerLabel(): public function handlerLabel(): string
 Symfony\AI\Mate\Discovery\Model\ResourceTemplateDefinition::toRegex(): public function toRegex(): string
@@ -212,8 +217,9 @@ Symfony\AI\Mate\Discovery\Model\ToolDefinition::$handlerClass: public readonly s
 Symfony\AI\Mate\Discovery\Model\ToolDefinition::$handlerMethod: public readonly string
 Symfony\AI\Mate\Discovery\Model\ToolDefinition::$inputSchema: public readonly array
 Symfony\AI\Mate\Discovery\Model\ToolDefinition::$name: public readonly string
+Symfony\AI\Mate\Discovery\Model\ToolDefinition::$outputSchema: public readonly array|null
 Symfony\AI\Mate\Discovery\Model\ToolDefinition::$title: public readonly null|string
-Symfony\AI\Mate\Discovery\Model\ToolDefinition::__construct(): public function __construct(string $name, null|string $title, null|string $description, array $inputSchema, string $handlerClass, string $handlerMethod)
+Symfony\AI\Mate\Discovery\Model\ToolDefinition::__construct(): public function __construct(string $name, null|string $title, null|string $description, array $inputSchema, string $handlerClass, string $handlerMethod, array|null $outputSchema = null)
 Symfony\AI\Mate\Discovery\Model\ToolDefinition::handlerLabel(): public function handlerLabel(): string
 Symfony\AI\Mate\Discovery\PathGuard: final class
 Symfony\AI\Mate\Discovery\PathGuard::hasTraversal(): public static function hasTraversal(string $path): bool

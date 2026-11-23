@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\MemoryCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\AssertsOutputSchemaTrait;
 use Symfony\Component\HttpKernel\DataCollector\MemoryDataCollector;
 
 /**
@@ -20,11 +21,31 @@ use Symfony\Component\HttpKernel\DataCollector\MemoryDataCollector;
  */
 final class MemoryCollectorFormatterTest extends TestCase
 {
+    use AssertsOutputSchemaTrait;
+
     private MemoryCollectorFormatter $formatter;
 
     protected function setUp(): void
     {
         $this->formatter = new MemoryCollectorFormatter();
+    }
+
+    public function testFormatMatchesOutputSchema()
+    {
+        $collector = $this->createMock(MemoryDataCollector::class);
+        $collector->method('getMemory')->willReturn(16 * 1024 * 1024);
+        $collector->method('getMemoryLimit')->willReturn(128 * 1024 * 1024);
+
+        $this->assertMatchesOutputSchema(MemoryCollectorFormatter::OUTPUT_SCHEMA, $this->formatter->format($collector));
+    }
+
+    public function testFormatWithUnlimitedMemoryMatchesOutputSchema()
+    {
+        $collector = $this->createMock(MemoryDataCollector::class);
+        $collector->method('getMemory')->willReturn(8 * 1024 * 1024);
+        $collector->method('getMemoryLimit')->willReturn(-1);
+
+        $this->assertMatchesOutputSchema(MemoryCollectorFormatter::OUTPUT_SCHEMA, $this->formatter->format($collector));
     }
 
     public function testGetName()

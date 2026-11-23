@@ -24,6 +24,23 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
  */
 final class ConfigCollectorFormatter implements CollectorFormatterInterface
 {
+    public const OUTPUT_SCHEMA = [
+        'title' => 'config',
+        'type' => 'object',
+        'properties' => [
+            'symfony_version' => ['type' => 'string'],
+            'php_version' => ['type' => 'string'],
+            'environment' => ['type' => 'string'],
+            'debug' => ['type' => ['boolean', 'string'], 'description' => 'A string when debug is set from an environment expression.'],
+            'sapi' => ['type' => 'string'],
+            'timezone' => ['type' => 'string'],
+            'xdebug_enabled' => ['type' => 'boolean'],
+            'apcu_enabled' => ['type' => 'boolean'],
+            'opcache_enabled' => ['type' => 'boolean'],
+        ],
+        'required' => ['symfony_version', 'php_version', 'environment', 'debug', 'sapi', 'timezone', 'xdebug_enabled', 'apcu_enabled', 'opcache_enabled'],
+    ];
+
     public function getName(): string
     {
         return 'config';

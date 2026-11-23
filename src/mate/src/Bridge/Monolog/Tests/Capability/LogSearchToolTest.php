@@ -14,9 +14,11 @@ namespace Symfony\AI\Mate\Bridge\Monolog\Tests\Capability;
 use HelgeSverre\Toon\DecodeOptions;
 use HelgeSverre\Toon\Toon;
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Mate\Attribute\MateTool;
 use Symfony\AI\Mate\Bridge\Monolog\Capability\LogSearchTool;
 use Symfony\AI\Mate\Bridge\Monolog\Service\LogParser;
 use Symfony\AI\Mate\Bridge\Monolog\Service\LogReader;
+use Symfony\AI\Mate\Bridge\Monolog\Tests\AssertsOutputSchemaTrait;
 use Symfony\AI\Mate\Discovery\DocBlockParser;
 use Symfony\AI\Mate\Discovery\SchemaGenerator;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
@@ -27,6 +29,8 @@ use Symfony\AI\Mate\Exception\InvalidArgumentException;
  */
 final class LogSearchToolTest extends TestCase
 {
+    use AssertsOutputSchemaTrait;
+
     private string $fixturesDir;
     private LogSearchTool $tool;
 
@@ -501,6 +505,85 @@ final class LogSearchToolTest extends TestCase
         }
     }
 
+    public function testSearchMatchesItsOutputSchema()
+    {
+        $schema = $this->outputSchema('search');
+
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->search('logged in')));
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->search('', level: 'ERROR')));
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->search('nonexistent search term xyz'), DecodeOptions::lenient()));
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->search('logged', limit: 1)));
+    }
+
+    public function testSearchMatchesItsOutputSchemaWithKernelContextAndSkippedFiles()
+    {
+        $schema = $this->outputSchema('search');
+
+        $result = $this->decodeUntrusted($this->createMultiKernelTool()->search('logged'));
+        $this->assertArrayHasKey('kernel_context', $result['entries'][0]);
+        $this->assertMatchesOutputSchema($schema, $result);
+
+        $dir = $this->createDirectoryWithCompressedRotation();
+        try {
+            $tool = new LogSearchTool(new LogReader(new LogParser(), $dir));
+            $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($tool->search('')));
+        } finally {
+            $this->removeDirectory($dir);
+        }
+    }
+
+    public function testSearchTruncatedMatchesItsOutputSchema()
+    {
+        $tempDir = sys_get_temp_dir().'/mate-log-search-tool-test-'.uniqid();
+        mkdir($tempDir, 0755, true);
+        file_put_contents($tempDir.'/app.log', "[2024-01-01 00:00:01] app.ERROR: One {\"user\":1} {\"ip\":\"127.0.0.1\"}\n[2024-01-01 00:00:02] app.ERROR: Two [] []\n");
+
+        try {
+            $tool = new LogSearchTool(new LogReader(new LogParser(), $tempDir));
+            $result = $this->decodeUntrusted($tool->search('', limit: 2));
+
+            $this->assertTrue($result['truncated']);
+            $this->assertMatchesOutputSchema($this->outputSchema('search'), $result);
+        } finally {
+            $this->removeDirectory($tempDir);
+        }
+    }
+
+    public function testSearchContextMatchesItsOutputSchema()
+    {
+        $schema = $this->outputSchema('searchContext');
+
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->searchContext('user_id', '123')));
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->searchContext('nonexistent_key', 'x'), DecodeOptions::lenient()));
+    }
+
+    public function testTailMatchesItsOutputSchema()
+    {
+        $schema = $this->outputSchema('tail');
+
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->tail()));
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->tail(1)));
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->createMultiKernelTool()->tail()));
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->tail(level: 'EMERGENCY'), DecodeOptions::lenient()));
+    }
+
+    public function testListFilesMatchesItsOutputSchema()
+    {
+        $schema = $this->outputSchema('listFiles');
+
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->listFiles()));
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->createMultiKernelTool()->listFiles()));
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->listFiles(environment: 'nonexistent'), DecodeOptions::lenient()));
+    }
+
+    public function testListChannelsMatchesItsOutputSchema()
+    {
+        $schema = $this->outputSchema('listChannels');
+
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->tool->listChannels()));
+        $this->assertMatchesOutputSchema($schema, $this->decodeUntrusted($this->createMultiKernelTool()->listChannels(kernelContext: 'admin')));
+    }
+
     public function testToolDescriptionsMentionSkippedFiles()
     {
         $reflection = new \ReflectionClass(LogSearchTool::class);
@@ -521,6 +604,18 @@ final class LogSearchToolTest extends TestCase
         file_put_contents($dir.'/dev.log.1.gz', (string) gzencode("[2026-09-25 10:00:00] app.INFO: Older {} []\n"));
 
         return $dir;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function outputSchema(string $method): array
+    {
+        $schema = (new \ReflectionMethod(LogSearchTool::class, $method))->getAttributes(MateTool::class)[0]->newInstance()->outputSchema;
+
+        $this->assertIsArray($schema);
+
+        return $schema;
     }
 
     private function createMultiKernelTool(): LogSearchTool

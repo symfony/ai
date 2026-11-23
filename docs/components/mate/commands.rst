@@ -87,7 +87,8 @@ These are the commands a coding agent uses.
         $ vendor/bin/mate tools:list --format=json
 
 ``mate tools:inspect <tool-name>``
-    Show one tool with its full JSON input schema. Use it before guessing a parameter name.
+    Show one tool with its full JSON input schema and, when the tool declares one, its output schema.
+    Use it before guessing a parameter name or a path for ``--pick``.
 
     **Options:**
 
@@ -205,8 +206,10 @@ These are the commands a coding agent uses.
         $ vendor/bin/mate resources:list --format=json
 
 ``mate resources:inspect <resource>``
-    Show one resource or template with its URI, parameters and MIME type. The argument is a name,
-    a URI template or a concrete URI. A concrete URI finds the template it matches.
+    Show one resource or template with its URI, parameters, MIME type and output schema. The
+    argument is a name, a URI template or a concrete URI. A concrete URI finds the template it
+    matches. When the template has one schema per variant, such as the profiler collectors, a
+    concrete URI shows only the schema of its variant.
 
     **Options:**
 

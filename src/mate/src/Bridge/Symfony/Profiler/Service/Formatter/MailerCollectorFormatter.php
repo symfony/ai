@@ -33,6 +33,48 @@ use Symfony\Component\Mime\Email;
  */
 final class MailerCollectorFormatter implements CollectorFormatterInterface
 {
+    public const OUTPUT_SCHEMA = [
+        'title' => 'mailer',
+        'type' => 'object',
+        'properties' => [
+            'message_count' => ['type' => 'integer'],
+            'messages' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'description' => 'Email messages carry the keys from subject on. Other message types only carry type.',
+                    'properties' => [
+                        'transport' => ['type' => 'string'],
+                        'is_queued' => ['type' => 'boolean'],
+                        'type' => ['type' => 'string', 'description' => 'Class of a message that is not an Email.'],
+                        'subject' => ['type' => ['string', 'null']],
+                        'from' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Addresses with the local part masked as ***.'],
+                        'to' => ['type' => 'array', 'items' => ['type' => 'string']],
+                        'cc' => ['type' => 'array', 'items' => ['type' => 'string']],
+                        'bcc' => ['type' => 'array', 'items' => ['type' => 'string']],
+                        'reply_to' => ['type' => 'array', 'items' => ['type' => 'string']],
+                        'has_text_body' => ['type' => 'boolean'],
+                        'has_html_body' => ['type' => 'boolean'],
+                        'links' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Without query string and fragment, token-like path segments masked.'],
+                        'attachments' => [
+                            'type' => 'array',
+                            'items' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'filename' => ['type' => ['string', 'null']],
+                                    'content_type' => ['type' => ['string', 'null']],
+                                ],
+                                'required' => ['filename', 'content_type'],
+                            ],
+                        ],
+                    ],
+                    'required' => ['transport', 'is_queued'],
+                ],
+            ],
+        ],
+        'required' => ['message_count', 'messages'],
+    ];
+
     public function getName(): string
     {
         return 'mailer';

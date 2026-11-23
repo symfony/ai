@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\TranslationCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\AssertsOutputSchemaTrait;
 use Symfony\Component\Translation\DataCollector\TranslationDataCollector;
 use Symfony\Component\VarDumper\Cloner\Data;
 
@@ -21,11 +22,33 @@ use Symfony\Component\VarDumper\Cloner\Data;
  */
 final class TranslationCollectorFormatterTest extends TestCase
 {
+    use AssertsOutputSchemaTrait;
+
     private TranslationCollectorFormatter $formatter;
 
     protected function setUp(): void
     {
         $this->formatter = new TranslationCollectorFormatter();
+    }
+
+    public function testFormatMatchesOutputSchema()
+    {
+        $collector = $this->createMock(TranslationDataCollector::class);
+        $collector->method('getLocale')->willReturn('en');
+        $collector->method('getFallbackLocales')->willReturn(['fr', 'de']);
+        $collector->method('getCountDefines')->willReturn(1);
+        $collector->method('getCountMissings')->willReturn(1);
+        $collector->method('getCountFallbacks')->willReturn(1);
+        $collector->method('getMessages')->willReturn([
+            ['locale' => 'en', 'domain' => 'messages', 'id' => 'hello', 'translation' => 'Hello', 'state' => 0, 'count' => 3],
+            ['locale' => 'en', 'domain' => 'messages', 'id' => 'missing', 'translation' => 'missing', 'state' => 1],
+            ['locale' => 'fr', 'domain' => 'messages', 'id' => 'bye', 'translation' => 'Bye', 'state' => 2, 'count' => 1],
+        ]);
+
+        $result = $this->formatter->format($collector);
+
+        $this->assertSame(['defined', 'missing', 'fallback'], array_column($result['messages'], 'state'));
+        $this->assertMatchesOutputSchema(TranslationCollectorFormatter::OUTPUT_SCHEMA, $result);
     }
 
     public function testGetName()

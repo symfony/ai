@@ -13,6 +13,7 @@ namespace Symfony\AI\Mate\Bridge\Symfony\Tests\Profiler\Service\Formatter;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Mate\Bridge\Symfony\Profiler\Service\Formatter\LoggerCollectorFormatter;
+use Symfony\AI\Mate\Bridge\Symfony\Tests\AssertsOutputSchemaTrait;
 use Symfony\Component\HttpKernel\DataCollector\LoggerDataCollector;
 use Symfony\Component\VarDumper\Cloner\Data;
 
@@ -21,11 +22,51 @@ use Symfony\Component\VarDumper\Cloner\Data;
  */
 final class LoggerCollectorFormatterTest extends TestCase
 {
+    use AssertsOutputSchemaTrait;
+
     private LoggerCollectorFormatter $formatter;
 
     protected function setUp(): void
     {
         $this->formatter = new LoggerCollectorFormatter();
+    }
+
+    public function testFormatMatchesOutputSchema()
+    {
+        $message = $this->createMock(Data::class);
+        $message->method('getValue')->with()->willReturn('Something went wrong');
+
+        $context = $this->createMock(Data::class);
+        $context->method('getValue')->with(true)->willReturn(['key' => 'value', 'password' => 'hunter2']);
+
+        $collector = $this->createMock(LoggerDataCollector::class);
+        $collector->method('countErrors')->willReturn(1);
+        $collector->method('countWarnings')->willReturn(0);
+        $collector->method('countDeprecations')->willReturn(0);
+        $collector->method('countScreams')->willReturn(0);
+        $collector->method('getProcessedLogs')->willReturn([
+            [
+                'type' => 'error',
+                'timestamp' => 1234567890,
+                'priority' => 400,
+                'priorityName' => 'ERROR',
+                'channel' => 'app',
+                'message' => $message,
+                'context' => $context,
+                'errorCount' => 1,
+            ],
+            ['message' => 'bare entry'],
+        ]);
+
+        $this->assertMatchesOutputSchema(LoggerCollectorFormatter::OUTPUT_SCHEMA, $this->formatter->format($collector));
+    }
+
+    public function testFormatWithNoLogsMatchesOutputSchema()
+    {
+        $collector = $this->createMock(LoggerDataCollector::class);
+        $collector->method('getProcessedLogs')->willReturn([]);
+
+        $this->assertMatchesOutputSchema(LoggerCollectorFormatter::OUTPUT_SCHEMA, $this->formatter->format($collector));
     }
 
     public function testGetName()

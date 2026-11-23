@@ -24,6 +24,79 @@ use Symfony\AI\Mate\Exception\InvalidArgumentException;
  */
 final class LogSearchTool
 {
+    private const ENTRY_SCHEMA = [
+        'type' => 'object',
+        'properties' => [
+            'datetime' => ['type' => 'string', 'description' => 'ATOM formatted timestamp'],
+            'channel' => ['type' => 'string'],
+            'level' => ['type' => 'string'],
+            'message' => ['type' => 'string'],
+            'context' => ['type' => 'object', 'description' => 'Monolog context, sensitive keys redacted'],
+            'extra' => ['type' => 'object', 'description' => 'Monolog extra data, sensitive keys redacted'],
+            'source_file' => ['type' => ['string', 'null'], 'description' => 'Log file relative to its log directory'],
+            'line_number' => ['type' => ['integer', 'null']],
+            'kernel_context' => ['type' => 'string', 'description' => 'Only present when multiple log directories are configured'],
+        ],
+        'required' => ['datetime', 'channel', 'level', 'message', 'context', 'extra', 'source_file', 'line_number'],
+        'additionalProperties' => false,
+    ];
+
+    private const SEARCH_SCHEMA = [
+        'type' => 'object',
+        'properties' => [
+            'entries' => ['type' => 'array', 'items' => self::ENTRY_SCHEMA],
+            'total_matched' => ['type' => 'integer', 'description' => 'Number of returned entries'],
+            'truncated' => ['type' => 'boolean', 'description' => 'True when the page is full and more matches may exist'],
+            'skipped_files' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Compressed files not read in full'],
+        ],
+        'required' => ['entries', 'total_matched', 'truncated', 'skipped_files'],
+        'additionalProperties' => false,
+    ];
+
+    private const TAIL_SCHEMA = [
+        'type' => 'object',
+        'properties' => [
+            'entries' => ['type' => 'array', 'items' => self::ENTRY_SCHEMA],
+            'total_matched' => ['type' => 'integer', 'description' => 'Matches within the file(s) read, may exceed the entries returned'],
+            'truncated' => ['type' => 'boolean', 'description' => 'True when total_matched exceeds the entries returned'],
+        ],
+        'required' => ['entries', 'total_matched', 'truncated'],
+        'additionalProperties' => false,
+    ];
+
+    private const LIST_FILES_SCHEMA = [
+        'type' => 'object',
+        'properties' => [
+            'files' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'name' => ['type' => 'string'],
+                        'path' => ['type' => 'string'],
+                        'size' => ['type' => 'integer', 'description' => 'Bytes'],
+                        'modified' => ['type' => 'string', 'description' => 'ATOM formatted timestamp'],
+                        'kernel_context' => ['type' => 'string', 'description' => 'Only present when multiple log directories are configured'],
+                    ],
+                    'required' => ['name', 'path', 'size', 'modified'],
+                    'additionalProperties' => false,
+                ],
+            ],
+            'skipped_files' => ['type' => 'array', 'items' => ['type' => 'string'], 'description' => 'Compressed files that cannot be read (zlib missing)'],
+        ],
+        'required' => ['files', 'skipped_files'],
+        'additionalProperties' => false,
+    ];
+
+    private const LIST_CHANNELS_SCHEMA = [
+        'type' => 'object',
+        'properties' => [
+            'channels' => ['type' => 'array', 'items' => ['type' => 'string']],
+        ],
+        'required' => ['channels'],
+        'additionalProperties' => false,
+    ];
+
     public function __construct(
         private LogReader $reader,
     ) {
@@ -40,7 +113,7 @@ final class LogSearchTool
      * @param int         $limit         Maximum number of entries to return
      * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[MateTool(name: 'monolog-search', title: 'Log Search', description: 'Search log entries by text or regex pattern. Supports filtering by log level, channel, environment, and date range. Use empty string for term to match all entries when using filters only. When multiple kernel contexts are configured, entries carry a kernel_context field and can be narrowed with the kernelContext parameter. The response also carries total_matched (the number of returned entries, so you do not have to count them) and truncated (true when total_matched equals limit, meaning more matches may exist beyond the page): raise limit and search again to see if truncated turns false. Compressed rotations (*.log.gz) are searched after the plain files; skipped_files names the ones that were not read in full (zlib missing, or cut at 256 MB): use zgrep on them.')]
+    #[MateTool(name: 'monolog-search', title: 'Log Search', description: 'Search log entries by text or regex pattern. Supports filtering by log level, channel, environment, and date range. Use empty string for term to match all entries when using filters only. When multiple kernel contexts are configured, entries carry a kernel_context field and can be narrowed with the kernelContext parameter. The response also carries total_matched (the number of returned entries, so you do not have to count them) and truncated (true when total_matched equals limit, meaning more matches may exist beyond the page): raise limit and search again to see if truncated turns false. Compressed rotations (*.log.gz) are searched after the plain files; skipped_files names the ones that were not read in full (zlib missing, or cut at 256 MB): use zgrep on them.', outputSchema: self::SEARCH_SCHEMA)]
     public function search(
         ?string $term = null,
         bool $regex = false,
@@ -92,7 +165,7 @@ final class LogSearchTool
      * @param int         $limit         Maximum number of entries to return
      * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[MateTool(name: 'monolog-context-search', title: 'Log Context Search', description: 'Search log entries by structured context data. Finds entries where a specific context key contains the given value. The response also carries total_matched (the number of returned entries, so you do not have to count them) and truncated (true when total_matched equals limit, meaning more matches may exist beyond the page): raise limit and search again to see if truncated turns false. Compressed rotations (*.log.gz) are searched after the plain files; skipped_files names the ones that were not read in full (zlib missing, or cut at 256 MB): use zgrep on them.')]
+    #[MateTool(name: 'monolog-context-search', title: 'Log Context Search', description: 'Search log entries by structured context data. Finds entries where a specific context key contains the given value. The response also carries total_matched (the number of returned entries, so you do not have to count them) and truncated (true when total_matched equals limit, meaning more matches may exist beyond the page): raise limit and search again to see if truncated turns false. Compressed rotations (*.log.gz) are searched after the plain files; skipped_files names the ones that were not read in full (zlib missing, or cut at 256 MB): use zgrep on them.', outputSchema: self::SEARCH_SCHEMA)]
     public function searchContext(
         string $key,
         string $value,
@@ -118,7 +191,7 @@ final class LogSearchTool
      * @param string|null $channel       Filter by Monolog channel name (e.g. app, security, doctrine)
      * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[MateTool(name: 'monolog-tail', title: 'Log Tail', description: 'Get the most recent log entries. Reads from the end of log files, optionally filtered by level, environment, and channel. When multiple kernel contexts are configured, the most recent entries of every context are merged. tail only reads the newest log file per context: the response also carries total_matched (the match count within the file(s) actually read, not the whole log directory) and truncated (true when total_matched exceeds what entries returns): the length of entries alone is not that count when truncated is true, raise limit instead.')]
+    #[MateTool(name: 'monolog-tail', title: 'Log Tail', description: 'Get the most recent log entries. Reads from the end of log files, optionally filtered by level, environment, and channel. When multiple kernel contexts are configured, the most recent entries of every context are merged. tail only reads the newest log file per context: the response also carries total_matched (the match count within the file(s) actually read, not the whole log directory) and truncated (true when total_matched exceeds what entries returns): the length of entries alone is not that count when truncated is true, raise limit instead.', outputSchema: self::TAIL_SCHEMA)]
     public function tail(int $limit = 50, ?string $level = null, ?string $environment = null, ?string $channel = null, ?string $kernelContext = null): string
     {
         $result = $this->reader->tail($limit, $level, $environment, $channel, $kernelContext);
@@ -134,7 +207,7 @@ final class LogSearchTool
      * @param string|null $environment   Filter log files by Symfony environment (e.g. dev, prod, test)
      * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[MateTool(name: 'monolog-list-files', title: 'List Log Files', description: 'List available log files with metadata (name, path, size, last modified). Use to discover which logs exist before searching. When multiple kernel contexts are configured, files carry a kernel_context field. Compressed rotations (*.log.gz) are listed too and searched after the plain files; skipped_files names the ones that cannot be read (zlib missing).')]
+    #[MateTool(name: 'monolog-list-files', title: 'List Log Files', description: 'List available log files with metadata (name, path, size, last modified). Use to discover which logs exist before searching. When multiple kernel contexts are configured, files carry a kernel_context field. Compressed rotations (*.log.gz) are listed too and searched after the plain files; skipped_files names the ones that cannot be read (zlib missing).', outputSchema: self::LIST_FILES_SCHEMA)]
     public function listFiles(?string $environment = null, ?string $kernelContext = null): string
     {
         $files = [
@@ -167,7 +240,7 @@ final class LogSearchTool
     /**
      * @param string|null $kernelContext Filter by kernel context (e.g. the APP_ID of a multi-kernel application), only relevant when multiple log directories are configured
      */
-    #[MateTool(name: 'monolog-list-channels', title: 'List Log Channels', description: 'List all unique Monolog channel names found across log files (e.g. app, security, doctrine).')]
+    #[MateTool(name: 'monolog-list-channels', title: 'List Log Channels', description: 'List all unique Monolog channel names found across log files (e.g. app, security, doctrine).', outputSchema: self::LIST_CHANNELS_SCHEMA)]
     public function listChannels(?string $kernelContext = null): string
     {
         return ResponseEncoder::encodeUntrusted(['channels' => $this->reader->getUniqueChannels($kernelContext)]);

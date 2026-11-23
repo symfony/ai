@@ -29,6 +29,31 @@ use Symfony\Component\HttpKernel\DataCollector\TimeDataCollector;
  */
 final class TimeCollectorFormatter implements CollectorFormatterInterface
 {
+    public const OUTPUT_SCHEMA = [
+        'title' => 'time',
+        'type' => 'object',
+        'properties' => [
+            'duration_ms' => ['type' => 'number'],
+            'init_time_ms' => ['type' => 'number'],
+            'stopwatch_installed' => ['type' => 'boolean'],
+            'events' => [
+                'type' => 'array',
+                'description' => 'Longest first.',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'name' => ['type' => 'string'],
+                        'category' => ['type' => 'string'],
+                        'duration_ms' => ['type' => 'number'],
+                        'memory' => ['type' => 'integer', 'description' => 'Bytes.'],
+                    ],
+                    'required' => ['name', 'category', 'duration_ms', 'memory'],
+                ],
+            ],
+        ],
+        'required' => ['duration_ms', 'init_time_ms', 'stopwatch_installed', 'events'],
+    ];
+
     public function getName(): string
     {
         return 'time';

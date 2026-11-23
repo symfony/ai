@@ -23,12 +23,19 @@ namespace Symfony\AI\Mate\Attribute;
 #[\Attribute(\Attribute::TARGET_METHOD)]
 final class MateResourceTemplate
 {
+    /**
+     * @param array<string, mixed>|null $outputSchema JSON Schema of the decoded result, without the `untrusted_data` envelope. Shown by `resources:inspect`
+     *                                                A top-level `oneOf` whose branches carry a `title` equal to a URI variable
+     *                                                (e.g. the collector name) lets `resources:inspect` show only the matching branch,
+     *                                                or the branch titled `other` when none matches
+     */
     public function __construct(
         public string $uriTemplate,
         public ?string $name = null,
         public ?string $title = null,
         public ?string $description = null,
         public ?string $mimeType = null,
+        public ?array $outputSchema = null,
     ) {
     }
 }

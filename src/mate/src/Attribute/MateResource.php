@@ -20,12 +20,16 @@ namespace Symfony\AI\Mate\Attribute;
 #[\Attribute(\Attribute::TARGET_METHOD)]
 final class MateResource
 {
+    /**
+     * @param array<string, mixed>|null $outputSchema JSON Schema of the decoded result, without the `untrusted_data` envelope. Shown by `resources:inspect`
+     */
     public function __construct(
         public string $uri,
         public ?string $name = null,
         public ?string $title = null,
         public ?string $description = null,
         public ?string $mimeType = null,
+        public ?array $outputSchema = null,
     ) {
     }
 }

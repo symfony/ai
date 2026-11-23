@@ -19,8 +19,9 @@ namespace Symfony\AI\Mate\Discovery\Model;
 final class ToolDefinition
 {
     /**
-     * @param class-string         $handlerClass
-     * @param array<string, mixed> $inputSchema
+     * @param class-string              $handlerClass
+     * @param array<string, mixed>      $inputSchema
+     * @param array<string, mixed>|null $outputSchema
      */
     public function __construct(
         public readonly string $name,
@@ -29,6 +30,7 @@ final class ToolDefinition
         public readonly array $inputSchema,
         public readonly string $handlerClass,
         public readonly string $handlerMethod,
+        public readonly ?array $outputSchema = null,
     ) {
     }
 
