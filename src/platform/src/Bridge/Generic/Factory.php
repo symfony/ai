@@ -42,6 +42,8 @@ class Factory
         string $completionsPath = '/v1/chat/completions',
         string $embeddingsPath = '/v1/embeddings',
         string $name = 'generic',
+        bool $supportsTextToSpeech = false,
+        string $speechPath = '/v1/audio/speech',
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
@@ -54,6 +56,11 @@ class Factory
         if ($supportsEmbeddings) {
             $modelClients[] = new Embeddings\ModelClient($httpClient, $baseUrl, $apiKey, $embeddingsPath);
             $resultConverters[] = new Embeddings\ResultConverter();
+        }
+
+        if ($supportsTextToSpeech) {
+            $modelClients[] = new TextToSpeech\ModelClient($httpClient, $baseUrl, $apiKey, $speechPath);
+            $resultConverters[] = new TextToSpeech\ResultConverter();
         }
 
         return new Provider($name, $modelClients, $resultConverters, $modelCatalog, $contract, $eventDispatcher);
@@ -75,9 +82,11 @@ class Factory
         string $embeddingsPath = '/v1/embeddings',
         string $name = 'generic',
         ?ModelRouterInterface $modelRouter = null,
+        bool $supportsTextToSpeech = false,
+        string $speechPath = '/v1/audio/speech',
     ): Platform {
         return new Platform(
-            [self::createProvider($baseUrl, $apiKey, $httpClient, $modelCatalog, $contract, $eventDispatcher, $supportsCompletions, $supportsEmbeddings, $completionsPath, $embeddingsPath, $name)],
+            [self::createProvider($baseUrl, $apiKey, $httpClient, $modelCatalog, $contract, $eventDispatcher, $supportsCompletions, $supportsEmbeddings, $completionsPath, $embeddingsPath, $name, $supportsTextToSpeech, $speechPath)],
             $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );

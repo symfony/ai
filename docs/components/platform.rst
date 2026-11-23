@@ -216,6 +216,41 @@ This requires to configure a :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\Mod
 :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\CompletionsModel` or :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\EmbeddingsModel`,
 see `LiteLLM example`_ for more details.
 
+Servers that implement OpenAI's speech endpoint (``POST /v1/audio/speech``), like `Kokoro-FastAPI`_,
+`LocalAI`_, `Speaches`_ or `VoiceStudio`_, can be used for text to speech by enabling it on the factory and
+registering a :class:`Symfony\\AI\\Platform\\Bridge\\Generic\\TextToSpeechModel`::
+
+    use Symfony\AI\Platform\Bridge\Generic\Factory;
+    use Symfony\AI\Platform\Bridge\Generic\ModelCatalog;
+    use Symfony\AI\Platform\Bridge\Generic\TextToSpeechModel;
+    use Symfony\AI\Platform\Capability;
+    use Symfony\AI\Platform\Message\Content\Text;
+
+    $platform = Factory::createPlatform(
+        'http://127.0.0.1:8880',
+        httpClient: $httpClient,
+        modelCatalog: new ModelCatalog([
+            'kokoro' => [
+                'class' => TextToSpeechModel::class,
+                'capabilities' => [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH],
+            ],
+        ]),
+        supportsCompletions: false,
+        supportsEmbeddings: false,
+        supportsTextToSpeech: true,
+    );
+
+    $result = $platform->invoke('kokoro', new Text('Hello world'), [
+        'voice' => 'af_heart',
+        'response_format' => 'mp3',
+    ]);
+
+    file_put_contents('hello.mp3', $result->asBinary());
+
+All options (``voice``, ``response_format``, ``speed``, ``instructions``, ...) are sent as they are, since their
+accepted values depend on the server. The MIME type of the result is taken from the ``Content-Type`` of the
+response. Use the ``speechPath`` argument for servers that do not serve the endpoint under ``/v1/audio/speech``.
+
 Alternatively, use the :doc:`models.dev bridge <platform/models-dev>` to
 auto-discover model capabilities for many providers without manually curating
 model catalogs.
@@ -2411,6 +2446,10 @@ Code Examples
 .. _`Fireworks`: https://fireworks.ai/
 .. _`Higgsfield`: https://higgsfield.ai/
 .. _`LiteLLM example`: https://github.com/symfony/ai/blob/main/examples/litellm/chat.php
+.. _`Kokoro-FastAPI`: https://github.com/remsky/Kokoro-FastAPI
+.. _`LocalAI`: https://localai.io
+.. _`Speaches`: https://speaches.ai
+.. _`VoiceStudio`: https://github.com/debpalash/VoiceStudio
 .. _`Meta's Llama`: https://www.llama.com/
 .. _`Ollama`: https://ollama.com/
 .. _`Ollama TTS`: https://docs.ollama.com/capabilities/speech

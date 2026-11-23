@@ -222,6 +222,31 @@ Based on the generic bridge, you can configure any service, that complies with t
                         - !php/const 'Symfony\AI\Platform\Capability::INPUT_IMAGE'
                         - !php/const 'Symfony\AI\Platform\Capability::TOOL_CALLING'
 
+Text to speech through an OpenAI-compatible speech endpoint is disabled by default. Enable it with
+``supports_text_to_speech`` and register the voice models as
+:class:`Symfony\\AI\\Platform\\Bridge\\Generic\\TextToSpeechModel`; ``speech_path`` defaults to
+``/v1/audio/speech``:
+
+.. code-block:: yaml
+
+    # config/packages/ai.yaml
+    ai:
+        platform:
+            generic:
+                kokoro:
+                    base_url: 'http://127.0.0.1:8880'
+                    supports_completions: false
+                    supports_embeddings: false
+                    supports_text_to_speech: true
+                    model_catalog:
+                        models:
+                            kokoro:
+                                class: 'Symfony\AI\Platform\Bridge\Generic\TextToSpeechModel'
+                                capabilities:
+                                    - !php/const 'Symfony\AI\Platform\Capability::INPUT_TEXT'
+                                    - !php/const 'Symfony\AI\Platform\Capability::OUTPUT_AUDIO'
+                                    - !php/const 'Symfony\AI\Platform\Capability::TEXT_TO_SPEECH'
+
 OpenResponses Platform
 ----------------------
 

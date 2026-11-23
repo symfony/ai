@@ -10993,6 +10993,38 @@ class AiBundleTest extends TestCase
         $this->assertTrue($arguments[7]);
         $this->assertSame('/v1/chat/completions', $arguments[8]);
         $this->assertSame('/v1/embeddings', $arguments[9]);
+        $this->assertSame('generic', $arguments[10]);
+        $this->assertNull($arguments[11], 'Model router should be null');
+        $this->assertFalse($arguments[12]);
+        $this->assertSame('/v1/audio/speech', $arguments[13]);
+    }
+
+    public function testGenericPlatformTextToSpeechConfiguration()
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    'generic' => [
+                        'voicestudio' => [
+                            'base_url' => 'http://127.0.0.1:3900',
+                            'supports_completions' => false,
+                            'supports_embeddings' => false,
+                            'supports_text_to_speech' => true,
+                            'speech_path' => '/api/v1/audio/speech',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $arguments = $container->getDefinition('ai.platform.generic.voicestudio')->getArguments();
+
+        $this->assertSame('http://127.0.0.1:3900', $arguments[0]);
+        $this->assertNull($arguments[1]);
+        $this->assertFalse($arguments[6]);
+        $this->assertFalse($arguments[7]);
+        $this->assertTrue($arguments[12]);
+        $this->assertSame('/api/v1/audio/speech', $arguments[13]);
     }
 
     public function testGenericPlatformCanBeInstantiated()

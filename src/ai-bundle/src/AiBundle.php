@@ -807,6 +807,10 @@ final class AiBundle extends AbstractBundle
                         $config['supports_embeddings'],
                         $config['completions_path'],
                         $config['embeddings_path'],
+                        'generic',
+                        null, // $modelRouter
+                        $config['supports_text_to_speech'],
+                        $config['speech_path'],
                     ])
                     ->addTag('ai.platform', ['name' => 'generic.'.$name]);
 
