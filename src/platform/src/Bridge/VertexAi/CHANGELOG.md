@@ -1,11 +1,6 @@
 CHANGELOG
 =========
 
-1.0
----
-
- * Send the API key in the `x-goog-api-key` header instead of the `key` query parameter, so it no longer appears in request URLs and HTTP client exception messages
-
 0.14
 ----
 
