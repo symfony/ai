@@ -1650,6 +1650,12 @@ It throws an ``UnexpectedResultTypeException`` if the structured output is not a
 
     $reasoning = $result->asObject(MathReasoning::class); // typed as `MathReasoning`
 
+The Codex CLI bridge also accepts PHP classes as ``response_format``. Use the same
+subscriber with ``Symfony\AI\Platform\Bridge\Codex\Factory`` and a Codex model.
+The bridge passes the generated schema to ``codex exec --output-schema``. For a
+streamed response, the structured object becomes available when the CLI
+completes the turn.
+
 Array Structures as Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 

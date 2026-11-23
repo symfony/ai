@@ -32,6 +32,7 @@ final class ModelCatalog extends AbstractModelCatalog
             Capability::INPUT_MESSAGES,
             Capability::INPUT_TEXT,
             Capability::OUTPUT_TEXT,
+            Capability::OUTPUT_STRUCTURED,
             Capability::OUTPUT_STREAMING,
         ];
 

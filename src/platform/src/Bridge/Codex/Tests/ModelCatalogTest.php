@@ -24,7 +24,7 @@ final class ModelCatalogTest extends ModelCatalogTestCase
 {
     public static function modelsProvider(): iterable
     {
-        $capabilities = [Capability::INPUT_MESSAGES, Capability::INPUT_TEXT, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING];
+        $capabilities = [Capability::INPUT_MESSAGES, Capability::INPUT_TEXT, Capability::OUTPUT_TEXT, Capability::OUTPUT_STRUCTURED, Capability::OUTPUT_STREAMING];
 
         yield 'gpt-5.4' => ['gpt-5.4', Codex::class, $capabilities];
         yield 'gpt-5.4-mini' => ['gpt-5.4-mini', Codex::class, $capabilities];

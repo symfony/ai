@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Add structured output support through the Codex CLI's `--output-schema` option
+
 0.14
 ----
 

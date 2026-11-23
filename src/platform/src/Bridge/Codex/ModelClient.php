@@ -16,6 +16,7 @@ use Psr\Log\NullLogger;
 use Symfony\AI\Platform\Bridge\Codex\Exception\CliNotFoundException;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\MissingModelSupportException;
+use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawResultInterface;
@@ -78,17 +79,35 @@ final class ModelClient implements ModelClientInterface
             $options['sandbox'] = 'read-only';
         }
 
-        $command = $this->buildCommand($prompt, $options);
+        $schemaPath = null;
+        if (isset($options['response_format'])) {
+            if (isset($options['output_schema'])) {
+                throw new InvalidArgumentException('Set either "response_format" or "output_schema", not both.');
+            }
 
-        $this->logger->info('Spawning Codex CLI subprocess.', [
-            'command' => implode(' ', array_map('escapeshellarg', $command)),
-            'cwd' => $cwd,
-        ]);
+            $options['output_schema'] = $schemaPath = $this->createSchemaFile($options['response_format']);
+            unset($options['response_format']);
+        }
 
-        $process = new Process($command, $cwd, $this->environment, null, $this->timeout);
-        $process->start();
+        try {
+            $command = $this->buildCommand($prompt, $options);
 
-        return new RawProcessResult($process);
+            $this->logger->info('Spawning Codex CLI subprocess.', [
+                'command' => implode(' ', array_map('escapeshellarg', $command)),
+                'cwd' => $cwd,
+            ]);
+
+            $process = new Process($command, $cwd, $this->environment, null, $this->timeout);
+            $process->start();
+        } catch (\Throwable $exception) {
+            if (null !== $schemaPath) {
+                @unlink($schemaPath);
+            }
+
+            throw $exception;
+        }
+
+        return new RawProcessResult($process, $schemaPath);
     }
 
     /**
@@ -129,6 +148,29 @@ final class ModelClient implements ModelClientInterface
         $command[] = $prompt;
 
         return $command;
+    }
+
+    private function createSchemaFile(mixed $responseFormat): string
+    {
+        $format = \is_array($responseFormat) ? ($responseFormat['json_schema'] ?? null) : null;
+        $schema = \is_array($format) ? ($format['schema'] ?? null) : null;
+        if (!\is_array($schema)) {
+            throw new InvalidArgumentException('Codex CLI requires a JSON Schema in "response_format".');
+        }
+
+        $json = json_encode($schema, \JSON_THROW_ON_ERROR);
+        $path = @tempnam(sys_get_temp_dir(), 'symfony-ai-codex-');
+        if (false === $path) {
+            throw new RuntimeException('Cannot create a temporary JSON Schema file for Codex CLI.');
+        }
+
+        if (\strlen($json) !== @file_put_contents($path, $json)) {
+            @unlink($path);
+
+            throw new RuntimeException('Cannot write the JSON Schema file for Codex CLI.');
+        }
+
+        return $path;
     }
 
     private function getCliBinary(): string

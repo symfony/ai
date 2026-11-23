@@ -26,7 +26,13 @@ final class RawProcessResult implements RawResultInterface
 
     public function __construct(
         private readonly Process $process,
+        private ?string $schemaPath = null,
     ) {
+    }
+
+    public function __destruct()
+    {
+        $this->removeSchemaFile();
     }
 
     /**
@@ -37,7 +43,11 @@ final class RawProcessResult implements RawResultInterface
      */
     public function getData(): array
     {
-        $this->process->wait();
+        try {
+            $this->process->wait();
+        } finally {
+            $this->removeSchemaFile();
+        }
 
         if (!$this->process->isSuccessful()) {
             throw new RuntimeException(\sprintf('Codex CLI process failed: "%s"', $this->process->getErrorOutput()));
@@ -112,6 +122,23 @@ final class RawProcessResult implements RawResultInterface
      */
     public function getDataStream(): \Generator
     {
+        try {
+            yield from $this->readDataStream();
+        } finally {
+            if (!$this->process->isRunning()) {
+                $this->removeSchemaFile();
+            }
+        }
+    }
+
+    public function getObject(): Process
+    {
+        return $this->process;
+    }
+
+    /** @return \Generator<int, array<string, mixed>> */
+    private function readDataStream(): \Generator
+    {
         $buffer = '';
 
         while ($this->process->isRunning()) {
@@ -165,9 +192,12 @@ final class RawProcessResult implements RawResultInterface
         }
     }
 
-    public function getObject(): Process
+    private function removeSchemaFile(): void
     {
-        return $this->process;
+        if (null !== $this->schemaPath) {
+            @unlink($this->schemaPath);
+            $this->schemaPath = null;
+        }
     }
 
     /**
