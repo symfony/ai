@@ -7,6 +7,7 @@ Manticore Search Documentation
 ------------------------------
 
  * [KNN search](https://manual.manticoresearch.com/Searching/KNN)
+ * [Filters](https://manual.manticoresearch.com/Searching/Filters)
 
 Resources
 ---------

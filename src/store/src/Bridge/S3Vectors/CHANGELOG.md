@@ -6,6 +6,7 @@ CHANGELOG
 
  * [BC BREAK] Rename the `topK` option of `Store::query()` and the `topK` argument of `Store` to `limit`
  * [BC BREAK] Replace the `dimension`, `distanceMetric`, `dataType`, `metadata`, `encryption` and `tags` options of `Store::setup()` by the `dimensions`, `metric`, `dataType`, `metadataConfiguration`, `kmsKeyId` and `tags` arguments of `Store`, the dimensions default to 1536
+ * Add `find` and `findSimilar` methods
 
 0.14
 ----

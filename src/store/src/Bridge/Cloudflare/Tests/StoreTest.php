@@ -399,6 +399,103 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $mockHttpClient->getRequestsCount());
     }
 
+    public function testFindGetsTheVectorById()
+    {
+        $mockHttpClient = new MockHttpClient([
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame('POST', $method);
+                $this->assertSame('https://api.cloudflare.com/client/v4/accounts/foo/vectorize/v2/indexes/random/get_by_ids', $url);
+                $this->assertIsString($options['body']);
+                $this->assertSame(['ids' => ['vector-id']], json_decode($options['body'], true));
+
+                return new JsonMockResponse([
+                    'result' => [
+                        [
+                            'id' => 'vector-id',
+                            'namespace' => 'namespace',
+                            'values' => [0.1, 0.2, 0.3],
+                            'metadata' => ['title' => 'Test Document'],
+                        ],
+                    ],
+                    'success' => true,
+                ]);
+            },
+        ], self::BASE_URI);
+
+        $store = new Store($mockHttpClient, 'random');
+
+        $document = $store->find('vector-id');
+
+        $this->assertSame(1, $mockHttpClient->getRequestsCount());
+        $this->assertNotNull($document);
+        $this->assertSame('vector-id', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['title' => 'Test Document'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $mockHttpClient = new MockHttpClient([
+            new JsonMockResponse(['result' => [], 'success' => true]),
+        ], self::BASE_URI);
+
+        $store = new Store($mockHttpClient, 'random');
+
+        $this->assertNull($store->find('unknown-id'));
+    }
+
+    public function testFindCannotGetOnInvalidResponse()
+    {
+        $mockHttpClient = new MockHttpClient([
+            new JsonMockResponse([], [
+                'http_code' => 400,
+            ]),
+        ], self::BASE_URI);
+
+        $store = new Store($mockHttpClient, 'random');
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 400 returned for "https://api.cloudflare.com/client/v4/accounts/foo/vectorize/v2/indexes/random/get_by_ids".');
+        $store->find('vector-id');
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $mockHttpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'result' => [['id' => 'vector-id', 'values' => [0.1, 0.2, 0.3], 'metadata' => []]],
+                'success' => true,
+            ]),
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame('https://api.cloudflare.com/client/v4/accounts/foo/vectorize/v2/indexes/random/query', $url);
+                $this->assertIsString($options['body']);
+                $this->assertSame([
+                    'vector' => [0.1, 0.2, 0.3],
+                    'returnValues' => true,
+                    'returnMetadata' => 'all',
+                    'topK' => 2,
+                ], json_decode($options['body'], true));
+
+                return new JsonMockResponse([
+                    'result' => [
+                        'matches' => [
+                            ['score' => 1.0, 'id' => 'vector-id', 'values' => [0.1, 0.2, 0.3], 'metadata' => []],
+                            ['score' => 0.9, 'id' => 'other-id', 'values' => [0.1, 0.2, 0.4], 'metadata' => []],
+                        ],
+                    ],
+                ]);
+            },
+        ], self::BASE_URI);
+
+        $store = new Store($mockHttpClient, 'random');
+
+        $results = iterator_to_array($store->findSimilar('vector-id', ['limit' => 1]), false);
+
+        $this->assertCount(1, $results);
+        $this->assertSame('other-id', $results[0]->getId());
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'test_index');

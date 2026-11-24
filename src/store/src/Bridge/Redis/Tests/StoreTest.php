@@ -637,6 +637,94 @@ final class StoreTest extends TestCase
         $store->clear();
     }
 
+    public function testFindReturnsTheDocumentWithItsVectorAndMetadata()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test_index', 'vector:');
+
+        $uuid = Uuid::v4()->toString();
+
+        $redis->expects($this->once())
+            ->method('rawCommand')
+            ->with('JSON.GET', 'vector:'.$uuid, '$')
+            ->willReturn(json_encode([[
+                'id' => $uuid,
+                'metadata' => ['title' => 'Test Document'],
+                'embedding' => [0.1, 0.2, 0.3],
+            ]]));
+
+        $document = $store->find($uuid);
+
+        $this->assertNotNull($document);
+        $this->assertSame($uuid, $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['title' => 'Test Document'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test_index', 'vector:');
+
+        $uuid = Uuid::v4()->toString();
+
+        $redis->expects($this->once())
+            ->method('rawCommand')
+            ->with('JSON.GET', 'vector:'.$uuid, '$')
+            ->willReturn(false);
+
+        $this->assertNull($store->find($uuid));
+    }
+
+    public function testFindFailureThrowsRuntimeException()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test_index', 'vector:');
+
+        $redis->expects($this->once())
+            ->method('rawCommand')
+            ->willThrowException(new \RedisException('Existing key has wrong Redis type'));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to find document in Redis: "Existing key has wrong Redis type".');
+
+        $store->find(Uuid::v4()->toString());
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $redis = $this->createMock(\Redis::class);
+        $store = new Store($redis, 'test_index', 'vector:');
+
+        $uuid = Uuid::v4()->toString();
+        $similarUuid = Uuid::v4()->toString();
+
+        $redis->expects($this->exactly(2))
+            ->method('rawCommand')
+            ->willReturnCallback(function (string $command, mixed ...$arguments) use ($uuid, $similarUuid): string|array {
+                if ('JSON.GET' === $command) {
+                    return json_encode([['id' => $uuid, 'metadata' => [], 'embedding' => [0.1, 0.2, 0.3]]]);
+                }
+
+                $this->assertSame('FT.SEARCH', $command);
+                $this->assertSame('(*) => [KNN 2 @embedding $query_vector AS vector_score]', $arguments[1]);
+
+                return [
+                    2,
+                    'vector:'.$uuid,
+                    ['$.id', $uuid, '$.metadata', '[]', '$.embedding', '[0.1,0.2,0.3]', 'vector_score', '0'],
+                    'vector:'.$similarUuid,
+                    ['$.id', $similarUuid, '$.metadata', '[]', '$.embedding', '[0.1,0.2,0.4]', 'vector_score', '0.01'],
+                ];
+            });
+
+        $results = iterator_to_array($store->findSimilar($uuid, ['limit' => 1]), false);
+
+        $this->assertCount(1, $results);
+        $this->assertSame($similarUuid, $results[0]->getId());
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $redis = $this->createMock(\Redis::class);

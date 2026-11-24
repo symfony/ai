@@ -43,6 +43,25 @@ interface StoreInterface extends \Countable
     public function clear(array $options = []): void;
 
     /**
+     * Returns the document with the given id, with its vector, or null when the store has none.
+     */
+    public function find(string $id): ?VectorDocumentInterface;
+
+    /**
+     * Returns the documents nearest to the one with the given id, leaving that document out.
+     *
+     * The options are the ones of a vector query, and the "limit" option does not count the document itself.
+     * There are no similar documents to a document the store does not have.
+     *
+     * @param array<string, mixed> $options
+     *
+     * @return iterable<VectorDocumentInterface>
+     *
+     * @throws UnsupportedQueryTypeException if the store does not support vector queries
+     */
+    public function findSimilar(string $id, array $options = []): iterable;
+
+    /**
      * Returns the documents of the store matching the given query.
      *
      * The "limit" option caps the number of returned documents.

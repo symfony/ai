@@ -19,6 +19,7 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -30,6 +31,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     private const BATCH_SIZE = 10000;
 
     /**
@@ -107,6 +110,23 @@ final class Store implements ManagedStoreInterface, StoreInterface
                 $this->getBatchSize($options),
             ),
         ]);
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $response = $this->request('POST', \sprintf('db/%s/query/v2', $this->databaseName), [
+            'statement' => \sprintf('MATCH (n:%s {id: $id}) RETURN n LIMIT 1', $this->nodeName),
+            'parameters' => [
+                'id' => $id,
+            ],
+        ]);
+
+        $item = $response['data']['values'][0] ?? null;
+        if (null === $item) {
+            return null;
+        }
+
+        return $this->convertToVectorDocument($item);
     }
 
     public function supports(string $queryClass): bool

@@ -19,6 +19,7 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -28,6 +29,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly string $indexName,
@@ -154,6 +157,31 @@ final class Store implements ManagedStoreInterface, StoreInterface
         }
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        // "fields" returns the vector on every version, while "_source" leaves it out since Elasticsearch 9.2
+        $hits = $this->searchHits([
+            'query' => ['ids' => ['values' => [$id]]],
+            'fields' => [$this->vectorsField],
+            'size' => 1,
+        ]);
+
+        $hit = $hits[0] ?? null;
+        if (null === $hit) {
+            return null;
+        }
+
+        $source = $hit['_source'] ?? null;
+        if (!\is_array($source)) {
+            throw new InvalidArgumentException('Missing "_source" field in the document data.');
+        }
+
+        $fields = $hit['fields'] ?? null;
+        $source[$this->vectorsField] = \is_array($fields) ? ($fields[$this->vectorsField] ?? null) : null;
+
+        return $this->convertToVectorDocument(['_id' => $hit['_id'] ?? null, '_source' => $source]);
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
@@ -191,6 +219,18 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $payload['size'] = $k;
         }
 
+        foreach ($this->searchHits($payload) as $document) {
+            yield $this->convertToVectorDocument($document);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     *
+     * @return list<array<mixed>>
+     */
+    private function searchHits(array $payload): array
+    {
         $documents = $this->request('POST', \sprintf('%s/_search', $this->indexName), $payload);
 
         $hits = $documents['hits'] ?? null;
@@ -203,13 +243,16 @@ final class Store implements ManagedStoreInterface, StoreInterface
             throw new RuntimeException('The Elasticsearch search response does not contain a result set.');
         }
 
+        $documents = [];
         foreach ($innerHits as $document) {
             if (!\is_array($document)) {
                 throw new RuntimeException('The Elasticsearch search response contains an invalid hit.');
             }
 
-            yield $this->convertToVectorDocument($document);
+            $documents[] = $document;
         }
+
+        return $documents;
     }
 
     /**

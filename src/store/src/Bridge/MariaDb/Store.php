@@ -19,6 +19,7 @@ use Symfony\AI\Store\Document\VectorDocument;
 use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -34,6 +35,8 @@ use Symfony\Component\Uid\Uuid;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     private ?\PDO $connection = null;
     private string $dsn;
 
@@ -202,6 +205,31 @@ final class Store implements ManagedStoreInterface, StoreInterface
     public function clear(array $options = []): void
     {
         $this->getConnection()->exec(\sprintf('TRUNCATE TABLE %s', $this->tableName));
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $statement = $this->getConnection()->prepare(
+            \sprintf(
+                'SELECT id, VEC_ToText(`%s`) embedding, metadata FROM %s WHERE id = :id',
+                $this->vectorFieldName,
+                $this->tableName,
+            ),
+        );
+        $statement->bindValue(':id', $id);
+        $statement->execute();
+
+        $result = $statement->fetch(\PDO::FETCH_ASSOC);
+
+        if (false === $result) {
+            return null;
+        }
+
+        return new VectorDocument(
+            id: Uuid::fromRfc4122($result['id']),
+            vector: new Vector(json_decode((string) $result['embedding'], true)),
+            metadata: new Metadata(json_decode($result['metadata'] ?? '{}', true)),
+        );
     }
 
     public function supports(string $queryClass): bool

@@ -20,17 +20,21 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Guillaume Loulier <personal@guillaumeloulier.fr>
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly string $collection,
@@ -120,6 +124,17 @@ final class Store implements ManagedStoreInterface, StoreInterface
         } while (0 !== $successful);
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $response = $this->sendRequest('GET', \sprintf('v1/objects/%s/%s', $this->collection, rawurlencode($id)), []);
+
+        if (404 === $response->getStatusCode()) {
+            return null;
+        }
+
+        return $this->convertToVectorDocument($response->toArray()['properties']);
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
@@ -185,6 +200,20 @@ final class Store implements ManagedStoreInterface, StoreInterface
      */
     private function request(string $method, string $endpoint, array $payload): array
     {
+        $response = $this->sendRequest($method, $endpoint, $payload);
+
+        if (200 === $response->getStatusCode() && '' === $response->getContent(false)) {
+            return [];
+        }
+
+        return $response->toArray();
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function sendRequest(string $method, string $endpoint, array $payload): ResponseInterface
+    {
         $options = [
             'headers' => ['X-Weaviate-Client-Integration' => 'symfony-ai/'.self::resolveVersion()],
         ];
@@ -193,13 +222,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $options['json'] = $payload;
         }
 
-        $response = $this->httpClient->request($method, $endpoint, $options);
-
-        if (200 === $response->getStatusCode() && '' === $response->getContent(false)) {
-            return [];
-        }
-
-        return $response->toArray();
+        return $this->httpClient->request($method, $endpoint, $options);
     }
 
     /**

@@ -70,6 +70,16 @@ final class CombinedStore implements StoreInterface
         }
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        return $this->vectorStore->find($id);
+    }
+
+    public function findSimilar(string $id, array $options = []): iterable
+    {
+        return $this->vectorStore->findSimilar($id, $options);
+    }
+
     public function query(QueryInterface $query, array $options = []): iterable
     {
         if ($query instanceof HybridQuery) {

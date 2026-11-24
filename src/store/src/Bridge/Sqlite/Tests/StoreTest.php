@@ -213,6 +213,52 @@ final class StoreTest extends TestCase
         $this->assertSame('test_vectors_fts', $result->fetchColumn());
     }
 
+    public function testFindReturnsTheDocumentWithItsVector()
+    {
+        $store = $this->createStore();
+        $store->setup();
+
+        $store->add([
+            new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), new Metadata(['name' => 'first'])),
+            new VectorDocument('doc-2', new Vector([0.4, 0.5, 0.6]), new Metadata(['name' => 'second'])),
+        ]);
+
+        $document = $store->find('doc-2');
+
+        $this->assertNotNull($document);
+        $this->assertSame('doc-2', $document->getId());
+        $this->assertSame([0.4, 0.5, 0.6], $document->getVector()->getData());
+        $this->assertSame(['name' => 'second'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $store = $this->createStore();
+        $store->setup();
+
+        $store->add(new VectorDocument('doc-1', new Vector([0.1, 0.2, 0.3]), new Metadata(['name' => 'first'])));
+
+        $this->assertNull($store->find('unknown'));
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $store = $this->createStore();
+        $store->setup();
+
+        $store->add([
+            new VectorDocument('doc-1', new Vector([1.0, 0.0, 0.0]), new Metadata(['name' => 'first'])),
+            new VectorDocument('doc-2', new Vector([0.9, 0.1, 0.0]), new Metadata(['name' => 'second'])),
+            new VectorDocument('doc-3', new Vector([0.0, 0.0, 1.0]), new Metadata(['name' => 'third'])),
+        ]);
+
+        $results = iterator_to_array($store->findSimilar('doc-1', ['limit' => 1]), false);
+
+        $this->assertCount(1, $results);
+        $this->assertSame('doc-2', $results[0]->getId());
+    }
+
     public function testQueryVector()
     {
         $store = $this->createStore();

@@ -9,6 +9,7 @@ Milvus Documentation
  * [Create collection](https://milvus.io/api-reference/restful/v2.5.x/v2/Collection%20%28v2%29/Create.md)
  * [Insert entities](https://milvus.io/api-reference/restful/v2.5.x/v2/Vector%20%28v2%29/Insert.md)
  * [Search entities](https://milvus.io/api-reference/restful/v2.5.x/v2/Vector%20%28v2%29/Search.md)
+ * [Query entities](https://milvus.io/api-reference/restful/v2.5.x/v2/Vector%20%28v2%29/Query.md)
  * [Boolean filter expression](https://milvus.io/docs/v2.5.x/basic-operators.md)
 
 Resources

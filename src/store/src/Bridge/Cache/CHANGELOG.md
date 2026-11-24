@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] Rename the `maxItems` option of `Store::query()` to `limit`
+ * Add `find` and `findSimilar` methods
 
 0.14
 ----

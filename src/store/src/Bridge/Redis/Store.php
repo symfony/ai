@@ -19,6 +19,7 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -29,6 +30,8 @@ use Symfony\AI\Store\StoreInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     /**
      * @param 'FLAT'|'HNSW' $indexMethod
      * @param list<string>  $extraSchema
@@ -169,6 +172,28 @@ final class Store implements ManagedStoreInterface, StoreInterface
             $e = new \RedisException($error);
             throw new RuntimeException(\sprintf('Failed to clear documents from Redis: "%s".', $e->getMessage()), 0, $e);
         }
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        try {
+            $json = $this->redis->rawCommand('JSON.GET', $this->keyPrefix.$id, '$');
+        } catch (\RedisException $e) {
+            throw new RuntimeException(\sprintf('Failed to find document in Redis: "%s".', $e->getMessage()), 0, $e);
+        }
+
+        if (false === $json) {
+            return null;
+        }
+
+        // a JSONPath returns the matching values wrapped in an array
+        $data = json_decode($json, true, 512, \JSON_THROW_ON_ERROR)[0];
+
+        return new VectorDocument(
+            id: $data['id'],
+            vector: new Vector($data['embedding']),
+            metadata: new Metadata($data['metadata']),
+        );
     }
 
     public function supports(string $queryClass): bool

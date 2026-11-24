@@ -6,6 +6,7 @@ CHANGELOG
 
  * [BC BREAK] Rename the `k` option of `Store::query()` to `limit`, which also sets the limit of the search
  * [BC BREAK] Rename the `similarity` argument of `Store` and `StoreFactory` to `metric`
+ * Add `find` and `findSimilar` methods
 
 0.14
 ----

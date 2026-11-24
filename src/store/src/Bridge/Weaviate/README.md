@@ -7,6 +7,7 @@ Weaviate Documentation
 ----------------------
 
  * [REST API](https://docs.weaviate.io/weaviate/api/rest)
+ * [Get an object (REST)](https://docs.weaviate.io/weaviate/api/rest/objects)
  * [GraphQL Get](https://docs.weaviate.io/weaviate/api/graphql/get)
  * [Similarity search (nearVector)](https://docs.weaviate.io/weaviate/search/similarity)
 

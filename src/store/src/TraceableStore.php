@@ -65,6 +65,29 @@ final class TraceableStore implements StoreInterface, ManagedStoreInterface, Res
         $this->store->add($documents);
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $this->calls[] = [
+            'method' => 'find',
+            'ids' => $id,
+            'called_at' => $this->clock->now(),
+        ];
+
+        return $this->store->find($id);
+    }
+
+    public function findSimilar(string $id, array $options = []): iterable
+    {
+        $this->calls[] = [
+            'method' => 'findSimilar',
+            'ids' => $id,
+            'options' => $options,
+            'called_at' => $this->clock->now(),
+        ];
+
+        return $this->store->findSimilar($id, $options);
+    }
+
     public function query(QueryInterface $query, array $options = []): iterable
     {
         $this->calls[] = [

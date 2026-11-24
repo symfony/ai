@@ -7,6 +7,7 @@ MongoDB Documentation
 ---------------------
 
  * [Atlas Vector Search overview (`$vectorSearch`)](https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-overview/)
+ * [`MongoDB\Collection::findOne()`](https://www.mongodb.com/docs/php-library/current/reference/method/MongoDBCollection-findOne/)
 
 Resources
 ---------

@@ -8,6 +8,8 @@ Elasticsearch Documentation
 
  * [kNN search](https://www.elastic.co/docs/solutions/search/vector/knn)
  * [`dense_vector` field type](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/dense-vector)
+ * [`ids` query](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-ids-query)
+ * [Retrieve selected fields](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/retrieve-selected-fields)
 
 Resources
 ---------

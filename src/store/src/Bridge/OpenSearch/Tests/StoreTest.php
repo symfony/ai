@@ -20,6 +20,7 @@ use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Query\HybridQuery;
 use Symfony\AI\Store\Query\TextQuery;
 use Symfony\AI\Store\Query\VectorQuery;
+use Symfony\Component\HttpClient\Exception\ClientException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 use Symfony\Component\HttpClient\ScopingHttpClient;
@@ -354,6 +355,89 @@ final class StoreTest extends TestCase
         $this->assertSame('http://127.0.0.1:9200/foo/_delete_by_query?refresh=true&conflicts=proceed&scroll_size=1000', $requestedUrl);
         $this->assertSame('{"query":{"match_all":{}}}', $requestedBody);
         $this->assertSame(1, $httpClient->getRequestsCount());
+    }
+
+    public function testFindGetsTheDocumentWithItsVector()
+    {
+        $response = new JsonMockResponse([
+            '_index' => 'foo',
+            '_id' => '123e4567-e89b-12d3-a456-426614174000',
+            '_version' => 1,
+            'found' => true,
+            '_source' => [
+                '_vectors' => [0.1, 0.2, 0.3],
+                'metadata' => '{"foo":"bar"}',
+            ],
+        ]);
+        $store = new Store(ScopingHttpClient::forBaseUri(new MockHttpClient($response), 'http://127.0.0.1:9200/'), 'foo');
+
+        $document = $store->find('123e4567-e89b-12d3-a456-426614174000');
+
+        $this->assertSame('GET', $response->getRequestMethod());
+        $this->assertSame('http://127.0.0.1:9200/foo/_doc/123e4567-e89b-12d3-a456-426614174000', $response->getRequestUrl());
+
+        $this->assertNotNull($document);
+        $this->assertSame('123e4567-e89b-12d3-a456-426614174000', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['foo' => 'bar'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindEncodesTheIdInThePath()
+    {
+        $response = new JsonMockResponse(['_index' => 'foo', '_id' => 'a/b', 'found' => false], ['http_code' => 404]);
+        $store = new Store(ScopingHttpClient::forBaseUri(new MockHttpClient($response), 'http://127.0.0.1:9200/'), 'foo');
+
+        $store->find('a/b');
+
+        $this->assertSame('http://127.0.0.1:9200/foo/_doc/a%2Fb', $response->getRequestUrl());
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['_index' => 'foo', '_id' => 'unknown', 'found' => false], ['http_code' => 404]),
+        ]);
+        $store = new Store($httpClient, 'foo');
+
+        $this->assertNull($store->find('unknown'));
+    }
+
+    public function testFindThrowsWhenTheIndexDoesNotExist()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'error' => ['type' => 'index_not_found_exception', 'reason' => 'no such index [foo]'],
+                'status' => 404,
+            ], ['http_code' => 404]),
+        ]);
+        $store = new Store(ScopingHttpClient::forBaseUri($httpClient, 'http://127.0.0.1:9200/'), 'foo');
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 404 returned for "http://127.0.0.1:9200/foo/_doc/unknown".');
+
+        $store->find('unknown');
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $searchResponse = new JsonMockResponse(['hits' => ['hits' => [
+            ['_id' => 'itself', '_score' => 1.0, '_source' => ['_vectors' => [0.1, 0.2, 0.3], 'metadata' => '{}']],
+            ['_id' => 'other', '_score' => 0.9, '_source' => ['_vectors' => [0.1, 0.2, 0.4], 'metadata' => '{}']],
+        ]]]);
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse(['_id' => 'itself', 'found' => true, '_source' => ['_vectors' => [0.1, 0.2, 0.3], 'metadata' => '{}']]),
+            $searchResponse,
+        ]);
+        $store = new Store($httpClient, 'foo');
+
+        $documents = iterator_to_array($store->findSimilar('itself', ['limit' => 1]), false);
+
+        $body = json_decode($searchResponse->getRequestOptions()['body'], true);
+        $this->assertSame([0.1, 0.2, 0.3], $body['query']['knn']['_vectors']['vector']);
+        $this->assertSame(2, $body['size']);
+        $this->assertCount(1, $documents);
+        $this->assertSame('other', $documents[0]->getId());
     }
 
     public function testStoreSupportsVectorQuery()

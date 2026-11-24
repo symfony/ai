@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add `find` and `findSimilar` methods
  * Allow passing a DSN instead of a `\PDO` instance to `Store` and `VecStore`, with the `connectionOptions` argument for the PDO options; the connection is opened on the first query
  * Make `StoreFactory::create()` and `StoreFactory::createVecStore()` connect on the first query instead of when called
  * [BC BREAK] Rename the `maxItems` option of `Store::query()` and `VecStore::query()` to `limit`

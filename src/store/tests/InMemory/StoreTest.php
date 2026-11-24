@@ -509,4 +509,91 @@ final class StoreTest extends TestCase
 
         $this->assertCount(0, iterator_to_array($store->query(new VectorQuery(new Vector([1.0, 2.0])))));
     }
+
+    public function testFindReturnsTheDocument()
+    {
+        $store = new Store();
+        $store->add([
+            new VectorDocument('1', new Vector([1.0, 0.0]), new Metadata(['name' => 'first'])),
+            new VectorDocument('2', new Vector([0.0, 1.0]), new Metadata(['name' => 'second'])),
+        ]);
+
+        $document = $store->find('2');
+
+        $this->assertNotNull($document);
+        $this->assertSame('2', $document->getId());
+        $this->assertSame([0.0, 1.0], $document->getVector()->getData());
+        $this->assertSame('second', $document->getMetadata()['name']);
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $store = new Store();
+        $store->add(new VectorDocument('1', new Vector([1.0, 0.0])));
+
+        $this->assertNull($store->find('2'));
+    }
+
+    public function testFindReturnsTheDocumentAddedLastUnderAnId()
+    {
+        $store = new Store();
+        $store->add(new VectorDocument('1', new Vector([1.0, 0.0]), new Metadata(['name' => 'old'])));
+        $store->add(new VectorDocument('1', new Vector([0.0, 1.0]), new Metadata(['name' => 'new'])));
+
+        $this->assertSame('new', $store->find('1')?->getMetadata()['name']);
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $store = new Store();
+        $store->add([
+            new VectorDocument('source', new Vector([1.0, 0.0])),
+            new VectorDocument('far', new Vector([0.0, 1.0])),
+            new VectorDocument('near', new Vector([0.9, 0.1])),
+            new VectorDocument('nearer', new Vector([0.99, 0.01])),
+        ]);
+
+        $ids = array_map(static fn (VectorDocumentInterface $document) => $document->getId(), iterator_to_array($store->findSimilar('source', ['limit' => 2]), false));
+
+        $this->assertSame(['nearer', 'near'], $ids);
+    }
+
+    public function testFindSimilarWithoutLimitReturnsAllOtherDocuments()
+    {
+        $store = new Store();
+        $store->add([
+            new VectorDocument('source', new Vector([1.0, 0.0])),
+            new VectorDocument('far', new Vector([0.0, 1.0])),
+            new VectorDocument('near', new Vector([0.9, 0.1])),
+        ]);
+
+        $ids = array_map(static fn (VectorDocumentInterface $document) => $document->getId(), iterator_to_array($store->findSimilar('source'), false));
+
+        $this->assertSame(['near', 'far'], $ids);
+    }
+
+    public function testFindSimilarKeepsTheLimitWhenTheFilterLeavesTheDocumentOut()
+    {
+        $store = new Store();
+        $store->add([
+            new VectorDocument('source', new Vector([1.0, 0.0]), new Metadata(['category' => 'books'])),
+            new VectorDocument('far', new Vector([0.0, 1.0]), new Metadata(['category' => 'games'])),
+            new VectorDocument('near', new Vector([0.9, 0.1]), new Metadata(['category' => 'games'])),
+        ]);
+
+        $ids = array_map(static fn (VectorDocumentInterface $document) => $document->getId(), iterator_to_array($store->findSimilar('source', [
+            'limit' => 1,
+            'filter' => static fn (VectorDocumentInterface $document): bool => 'games' === $document->getMetadata()['category'],
+        ]), false));
+
+        $this->assertSame(['near'], $ids);
+    }
+
+    public function testFindSimilarToAnUnknownDocumentReturnsNothing()
+    {
+        $store = new Store();
+        $store->add(new VectorDocument('1', new Vector([1.0, 0.0])));
+
+        $this->assertSame([], iterator_to_array($store->findSimilar('2'), false));
+    }
 }

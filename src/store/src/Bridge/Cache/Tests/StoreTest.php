@@ -419,6 +419,74 @@ final class StoreTest extends TestCase
         $store->clear(['unsupported' => true]);
     }
 
+    public function testFindReturnsTheDocumentWithItsVectorAndMetadata()
+    {
+        $store = new Store(new ArrayAdapter());
+        $store->setup();
+
+        $id = Uuid::v4();
+
+        $store->add([
+            new VectorDocument(Uuid::v4(), new Vector([0.7, -0.3, 0.0])),
+            new VectorDocument($id, new Vector([0.1, 0.1, 0.5]), new Metadata(['title' => 'Found'])),
+        ]);
+
+        $document = $store->find($id->toRfc4122());
+
+        $this->assertNotNull($document);
+        $this->assertSame($id->toRfc4122(), $document->getId());
+        $this->assertSame([0.1, 0.1, 0.5], $document->getVector()->getData());
+        $this->assertSame(['title' => 'Found'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindReturnsTheLastVersionOfADocumentAddedTwice()
+    {
+        $store = new Store(new ArrayAdapter());
+        $store->setup();
+
+        $id = Uuid::v4();
+
+        $store->add(new VectorDocument($id, new Vector([0.1, 0.1, 0.5]), new Metadata(['version' => 1])));
+        $store->add(new VectorDocument($id, new Vector([0.3, 0.7, 0.1]), new Metadata(['version' => 2])));
+
+        $document = $store->find($id->toRfc4122());
+
+        $this->assertNotNull($document);
+        $this->assertSame([0.3, 0.7, 0.1], $document->getVector()->getData());
+        $this->assertSame(['version' => 2], $document->getMetadata()->getArrayCopy());
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $store = new Store(new ArrayAdapter());
+        $store->setup();
+
+        $store->add(new VectorDocument(Uuid::v4(), new Vector([0.1, 0.1, 0.5])));
+
+        $this->assertNull($store->find(Uuid::v4()->toRfc4122()));
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $store = new Store(new ArrayAdapter());
+        $store->setup();
+
+        $id = Uuid::v4();
+        $nearestId = Uuid::v4();
+
+        $store->add([
+            new VectorDocument($id, new Vector([0.1, 0.1, 0.5])),
+            new VectorDocument(Uuid::v4(), new Vector([0.7, -0.3, 0.0])),
+            new VectorDocument($nearestId, new Vector([0.0, 0.1, 0.6])),
+        ]);
+
+        $result = iterator_to_array($store->findSimilar($id->toRfc4122(), ['limit' => 1]), false);
+
+        $this->assertCount(1, $result);
+        $this->assertSame($nearestId->toRfc4122(), $result[0]->getId());
+    }
+
     public function testStoreCanSearchUsingTextQuery()
     {
         $store = new Store(new ArrayAdapter());

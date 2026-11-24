@@ -10,6 +10,7 @@ MariaDB Documentation
 
  * [Vector overview (`VECTOR`, `VECTOR INDEX`, distance functions)](https://mariadb.com/docs/server/reference/sql-structure/vectors/vector-overview)
  * [CREATE TABLE with vectors (`VECTOR INDEX` options, `DISTANCE`)](https://mariadb.com/docs/server/reference/sql-structure/vectors/create-table-with-vectors)
+ * [`VEC_ToText` (reading a stored vector)](https://mariadb.com/docs/server/reference/sql-structure/vectors/vector-functions/vec_totext)
  * [RAG with MariaDB Vector](https://mariadb.org/rag-with-mariadb-vector/)
 
 Resources

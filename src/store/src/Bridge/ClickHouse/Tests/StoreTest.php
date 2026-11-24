@@ -305,6 +305,79 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testFindReturnsTheDocumentWithItsVector()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame('GET', $method);
+            $this->assertSame('SELECT id, embedding, metadata FROM test_table WHERE id = toUUIDOrNull({id:String}) LIMIT 1', $options['query']['query']);
+            $this->assertSame('test_db', $options['query']['database']);
+            $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', $options['query']['param_id']);
+
+            return new JsonMockResponse([
+                'data' => [
+                    [
+                        'id' => '01234567-89ab-cdef-0123-456789abcdef',
+                        'embedding' => [0.1, 0.2, 0.3],
+                        'metadata' => json_encode(['title' => 'Test Document']),
+                    ],
+                ],
+            ]);
+        });
+
+        $store = new Store($httpClient, 'test_db', 'test_table');
+
+        $document = $store->find('01234567-89ab-cdef-0123-456789abcdef');
+
+        $this->assertNotNull($document);
+        $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['title' => 'Test Document'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testFindReturnsNullForAnUnknownId()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse(['data' => []]));
+
+        $store = new Store($httpClient, 'test_db', 'test_table');
+
+        $this->assertNull($store->find('01234567-89ab-cdef-0123-456789abcdef'));
+    }
+
+    public function testFindSimilarLeavesTheDocumentOut()
+    {
+        $requests = [];
+        $responses = [
+            new JsonMockResponse([
+                'data' => [
+                    ['id' => '01234567-89ab-cdef-0123-456789abcdef', 'embedding' => [0.1, 0.2, 0.3], 'metadata' => '{}'],
+                ],
+            ]),
+            new JsonMockResponse([
+                'data' => [
+                    ['id' => '01234567-89ab-cdef-0123-456789abcdef', 'embedding' => [0.1, 0.2, 0.3], 'metadata' => '{}', 'score' => 0.0],
+                    ['id' => 'a0d23a85-abfb-4696-a652-73a83b46710b', 'embedding' => [0.1, 0.2, 0.4], 'metadata' => '{}', 'score' => 0.1],
+                ],
+            ]),
+        ];
+
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requests, &$responses) {
+            $requests[] = $options['query'];
+
+            return array_shift($responses);
+        });
+
+        $store = new Store($httpClient, 'test_db', 'test_table');
+
+        $results = iterator_to_array($store->findSimilar('01234567-89ab-cdef-0123-456789abcdef', ['limit' => 2]), false);
+
+        $this->assertCount(2, $requests);
+        $this->assertSame('[0.1,0.2,0.3]', $requests[1]['param_query_vector']);
+        $this->assertSame(3, $requests[1]['param_limit']);
+        $this->assertCount(1, $results);
+        $this->assertSame('a0d23a85-abfb-4696-a652-73a83b46710b', $results[0]->getId());
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'default', 'test_table');

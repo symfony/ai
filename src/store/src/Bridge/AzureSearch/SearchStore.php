@@ -19,16 +19,20 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
 use Symfony\AI\Store\StoreInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
 final class SearchStore implements StoreInterface
 {
+    use FindSimilarTrait;
+
     private const BATCH_SIZE = 1000;
     private const MAX_UNCHANGED_BATCHES = 10;
     private const INDEX_CATCH_UP_DELAY = 200000;
@@ -118,6 +122,25 @@ final class SearchStore implements StoreInterface
         }
     }
 
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        $response = $this->httpClient->request('GET', \sprintf('indexes/%s/docs/%s', $this->indexName, rawurlencode($id)));
+
+        if (404 === $response->getStatusCode()) {
+            return null;
+        }
+
+        $this->throwOnErrorStatus($response);
+
+        $data = $response->toArray();
+
+        if (null === ($data[$this->vectorFieldName] ?? null)) {
+            throw new RuntimeException(\sprintf('The "%s" field of the "%s" index must be retrievable to find a document with its vector.', $this->vectorFieldName, $this->indexName));
+        }
+
+        return $this->convertToVectorDocument($data);
+    }
+
     public function supports(string $queryClass): bool
     {
         return VectorQuery::class === $queryClass;
@@ -194,9 +217,7 @@ final class SearchStore implements StoreInterface
             'json' => $payload,
         ]);
 
-        if ($response->getStatusCode() >= 400) {
-            throw new RuntimeException(\sprintf('Azure Search request failed: "%s"', $response->getContent(false)));
-        }
+        $this->throwOnErrorStatus($response);
 
         $result = $response->toArray();
 
@@ -214,6 +235,13 @@ final class SearchStore implements StoreInterface
         }
 
         return $result;
+    }
+
+    private function throwOnErrorStatus(ResponseInterface $response): void
+    {
+        if ($response->getStatusCode() >= 400) {
+            throw new RuntimeException(\sprintf('Azure Search request failed: "%s"', $response->getContent(false)));
+        }
     }
 
     /**

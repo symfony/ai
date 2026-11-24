@@ -9,6 +9,7 @@ OpenSearch Documentation
  * [`knn_vector` field type](https://docs.opensearch.org/latest/mappings/supported-field-types/knn-vector/)
  * [k-NN query DSL](https://docs.opensearch.org/latest/query-dsl/specialized/k-nn/index/)
  * [Approximate k-NN](https://docs.opensearch.org/latest/vector-search/vector-search-techniques/approximate-knn/)
+ * [Get document API](https://docs.opensearch.org/latest/api-reference/document-apis/get-documents/)
 
 Resources
 ---------

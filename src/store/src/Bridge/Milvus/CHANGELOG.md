@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * [BC BREAK] Rename the `metricType` argument of `Store` and `StoreFactory` to `metric`
+ * Add `find` and `findSimilar` methods
 
 0.14
 ----

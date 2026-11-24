@@ -8,6 +8,7 @@ Qdrant Documentation
 
  * [Collections](https://qdrant.tech/documentation/concepts/collections/)
  * [Points (manage data)](https://qdrant.tech/documentation/manage-data/points/)
+ * [Retrieve points by ids](https://api.qdrant.tech/api-reference/points/get-points)
  * [Query points (unified search)](https://api.qdrant.tech/api-reference/search/query-points)
  * [Filter syntax](https://qdrant.tech/documentation/concepts/filtering/)
 

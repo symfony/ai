@@ -19,6 +19,7 @@ use Symfony\AI\Store\Document\VectorDocumentInterface;
 use Symfony\AI\Store\Exception\InvalidArgumentException;
 use Symfony\AI\Store\Exception\RuntimeException;
 use Symfony\AI\Store\Exception\UnsupportedQueryTypeException;
+use Symfony\AI\Store\FindSimilarTrait;
 use Symfony\AI\Store\ManagedStoreInterface;
 use Symfony\AI\Store\Query\QueryInterface;
 use Symfony\AI\Store\Query\VectorQuery;
@@ -30,6 +31,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Store implements ManagedStoreInterface, StoreInterface
 {
+    use FindSimilarTrait;
+
     /**
      * @param HttpClientInterface $httpClient HTTP client scoped to the Milvus instance, see {@see StoreFactory}
      */
@@ -121,7 +124,7 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
         $this->request('POST', 'v2/vectordb/entities/delete', [
             'collectionName' => $this->collection,
-            'filter' => \sprintf('id in [%s]', implode(',', array_map(static fn ($id) => '"'.str_replace(['\\', '"'], ['\\\\', '\\"'], (string) $id).'"', $ids))),
+            'filter' => \sprintf('id in [%s]', implode(',', array_map(self::quote(...), $ids))),
         ]);
     }
 
@@ -131,6 +134,22 @@ final class Store implements ManagedStoreInterface, StoreInterface
             'collectionName' => $this->collection,
             'filter' => "id != ''",
         ]);
+    }
+
+    public function find(string $id): ?VectorDocumentInterface
+    {
+        // entities/get does not escape the ids it puts in its filter, so a quote or a backslash would break the lookup
+        $documents = $this->request('POST', 'v2/vectordb/entities/query', [
+            'collectionName' => $this->collection,
+            'filter' => \sprintf('id in [%s]', self::quote($id)),
+            'outputFields' => ['id', '_metadata', $this->vectorFieldName],
+        ]);
+
+        if ([] === $documents['data']) {
+            return null;
+        }
+
+        return $this->convertToVectorDocument($documents['data'][0]);
     }
 
     public function supports(string $queryClass): bool
@@ -233,5 +252,10 @@ final class Store implements ManagedStoreInterface, StoreInterface
         $score = $data['distance'] ?? null;
 
         return new VectorDocument($id, $vector, new Metadata(json_decode($data['_metadata'], true)), $score);
+    }
+
+    private static function quote(string $id): string
+    {
+        return '"'.str_replace(['\\', '"'], ['\\\\', '\\"'], $id).'"';
     }
 }

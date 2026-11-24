@@ -171,7 +171,7 @@ final class StoreTest extends TestCase
                         'id' => Uuid::v4()->toRfc4122(),
                         '_vectors' => [
                             'default' => [
-                                'embeddings' => [0.1, 0.2, 0.3],
+                                'embeddings' => [[0.1, 0.2, 0.3]],
                                 'regenerate' => false,
                             ],
                         ],
@@ -181,7 +181,7 @@ final class StoreTest extends TestCase
                         'id' => Uuid::v4()->toRfc4122(),
                         '_vectors' => [
                             'default' => [
-                                'embeddings' => [0.4, 0.5, 0.6],
+                                'embeddings' => [[0.4, 0.5, 0.6]],
                                 'regenerate' => false,
                             ],
                         ],
@@ -203,6 +203,8 @@ final class StoreTest extends TestCase
         $this->assertInstanceOf(VectorDocument::class, $vectors[1]);
         $this->assertSame(0.95, $vectors[0]->getScore());
         $this->assertSame(0.85, $vectors[1]->getScore());
+        $this->assertSame([0.1, 0.2, 0.3], $vectors[0]->getVector()->getData());
+        $this->assertSame([0.4, 0.5, 0.6], $vectors[1]->getVector()->getData());
     }
 
     public function testMetadataWithoutIDRankingandVector()
@@ -216,7 +218,7 @@ final class StoreTest extends TestCase
                         'description' => 'A science fiction action film.',
                         '_vectors' => [
                             'default' => [
-                                'embeddings' => [0.1, 0.2, 0.3],
+                                'embeddings' => [[0.1, 0.2, 0.3]],
                                 'regenerate' => false,
                             ],
                         ],
@@ -275,7 +277,7 @@ final class StoreTest extends TestCase
                         'id' => '550e8400-e29b-41d4-a716-446655440000',
                         '_vectors' => [
                             'default' => [
-                                'embeddings' => [0.1, 0.2, 0.3],
+                                'embeddings' => [[0.1, 0.2, 0.3]],
                             ],
                         ],
                         '_rankingScore' => 0.95,
@@ -338,7 +340,7 @@ final class StoreTest extends TestCase
                         'id' => '550e8400-e29b-41d4-a716-446655440000',
                         '_vectors' => [
                             'default' => [
-                                'embeddings' => [0.1, 0.2, 0.3],
+                                'embeddings' => [[0.1, 0.2, 0.3]],
                             ],
                         ],
                         '_rankingScore' => 0.85,
@@ -484,6 +486,127 @@ final class StoreTest extends TestCase
         $this->assertSame(1, $httpClient->getRequestsCount());
     }
 
+    public function testStoreCanFind()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): JsonMockResponse {
+            $this->assertSame('GET', $method);
+            $this->assertSame('http://127.0.0.1:7700/indexes/test/documents/123e4567-e89b-12d3-a456-426614174000?retrieveVectors=true', $url);
+
+            return new JsonMockResponse([
+                'id' => '123e4567-e89b-12d3-a456-426614174000',
+                'title' => 'The Matrix',
+                '_vectors' => [
+                    'default' => [
+                        'embeddings' => [[0.1, 0.2, 0.3]],
+                        'regenerate' => false,
+                    ],
+                ],
+            ]);
+        }, 'http://127.0.0.1:7700');
+
+        $store = new Store($httpClient, 'test');
+
+        $document = $store->find('123e4567-e89b-12d3-a456-426614174000');
+
+        $this->assertNotNull($document);
+        $this->assertSame('123e4567-e89b-12d3-a456-426614174000', $document->getId());
+        $this->assertSame([0.1, 0.2, 0.3], $document->getVector()->getData());
+        $this->assertSame(['title' => 'The Matrix'], $document->getMetadata()->getArrayCopy());
+        $this->assertNull($document->getScore());
+    }
+
+    public function testStoreReturnsNullWhenFindingAnUnknownDocument()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'message' => 'Document `123e4567-e89b-12d3-a456-426614174000` not found.',
+                'code' => 'document_not_found',
+                'type' => 'invalid_request',
+            ], [
+                'http_code' => 404,
+            ]),
+        ], 'http://127.0.0.1:7700');
+
+        $store = new Store($httpClient, 'test');
+
+        $this->assertNull($store->find('123e4567-e89b-12d3-a456-426614174000'));
+    }
+
+    public function testStoreCannotFindInAnUnknownIndex()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'message' => 'Index `test` not found.',
+                'code' => 'index_not_found',
+                'type' => 'invalid_request',
+            ], [
+                'http_code' => 404,
+            ]),
+        ], 'http://127.0.0.1:7700');
+
+        $store = new Store($httpClient, 'test');
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('HTTP 404 returned for "http://127.0.0.1:7700/indexes/test/documents/123e4567-e89b-12d3-a456-426614174000?retrieveVectors=true".');
+        $this->expectExceptionCode(404);
+        $store->find('123e4567-e89b-12d3-a456-426614174000');
+    }
+
+    public function testStoreCanFindSimilarDocuments()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'id' => '123e4567-e89b-12d3-a456-426614174000',
+                '_vectors' => [
+                    'default' => [
+                        'embeddings' => [[0.1, 0.2, 0.3]],
+                        'regenerate' => false,
+                    ],
+                ],
+            ]),
+            function (string $method, string $url, array $options): JsonMockResponse {
+                $this->assertSame('http://127.0.0.1:7700/indexes/test/search', $url);
+
+                $body = json_decode($options['body'], true, 512, \JSON_THROW_ON_ERROR);
+                $this->assertSame([0.1, 0.2, 0.3], $body['vector']);
+                $this->assertSame(2, $body['limit']);
+
+                return new JsonMockResponse([
+                    'hits' => [
+                        [
+                            'id' => '123e4567-e89b-12d3-a456-426614174000',
+                            '_vectors' => [
+                                'default' => [
+                                    'embeddings' => [[0.1, 0.2, 0.3]],
+                                    'regenerate' => false,
+                                ],
+                            ],
+                            '_rankingScore' => 1.0,
+                        ],
+                        [
+                            'id' => 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+                            '_vectors' => [
+                                'default' => [
+                                    'embeddings' => [[0.2, 0.1, 0.3]],
+                                    'regenerate' => false,
+                                ],
+                            ],
+                            '_rankingScore' => 0.9,
+                        ],
+                    ],
+                ]);
+            },
+        ], 'http://127.0.0.1:7700');
+
+        $store = new Store($httpClient, 'test');
+
+        $documents = iterator_to_array($store->findSimilar('123e4567-e89b-12d3-a456-426614174000', ['limit' => 1]), false);
+
+        $this->assertSame(2, $httpClient->getRequestsCount());
+        $this->assertCount(1, $documents);
+        $this->assertSame('f47ac10b-58cc-4372-a567-0e02b2c3d479', $documents[0]->getId());
+    }
+
     public function testStoreSupportsVectorQuery()
     {
         $store = new Store(new MockHttpClient(), 'test-index');
@@ -511,7 +634,7 @@ final class StoreTest extends TestCase
                         'id' => '550e8400-e29b-41d4-a716-446655440000',
                         '_vectors' => [
                             'default' => [
-                                'embeddings' => [0.1, 0.2, 0.3],
+                                'embeddings' => [[0.1, 0.2, 0.3]],
                             ],
                         ],
                         '_rankingScore' => 0.9,
