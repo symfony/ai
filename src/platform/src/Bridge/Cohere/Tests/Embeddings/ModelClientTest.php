@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Bridge\Cohere\Cohere;
 use Symfony\AI\Platform\Bridge\Cohere\Embeddings;
 use Symfony\AI\Platform\Bridge\Cohere\Embeddings\ModelClient;
 use Symfony\AI\Platform\Bridge\Cohere\InputType;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -95,5 +96,51 @@ final class ModelClientTest extends TestCase
 
         $model = new Embeddings('embed-english-v3.0', [], ['input_type' => InputType::Classification]);
         $client->request($model, 'Hello, world!');
+    }
+
+    public function testItAcceptsInputTypeAsStringFromModelOptions()
+    {
+        $httpClient = new MockHttpClient([function (
+            string $method,
+            string $url,
+            array $options,
+        ): MockResponse {
+            $body = json_decode($options['body'], true);
+            $this->assertSame('search_query', $body['input_type']);
+
+            return new MockResponse();
+        }]);
+
+        $client = new ModelClient($httpClient, 'test-key');
+
+        $client->request(new Embeddings('embed-english-v3.0', [], ['input_type' => 'search_query']), 'Hello, world!');
+    }
+
+    public function testItAcceptsInputTypeAsStringFromOptions()
+    {
+        $httpClient = new MockHttpClient([function (
+            string $method,
+            string $url,
+            array $options,
+        ): MockResponse {
+            $body = json_decode($options['body'], true);
+            $this->assertSame('clustering', $body['input_type']);
+
+            return new MockResponse();
+        }]);
+
+        $client = new ModelClient($httpClient, 'test-key');
+
+        $client->request(new Embeddings('embed-english-v3.0'), 'Hello, world!', ['input_type' => 'clustering']);
+    }
+
+    public function testItRejectsUnknownInputType()
+    {
+        $client = new ModelClient(new MockHttpClient(), 'test-key');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('search_document", "search_query"');
+
+        $client->request(new Embeddings('embed-english-v3.0'), 'Hello, world!', ['input_type' => 'bogus']);
     }
 }
