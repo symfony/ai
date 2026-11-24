@@ -119,6 +119,7 @@ use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Platform;
 use Symfony\AI\Platform\PlatformInterface;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatterInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureSearchStore;
 use Symfony\AI\Store\Bridge\AzureSearch\StoreFactory as AzureSearchStoreFactory;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
@@ -425,6 +426,8 @@ final class AiBundle extends AbstractBundle
         if (!ContainerBuilder::willBeAvailable('symfony/validator', ValidatorInterface::class, ['symfony/ai-bundle'])) {
             $builder->removeDefinition('ai.tool.validate_tool_call_arguments_listener');
             $builder->removeDefinition('ai.platform.structured_output.validator_subscriber');
+            $builder->removeDefinition('ai.platform.structured_output.violation_formatter');
+            $builder->removeAlias(ViolationFormatterInterface::class);
         }
 
         if (false === $builder->getParameter('kernel.debug')) {

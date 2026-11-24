@@ -4,6 +4,9 @@ CHANGELOG
 1.0
 ---
 
+ * Add the `validate_response` option to validate structured output against validation groups or a `GroupSequence`, or to skip the validation with `false`
+ * Add the `validation_retries` option to hand the violations of structured output back to the model and let it answer again, with the message built by a `StructuredOutput\Validator\ViolationFormatterInterface`, `ViolationFormatter` by default
+ * Add `Result\DeferredResult::getOptions()`
  * Add the status code and the request URL, without its query and credentials, to the message of the exceptions `HttpStatusErrorHandlingTrait` throws
  * Throw a `BadRequestException` on HTTP 422 in `HttpStatusErrorHandlingTrait` and read the `detail` of FastAPI error bodies, which Mistral sends for validation errors
  * Add the serving provider to `InvocationEvent` and `ResultEvent`, as `ResultConvertedEvent` and `ResultErrorEvent` already have it, so a listener can attribute these events to the provider serving the call

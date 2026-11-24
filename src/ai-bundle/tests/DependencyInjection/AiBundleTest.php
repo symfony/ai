@@ -78,6 +78,8 @@ use Symfony\AI\Platform\ModelCatalog\CachedModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\CompositeModelCatalog;
 use Symfony\AI\Platform\ModelCatalog\InMemoryModelCatalog;
 use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatter;
+use Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatterInterface;
 use Symfony\AI\Store\Bridge\AzureSearch\SearchStore as AzureStore;
 use Symfony\AI\Store\Bridge\AzureSearch\StoreFactory as AzureSearchStoreFactory;
 use Symfony\AI\Store\Bridge\Cache\Store as CacheStore;
@@ -245,6 +247,19 @@ class AiBundleTest extends TestCase
         // Without a normalizer the listener rejects object template vars, which makes
         // `template_options.normalizer_context` unusable.
         $this->assertSame('serializer', (string) $arguments[1]);
+    }
+
+    public function testValidatorSubscriberReceivesTheViolationFormatter()
+    {
+        $container = $this->buildContainer($this->getFullConfig());
+
+        $formatter = $container->getDefinition('ai.platform.structured_output.violation_formatter');
+        $this->assertSame(ViolationFormatter::class, $formatter->getClass());
+        $this->assertSame('translator', (string) $formatter->getArgument('$translator'));
+        $this->assertSame('ai.platform.structured_output.violation_formatter', (string) $container->getAlias(ViolationFormatterInterface::class));
+
+        $subscriber = $container->getDefinition('ai.platform.structured_output.validator_subscriber');
+        $this->assertSame('ai.platform.structured_output.violation_formatter', (string) $subscriber->getArgument('$violationFormatter'));
     }
 
     public function testStoreCommandsArentDefinedWithoutStore()

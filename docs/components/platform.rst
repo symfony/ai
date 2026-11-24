@@ -1783,10 +1783,9 @@ schemas, so discriminated sub-schemas (``anyOf``) are scoped the same way.
 Validating Structured Output
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When using structured output, you might want to validate the generated data against some constraints. Symfony AI
-provides a ``ValidatorSubscriber`` that uses the Symfony Validator component for this purpose.
-
-To enable validation, register the ``ValidatorSubscriber`` with your platform's event dispatcher::
+The model fills the properties of your class, but it can still break your validation constraints. Register the
+``ValidatorSubscriber`` to validate the object with the Symfony Validator component. It needs the
+``symfony/validator`` package::
 
     use Symfony\AI\Platform\Exception\ValidationException;
     use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
@@ -1798,16 +1797,103 @@ To enable validation, register the ``ValidatorSubscriber`` with your platform's 
     $dispatcher->addSubscriber(new ValidatorSubscriber());
 
     $platform = Factory::createPlatform($apiKey, eventDispatcher: $dispatcher);
+    $result = $platform->invoke('gpt-5-mini', $messages, ['response_format' => MathReasoning::class]);
 
     try {
-        $result = $platform->invoke('gpt-4o', $messages, ['response_format' => MathReasoning::class]);
+        $mathReasoning = $result->asObject();
     } catch (ValidationException $e) {
         $violations = $e->getViolations();
-        // handle violations
+        // ...
     }
 
-The ``ValidatorSubscriber`` will automatically validate any :class:`Symfony\\AI\\Platform\\Result\\ObjectResult` produced
-by the ``PlatformSubscriber``. To use this feature, make sure `symfony/validator` is installed in your project.
+The object is validated when you read the result, so ``asObject()`` throws the exception. In a Symfony application,
+the AI Bundle registers the subscriber for you when ``symfony/validator`` is installed.
+
+Validation Groups
+.................
+
+By default, the constraints of the ``Default`` group are validated. Use the ``validate_response`` option to choose
+other groups for one invocation::
+
+    use Symfony\Component\Validator\Constraints\GroupSequence;
+
+    $result = $platform->invoke('gpt-5-mini', $messages, [
+        'response_format' => Invoice::class,
+        // a group, a list of groups, a GroupSequence, or false to skip the validation
+        'validate_response' => new GroupSequence(['Default', 'strict']),
+    ]);
+
+The option applies to streamed structured output too.
+
+Retrying Invalid Answers
+........................
+
+A model can often fix its answer once it knows what was wrong. Use the ``validation_retries`` option to send the
+violations back to the model and ask it again::
+
+    $result = $platform->invoke('gpt-5-mini', $messages, [
+        'response_format' => ProductListing::class,
+        // number of new requests after a failed validation (0 by default)
+        'validation_retries' => 2,
+    ]);
+
+    $productListing = $result->asObject();
+
+For each retry, the subscriber adds the rejected answer and a message with the violations to the conversation. Then
+it calls the same provider again. The token usage of the result includes all requests. If the last answer is still
+invalid, ``asObject()`` throws a ``ValidationException`` with the violations of that answer.
+
+To retry every invocation, pass the number to the subscriber::
+
+    $dispatcher->addSubscriber(new ValidatorSubscriber(retries: 2));
+
+.. note::
+
+    Retries only work when the input is a ``MessageBag``, because the subscriber adds messages to it. Streamed
+    structured output is never retried.
+
+Changing the Retry Message
+..........................
+
+The ``ViolationFormatter`` writes the message that lists the violations, one ``- propertyPath: message`` line each.
+Pass your own template to change the text around them. The template must contain the ``{violations}`` placeholder::
+
+    use Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatter;
+
+    $formatter = new ViolationFormatter(<<<'TEXT'
+        The object you returned was rejected for these reasons:
+        {violations}
+
+        Send the whole object again and change only the values listed above.
+        TEXT);
+
+    $dispatcher->addSubscriber(new ValidatorSubscriber(retries: 2, violationFormatter: $formatter));
+
+The Validator component translates the violation messages. To translate the template too, pass a translatable
+message and a translator. The template is then translated on each retry, in the current locale of the translator::
+
+    use Symfony\Component\Translation\TranslatableMessage;
+
+    $formatter = new ViolationFormatter(new TranslatableMessage('ai.fix_violations', [], 'ai'), $translator);
+
+In a Symfony application, the AI Bundle registers the formatter as the
+``ai.platform.structured_output.violation_formatter`` service. Redefine this service to change the template, and pass
+the ``translator`` service if your template is translatable:
+
+.. code-block:: yaml
+
+    # config/services.yaml
+    services:
+        ai.platform.structured_output.violation_formatter:
+            class: Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatter
+            arguments:
+                $template: !service
+                    class: Symfony\Component\Translation\TranslatableMessage
+                    arguments: ['ai.fix_violations', [], 'ai']
+                $translator: '@translator'
+
+To build the message in your own way, implement
+:class:`Symfony\\AI\\Platform\\StructuredOutput\\Validator\\ViolationFormatterInterface` and pass it to the subscriber.
 
 Streaming Partial Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1900,6 +1986,7 @@ Code Examples
 
 * `Structured Output with PHP class`_
 * `Structured Output with array`_
+* `Retrying invalid structured output`_
 * `Populating existing objects`_
 * `Partial JSON streaming via DeferredResult`_
 * `Streaming Structured Output`_
@@ -2471,6 +2558,7 @@ Code Examples
 .. _`Embeddings with Mistral`: https://github.com/symfony/ai/blob/main/examples/mistral/embeddings.php
 .. _`Structured Output with PHP class`: https://github.com/symfony/ai/blob/main/examples/openai/structured-output-math.php
 .. _`Structured Output with array`: https://github.com/symfony/ai/blob/main/examples/openai/structured-output-clock.php
+.. _`Retrying invalid structured output`: https://github.com/symfony/ai/blob/main/examples/openai/structured-output-validation-retry.php
 .. _`Populating existing objects`: https://github.com/symfony/ai/blob/main/examples/platform/structured-output-populate-object.php
 .. _`Partial JSON streaming via DeferredResult`: https://github.com/symfony/ai/blob/main/examples/platform/partial-json-stream.php
 .. _`Streaming Structured Output`: https://github.com/symfony/ai/blob/main/examples/platform/streaming-structured-output.php

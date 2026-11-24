@@ -93,6 +93,8 @@ use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactory;
 use Symfony\AI\Platform\StructuredOutput\ResponseFormatFactoryInterface;
 use Symfony\AI\Platform\StructuredOutput\Serializer as StructuredOutputSerializer;
 use Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber;
+use Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatter;
+use Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatterInterface;
 use Symfony\AI\Store\Command\ClearStoreCommand;
 use Symfony\AI\Store\Command\DropStoreCommand;
 use Symfony\AI\Store\Command\IndexCommand;
@@ -250,10 +252,14 @@ return static function (ContainerConfigurator $container): void {
                 service('ai.platform.structured_output_serializer'),
             ])
             ->tag('kernel.event_subscriber')
+        ->set('ai.platform.structured_output.violation_formatter', ViolationFormatter::class)
+            ->arg('$translator', service('translator')->nullOnInvalid())
+        ->alias(ViolationFormatterInterface::class, 'ai.platform.structured_output.violation_formatter')
         ->set('ai.platform.structured_output.validator_subscriber', ValidatorSubscriber::class)
             ->args([
                 service('validator')->nullOnInvalid(),
             ])
+            ->arg('$violationFormatter', service('ai.platform.structured_output.violation_formatter'))
             ->tag('kernel.event_subscriber')
 
         // tools

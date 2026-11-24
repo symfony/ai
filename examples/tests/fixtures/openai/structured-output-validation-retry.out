@@ -1,0 +1,23 @@
+Attempt 1
+Attempt 2
+Symfony\AI\Fixtures\ProductListing {
+  +name: "EverFlow Stainless Steel Water Bottle — 750ml"
+  +slogan: "Insulated, leakproof, and built to last — keeps drinks cold 24 hrs and hot 12."
+  +tags: array:15 [
+    0 => "750ml"
+    1 => "BPA-free"
+    2 => "dishwasher-safe"
+    3 => "eco-friendly"
+    4 => "gift"
+    5 => "insulated"
+    6 => "leakproof"
+    7 => "outdoor"
+    8 => "reusable"
+    9 => "sports"
+    10 => "stainless steel"
+    11 => "sweat-free"
+    12 => "travel"
+    13 => "vacuum-sealed"
+    14 => "zero-waste"
+  ]
+}
