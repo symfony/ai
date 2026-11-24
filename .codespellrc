@@ -1,3 +1,3 @@
 [codespell]
-skip = ./fixtures/lorem.txt,./examples/tests/fixtures
+skip = ./fixtures/lorem.txt,./examples/tests/fixtures,*/Fixtures/pdf/*.pdf
 ignore-words-list = hasTable,invokable,vektor

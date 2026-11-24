@@ -65,6 +65,9 @@ Symfony\AI\Store\Document\Loader\JsonFileLoader::__construct(): public function 
 Symfony\AI\Store\Document\Loader\JsonFileLoader::load(): public function load(null|string $source = null, array $options = []): iterable
 Symfony\AI\Store\Document\Loader\MarkdownLoader: final class implements Symfony\AI\Store\Document\LoaderInterface
 Symfony\AI\Store\Document\Loader\MarkdownLoader::load(): public function load(null|string $source = null, array $options = []): iterable
+Symfony\AI\Store\Document\Loader\PdfLoader: final class implements Symfony\AI\Store\Document\LoaderInterface
+Symfony\AI\Store\Document\Loader\PdfLoader::__construct(): public function __construct(Smalot\PdfParser\Parser|null $parser = null)
+Symfony\AI\Store\Document\Loader\PdfLoader::load(): public function load(null|string $source = null, array $options = []): iterable
 Symfony\AI\Store\Document\Loader\RssFeedLoader: final class implements Symfony\AI\Store\Document\LoaderInterface
 Symfony\AI\Store\Document\Loader\RssFeedLoader::OPTION_UUID_NAMESPACE: public const
 Symfony\AI\Store\Document\Loader\RssFeedLoader::__construct(): public function __construct(Symfony\Contracts\HttpClient\HttpClientInterface $httpClient, string $uuidNamespace = '6ba7b810-9dad-11d1-80b4-00c04fd430c8')
@@ -127,6 +130,9 @@ Symfony\AI\Store\Document\Transformer\RegexSplitTransformer::OPTION_KEEP_DELIMIT
 Symfony\AI\Store\Document\Transformer\RegexSplitTransformer::OPTION_PATTERN: public const
 Symfony\AI\Store\Document\Transformer\RegexSplitTransformer::__construct(): public function __construct(string $pattern, bool $keepDelimiter = true)
 Symfony\AI\Store\Document\Transformer\RegexSplitTransformer::transform(): public function transform(iterable $documents, array $options = []): iterable
+Symfony\AI\Store\Document\Transformer\SourceUrlTransformer: final class implements Symfony\AI\Store\Document\TransformerInterface
+Symfony\AI\Store\Document\Transformer\SourceUrlTransformer::__construct(): public function __construct(string $pathPrefix, string $urlPrefix)
+Symfony\AI\Store\Document\Transformer\SourceUrlTransformer::transform(): public function transform(iterable $documents, array $options = []): iterable
 Symfony\AI\Store\Document\Transformer\SummaryGeneratorTransformer: final class implements Symfony\AI\Store\Document\TransformerInterface
 Symfony\AI\Store\Document\Transformer\SummaryGeneratorTransformer::__construct(): public function __construct(Symfony\AI\Platform\PlatformInterface $platform, string $model, bool $yieldSummaryDocuments = false, string $systemPrompt = self::DEFAULT_SYSTEM_PROMPT)
 Symfony\AI\Store\Document\Transformer\SummaryGeneratorTransformer::transform(): public function transform(iterable $documents, array $options = []): iterable

@@ -4,6 +4,9 @@ CHANGELOG
 1.0
 ---
 
+ * Add `PdfLoader` for page-based PDF text extraction with normalized metadata
+ * Add `SourceUrlTransformer` for mapping local document paths to public URLs
+
  * Add `Document\Transformer\RegexSplitTransformer` to split documents on a regex pattern
  * Add the `limit` option to cap the number of documents returned by `StoreInterface::query()`, and pass it from `ai:store:retrieve`
  * [BC BREAK] Rename the `maxItems` option of `InMemory\Store::query()` to `limit`

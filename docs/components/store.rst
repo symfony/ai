@@ -67,6 +67,72 @@ which is useful when the source is defined in configuration but should still be 
 
 See the `RAG Implementation cookbook`_ for more advanced usage in combination with an Agent.
 
+Loading PDFs
+------------
+
+Install the optional dependencies required by ``PdfLoader``:
+
+.. code-block:: terminal
+
+    $ composer require smalot/pdfparser symfony/filesystem
+
+Load a local PDF directly, or register it with ``DirectoryLoader`` for a directory::
+
+    use Symfony\AI\Store\Document\Loader\DirectoryLoader;
+    use Symfony\AI\Store\Document\Loader\PdfLoader;
+
+    $loader = new PdfLoader();
+    $pages = $loader->load('/srv/public/files/report.pdf');
+
+    $directoryLoader = new DirectoryLoader(['pdf' => $loader]);
+    $pages = $directoryLoader->load('/srv/public/files');
+
+The loader yields one ``TextDocument`` per nonempty page, retaining original page
+numbers and the total page count, including blank pages. Metadata includes ``_source``
+(the supplied local path), ``_title`` (embedded title or filename), ``page_number`` and
+``page_count``. Available PDF properties or XMP alternatives populate ``pdf_author``,
+``pdf_subject``, ``pdf_keywords``, ``pdf_creation_date`` and ``pdf_modification_date``
+as strings. Dates retain the parser's representation; they are not publication dates.
+Metadata is separate from page text. You can inject a configured ``Smalot\PdfParser\Parser``.
+
+Unreadable files, parser failures, PDFs with no extractable text, and pages containing
+clearly invalid extracted text raise a Store ``RuntimeException``. Missing sources and
+URLs raise ``InvalidArgumentException``. The text checks cannot detect every extraction
+defect. Iteration stops on failure; pages yielded before a later failure remain yielded.
+``DirectoryLoader`` propagates these exceptions; it does not recover from failed files.
+
+Page IDs are stable for the normalized absolute local path and original page number.
+Moving a file changes its identity; changing its public URL does not. Split chunks use
+random IDs, so stable page IDs do not guarantee idempotent re-indexing.
+
+The parser loads the PDF in memory; yielding pages does not make parsing memory-streaming.
+Text order depends on the PDF. OCR, image interpretation, table reconstruction,
+form-field extraction and secured PDFs are not supported. See the
+`Smalot PDF parser usage documentation`_ for parser capabilities.
+
+Mapping Sources to Public URLs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``SourceUrlTransformer`` requires ``symfony/filesystem`` and works with any text document
+whose ``_source`` is a local path. Apply it before splitting pages into chunks::
+
+    use Symfony\AI\Store\Document\Transformer\SourceUrlTransformer;
+
+    $urls = new SourceUrlTransformer('/srv/public/files', 'https://example.com/files');
+    $documents = $urls->transform($pages);
+    // _source: /srv/public/files/report.pdf
+    // source_url: https://example.com/files/report.pdf
+
+The transformer returns a new document with copied metadata when adding ``source_url``,
+preserving its ID, content and local source. Existing URLs and unmatched sources remain
+unchanged. Prefixes must be an absolute local directory and an HTTP(S) URL without a
+query or fragment. Directory boundaries are respected, trailing slashes are normalized,
+and relative path segments are percent-encoded. It does not publish or fetch files.
+
+``DirectoryLoader`` supplies resolved file paths: use the resolved directory prefix
+when loading through symlinks. A PDF citation may append ``#page=N`` using ``page_number``;
+splitting preserves the title, URL and page metadata.
+
 Retrieving
 ----------
 
@@ -199,6 +265,7 @@ To help loading documents and integrate them into your RAG system, you can use t
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\InMemoryLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\JsonFileLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\MarkdownLoader`
+* :class:`Symfony\\AI\\Store\\Document\\Loader\\PdfLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\RssFeedLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\RstLoader`
 * :class:`Symfony\\AI\\Store\\Document\\Loader\\RstToctreeLoader`
@@ -506,3 +573,5 @@ does not include documents added moments ago::
 .. _`Vektor`: https://github.com/centamiv/vektor
 .. _`Weaviate`: https://weaviate.io/
 .. _`RAG Implementation cookbook`: https://symfony.com/doc/current/ai/cookbook/rag-implementation.html
+
+.. _Smalot PDF parser usage documentation: https://github.com/smalot/pdfparser/blob/master/doc/Usage.md
