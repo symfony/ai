@@ -1014,6 +1014,33 @@ class McpBundleTest extends TestCase
         $this->assertSame([], $this->callsNamed($container, 'setSubscriptionLifetime'));
     }
 
+    public function testAStringOptionSetToNullIsTheSameAsLeavingItOut()
+    {
+        $icon = ['src' => 'https://example.com/icon.png'];
+
+        $expected = $this->buildContainer($this->config([
+            'default' => ['icons' => [$icon], 'session' => ['lock' => ['enabled' => true]]],
+            'cached' => ['session' => ['store' => 'cache']],
+        ]));
+
+        $container = $this->buildContainer($this->config([
+            'default' => [
+                'name' => null,
+                'description' => null,
+                'icons' => [$icon + ['mime_type' => null]],
+                'website_url' => null,
+                'instructions' => null,
+                'http' => ['path' => null],
+                'session' => ['directory' => null, 'lock' => ['enabled' => true, 'factory' => null]],
+            ],
+            'cached' => ['session' => ['store' => 'cache', 'prefix' => null]],
+        ]));
+
+        // Serialized, as assertEquals() would take "" for null.
+        $this->assertSame(serialize($expected->getDefinitions()), serialize($container->getDefinitions()));
+        $this->assertSame($expected->getParameterBag()->all(), $container->getParameterBag()->all());
+    }
+
     /**
      * Builds an "mcp" configuration from partial server definitions, defaulting each server to
      * exposing every tool so the "at least one element list" validation is satisfied.
