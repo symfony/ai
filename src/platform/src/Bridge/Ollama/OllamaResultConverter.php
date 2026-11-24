@@ -178,6 +178,7 @@ final class OllamaResultConverter implements ResultConverterInterface
                     promptTokens: $data['prompt_eval_count'],
                     completionTokens: $data['eval_count'],
                     cachedTokens: $data['prompt_eval_cached_count'] ?? null,
+                    totalTokens: $data['prompt_eval_count'] + $data['eval_count'],
                     model: $data['model'] ?? null,
                 );
             }
