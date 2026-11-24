@@ -27,7 +27,7 @@ return [
         'type' => 'css',
     ],
     'typed.js' => [
-        'version' => '2.1.0',
+        'version' => '3.0.0',
     ],
     '@hotwired/stimulus' => [
         'version' => '3.2.2',
