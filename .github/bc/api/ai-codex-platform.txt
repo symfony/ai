@@ -17,7 +17,8 @@ Symfony\AI\Platform\Bridge\Codex\ModelClient::buildCommand(): public function bu
 Symfony\AI\Platform\Bridge\Codex\ModelClient::request(): public function request(Symfony\AI\Platform\Model $model, array|string $payload, array $options = []): Symfony\AI\Platform\Result\RawResultInterface
 Symfony\AI\Platform\Bridge\Codex\ModelClient::supports(): public function supports(Symfony\AI\Platform\Model $model): bool
 Symfony\AI\Platform\Bridge\Codex\RawProcessResult: final class implements Symfony\AI\Platform\Result\RawResultInterface
-Symfony\AI\Platform\Bridge\Codex\RawProcessResult::__construct(): public function __construct(Symfony\Component\Process\Process $process)
+Symfony\AI\Platform\Bridge\Codex\RawProcessResult::__construct(): public function __construct(Symfony\Component\Process\Process $process, null|string $schemaPath = null)
+Symfony\AI\Platform\Bridge\Codex\RawProcessResult::__destruct(): public function __destruct()
 Symfony\AI\Platform\Bridge\Codex\RawProcessResult::getData(): public function getData(): array
 Symfony\AI\Platform\Bridge\Codex\RawProcessResult::getDataStream(): public function getDataStream(): Generator
 Symfony\AI\Platform\Bridge\Codex\RawProcessResult::getObject(): public function getObject(): Symfony\Component\Process\Process

@@ -41,7 +41,7 @@ final class ResultConverter implements ResultConverterInterface
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result));
+            return new StreamResult($this->convertStream($result, isset($options['response_format']['json_schema']['schema'])));
         }
 
         $data = $result->getData();
@@ -95,15 +95,17 @@ final class ResultConverter implements ResultConverterInterface
         return new CustomToolCallResult($toolCall['name'], $arguments, $toolCall['id'], $toolCall['status'] ?? null);
     }
 
-    private function convertStream(RawResultInterface $result): \Generator
+    private function convertStream(RawResultInterface $result, bool $structured): \Generator
     {
         $inTurn = false;
+        $lastMessage = null;
 
         foreach ($result->getDataStream() as $data) {
             $type = $data['type'] ?? '';
 
             if ('turn.started' === $type) {
                 $inTurn = true;
+                $lastMessage = null;
             }
 
             if ('turn.completed' === $type || 'turn.failed' === $type) {
@@ -114,7 +116,15 @@ final class ResultConverter implements ResultConverterInterface
                 && 'agent_message' === ($data['item']['type'] ?? '')
                 && isset($data['item']['text'])
             ) {
-                yield new TextDelta($data['item']['text']);
+                if ($structured) {
+                    $lastMessage = $data['item']['text'];
+                } else {
+                    yield new TextDelta($data['item']['text']);
+                }
+            }
+
+            if ('turn.completed' === $type && null !== $lastMessage) {
+                yield new TextDelta($lastMessage);
             }
 
             if ('turn.completed' === $type && isset($data['usage'])) {
