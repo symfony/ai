@@ -15,7 +15,12 @@ use PHPUnit\Framework\TestCase;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Agent\Exception\ConflictException;
 use Symfony\AI\Agent\InputProcessor\SystemPromptInputProcessor;
+use Symfony\AI\Agent\Memory\Memory;
+use Symfony\AI\Agent\Memory\MemoryInputProcessor;
+use Symfony\AI\Agent\Memory\MemoryProviderInterface;
 use Symfony\AI\Agent\MessageStore\InMemoryMessageStore;
+use Symfony\AI\Agent\MessageStore\TraceableMessageStore;
+use Symfony\AI\Agent\Toolbox\Event\BeforeToolRoundContinuation;
 use Symfony\AI\Agent\Toolbox\ToolboxInterface;
 use Symfony\AI\Agent\Toolbox\ToolResult;
 use Symfony\AI\Platform\Message\AssistantMessage;
@@ -30,6 +35,8 @@ use Symfony\AI\Platform\Result\ToolCall;
 use Symfony\AI\Platform\Result\ToolCallResult;
 use Symfony\AI\Platform\Test\MockPlatformFactory;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
+use Symfony\Component\Clock\MockClock;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Uid\Uuid;
 
 final class StatefulAgentTest extends TestCase
@@ -125,6 +132,73 @@ final class StatefulAgentTest extends TestCase
             [UserMessage::class, AssistantMessage::class, ToolCallMessage::class],
             array_map(get_class(...), $store->load($messages->getId())->getMessages()),
         );
+    }
+
+    public function testShorteningAToolResultPreservesRetrievedMemory()
+    {
+        $provider = $this->createMock(MemoryProviderInterface::class);
+        $provider->expects($this->once())->method('load')->willReturn([new Memory('Use UTC.')]);
+        $call = new ToolCall('call_1', 'clock');
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([]);
+        $toolbox->method('execute')->willReturn(new ToolResult($call, 'Verbose clock output'));
+        $requests = [];
+        $platform = MockPlatformFactory::createPlatform(static function (Model $model, array $input) use (&$requests, $call): ResultInterface {
+            $requests[] = $input['messages'];
+
+            return 1 === \count($requests) ? new ToolCallResult([$call]) : new TextResult('Noon.');
+        });
+        $events = new EventDispatcher();
+        $events->addListener(BeforeToolRoundContinuation::class, static function (BeforeToolRoundContinuation $event) use ($call) {
+            $bag = $event->getMessageBag();
+            $id = array_last($bag->getMessages())->getId();
+            $event->setMessageBag($bag->replace($id, Message::ofToolCall($call, '12:00')->withId($id)));
+        });
+        $agent = new Agent($platform, 'gpt-4', [new MemoryInputProcessor([$provider])], toolbox: $toolbox, eventDispatcher: $events);
+        $instructions = [Message::forSystem('Be brief.'), Message::forSystem('Use the clock.')];
+        $input = (new MessageBag(...$instructions))->with(Message::ofUser('What time is it?'));
+        $conversation = $agent->call($input)->getMessages();
+
+        $this->assertSame($requests[0][0], $requests[1][0]);
+        $this->assertStringContainsString('Use UTC.', $requests[1][0]['content']);
+        $this->assertSame('12:00', $requests[1][3]['content']);
+        $this->assertSame($instructions, \array_slice($conversation->getMessages(), 0, 2));
+    }
+
+    public function testReplacingTheContinuationSurvivesReload()
+    {
+        $call = new ToolCall('call_1', 'clock');
+        $toolbox = $this->createStub(ToolboxInterface::class);
+        $toolbox->method('getTools')->willReturn([]);
+        $toolbox->method('execute')->willReturn(new ToolResult($call, '12:00'));
+        $requests = [];
+        $platform = MockPlatformFactory::createPlatform(static function (Model $model, array $input) use (&$requests, $call): ResultInterface {
+            $requests[] = array_column($input['messages'], 'content');
+
+            return 1 === \count($requests) ? new ToolCallResult([$call]) : new TextResult('Noon.');
+        });
+        $events = new EventDispatcher();
+        $events->addListener(BeforeToolRoundContinuation::class, function (BeforeToolRoundContinuation $event) {
+            $this->assertInstanceOf(ToolCallMessage::class, $event->getMessageBag()->getMessages()[2]);
+            $event->setMessageBag(new MessageBag(Message::ofUser('Clock reported noon.')));
+        });
+        $store = new TraceableMessageStore(new InMemoryMessageStore(), new MockClock());
+        $agent = new Agent($platform, 'gpt-4', [new SystemPromptInputProcessor('Be brief.')], toolbox: $toolbox, eventDispatcher: $events, messageStore: $store);
+        $input = new MessageBag(Message::ofUser('What time is it?'));
+        $conversation = $agent->call($input)->getMessages();
+
+        $agent->call(MessageBag::forId($input->getId(), 'Continue'))->getResult();
+
+        $this->assertSame([
+            ['Be brief.', 'What time is it?'],
+            ['Be brief.', 'Clock reported noon.'],
+            ['Be brief.', 'Clock reported noon.', 'Noon.', 'Continue'],
+        ], $requests);
+        $this->assertCount(2, $conversation);
+        $this->assertNull($store->load($input->getId())->getSystemMessage());
+
+        $this->expectException(ConflictException::class);
+        $agent->call($input)->getResult();
     }
 
     public function testItFailsWhenTheConversationChangedDuringTheRun()

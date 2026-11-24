@@ -14,6 +14,7 @@ namespace Symfony\AI\Agent\Execution;
 use Symfony\AI\Agent\Exception\MaxIterationsExceededException;
 use Symfony\AI\Agent\Execution\Update\Progress;
 use Symfony\AI\Agent\Execution\Update\Result as ResultUpdate;
+use Symfony\AI\Agent\Toolbox\Event\BeforeToolRoundContinuation;
 use Symfony\AI\Agent\Toolbox\Event\ToolCallsExecuted;
 use Symfony\AI\Agent\Toolbox\Exception\ToolNotFoundException;
 use Symfony\AI\Agent\Toolbox\Source\SourceCollection;
@@ -65,19 +66,22 @@ final class Runner
         private readonly bool $includeSources = false,
         private readonly ?EventDispatcherInterface $eventDispatcher = null,
         private readonly ToolResultConverter $resultConverter = new ToolResultConverter(),
+        private readonly string $agentName = 'agent',
     ) {
     }
 
     /**
-     * @param non-empty-string|Model            $model
-     * @param array<string, mixed>              $options
-     * @param (\Closure(MessageBag): void)|null $onToolRound receives the messages after each completed tool round
+     * @param non-empty-string|Model                                          $model
+     * @param array<string, mixed>                                            $options
+     * @param (\Closure(MessageBag): void)|null                               $onToolRound receives the messages after each completed tool round
+     * @param (\Closure(MessageBag, MessageBag, MessageBag): MessageBag)|null $onChange    persists a changed conversation and prepares its request
      *
      * @return \Generator<int, UpdateInterface, mixed, void>
      */
-    public function run(string|Model $model, MessageBag $messages, array $options, ?Cancellation $cancellation = null, ?\Closure $onToolRound = null): \Generator
+    public function run(string|Model $model, MessageBag $messages, array $options, ?Cancellation $cancellation = null, ?\Closure $onToolRound = null, ?MessageBag $conversation = null, ?\Closure $onChange = null): \Generator
     {
         [$options, $allowedTools] = $this->exposeTools($options);
+        $conversation ??= $messages;
 
         $sources = new SourceCollection();
         $metadata = new Metadata();
@@ -129,18 +133,20 @@ final class Runner
             $this->denyRestrictedToolCalls($toolCalls, $allowedTools);
             $toolResults = yield from $this->toolExecutor->execute($toolCalls);
 
-            $messages = $messages->with($this->toAssistantMessage($result, $assistantMessage, $result->getMetadata()->all()));
+            $round = new MessageBag($this->toAssistantMessage($result, $assistantMessage, $result->getMetadata()->all()));
             foreach ($toolResults as $i => $toolResult) {
                 // a tool returning nothing still has to answer its call
-                $messages = $messages->with(Message::ofToolCall($toolCalls[$i], $this->resultConverter->convert($toolResult) ?? ''));
+                $round = $round->with(Message::ofToolCall($toolCalls[$i], $this->resultConverter->convert($toolResult) ?? ''));
 
                 if (null !== $toolResult->getSources()) {
                     $sources = $sources->merge($toolResult->getSources());
                 }
             }
 
+            $messages = $messages->merge($round);
+            $conversation = $conversation->merge($round);
             if (null !== $onToolRound) {
-                $onToolRound($messages);
+                $onToolRound($conversation);
             }
 
             $event = new ToolCallsExecuted($toolResults);
@@ -152,13 +158,23 @@ final class Runner
 
                 break;
             }
+
+            if (null !== $this->eventDispatcher) {
+                $continuation = new BeforeToolRoundContinuation($model, $conversation, $this->agentName);
+                $this->eventDispatcher->dispatch($continuation);
+                if ($conversation !== $continuation->getMessageBag()) {
+                    $next = $continuation->getMessageBag()->withId($conversation->getId());
+                    $messages = null !== $onChange ? $onChange($conversation, $next, $messages) : $next;
+                    $conversation = $next;
+                }
+            }
         }
 
         $roundMetadata = $result->getMetadata()->all();
         if ($this->includeSources) {
             $roundMetadata['sources'] = $sources;
         }
-        $answer = fn (?ResultInterface $replacement = null): MessageBag => $messages->with(null === $replacement
+        $answer = fn (?ResultInterface $replacement = null): MessageBag => $conversation->with(null === $replacement
             ? $this->toAssistantMessage($result, $assistantMessage, $roundMetadata)
             : $this->toAssistantMessage($replacement, null, $roundMetadata));
 
