@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\StructuredOutput\Validator;
 
 use Symfony\AI\Platform\Exception\ValidationException;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\MultiPartResult;
 use Symfony\AI\Platform\Result\ObjectResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\AI\Platform\Result\ResultInterface;
@@ -20,6 +21,8 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\ResultConverterInterface;
 use Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
+use Symfony\Component\Validator\Constraints\GroupSequence;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
@@ -29,9 +32,15 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  */
 final class ValidatorResultConverter implements ResultConverterInterface
 {
+    /**
+     * @param string|list<string>|GroupSequence|null                                          $groups
+     * @param (\Closure(ConstraintViolationListInterface, string|null): ResultInterface)|null $retry
+     */
     public function __construct(
         private readonly ResultConverterInterface $innerConverter,
         private readonly ValidatorInterface $validator,
+        private readonly string|array|GroupSequence|null $groups = null,
+        private readonly ?\Closure $retry = null,
     ) {
     }
 
@@ -47,29 +56,50 @@ final class ValidatorResultConverter implements ResultConverterInterface
         if ($innerResult instanceof StreamResult) {
             foreach ($innerResult->getListeners() as $listener) {
                 if ($listener instanceof PartialObjectStreamListener) {
-                    $listener->setValidator($this->validator);
+                    $listener->setValidator($this->validator, $this->groups);
                 }
             }
 
             return $innerResult;
         }
 
-        if (!$innerResult instanceof ObjectResult) {
+        if (null === $objectResult = $this->findObjectResult($innerResult)) {
             return $innerResult;
         }
 
-        $structure = $innerResult->getContent();
-        $violations = $this->validator->validate($structure);
+        $violations = $this->validator->validate($objectResult->getContent(), groups: $this->groups);
 
-        if (0 !== \count($violations)) {
+        if (0 === \count($violations)) {
+            return $innerResult;
+        }
+
+        if (null === $this->retry) {
             throw new ValidationException($violations);
         }
 
-        return $innerResult;
+        return ($this->retry)($violations, $objectResult->getText());
     }
 
     public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
     {
         return $this->innerConverter->getTokenUsageExtractor();
+    }
+
+    /**
+     * Finds the object the same way DeferredResult::asObject() does, so reasoning models are validated too.
+     */
+    private function findObjectResult(ResultInterface $result): ?ObjectResult
+    {
+        if ($result instanceof ObjectResult) {
+            return $result;
+        }
+
+        if (!$result instanceof MultiPartResult) {
+            return null;
+        }
+
+        $objectResults = array_filter($result->getContent(), static fn (ResultInterface $part): bool => $part instanceof ObjectResult);
+
+        return 1 === \count($objectResults) ? array_first($objectResults) : null;
     }
 }

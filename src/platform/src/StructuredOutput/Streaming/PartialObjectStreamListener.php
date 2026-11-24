@@ -23,6 +23,7 @@ use Symfony\Component\Serializer\Exception\ExceptionInterface as SerializerExcep
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Constraints\GroupSequence;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
@@ -46,6 +47,11 @@ final class PartialObjectStreamListener extends AbstractStreamListener
     private ?ValidationException $validationException = null;
     private ?ValidatorInterface $validator = null;
 
+    /**
+     * @var string|list<string>|GroupSequence|null
+     */
+    private string|array|GroupSequence|null $validationGroups = null;
+
     private readonly SerializerInterface&DenormalizerInterface $serializer;
 
     /**
@@ -59,9 +65,13 @@ final class PartialObjectStreamListener extends AbstractStreamListener
         $this->serializer = $serializer;
     }
 
-    public function setValidator(?ValidatorInterface $validator): void
+    /**
+     * @param string|list<string>|GroupSequence|null $groups
+     */
+    public function setValidator(?ValidatorInterface $validator, string|array|GroupSequence|null $groups = null): void
     {
         $this->validator = $validator;
+        $this->validationGroups = $groups;
     }
 
     public function getFinalObjectResult(): ?ObjectResult
@@ -131,7 +141,7 @@ final class PartialObjectStreamListener extends AbstractStreamListener
         }
 
         if (null !== $this->validator) {
-            $violations = $this->validator->validate($structure);
+            $violations = $this->validator->validate($structure, groups: $this->validationGroups);
 
             if (0 !== \count($violations)) {
                 $this->validationException = new ValidationException($violations);

@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Register `ai.platform.structured_output.violation_formatter`, aliased to `ViolationFormatterInterface`, so the message that asks a model to fix its invalid structured output can be reworded or translated
  * Autoconfigure services with the `#[AsTool]` attribute on public methods
  * Register `ModelOverrideInputProcessor` for every agent, so the `model` option of `AgentInterface::call()` selects the model of that call
  * Add the `base_url` option to the `mistral` platform

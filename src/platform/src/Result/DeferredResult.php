@@ -175,6 +175,14 @@ final class DeferredResult
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public function getOptions(): array
+    {
+        return $this->options;
+    }
+
+    /**
      * @throws ExceptionInterface when the provider answered with a result instead of a job
      */
     public function asJob(): JobHandle

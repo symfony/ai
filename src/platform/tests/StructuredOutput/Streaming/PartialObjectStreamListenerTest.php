@@ -19,6 +19,7 @@ use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\StructuredOutput\Serializer;
 use Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener;
 use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\City;
+use Symfony\AI\Platform\Tests\Fixtures\StructuredOutput\UserWithValidationGroups;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Validation;
@@ -188,6 +189,38 @@ final class PartialObjectStreamListenerTest extends TestCase
         $stream = $this->buildStream([
             '{"name":"Berlin"}',
         ], [$listener]);
+
+        iterator_to_array($stream->getContent(), false);
+
+        $this->expectException(ValidationException::class);
+
+        $listener->getFinalObjectResult();
+    }
+
+    public function testValidatorOnlyChecksTheGivenGroups()
+    {
+        $validator = Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator();
+
+        $listener = new PartialObjectStreamListener(new Serializer(), UserWithValidationGroups::class);
+        $listener->setValidator($validator, ['strict']);
+
+        // "name" is blank, but NotBlank is in the Default group only.
+        $stream = $this->buildStream(['{"name":"","age":1}'], [$listener]);
+
+        iterator_to_array($stream->getContent(), false);
+
+        $this->assertInstanceOf(UserWithValidationGroups::class, $listener->getFinalObjectResult()?->getContent());
+    }
+
+    public function testValidatorEnforcesTheGivenGroups()
+    {
+        $validator = Validation::createValidatorBuilder()->enableAttributeMapping()->getValidator();
+
+        $listener = new PartialObjectStreamListener(new Serializer(), UserWithValidationGroups::class);
+        $listener->setValidator($validator, ['strict']);
+
+        // "age" is zero, and Positive is in the "strict" group.
+        $stream = $this->buildStream(['{"name":"Alice","age":0}'], [$listener]);
 
         iterator_to_array($stream->getContent(), false);
 

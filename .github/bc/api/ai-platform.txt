@@ -654,6 +654,7 @@ Symfony\AI\Platform\Result\DeferredResult::__debugInfo(): public function __debu
 Symfony\AI\Platform\Result\DeferredResult::asJob(): public function asJob(): Symfony\AI\Platform\Job\JobHandle
 Symfony\AI\Platform\Result\DeferredResult::asObject(): public function asObject(null|string $class = null): array|object
 Symfony\AI\Platform\Result\DeferredResult::asStream(): public function asStream(): Generator
+Symfony\AI\Platform\Result\DeferredResult::getOptions(): public function getOptions(): array
 Symfony\AI\Platform\Result\DeferredResult::getRawResult(): public function getRawResult(): Symfony\AI\Platform\Result\RawResultInterface
 Symfony\AI\Platform\Result\DeferredResult::getResult(): public function getResult(): Symfony\AI\Platform\Result\ResultInterface
 Symfony\AI\Platform\Result\DeferredResult::getResultConverter(): public function getResultConverter(): Symfony\AI\Platform\ResultConverterInterface
@@ -920,11 +921,21 @@ Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener::__co
 Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener::getFinalObjectResult(): public function getFinalObjectResult(): Symfony\AI\Platform\Result\ObjectResult|null
 Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener::onComplete(): public function onComplete(Symfony\AI\Platform\Result\Stream\CompleteEvent $event): void
 Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener::onDelta(): public function onDelta(Symfony\AI\Platform\Result\Stream\DeltaEvent $event): void
-Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener::setValidator(): public function setValidator(Symfony\Component\Validator\Validator\ValidatorInterface|null $validator): void
+Symfony\AI\Platform\StructuredOutput\Streaming\PartialObjectStreamListener::setValidator(): public function setValidator(Symfony\Component\Validator\Validator\ValidatorInterface|null $validator, Symfony\Component\Validator\Constraints\GroupSequence|array|null|string $groups = null): void
 Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber: final class implements Symfony\Component\EventDispatcher\EventSubscriberInterface
-Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber::__construct(): public function __construct(Symfony\Component\Validator\Validator\ValidatorInterface|null $validator = null)
+Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber::VALIDATE_RESPONSE: public const
+Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber::VALIDATION_RETRIES: public const
+Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber::__construct(): public function __construct(Symfony\Component\Validator\Validator\ValidatorInterface|null $validator = null, int $retries = 0, Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatterInterface $violationFormatter = new \Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatter())
 Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber::getSubscribedEvents(): public static function getSubscribedEvents(): array
+Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber::processInput(): public function processInput(Symfony\AI\Platform\Event\InvocationEvent $event): void
 Symfony\AI\Platform\StructuredOutput\Validator\ValidatorSubscriber::processResult(): public function processResult(Symfony\AI\Platform\Event\ResultEvent $event): void
+Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatter: final class implements Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatterInterface
+Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatter::DEFAULT_TEMPLATE: public const
+Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatter::VIOLATIONS_PLACEHOLDER: public const
+Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatter::__construct(): public function __construct(Symfony\Contracts\Translation\TranslatableInterface|string $template = self::DEFAULT_TEMPLATE, Symfony\Contracts\Translation\TranslatorInterface|null $translator = null)
+Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatter::format(): public function format(Symfony\Component\Validator\ConstraintViolationListInterface $violations): string
+Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatterInterface: interface
+Symfony\AI\Platform\StructuredOutput\Validator\ViolationFormatterInterface::format(): public function format(Symfony\Component\Validator\ConstraintViolationListInterface $violations): string
 Symfony\AI\Platform\Test\MockModelCatalog: final class extends Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog
 Symfony\AI\Platform\Test\MockModelCatalog::__construct(): public function __construct(array $models = [])
 Symfony\AI\Platform\Test\MockModelClient: final class implements Symfony\AI\Platform\ModelClientInterface
