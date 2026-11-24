@@ -114,6 +114,22 @@ final class MiniMaxClient implements ModelClientInterface
         $json['model'] = $model->getName();
         $json['prompt'] = $this->extractText($payload);
 
+        if (\in_array($model->getName(), ['MiniMax-H3-Image', 'MiniMax-H3-Image-Highspeed'], true)) {
+            if ($options['stream'] ?? false) {
+                throw new InvalidArgumentException('Streaming image generation is not supported.');
+            }
+
+            $json['response_format'] ??= 'b64_json';
+
+            return new RawHttpResult($this->httpClient->request('POST', $this->endpoint.'/images/generations', [
+                'auth_bearer' => $this->apiKey,
+                'headers' => ['Content-Type' => 'application/json'],
+                'body' => $this->encodeJsonBody($json),
+                'timeout' => 600,
+                'max_duration' => 600,
+            ]));
+        }
+
         if (!\array_key_exists('response_format', $json)) {
             $json['response_format'] = 'base64';
         }

@@ -92,6 +92,7 @@ final class MiniMaxResultConverter implements ResultConverterInterface
             // both endpoints produce the same thing.
             str_contains($url, '/t2a_async_v2') => $this->startJob($result->getData(), 'query/t2a_async_query_v2', 'audio/mpeg', self::AUDIO_MAX_DURATION, self::AUDIO_POLL_INTERVAL, 'mp3'),
             str_contains($url, '/t2a_v2') => new BinaryResult($this->decodeHexAudio($result->getData()), 'audio/mpeg'),
+            str_contains($url, '/images/generations') => $this->convertH3Images($result->getData()),
             str_contains($url, '/image_generation') => $this->convertImage($result->getData()),
             str_contains($url, '/music_generation') => new BinaryResult($this->decodeHexAudio($result->getData()), 'audio/mpeg'),
             str_contains($url, '/video_generation') => $this->startJob($result->getData(), 'query/video_generation', 'video/mp4', self::VIDEO_MAX_DURATION, self::VIDEO_POLL_INTERVAL),
@@ -189,6 +190,38 @@ final class MiniMaxResultConverter implements ResultConverterInterface
         }
 
         return new ChoiceResult(array_values($results));
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function convertH3Images(array $data): ResultInterface
+    {
+        $results = [];
+        $errors = [];
+        foreach ($data['data'] ?? [] as $index => $image) {
+            if (isset($image['error'])) {
+                $errors[$index] = $image['error'];
+                continue;
+            }
+
+            $results[] = match (true) {
+                isset($image['b64_json']) => BinaryResult::fromBase64($image['b64_json'], 'image/'.($data['output_format'] ?? 'jpeg')),
+                isset($image['url']) => new TextResult($image['url']),
+                default => throw new RuntimeException('The MiniMax response contains an image without data or a URL.'),
+            };
+        }
+
+        if ([] === $results) {
+            throw new RuntimeException($errors ? reset($errors)['message'] : 'The MiniMax response does not contain any image.');
+        }
+
+        $result = 1 === \count($results) ? $results[0] : new ChoiceResult($results);
+        if ([] !== $errors) {
+            $result->getMetadata()->add('image_errors', $errors);
+        }
+
+        return $result;
     }
 
     /**
