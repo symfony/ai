@@ -26,6 +26,16 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
  */
 final class ModelCatalog extends AbstractModelCatalog
 {
+    private const CAPABILITIES = [
+        'embedding' => Capability::EMBEDDINGS,
+        'completion' => Capability::INPUT_MESSAGES,
+        'tools' => Capability::TOOL_CALLING,
+        'thinking' => Capability::THINKING,
+        'vision' => Capability::INPUT_IMAGE,
+        'audio' => Capability::INPUT_AUDIO,
+        'insert' => Capability::FILL_IN_THE_MIDDLE,
+    ];
+
     public function __construct(
         private readonly HttpClientInterface $httpClient,
     ) {
@@ -37,6 +47,59 @@ final class ModelCatalog extends AbstractModelCatalog
         // options like "qwen3:8b?think=false" are not part of the name that Ollama knows
         ['name' => $modelName, 'options' => $options] = $this->parseModelName($modelName);
 
+        return $this->createModel($modelName, $options, $this->fetchCapabilities($modelName));
+    }
+
+    public function getModels(): array
+    {
+        $response = $this->httpClient->request('GET', 'api/tags');
+
+        try {
+            $statusCode = $response->getStatusCode();
+        } catch (TransportExceptionInterface $e) {
+            throw new RuntimeException(\sprintf('Cannot connect to the Ollama API: "%s".', $e->getMessage()), previous: $e);
+        }
+
+        if (200 !== $statusCode) {
+            $errorMessage = $this->extractErrorMessage($response);
+
+            throw new RuntimeException(null !== $errorMessage ? \sprintf('Cannot retrieve models from the Ollama API (Status code: %d): "%s".', $statusCode, $errorMessage) : \sprintf('Cannot retrieve models from the Ollama API (Status code: %d).', $statusCode));
+        }
+
+        $models = $response->toArray();
+
+        if ([] === $models['models']) {
+            return [];
+        }
+
+        return array_merge(...array_map(
+            function (array $model): array {
+                ['name' => $modelName, 'options' => $options] = $this->parseModelName($model['name']);
+                $capabilities = $this->fetchCapabilities($modelName);
+
+                // Listing is discovery, so it skips the models the bridge cannot use, like the image generation ones; getModel() does not.
+                if (null !== $this->findUnsupportedCapability($capabilities)) {
+                    return [];
+                }
+
+                $retrievedModel = $this->createModel($modelName, $options, $capabilities);
+
+                return [
+                    $retrievedModel->getName() => [
+                        'class' => $retrievedModel::class,
+                        'capabilities' => $retrievedModel->getCapabilities(),
+                    ],
+                ];
+            },
+            $models['models'],
+        ));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function fetchCapabilities(string $modelName): array
+    {
         $response = $this->httpClient->request('POST', 'api/show', [
             'json' => [
                 'model' => $modelName,
@@ -65,13 +128,26 @@ final class ModelCatalog extends AbstractModelCatalog
             throw new InvalidArgumentException('The model information could not be retrieved from the Ollama API. Your Ollama server might be too old. Try upgrade it.');
         }
 
+        return $payload['capabilities'];
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     * @param list<string>         $capabilities
+     */
+    private function createModel(string $modelName, array $options, array $capabilities): Ollama
+    {
+        if (null !== $unsupportedCapability = $this->findUnsupportedCapability($capabilities)) {
+            throw new InvalidArgumentException(\sprintf('The "%s" capability is not supported', $unsupportedCapability));
+        }
+
         // Decision models use /v1/systemone: retain vision, but not chat capabilities (e.g. "completion").
-        if (\in_array('decision', $payload['capabilities'], true)) {
-            return new Decision($modelName, \in_array('vision', $payload['capabilities'], true) ? [Capability::INPUT_IMAGE] : [], $options);
+        if (\in_array('decision', $capabilities, true)) {
+            return new Decision($modelName, \in_array('vision', $capabilities, true) ? [Capability::INPUT_IMAGE] : [], $options);
         }
 
         // Speech models only generate speech: chat, completion and embedding requests are rejected by Ollama.
-        if (\in_array('speech', $payload['capabilities'], true)) {
+        if (\in_array('speech', $capabilities, true)) {
             return new TextToSpeech($modelName, [
                 Capability::INPUT_TEXT,
                 Capability::OUTPUT_AUDIO,
@@ -79,62 +155,35 @@ final class ModelCatalog extends AbstractModelCatalog
             ], $options);
         }
 
-        $capabilities = array_map(
-            static fn (string $capability): Capability => match ($capability) {
-                'embedding' => Capability::EMBEDDINGS,
-                'completion' => Capability::INPUT_MESSAGES,
-                'tools' => Capability::TOOL_CALLING,
-                'thinking' => Capability::THINKING,
-                'vision' => Capability::INPUT_IMAGE,
-                'audio' => Capability::INPUT_AUDIO,
-                'insert' => Capability::FILL_IN_THE_MIDDLE,
-                default => throw new InvalidArgumentException(\sprintf('The "%s" capability is not supported', $capability)),
-            },
-            $payload['capabilities'],
+        $mappedCapabilities = array_map(
+            static fn (string $capability): Capability => self::CAPABILITIES[$capability],
+            $capabilities,
         );
 
-        if (!\in_array(Capability::EMBEDDINGS, $capabilities, true)) {
-            $capabilities[] = Capability::OUTPUT_STRUCTURED;
+        if (!\in_array(Capability::EMBEDDINGS, $mappedCapabilities, true)) {
+            $mappedCapabilities[] = Capability::OUTPUT_STRUCTURED;
         }
 
-        return new Ollama($modelName, $capabilities, $options);
+        return new Ollama($modelName, $mappedCapabilities, $options);
     }
 
-    public function getModels(): array
+    /**
+     * @param list<string> $capabilities
+     */
+    private function findUnsupportedCapability(array $capabilities): ?string
     {
-        $response = $this->httpClient->request('GET', 'api/tags');
-
-        try {
-            $statusCode = $response->getStatusCode();
-        } catch (TransportExceptionInterface $e) {
-            throw new RuntimeException(\sprintf('Cannot connect to the Ollama API: "%s".', $e->getMessage()), previous: $e);
+        // Decision and speech models are queried through their own endpoint, whatever else they report.
+        if (\in_array('decision', $capabilities, true) || \in_array('speech', $capabilities, true)) {
+            return null;
         }
 
-        if (200 !== $statusCode) {
-            $errorMessage = $this->extractErrorMessage($response);
-
-            throw new RuntimeException(null !== $errorMessage ? \sprintf('Cannot retrieve models from the Ollama API (Status code: %d): "%s".', $statusCode, $errorMessage) : \sprintf('Cannot retrieve models from the Ollama API (Status code: %d).', $statusCode));
+        foreach ($capabilities as $capability) {
+            if (!isset(self::CAPABILITIES[$capability])) {
+                return $capability;
+            }
         }
 
-        $models = $response->toArray();
-
-        if ([] === $models['models']) {
-            return [];
-        }
-
-        return array_merge(...array_map(
-            function (array $model): array {
-                $retrievedModel = $this->getModel($model['name']);
-
-                return [
-                    $retrievedModel->getName() => [
-                        'class' => $retrievedModel::class,
-                        'capabilities' => $retrievedModel->getCapabilities(),
-                    ],
-                ];
-            },
-            $models['models'],
-        ));
+        return null;
     }
 
     private function extractErrorMessage(ResponseInterface $response): ?string

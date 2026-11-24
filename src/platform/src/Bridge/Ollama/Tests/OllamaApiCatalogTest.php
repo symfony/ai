@@ -261,6 +261,66 @@ final class OllamaApiCatalogTest extends TestCase
         ], $models['phonon']['capabilities']);
     }
 
+    public function testGetModelsLeavesOutModelsWithUnsupportedCapabilities()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'models' => [
+                    ['name' => 'llama3', 'details' => []],
+                    ['name' => 'x/z-image-turbo', 'details' => []],
+                ],
+            ]),
+            new JsonMockResponse([
+                'capabilities' => ['completion', 'tools'],
+            ]),
+            new JsonMockResponse([
+                'capabilities' => ['image'],
+            ]),
+        ], 'http://127.0.0.1:11434');
+
+        $models = (new ModelCatalog($httpClient))->getModels();
+
+        $this->assertSame(['llama3'], array_keys($models));
+    }
+
+    public function testGetModelsStillFailsWhenTheServerReportsNoCapabilities()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'models' => [
+                    ['name' => 'llama3', 'details' => []],
+                ],
+            ]),
+            new JsonMockResponse([
+                'capabilities' => [],
+            ]),
+        ], 'http://127.0.0.1:11434');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Your Ollama server might be too old.');
+
+        (new ModelCatalog($httpClient))->getModels();
+    }
+
+    public function testGetModelsStillFailsOnAnEmptyModelName()
+    {
+        $httpClient = new MockHttpClient([
+            new JsonMockResponse([
+                'models' => [
+                    ['name' => '', 'details' => []],
+                ],
+            ]),
+            new JsonMockResponse([
+                'capabilities' => ['completion'],
+            ]),
+        ], 'http://127.0.0.1:11434');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Model name cannot be empty.');
+
+        (new ModelCatalog($httpClient))->getModels();
+    }
+
     public function testModelCatalogCanReturnInsertModelsFromApi()
     {
         $httpClient = new MockHttpClient([
