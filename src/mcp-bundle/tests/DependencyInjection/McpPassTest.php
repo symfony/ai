@@ -20,6 +20,7 @@ use Mcp\Server\Capability\Attribute\McpResourceTemplate;
 use Mcp\Server\Capability\Attribute\McpTool;
 use Mcp\Server\Capability\Attribute\Schema;
 use Mcp\Server\Capability\Completion\ProviderInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\McpBundle\DependencyInjection\McpPass;
 use Symfony\AI\McpBundle\Exception\LogicException;
@@ -347,9 +348,158 @@ final class McpPassTest extends TestCase
         $container->setDefinition(TimeTool::class, (new Definition(TimeTool::class))->addTag('mcp.tool', ['method' => 'getCurrentTime']));
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('"App\\Typo\\" under "mcp.servers.default.registry"');
+        $this->expectExceptionMessage('The following MCP element patterns do not match any registered service: "App\\Typo\\" under "mcp.servers.default.registry". Elements are collected from container services carrying an MCP attribute, so check for a typo or make sure the class is registered as a service.');
 
         (new McpPass())->process($container);
+    }
+
+    /**
+     * @param list<string>          $patterns
+     * @param array<string, string> $services service id => class
+     * @param list<string>          $named
+     */
+    #[DataProvider('provideServicesWithAttributesOfTheFormerNamespace')]
+    public function testPatternMatchingNothingNamesAttributesOfTheFormerNamespace(array $patterns, array $services, array $named)
+    {
+        self::declareClassesWithFormerAttributes();
+
+        $container = $this->containerWithBuilder(['default' => ['tools' => $patterns]]);
+        foreach ($services as $id => $class) {
+            $container->setDefinition($id, new Definition($class));
+        }
+
+        try {
+            (new McpPass())->process($container);
+            $this->fail('A pattern that matches nothing must be rejected.');
+        } catch (LogicException $e) {
+            $this->assertStringEndsWith(\sprintf(
+                'registered as a service. mcp/sdk 0.10 moved the attributes from "Mcp\\Capability\\Attribute\\" to "Mcp\\Server\\Capability\\Attribute\\", and the former ones are still used by: %s.',
+                implode(', ', $named),
+            ), $e->getMessage());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{list<string>, array<string, string>, list<string>}>
+     */
+    public static function provideServicesWithAttributesOfTheFormerNamespace(): iterable
+    {
+        yield 'method attribute under a namespace prefix' => [
+            ['App\\Former\\'],
+            ['App\\Former\\MethodTool' => 'App\\Former\\MethodTool'],
+            ['"App\\Former\\MethodTool"'],
+        ];
+
+        yield 'class attribute under a class name' => [
+            ['App\\Former\\InvokableTool'],
+            ['App\\Former\\InvokableTool' => 'App\\Former\\InvokableTool'],
+            ['"App\\Former\\InvokableTool"'],
+        ];
+
+        yield 'service id that is not the class name' => [
+            ['app.former_tool'],
+            ['app.former_tool' => 'App\\Former\\MethodTool'],
+            ['"App\\Former\\MethodTool"'],
+        ];
+
+        yield 'only the classes under the pattern, each one once' => [
+            ['App\\Former\\', __NAMESPACE__.'\\', 'App\\Typo\\'],
+            [
+                'App\\Former\\MethodTool' => 'App\\Former\\MethodTool',
+                'app.former_tool' => 'App\\Former\\MethodTool',
+                PlainService::class => PlainService::class,
+                TimeTool::class => TimeTool::class,
+                'App\\Former\\InvokableTool' => 'App\\Former\\InvokableTool',
+                'Vendor\\Missing' => 'Vendor\\Missing',
+            ],
+            ['"App\\Former\\MethodTool"', '"App\\Former\\InvokableTool"'],
+        ];
+    }
+
+    public function testPatternMatchingNothingDoesNotBlameTheFormerNamespaceOutsideOfThePattern()
+    {
+        self::declareClassesWithFormerAttributes();
+
+        $container = $this->containerWithBuilder(['default' => ['tools' => ['App\\Typo\\', 'app.abstract']]]);
+        $container->setDefinition('App\\Former\\MethodTool', new Definition('App\\Former\\MethodTool'));
+        $container->setDefinition('app.abstract', (new Definition('App\\Former\\InvokableTool'))->setAbstract(true));
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessageMatches('/registered as a service\\.$/');
+
+        (new McpPass())->process($container);
+    }
+
+    public function testPatternMatchingNothingDoesNotLoadTheClassesUnderIt()
+    {
+        $container = $this->containerWithBuilder(['default' => ['tools' => ['App\\NotLoaded\\']]]);
+        $container->setDefinition('App\\NotLoaded\\Tool', new Definition('App\\NotLoaded\\Tool'));
+
+        $loaded = [];
+        $autoloader = static function (string $class) use (&$loaded): void {
+            $loaded[] = $class;
+        };
+        spl_autoload_register($autoloader, true, true);
+
+        try {
+            (new McpPass())->process($container);
+            $this->fail('A pattern that matches nothing must be rejected.');
+        } catch (LogicException $e) {
+            $this->assertStringEndsWith('registered as a service.', $e->getMessage());
+            $this->assertNotContains('App\\NotLoaded\\Tool', $loaded);
+        } finally {
+            spl_autoload_unregister($autoloader);
+        }
+    }
+
+    public function testPatternMatchingNothingIsStillReportedWhenAClassUnderItCannotBeResolved()
+    {
+        $container = $this->containerWithBuilder(['default' => ['tools' => ['app.unresolved']]]);
+        $container->setDefinition('app.unresolved', new Definition('%app.missing_class%'));
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('"app.unresolved" under "mcp.servers.default.registry"');
+
+        (new McpPass())->process($container);
+    }
+
+    /**
+     * Declared at runtime: the attributes name classes that mcp/sdk 0.10 no longer has, which
+     * PHP accepts as long as nobody instantiates them.
+     */
+    private static function declareClassesWithFormerAttributes(): void
+    {
+        if (class_exists('App\\Former\\MethodTool', false)) {
+            return;
+        }
+
+        eval(<<<'PHP'
+            namespace App\Former;
+
+            class MethodTool
+            {
+                #[\Mcp\Capability\Attribute\McpTool(name: 'former-method')]
+                public function ping(): string
+                {
+                    return 'pong';
+                }
+
+                #[\Mcp\Capability\Attribute\McpResource(uri: 'config://former')]
+                public function config(): string
+                {
+                    return 'config';
+                }
+            }
+
+            #[\Mcp\Capability\Attribute\McpTool(name: 'former-invokable')]
+            class InvokableTool
+            {
+                public function __invoke(): string
+                {
+                    return 'pong';
+                }
+            }
+            PHP);
     }
 
     /**
