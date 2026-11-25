@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
 use Symfony\AI\Platform\Bridge\Ovh\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Ovh\SpeechToText;
+use Symfony\AI\Platform\Bridge\Ovh\TextToSpeech;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Test\ModelCatalogTestCase;
@@ -57,6 +58,12 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         // Speech-to-text models
         yield 'whisper-large-v3' => ['whisper-large-v3', SpeechToText::class, [Capability::INPUT_AUDIO, Capability::OUTPUT_TEXT, Capability::SPEECH_TO_TEXT]];
         yield 'whisper-large-v3-turbo' => ['whisper-large-v3-turbo', SpeechToText::class, [Capability::INPUT_AUDIO, Capability::OUTPUT_TEXT, Capability::SPEECH_TO_TEXT]];
+
+        // Text-to-speech models
+        yield 'nvr-tts-de-de' => ['nvr-tts-de-de', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
+        yield 'nvr-tts-en-us' => ['nvr-tts-en-us', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
+        yield 'nvr-tts-es-es' => ['nvr-tts-es-es', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
+        yield 'nvr-tts-it-it' => ['nvr-tts-it-it', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

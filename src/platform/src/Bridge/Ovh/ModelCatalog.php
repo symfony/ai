@@ -290,6 +290,38 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::SPEECH_TO_TEXT,
                 ],
             ],
+            'nvr-tts-de-de' => [
+                'class' => TextToSpeech::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
+                ],
+            ],
+            'nvr-tts-en-us' => [
+                'class' => TextToSpeech::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
+                ],
+            ],
+            'nvr-tts-es-es' => [
+                'class' => TextToSpeech::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
+                ],
+            ],
+            'nvr-tts-it-it' => [
+                'class' => TextToSpeech::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_AUDIO,
+                    Capability::TEXT_TO_SPEECH,
+                ],
+            ],
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);

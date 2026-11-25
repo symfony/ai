@@ -13,6 +13,9 @@ namespace Symfony\AI\Platform\Bridge\Ovh\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Ovh\Factory;
+use Symfony\AI\Platform\Bridge\Ovh\ModelCatalog;
+use Symfony\AI\Platform\Bridge\Ovh\TextToSpeech;
+use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -75,5 +78,21 @@ final class FactoryTest extends TestCase
         $result = Factory::createPlatform('ovh-test-api-key', $httpClient)->invoke('whisper-large-v3', Audio::fromFile(\dirname(__DIR__, 6).'/fixtures/audio.mp3'));
 
         $this->assertSame('Hello world', $result->asText());
+    }
+
+    public function testItSendsTextToSpeechToTheHostOfTheModel()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url): MockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://nvr-tts-fr-fr.endpoints.kepler.ai.cloud.ovh.net/api/v1/tts/text_to_audio', $url);
+
+            return new MockResponse('audio');
+        });
+
+        $result = Factory::createPlatform('ovh-test-api-key', $httpClient, new ModelCatalog([
+            'nvr-tts-fr-fr' => ['class' => TextToSpeech::class, 'capabilities' => [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO]],
+        ]))->invoke('nvr-tts-fr-fr', 'Bonjour', ['voice' => 'French-FR.Female-1']);
+
+        $this->assertSame('audio', $result->asBinary());
     }
 }

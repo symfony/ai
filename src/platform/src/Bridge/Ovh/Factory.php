@@ -48,11 +48,13 @@ final class Factory
             new Completions\ModelClient($httpClient, self::BASE_URL, $apiKey),
             new Embeddings\ModelClient($httpClient, self::BASE_URL, $apiKey),
             new SpeechToText\ModelClient($httpClient, $apiKey, self::BASE_URL),
+            new TextToSpeech\ModelClient($httpClient, $apiKey),
         ];
         $resultConverters = [
             new Completions\ResultConverter(),
             new Embeddings\ResultConverter(),
             new SpeechToText\ResultConverter(),
+            new TextToSpeech\ResultConverter(),
         ];
 
         return new Provider(
