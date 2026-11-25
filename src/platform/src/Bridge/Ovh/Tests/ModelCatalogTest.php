@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Ovh\Tests;
 
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
+use Symfony\AI\Platform\Bridge\Ovh\Image;
 use Symfony\AI\Platform\Bridge\Ovh\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Ovh\SpeechToText;
 use Symfony\AI\Platform\Bridge\Ovh\TextToSpeech;
@@ -64,6 +65,9 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'nvr-tts-en-us' => ['nvr-tts-en-us', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
         yield 'nvr-tts-es-es' => ['nvr-tts-es-es', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
         yield 'nvr-tts-it-it' => ['nvr-tts-it-it', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
+
+        // Image models
+        yield 'stable-diffusion-xl-base-v10' => ['stable-diffusion-xl-base-v10', Image::class, [Capability::INPUT_TEXT, Capability::OUTPUT_IMAGE, Capability::TEXT_TO_IMAGE]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

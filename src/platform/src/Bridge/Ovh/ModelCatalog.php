@@ -322,6 +322,14 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TEXT_TO_SPEECH,
                 ],
             ],
+            'stable-diffusion-xl-base-v10' => [
+                'class' => Image::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::OUTPUT_IMAGE,
+                    Capability::TEXT_TO_IMAGE,
+                ],
+            ],
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);

@@ -95,4 +95,18 @@ final class FactoryTest extends TestCase
 
         $this->assertSame('audio', $result->asBinary());
     }
+
+    public function testItSendsImageGenerationsToTheImagesEndpoint()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url): MockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://oai.endpoints.kepler.ai.cloud.ovh.net/v1/images/generations', $url);
+
+            return new MockResponse(json_encode(['created' => 1, 'data' => [['b64_json' => base64_encode('image-bytes')]]]));
+        });
+
+        $result = Factory::createPlatform('ovh-test-api-key', $httpClient)->invoke('stable-diffusion-xl-base-v10', 'A cat in a spacesuit');
+
+        $this->assertSame('image-bytes', $result->asBinary());
+    }
 }
