@@ -23,6 +23,7 @@ use Symfony\AI\Platform\Message\Content\Audio;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Result\RealtimeSessionResult;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -129,5 +130,21 @@ final class FactoryTest extends TestCase
         $answers = $result->asObject();
         $this->assertInstanceOf(Answers::class, $answers);
         $this->assertSame(0.9, $answers->getNoul('is_bug')->getProbability());
+    }
+
+    public function testItOpensLiveTranscriptionSessions()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url): MockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://oai.endpoints.kepler.ai.cloud.ovh.net/gladia/v2/live', $url);
+
+            return new MockResponse('{"id": "45463597", "created_at": "2026-11-25T09:04:17.210Z", "url": "wss://example.com/gladia/v2/live?token=4a39145c"}', ['http_code' => 201]);
+        });
+
+        $result = Factory::createPlatform('ovh-test-api-key', $httpClient)->invoke('solaria-3', ['sample_rate' => 16000])->getResult();
+
+        $this->assertInstanceOf(RealtimeSessionResult::class, $result);
+        $this->assertSame('wss://example.com/gladia/v2/live?token=4a39145c', $result->getClientSecret());
+        $this->assertSame('solaria-3', $result->getModel());
     }
 }

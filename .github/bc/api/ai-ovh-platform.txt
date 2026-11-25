@@ -20,6 +20,15 @@ Symfony\AI\Platform\Bridge\Ovh\Image\ResultConverter: final class implements Sym
 Symfony\AI\Platform\Bridge\Ovh\Image\ResultConverter::convert(): public function convert(Symfony\AI\Platform\Result\RawHttpResult|Symfony\AI\Platform\Result\RawResultInterface $result, array $options = []): Symfony\AI\Platform\Result\ResultInterface
 Symfony\AI\Platform\Bridge\Ovh\Image\ResultConverter::getTokenUsageExtractor(): public function getTokenUsageExtractor(): Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface|null
 Symfony\AI\Platform\Bridge\Ovh\Image\ResultConverter::supports(): public function supports(Symfony\AI\Platform\Model $model): bool
+Symfony\AI\Platform\Bridge\Ovh\LiveTranscription: final class extends Symfony\AI\Platform\Model
+Symfony\AI\Platform\Bridge\Ovh\LiveTranscription\ModelClient: final class implements Symfony\AI\Platform\ModelClientInterface
+Symfony\AI\Platform\Bridge\Ovh\LiveTranscription\ModelClient::__construct(): public function __construct(Symfony\Contracts\HttpClient\HttpClientInterface $httpClient, string $apiKey, string $baseUrl = 'https://oai.endpoints.kepler.ai.cloud.ovh.net')
+Symfony\AI\Platform\Bridge\Ovh\LiveTranscription\ModelClient::request(): public function request(Symfony\AI\Platform\Model $model, array|string $payload, array $options = []): Symfony\AI\Platform\Result\RawHttpResult
+Symfony\AI\Platform\Bridge\Ovh\LiveTranscription\ModelClient::supports(): public function supports(Symfony\AI\Platform\Model $model): bool
+Symfony\AI\Platform\Bridge\Ovh\LiveTranscription\ResultConverter: final class implements Symfony\AI\Platform\ResultConverterInterface uses Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait
+Symfony\AI\Platform\Bridge\Ovh\LiveTranscription\ResultConverter::convert(): public function convert(Symfony\AI\Platform\Result\RawHttpResult|Symfony\AI\Platform\Result\RawResultInterface $result, array $options = []): Symfony\AI\Platform\Result\ResultInterface
+Symfony\AI\Platform\Bridge\Ovh\LiveTranscription\ResultConverter::getTokenUsageExtractor(): public function getTokenUsageExtractor(): Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface|null
+Symfony\AI\Platform\Bridge\Ovh\LiveTranscription\ResultConverter::supports(): public function supports(Symfony\AI\Platform\Model $model): bool
 Symfony\AI\Platform\Bridge\Ovh\ModelCatalog: final class extends Symfony\AI\Platform\ModelCatalog\AbstractModelCatalog
 Symfony\AI\Platform\Bridge\Ovh\ModelCatalog::__construct(): public function __construct(array $additionalModels = [])
 Symfony\AI\Platform\Bridge\Ovh\SpeechToText: final class extends Symfony\AI\Platform\Model

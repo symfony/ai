@@ -15,6 +15,7 @@ use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
 use Symfony\AI\Platform\Bridge\Ovh\DecisionModel;
 use Symfony\AI\Platform\Bridge\Ovh\Image;
+use Symfony\AI\Platform\Bridge\Ovh\LiveTranscription;
 use Symfony\AI\Platform\Bridge\Ovh\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Ovh\SpeechToText;
 use Symfony\AI\Platform\Bridge\Ovh\TextToSpeech;
@@ -72,6 +73,9 @@ final class ModelCatalogTest extends ModelCatalogTestCase
 
         // Decision models
         yield 'clef-flash' => ['clef-flash', DecisionModel::class, [Capability::INPUT_TEXT]];
+
+        // Live transcription models
+        yield 'solaria-3' => ['solaria-3', LiveTranscription::class, [Capability::INPUT_AUDIO, Capability::OUTPUT_TEXT, Capability::SPEECH_TO_TEXT, Capability::REALTIME_SESSION]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

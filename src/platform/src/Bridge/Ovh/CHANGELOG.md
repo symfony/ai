@@ -10,6 +10,7 @@ CHANGELOG
  * Add text-to-speech support for the `nvr-tts-de-de`, `nvr-tts-en-us`, `nvr-tts-es-es` and `nvr-tts-it-it` NVIDIA Riva voices
  * Add image generation support for the `stable-diffusion-xl-base-v10` model
  * Add decision support for the `clef-flash` model, which requires the `symfony/ai-decision-platform` package
+ * Add live transcription support for the `solaria-3` model, which opens the WebSocket session of Gladia
  * Remove the models OVHcloud no longer serves: `Qwen3-Coder-30B-A3B-Instruct`, `Qwen3-32B`, `Llama-3.1-8B-Instruct`, `Mistral-7B-Instruct-v0.3` and `Mistral-Nemo-Instruct-2407`
 
 0.8

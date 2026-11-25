@@ -336,6 +336,15 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::INPUT_TEXT,
                 ],
             ],
+            'solaria-3' => [
+                'class' => LiveTranscription::class,
+                'capabilities' => [
+                    Capability::INPUT_AUDIO,
+                    Capability::OUTPUT_TEXT,
+                    Capability::SPEECH_TO_TEXT,
+                    Capability::REALTIME_SESSION,
+                ],
+            ],
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);
