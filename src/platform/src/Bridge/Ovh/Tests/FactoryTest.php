@@ -12,7 +12,7 @@
 namespace Symfony\AI\Platform\Bridge\Ovh\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\AI\Platform\Bridge\Scaleway\Factory;
+use Symfony\AI\Platform\Bridge\Ovh\Factory;
 use Symfony\AI\Platform\Platform;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Component\HttpClient\MockHttpClient;
