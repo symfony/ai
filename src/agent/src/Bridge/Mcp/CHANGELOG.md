@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * Add the `only` and `exclude` arguments to `McpToolbox`, to expose a subset of the tools of a server
  * Add typed tool effect hints populated from remote MCP annotations
 
 0.15

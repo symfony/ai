@@ -45,8 +45,10 @@ final class McpToolbox extends AbstractToolbox implements ResetInterface
     private ?\DateTimeImmutable $retryListingAt = null;
 
     /**
-     * @param string $prefix     Prefixes every remote tool name, defaults to "<server>_"
-     * @param int    $retryAfter Seconds a server whose tools could not be listed is skipped before it is asked again
+     * @param string   $prefix     Prefixes every remote tool name, defaults to "<server>_"
+     * @param int      $retryAfter Seconds a server whose tools could not be listed is skipped before it is asked again
+     * @param string[] $only       Remote tool names to keep, every tool when empty
+     * @param string[] $exclude    Remote tool names to leave out, applied after $only
      */
     public function __construct(
         private readonly ToolsetInterface $toolset,
@@ -55,6 +57,8 @@ final class McpToolbox extends AbstractToolbox implements ResetInterface
         ?EventDispatcherInterface $eventDispatcher = null,
         private readonly int $retryAfter = 60,
         private readonly ClockInterface $clock = new MonotonicClock(),
+        private readonly array $only = [],
+        private readonly array $exclude = [],
     ) {
         parent::__construct($logger, $eventDispatcher);
     }
@@ -85,6 +89,14 @@ final class McpToolbox extends AbstractToolbox implements ResetInterface
 
         $toolsMetadata = [];
         foreach ($remoteTools as $remote) {
+            if ([] !== $this->only && !\in_array($remote->name, $this->only, true)) {
+                continue;
+            }
+
+            if (\in_array($remote->name, $this->exclude, true)) {
+                continue;
+            }
+
             $inputSchema = $remote->inputSchema;
             // `properties: {}` would reach the platform as `[]`, which is not a JSON object.
             if ($this->declaresNoArguments($inputSchema)) {

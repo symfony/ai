@@ -1774,7 +1774,7 @@ final class AiBundle extends AbstractBundle
     /**
      * One toolset and toolbox per configured MCP server, on top of the bundle's own connection.
      *
-     * @param list<array{mcp_server: string, prefix?: string}> $servers
+     * @param list<array{mcp_server: string, prefix?: string, only?: list<string>, exclude?: list<string>}> $servers
      *
      * @return list<Reference>
      */
@@ -1805,6 +1805,8 @@ final class AiBundle extends AbstractBundle
                 $server['prefix'] ?? '',
                 new Reference('logger', ContainerInterface::IGNORE_ON_INVALID_REFERENCE),
                 new Reference('event_dispatcher', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                '$only' => $server['only'] ?? [],
+                '$exclude' => $server['exclude'] ?? [],
             ]))
                 ->addTag('kernel.reset', ['method' => 'reset']);
 
