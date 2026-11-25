@@ -145,6 +145,35 @@ final class FactoryTest extends TestCase
         $this->assertSame('Hello', $result->asText());
     }
 
+    public function testEveryRequestStaysBelowTheEndpointPath()
+    {
+        $urls = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$urls): MockResponse {
+            $urls[] = $url;
+
+            return match (true) {
+                str_ends_with($url, '/api/show') => new JsonMockResponse(match (json_decode($options['body'], true)['model']) {
+                    'nomic-embed-text' => ['capabilities' => ['embedding']],
+                    'phonon' => ['capabilities' => ['speech'], 'voices' => ['default']],
+                    default => ['capabilities' => ['completion']],
+                }),
+                str_ends_with($url, '/api/chat') => new JsonMockResponse(['message' => ['role' => 'assistant', 'content' => 'Hello'], 'done' => true]),
+                str_ends_with($url, '/api/embed') => new JsonMockResponse(['embeddings' => [[0.1, 0.2]]]),
+                default => new MockResponse('fake-wav-bytes'),
+            };
+        });
+
+        $platform = Factory::createPlatform('http://127.0.0.1:11434/ollama/', httpClient: $httpClient);
+        $platform->invoke('llama3.2', new MessageBag(Message::ofUser('Hello')))->asText();
+        $platform->invoke('nomic-embed-text', 'ping')->asVectors();
+        $platform->invoke('phonon', 'Hello from Ollama.')->getResult();
+
+        $this->assertContains('http://127.0.0.1:11434/ollama/api/chat', $urls);
+        $this->assertContains('http://127.0.0.1:11434/ollama/api/embed', $urls);
+        $this->assertContains('http://127.0.0.1:11434/ollama/v1/audio/speech', $urls);
+        $this->assertSame([], array_values(array_filter($urls, static fn (string $url): bool => !str_starts_with($url, 'http://127.0.0.1:11434/ollama/'))));
+    }
+
     public function testItGeneratesSpeechWithASpeechModel()
     {
         $httpClient = new MockHttpClient([

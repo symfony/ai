@@ -56,7 +56,7 @@ final class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException('The payload "text" key must be a string.');
         }
 
-        return new RawHttpResult($this->httpClient->request('POST', '/v1/audio/speech', [
+        return new RawHttpResult($this->httpClient->request('POST', 'v1/audio/speech', [
             'headers' => ['Content-Type' => 'application/json'],
             'body' => $this->encodeJsonBody(array_merge($options, [
                 'model' => $model->getName(),
