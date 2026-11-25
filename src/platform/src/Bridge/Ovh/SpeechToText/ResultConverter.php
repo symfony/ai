@@ -1,0 +1,69 @@
+<?php
+
+/*
+ * This file is part of the Symfony package.
+ *
+ * (c) Fabien Potencier <fabien@symfony.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace Symfony\AI\Platform\Bridge\Ovh\SpeechToText;
+
+use Symfony\AI\Platform\Bridge\Ovh\SpeechToText;
+use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\HttpStatusErrorHandlingTrait;
+use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
+
+/**
+ * @author Loïc Sapone <loic@sapone.fr>
+ */
+final class ResultConverter implements ResultConverterInterface
+{
+    use HttpStatusErrorHandlingTrait;
+
+    public function supports(Model $model): bool
+    {
+        return $model instanceof SpeechToText;
+    }
+
+    public function convert(RawResultInterface $result, array $options = []): TextResult
+    {
+        $httpResponse = $result->getObject();
+
+        $this->throwOnHttpError($httpResponse);
+
+        if (200 !== $httpResponse->getStatusCode()) {
+            throw new RuntimeException(\sprintf('Unexpected response code %d: "%s"', $httpResponse->getStatusCode(), $httpResponse->getContent(false)));
+        }
+
+        // The "text" response format is not JSON
+        if ('text' === ($options['response_format'] ?? null)) {
+            return new TextResult($httpResponse->getContent());
+        }
+
+        $data = $result->getData();
+
+        if (!isset($data['text'])) {
+            throw new RuntimeException('Response does not contain transcription text.');
+        }
+
+        $textResult = new TextResult($data['text']);
+
+        if (isset($data['usage'])) {
+            $textResult->getMetadata()->add('usage', $data['usage']);
+        }
+
+        return $textResult;
+    }
+
+    public function getTokenUsageExtractor(): ?TokenUsageExtractorInterface
+    {
+        return null;
+    }
+}

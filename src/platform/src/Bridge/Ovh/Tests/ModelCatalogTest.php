@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Ovh\Tests;
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
 use Symfony\AI\Platform\Bridge\Ovh\ModelCatalog;
+use Symfony\AI\Platform\Bridge\Ovh\SpeechToText;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Test\ModelCatalogTestCase;
@@ -52,6 +53,10 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         yield 'bge-multilingual-gemma2' => ['bge-multilingual-gemma2', EmbeddingsModel::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
         yield 'bge-m3' => ['bge-m3', EmbeddingsModel::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
         yield 'Qwen3-Embedding-8B' => ['Qwen3-Embedding-8B', EmbeddingsModel::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
+
+        // Speech-to-text models
+        yield 'whisper-large-v3' => ['whisper-large-v3', SpeechToText::class, [Capability::INPUT_AUDIO, Capability::OUTPUT_TEXT, Capability::SPEECH_TO_TEXT]];
+        yield 'whisper-large-v3-turbo' => ['whisper-large-v3-turbo', SpeechToText::class, [Capability::INPUT_AUDIO, Capability::OUTPUT_TEXT, Capability::SPEECH_TO_TEXT]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

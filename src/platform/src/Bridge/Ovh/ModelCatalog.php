@@ -274,6 +274,22 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::EMBEDDINGS,
                 ],
             ],
+            'whisper-large-v3' => [
+                'class' => SpeechToText::class,
+                'capabilities' => [
+                    Capability::INPUT_AUDIO,
+                    Capability::OUTPUT_TEXT,
+                    Capability::SPEECH_TO_TEXT,
+                ],
+            ],
+            'whisper-large-v3-turbo' => [
+                'class' => SpeechToText::class,
+                'capabilities' => [
+                    Capability::INPUT_AUDIO,
+                    Capability::OUTPUT_TEXT,
+                    Capability::SPEECH_TO_TEXT,
+                ],
+            ],
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);
