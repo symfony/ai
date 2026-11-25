@@ -43,16 +43,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                 ],
             ],
-            'Qwen3-Coder-30B-A3B-Instruct' => [
-                'class' => CompletionsModel::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
             'gpt-oss-20b' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => [
@@ -61,6 +51,7 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                     Capability::OUTPUT_STRUCTURED,
                     Capability::TOOL_CALLING,
+                    Capability::THINKING,
                 ],
             ],
             'gpt-oss-120b' => [
@@ -71,12 +62,130 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STREAMING,
                     Capability::OUTPUT_STRUCTURED,
                     Capability::TOOL_CALLING,
+                    Capability::THINKING,
                 ],
             ],
-            'Qwen3-32B' => [
+            'gemma-4-26b-a4b' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
+            'laguna-xs-2.1' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
+            'nemotron3-nano-30b' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
+            'nemotron3-omni-30b' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
+            'DeepSeek-V4.1-Flash-1017' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
+            'Qwen3.5-397B-A17B' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
+            'Qwen3.5-9B' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
+            'Qwen3.6-27B' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
+            'Qwen3.8-27B' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
+            'qwen3.6-35b-a3b' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
+            'qwen3-vl-30b-a3b' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::INPUT_IMAGE,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
                     Capability::OUTPUT_STRUCTURED,
@@ -104,26 +213,6 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::OUTPUT_STRUCTURED,
                 ],
             ],
-            'Llama-3.1-8B-Instruct' => [
-                'class' => CompletionsModel::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
-            'Mistral-7B-Instruct-v0.3' => [
-                'class' => CompletionsModel::class,
-                'capabilities' => [
-                    Capability::INPUT_MESSAGES,
-                    Capability::OUTPUT_TEXT,
-                    Capability::OUTPUT_STREAMING,
-                    Capability::OUTPUT_STRUCTURED,
-                    Capability::TOOL_CALLING,
-                ],
-            ],
             'Meta-Llama-3_3-70B-Instruct' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => [
@@ -134,13 +223,34 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TOOL_CALLING,
                 ],
             ],
-            'Mistral-Nemo-Instruct-2407' => [
+            'Olala-v1.0-mini-7A1B' => [
                 'class' => CompletionsModel::class,
                 'capabilities' => [
                     Capability::INPUT_MESSAGES,
                     Capability::OUTPUT_TEXT,
                     Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
                     Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
+            'Olala-v1.0-summarise' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
+                    Capability::OUTPUT_STRUCTURED,
+                    Capability::TOOL_CALLING,
+                    Capability::THINKING,
+                ],
+            ],
+            'Olala-v1.0-translate' => [
+                'class' => CompletionsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_MESSAGES,
+                    Capability::OUTPUT_TEXT,
+                    Capability::OUTPUT_STREAMING,
                 ],
             ],
             'bge-multilingual-gemma2' => [
@@ -151,6 +261,13 @@ final class ModelCatalog extends AbstractModelCatalog
                 ],
             ],
             'bge-m3' => [
+                'class' => EmbeddingsModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                    Capability::EMBEDDINGS,
+                ],
+            ],
+            'Qwen3-Embedding-8B' => [
                 'class' => EmbeddingsModel::class,
                 'capabilities' => [
                     Capability::INPUT_TEXT,
