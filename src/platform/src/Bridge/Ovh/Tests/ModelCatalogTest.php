@@ -13,6 +13,7 @@ namespace Symfony\AI\Platform\Bridge\Ovh\Tests;
 
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
+use Symfony\AI\Platform\Bridge\Ovh\DecisionModel;
 use Symfony\AI\Platform\Bridge\Ovh\Image;
 use Symfony\AI\Platform\Bridge\Ovh\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Ovh\SpeechToText;
@@ -68,6 +69,9 @@ final class ModelCatalogTest extends ModelCatalogTestCase
 
         // Image models
         yield 'stable-diffusion-xl-base-v10' => ['stable-diffusion-xl-base-v10', Image::class, [Capability::INPUT_TEXT, Capability::OUTPUT_IMAGE, Capability::TEXT_TO_IMAGE]];
+
+        // Decision models
+        yield 'clef-flash' => ['clef-flash', DecisionModel::class, [Capability::INPUT_TEXT]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

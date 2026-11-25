@@ -12,6 +12,9 @@
 namespace Symfony\AI\Platform\Bridge\Ovh\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\AI\Platform\Bridge\Decision\Answer\Answers;
+use Symfony\AI\Platform\Bridge\Decision\Evaluation;
+use Symfony\AI\Platform\Bridge\Decision\Question\NoulQuestion;
 use Symfony\AI\Platform\Bridge\Ovh\Factory;
 use Symfony\AI\Platform\Bridge\Ovh\ModelCatalog;
 use Symfony\AI\Platform\Bridge\Ovh\TextToSpeech;
@@ -108,5 +111,23 @@ final class FactoryTest extends TestCase
         $result = Factory::createPlatform('ovh-test-api-key', $httpClient)->invoke('stable-diffusion-xl-base-v10', 'A cat in a spacesuit');
 
         $this->assertSame('image-bytes', $result->asBinary());
+    }
+
+    public function testItSendsEvaluationsToTheSystemOneEndpoint()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url): MockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://oai.endpoints.kepler.ai.cloud.ovh.net/api/v1/systemone', $url);
+
+            return new MockResponse(json_encode(['model' => 'clef-flash', 'answers' => ['is_bug' => ['type' => 'noul', 'noul' => 0.9]], 'usage' => ['input_tokens' => 10]]));
+        });
+
+        $result = Factory::createPlatform('ovh-test-api-key', $httpClient)->invoke('clef-flash', new Evaluation('The app crashes.', [
+            'is_bug' => new NoulQuestion('Is this a software defect?', 'Broken behavior', 'A question'),
+        ]));
+
+        $answers = $result->asObject();
+        $this->assertInstanceOf(Answers::class, $answers);
+        $this->assertSame(0.9, $answers->getNoul('is_bug')->getProbability());
     }
 }

@@ -50,6 +50,7 @@ final class Factory
             new SpeechToText\ModelClient($httpClient, $apiKey, self::BASE_URL),
             new TextToSpeech\ModelClient($httpClient, $apiKey),
             new Image\ModelClient($httpClient, $apiKey, self::BASE_URL),
+            new Decision\ModelClient($httpClient, $apiKey, self::BASE_URL),
         ];
         $resultConverters = [
             new Completions\ResultConverter(),
@@ -57,6 +58,7 @@ final class Factory
             new SpeechToText\ResultConverter(),
             new TextToSpeech\ResultConverter(),
             new Image\ResultConverter(),
+            new Decision\ResultConverter(),
         ];
 
         return new Provider(

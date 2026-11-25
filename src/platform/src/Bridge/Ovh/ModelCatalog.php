@@ -330,6 +330,12 @@ final class ModelCatalog extends AbstractModelCatalog
                     Capability::TEXT_TO_IMAGE,
                 ],
             ],
+            'clef-flash' => [
+                'class' => DecisionModel::class,
+                'capabilities' => [
+                    Capability::INPUT_TEXT,
+                ],
+            ],
         ];
 
         $this->models = array_merge($defaultModels, $additionalModels);
