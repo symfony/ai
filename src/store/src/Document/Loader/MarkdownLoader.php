@@ -90,7 +90,9 @@ final class MarkdownLoader implements LoaderInterface
             ->replaceMatches('/!\[([^\]]*)\]\([^)]+\)/', '$1')
             ->replaceMatches('/\[([^\]]+)\]\([^)]+\)/', '$1')
             ->replaceMatches('/^#{1,6}\s+/m', '')
-            ->replaceMatches('/(\*{1,3}|_{1,3})(.+?)\1/', '$2')
+            ->replaceMatches('/(\*{1,3})(.+?)\1/', '$2')
+            // underscores inside a word, as in snake_case, do not mark emphasis
+            ->replaceMatches('/(?<![\p{L}\p{N}_])(_{1,3})(.+?)\1(?![\p{L}\p{N}_])/', '$2')
             ->replaceMatches('/~~(.+?)~~/', '$1')
             ->replaceMatches('/^>\s?/m', '')
             ->replaceMatches('/^[-*_]{3,}$/m', '')
