@@ -150,6 +150,33 @@ final class JsonFileLoaderTest extends TestCase
         iterator_to_array($loader->load(\dirname(__DIR__, 5).'/src/store/tests/Fixtures/articles.json'));
     }
 
+    public function testLoadWithMetadataMissingForSomeDocuments()
+    {
+        $file = tempnam(sys_get_temp_dir(), 'json');
+        file_put_contents($file, json_encode(['articles' => [
+            ['id' => 'a-001', 'author' => 'Paula Schmidt', 'body' => 'Solar'],
+            ['id' => 'a-002', 'body' => 'Wind'],
+            ['id' => 'a-003', 'author' => 'Marc Dupont', 'body' => 'Hydro'],
+        ]]));
+
+        $loader = new JsonFileLoader(
+            $id = '$.articles[*].id',
+            $content = '$.articles[*].body',
+            $metadata = [
+                'author' => '$.articles[*].author',
+            ],
+        );
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Metadata "author" JsonPath results must have the same length as the IDs, got 2 for 3 documents.');
+
+        try {
+            iterator_to_array($loader->load($file));
+        } finally {
+            unlink($file);
+        }
+    }
+
     public function testLoadWithNonScalarMetadata()
     {
         $loader = new JsonFileLoader(

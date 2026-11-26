@@ -72,6 +72,14 @@ final class JsonFileLoader implements LoaderInterface
         }
 
         $normalizedMetadata = $this->normalizeMetadata($crawler, $this->metadata);
+
+        // values are matched to the documents by position, so a missing one would move the next ones to the wrong documents
+        foreach ($normalizedMetadata as $key => $values) {
+            if (\count($values) !== \count($ids)) {
+                throw new RuntimeException(\sprintf('Metadata "%s" JsonPath results must have the same length as the IDs, got %d for %d documents.', $key, \count($values), \count($ids)));
+            }
+        }
+
         foreach ($ids as $index => $id) {
             $docMetadata = [];
 
