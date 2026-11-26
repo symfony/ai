@@ -118,9 +118,12 @@ class ResultConverter implements ResultConverterInterface
             throw new RuntimeException('Response does not contain any content.');
         }
 
-        // A cut tool call block still carries a well-formed partial input, so only stop_reason reveals the cut
+        // A cut tool call still carries a well-formed partial input, and a cut before any text leaves nothing to return
         $lastBlock = $data['content'][array_key_last($data['content'])];
-        if ('max_tokens' === ($data['stop_reason'] ?? null) && \in_array($lastBlock['type'] ?? null, ['tool_use', 'server_tool_use'], true)) {
+        if ('max_tokens' === ($data['stop_reason'] ?? null) && (
+            \in_array($lastBlock['type'] ?? null, ['tool_use', 'server_tool_use'], true)
+            || !\in_array('text', array_column($data['content'], 'type'), true)
+        )) {
             throw self::maxOutputTokensException($data['usage']['output_tokens'] ?? null);
         }
 

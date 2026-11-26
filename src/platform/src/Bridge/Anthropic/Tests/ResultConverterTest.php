@@ -874,6 +874,123 @@ final class ResultConverterTest extends TestCase
         $this->assertSame(['title' => 'Test'], $result->getContent()[0]->getContent()[0]->getArguments());
     }
 
+    /**
+     * @param array<string, mixed> $body
+     */
+    #[DataProvider('provideResponsesTruncatedBeforeAnyText')]
+    public function testConvertThrowsWhenTruncatedAtMaxTokensBeforeAnyText(array $body, string $expectedMessage)
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse(['stop_reason' => 'max_tokens'] + $body));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $this->expectException(MaxOutputTokensException::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, string}>
+     */
+    public static function provideResponsesTruncatedBeforeAnyText(): iterable
+    {
+        yield 'thinking' => [
+            ['content' => [
+                ['type' => 'thinking', 'thinking' => 'The user asks for the time, so I', 'signature' => 'sig_abc123'],
+            ]],
+            'Anthropic truncated the response after reaching the output token limit.',
+        ];
+
+        yield 'thinking with output token count' => [
+            [
+                'content' => [
+                    ['type' => 'thinking', 'thinking' => 'The user asks for the time, so I', 'signature' => 'sig_abc123'],
+                ],
+                'usage' => ['input_tokens' => 10, 'output_tokens' => 1000],
+            ],
+            'Anthropic truncated the response after reaching the maximum of 1000 output tokens.',
+        ];
+
+        yield 'redacted thinking' => [
+            ['content' => [
+                ['type' => 'redacted_thinking', 'data' => 'EmwKAhgBEgy3va3pzix'],
+            ]],
+            'Anthropic truncated the response after reaching the output token limit.',
+        ];
+
+        yield 'web search' => [
+            ['content' => [
+                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'web_search', 'input' => ['query' => 'symfony ai']],
+                ['type' => 'web_search_tool_result', 'tool_use_id' => 'srvtoolu_01ABC123', 'content' => []],
+            ]],
+            'Anthropic truncated the response after reaching the output token limit.',
+        ];
+
+        yield 'thinking and web search' => [
+            ['content' => [
+                ['type' => 'thinking', 'thinking' => 'I need to look this up.', 'signature' => 'sig_abc123'],
+                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'web_search', 'input' => ['query' => 'symfony ai']],
+                ['type' => 'web_search_tool_result', 'tool_use_id' => 'srvtoolu_01ABC123', 'content' => []],
+            ]],
+            'Anthropic truncated the response after reaching the output token limit.',
+        ];
+
+        yield 'bash code execution' => [
+            ['content' => [
+                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'bash_code_execution', 'input' => ['command' => 'ls']],
+                ['type' => 'bash_code_execution_tool_result', 'tool_use_id' => 'srvtoolu_01ABC123', 'content' => ['return_code' => 0, 'stdout' => 'notes.md']],
+            ]],
+            'Anthropic truncated the response after reaching the output token limit.',
+        ];
+
+        yield 'text editor code execution' => [
+            ['content' => [
+                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'text_editor_code_execution', 'input' => ['command' => 'create', 'path' => '/tmp/notes.md', 'file_text' => '# Notes']],
+                ['type' => 'text_editor_code_execution_tool_result', 'tool_use_id' => 'srvtoolu_01ABC123', 'content' => ['type' => 'text_editor_code_execution_create_result', 'is_file_update' => false]],
+            ]],
+            'Anthropic truncated the response after reaching the output token limit.',
+        ];
+    }
+
+    public function testConvertKeepsPartialTextWhenTruncatedAtMaxTokensAfterThinking()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                ['type' => 'thinking', 'thinking' => 'The user asks for the time.', 'signature' => 'sig_abc123'],
+                ['type' => 'text', 'text' => 'It is'],
+            ],
+            'stop_reason' => 'max_tokens',
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $this->assertInstanceOf(TextResult::class, $result->getContent()[1]);
+        $this->assertSame('It is', $result->getContent()[1]->getContent());
+        $this->assertTrue($result->getMetadata()->get('finish_reason')->is(FinishReasonCase::LENGTH));
+    }
+
+    public function testConvertKeepsTextWhenTruncatedAtMaxTokensAfterAServerToolResult()
+    {
+        $httpClient = new MockHttpClient(new JsonMockResponse([
+            'content' => [
+                ['type' => 'text', 'text' => 'Let me search.'],
+                ['type' => 'server_tool_use', 'id' => 'srvtoolu_01ABC123', 'name' => 'web_search', 'input' => ['query' => 'symfony ai']],
+                ['type' => 'web_search_tool_result', 'tool_use_id' => 'srvtoolu_01ABC123', 'content' => []],
+            ],
+            'stop_reason' => 'max_tokens',
+        ]));
+        $httpResponse = $httpClient->request('POST', 'https://api.anthropic.com/v1/messages');
+
+        $result = (new ResultConverter())->convert(new RawHttpResult($httpResponse));
+
+        $this->assertInstanceOf(MultiPartResult::class, $result);
+        $this->assertInstanceOf(TextResult::class, $result->getContent()[0]);
+        $this->assertSame('Let me search.', $result->getContent()[0]->getContent());
+        $this->assertTrue($result->getMetadata()->get('finish_reason')->is(FinishReasonCase::LENGTH));
+    }
+
     public function testConvertWithoutStopReasonOmitsFinishReasonMetadata()
     {
         $httpClient = new MockHttpClient(new JsonMockResponse([
