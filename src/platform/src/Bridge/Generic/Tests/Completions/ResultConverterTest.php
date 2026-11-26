@@ -785,6 +785,36 @@ class ResultConverterTest extends TestCase
         $this->assertSame(['city' => 'Beijing'], $completed[0]->getArguments());
     }
 
+    public function testStreamingToolCallWhoseNameArrivesInALaterChunk()
+    {
+        // the first chunk has the id but no function.name
+        $converter = new ResultConverter();
+
+        $events = [
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['id' => 'call_1', 'type' => 'function', 'index' => 0, 'function' => ['arguments' => '']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => ['tool_calls' => [
+                ['index' => 0, 'function' => ['name' => 'get_weather', 'arguments' => '{"city":"Paris"}']],
+            ]]]]],
+            ['choices' => [['index' => 0, 'delta' => [], 'finish_reason' => 'tool_calls']]],
+        ];
+
+        $streamResult = $converter->convert(new InMemoryRawResult([], $events, $this->httpResponseStub()), ['stream' => true]);
+
+        $chunks = [];
+        foreach ($streamResult->getContent() as $part) {
+            $chunks[] = $part;
+        }
+
+        $complete = array_values(array_filter($chunks, static fn ($c) => $c instanceof ToolCallComplete));
+        $this->assertCount(1, $complete);
+        $toolCall = $complete[0]->getToolCalls()[0];
+        $this->assertSame('call_1', $toolCall->getId());
+        $this->assertSame('get_weather', $toolCall->getName());
+        $this->assertSame(['city' => 'Paris'], $toolCall->getArguments());
+    }
+
     public function testStreamingToolInputDeltasIncludeTheArgumentsOfTheStartChunk()
     {
         // llama.cpp sends the opening "{" in the chunk that carries the id and the name
