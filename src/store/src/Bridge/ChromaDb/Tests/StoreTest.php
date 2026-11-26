@@ -33,6 +33,7 @@ use Symfony\Component\Uid\Uuid;
 final class StoreTest extends TestCase
 {
     private const DEFAULT_QUERY_LIMIT = 10;
+    private const DEFAULT_INCLUDE = ['embeddings', 'metadatas', 'distances', 'documents'];
     private const CUSTOM_QUERY_LIMIT = 6;
 
     /**
@@ -173,7 +174,7 @@ final class StoreTest extends TestCase
                 self::DEFAULT_QUERY_LIMIT, // nResults
                 null,                  // where
                 null,                  // whereDocument
-                null                   // include
+                self::DEFAULT_INCLUDE  // include
             )
             ->willReturn($queryResponse);
 
@@ -215,7 +216,7 @@ final class StoreTest extends TestCase
                 self::CUSTOM_QUERY_LIMIT, // nResults
                 null,                  // where
                 null,                  // whereDocument
-                null                   // include
+                self::DEFAULT_INCLUDE  // include
             )
             ->willReturn($queryResponse);
 
@@ -257,7 +258,7 @@ final class StoreTest extends TestCase
                 self::DEFAULT_QUERY_LIMIT, // nResults
                 ['category' => 'technology'],  // where
                 null,                  // whereDocument
-                null                   // include
+                self::DEFAULT_INCLUDE  // include
             )
             ->willReturn($queryResponse);
 
@@ -300,7 +301,7 @@ final class StoreTest extends TestCase
                 self::DEFAULT_QUERY_LIMIT, // nResults
                 null,                  // where
                 ['$contains' => 'machine learning'],  // whereDocument
-                null                   // include
+                self::DEFAULT_INCLUDE  // include
             )
             ->willReturn($queryResponse);
 
@@ -344,7 +345,7 @@ final class StoreTest extends TestCase
                 self::DEFAULT_QUERY_LIMIT, // nResults
                 ['category' => 'AI', 'status' => 'published'],  // where
                 ['$contains' => 'neural networks'],  // whereDocument
-                null                   // include
+                self::DEFAULT_INCLUDE  // include
             )
             ->willReturn($queryResponse);
 
@@ -390,7 +391,7 @@ final class StoreTest extends TestCase
                 self::DEFAULT_QUERY_LIMIT, // nResults
                 ['category' => 'nonexistent'],  // where
                 null,                  // whereDocument
-                null                   // include
+                self::DEFAULT_INCLUDE  // include
             )
             ->willReturn($queryResponse);
 
@@ -504,7 +505,7 @@ final class StoreTest extends TestCase
                 self::DEFAULT_QUERY_LIMIT, // nResults
                 $expectedWhere,        // where
                 $expectedWhereDocument,// whereDocument
-                null                   // include
+                self::DEFAULT_INCLUDE  // include
             )
             ->willReturn($queryResponse);
 
@@ -514,14 +515,14 @@ final class StoreTest extends TestCase
         $this->assertCount(1, $documents);
     }
 
-    public function testQueryReturnsMetadatasEmbeddingsDistanceWithoutInclude()
+    public function testQueryReturnsTheTextOfTheDocumentsWithoutInclude()
     {
         $queryVector = new Vector([0.15, 0.25, 0.35]);
         $queryResponse = new QueryItemsResponse(
             ids: [['01234567-89ab-cdef-0123-456789abcdef']],
             embeddings: [[[0.1, 0.2, 0.3]]],
             metadatas: [[['title' => 'Doc 1']]],
-            documents: null,
+            documents: [['Document content here']],
             data: null,
             uris: null,
             distances: null
@@ -537,6 +538,14 @@ final class StoreTest extends TestCase
 
         $collection->expects($this->once())
             ->method('query')
+            ->with(
+                [[0.15, 0.25, 0.35]],  // queryEmbeddings
+                null,                  // queryTexts
+                self::DEFAULT_QUERY_LIMIT, // nResults
+                null,                  // where
+                null,                  // whereDocument
+                self::DEFAULT_INCLUDE  // include
+            )
             ->willReturn($queryResponse);
 
         $store = StoreFactory::create($client, 'test-collection');
@@ -545,7 +554,8 @@ final class StoreTest extends TestCase
         $this->assertCount(1, $documents);
         $this->assertSame('01234567-89ab-cdef-0123-456789abcdef', (string) $documents[0]->getId());
         $this->assertSame([0.1, 0.2, 0.3], $documents[0]->getVector()->getData());
-        $this->assertSame(['title' => 'Doc 1'], $documents[0]->getMetadata()->getArrayCopy());
+        $this->assertSame('Document content here', $documents[0]->getMetadata()->getText());
+        $this->assertSame(['title' => 'Doc 1', '_text' => 'Document content here'], $documents[0]->getMetadata()->getArrayCopy());
     }
 
     public function testQueryReturnsMetadatasEmbeddingsDistanceWithOnlyDocuments()
@@ -889,7 +899,7 @@ final class StoreTest extends TestCase
                 self::DEFAULT_QUERY_LIMIT,     // nResults
                 null,                          // where
                 null,                          // whereDocument
-                null                           // include
+                self::DEFAULT_INCLUDE          // include
             )
             ->willReturn($queryResponse);
 
