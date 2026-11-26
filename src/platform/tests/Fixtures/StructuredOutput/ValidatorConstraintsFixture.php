@@ -118,6 +118,9 @@ final class ValidatorConstraintsFixture
     #[Assert\NotBlank]
     public string $notBlankString;
 
+    #[Assert\NotBlank(allowNull: true)]
+    public ?string $notBlankAllowNull = null;
+
     #[Assert\NotEqualTo('bar')]
     public string $notEqualTo;
 

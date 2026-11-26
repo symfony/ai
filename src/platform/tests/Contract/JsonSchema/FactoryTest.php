@@ -242,6 +242,40 @@ final class FactoryTest extends TestCase
         $this->assertSame(['type' => ['string', 'null'], 'enum' => ['low', 'high', null]], $actual['properties']['level']);
     }
 
+    public function testBuildPropertiesRemovesNullForNotBlankAndEmitsNoOpenApiNullable()
+    {
+        $dto = new class(1, 'hello') {
+            public function __construct(
+                #[Assert\Positive]
+                public int $score,
+                #[Assert\NotBlank]
+                public ?string $note,
+                #[Assert\NotBlank(allowNull: true)]
+                public ?string $optionalNote = null,
+                #[Assert\NotNull]
+                public ?int $nonNullCount = null,
+                #[Assert\NotBlank]
+                public ?ExampleBackedEnum $verdict = null,
+            ) {
+            }
+        };
+
+        $actual = $this->factory->buildProperties($dto::class);
+
+        $this->assertSame([
+            'type' => 'object',
+            'properties' => [
+                'score' => ['type' => 'integer', 'exclusiveMinimum' => 0],
+                'note' => ['type' => 'string', 'minLength' => 1],
+                'optionalNote' => ['type' => ['string', 'null'], 'minLength' => 1],
+                'nonNullCount' => ['type' => 'integer'],
+                'verdict' => ['type' => 'integer', 'enum' => [1, 5]],
+            ],
+            'required' => ['score', 'note'],
+            'additionalProperties' => false,
+        ], $actual);
+    }
+
     public function testBuildPropertiesWithOnlyOptionalFieldsRejectsUnknownProperties()
     {
         $dto = new class {

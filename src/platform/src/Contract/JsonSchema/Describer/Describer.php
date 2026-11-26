@@ -63,14 +63,26 @@ final class Describer implements ObjectDescriberInterface, PropertyDescriberInte
 
     public function describeObject(ObjectSubject $subject, ?array &$schema): iterable
     {
-        $schema = $required = [];
+        $schema = $required = $properties = [];
         foreach ($this->objectDescribers as $describer) {
             foreach ($describer->describeObject($subject, $schema) as $property) {
-                $this->describeProperty($property, $schema['properties'][$property->getName()]);
+                $properties[$property->getName()][] = $property;
                 if ($property->isRequired()) {
                     $required[$property->getName()] = true;
                 }
             }
+        }
+
+        foreach ($properties as $name => $subjects) {
+            $propertySchema = null;
+            foreach ($this->propertyDescribers as $describer) {
+                foreach ($subjects as $propertySubject) {
+                    $describer->describeProperty($propertySubject, $propertySchema);
+                }
+            }
+
+            $this->finalizeProperty($propertySchema);
+            $schema['properties'][$name] = $propertySchema;
         }
 
         if (['type' => 'object'] === $schema) {
@@ -94,6 +106,14 @@ final class Describer implements ObjectDescriberInterface, PropertyDescriberInte
             $describer->describeProperty($subject, $schema);
         }
 
+        $this->finalizeProperty($schema);
+    }
+
+    /**
+     * @param array<string, mixed>|null $schema
+     */
+    private function finalizeProperty(?array &$schema): void
+    {
         // an enum lists every allowed value, so a nullable property must list null too
         if (isset($schema['enum']) && \in_array('null', (array) ($schema['type'] ?? []), true) && !\in_array(null, $schema['enum'], true)) {
             $schema['enum'][] = null;

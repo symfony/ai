@@ -139,12 +139,12 @@ final class ValidatorConstraintsDescriber implements PropertyDescriberInterface
 
     /**
      * @param JsonSchema|array<string, mixed>|null $schema
-     *
-     * @param-out JsonSchema|array<string, mixed> $schema
      */
     private function describeNotBlank(?array &$schema, Assert\NotBlank $constraint): void
     {
-        $schema['nullable'] = $constraint->allowNull;
+        if (!$constraint->allowNull) {
+            $this->describeNotNull($schema);
+        }
 
         if ($this->containsType($schema, 'string')) {
             $schema['minLength'] = 1;
@@ -161,13 +161,9 @@ final class ValidatorConstraintsDescriber implements PropertyDescriberInterface
 
     /**
      * @param JsonSchema|array<string, mixed>|null $schema
-     *
-     * @param-out JsonSchema|array<string, mixed> $schema
      */
     private function describeBlank(?array &$schema): void
     {
-        $schema['nullable'] = true;
-
         if ($this->containsType($schema, 'string')) {
             $schema['maxLength'] = 0;
         }
@@ -640,7 +636,29 @@ final class ValidatorConstraintsDescriber implements PropertyDescriberInterface
      */
     private function describeNotNull(?array &$schema): void
     {
-        $schema['nullable'] = false;
+        if (isset($schema['enum']) && \is_array($schema['enum'])) {
+            $schema['enum'] = array_values(array_filter($schema['enum'], static fn (mixed $item): bool => null !== $item));
+        }
+
+        if (isset($schema['anyOf']) && \is_array($schema['anyOf'])) {
+            $branches = array_values(array_filter(
+                $schema['anyOf'],
+                static fn (mixed $branch): bool => ['type' => 'null'] !== $branch,
+            ));
+
+            if (1 === \count($branches) && \is_array($branches[0])) {
+                unset($schema['anyOf']);
+                foreach ($branches[0] as $key => $value) {
+                    if (\is_string($key)) {
+                        $schema[$key] = $value;
+                    }
+                }
+            } elseif ([] !== $branches) {
+                $schema['anyOf'] = $branches;
+            } else {
+                unset($schema['anyOf']);
+            }
+        }
 
         if (\in_array($schema['type'] ?? null, ['null', ['null']], true)) {
             unset($schema['type']);
@@ -649,6 +667,16 @@ final class ValidatorConstraintsDescriber implements PropertyDescriberInterface
 
             if (1 === \count($schema['type'])) {
                 [$schema['type']] = $schema['type'];
+            }
+        }
+
+        if (!isset($schema['type']) && !isset($schema['anyOf']) && !isset($schema['enum']) && !isset($schema['const'])) {
+            if (isset($schema['not']['enum']) && \is_array($schema['not']['enum'])) {
+                if (!\in_array(null, $schema['not']['enum'], true)) {
+                    $schema['not']['enum'][] = null;
+                }
+            } elseif (!isset($schema['not'])) {
+                $schema['not'] = ['type' => 'null'];
             }
         }
     }
