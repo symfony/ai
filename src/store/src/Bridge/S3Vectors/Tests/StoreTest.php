@@ -493,11 +493,8 @@ final class StoreTest extends TestCase
                     && 'test-index' === $input['indexName'];
             }));
 
-        $client->expects($this->once())
-            ->method('deleteVectorBucket')
-            ->with($this->callback(static function ($input) {
-                return 'test-bucket' === $input['vectorBucketName'];
-            }));
+        $client->expects($this->never())
+            ->method('deleteVectorBucket');
 
         self::createStore($client)->drop();
     }
