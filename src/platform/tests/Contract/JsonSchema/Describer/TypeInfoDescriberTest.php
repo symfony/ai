@@ -26,6 +26,7 @@ final class TypeInfoDescriberTest extends TestCase
     #[TestWith([['type' => ['integer', 'null']], TypeInfoFixture::class, 'nullableInt'], 'add null for nullable scalar')]
     #[TestWith([['type' => 'integer', 'enum' => [1, 5]], TypeInfoFixture::class, 'backedEnum'], 'backed enum')]
     #[TestWith([['type' => ['integer', 'null'], 'enum' => [1, 5]], TypeInfoFixture::class, 'nullableBackedEnum'], 'nullable backed enum')]
+    #[TestWith([[], TypeInfoFixture::class, 'anything'], 'no type for mixed')]
     public function testDescribeAddsNullTypeForNullableScalar(array $expectedSchema, string $class, string $property)
     {
         $describer = new TypeInfoDescriber();

@@ -21,4 +21,5 @@ final class TypeInfoFixture
     public ExampleEnum $enum;
     public ?ExampleEnum $nullableEnum = null;
     public object $payload;
+    public mixed $anything = null;
 }

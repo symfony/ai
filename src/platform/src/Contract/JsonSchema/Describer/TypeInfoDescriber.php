@@ -73,7 +73,7 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
 
         $subSchema = $this->getTypeSchema($type);
         if ($type->isNullable()) {
-            if (!isset($subSchema['anyOf'])) {
+            if (isset($subSchema['type'])) {
                 $subSchema['type'] = (array) $subSchema['type'];
                 $subSchema['type'][] = 'null';
             }
