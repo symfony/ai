@@ -4,6 +4,7 @@ CHANGELOG
 1.0
 ---
 
+ * `McpToolbox::getTools()` carries a remote tool's `outputSchema` into `Tool::getMetadata()` under that key, readable through `Tool::getOutputSchema()`, instead of discarding it
  * Add typed tool effect hints populated from remote MCP annotations
 
 0.15

@@ -91,12 +91,19 @@ final class McpToolbox extends AbstractToolbox implements ResetInterface
                 $inputSchema = null;
             }
 
+            $metadata = $this->annotationsToMetadata($remote->annotations);
+            // The schema of a structured result, when the server announced one: a consumer deciding whether to
+            // trust a result can read it through Tool::getOutputSchema(), the platform bridges never send metadata.
+            if (null !== $remote->outputSchema) {
+                $metadata['outputSchema'] = $remote->outputSchema;
+            }
+
             $toolsMetadata[] = new Tool(
                 new ExecutionReference(self::class, $remote->name),
                 $prefix.$remote->name,
                 $remote->description ?? '',
                 $inputSchema,
-                $this->annotationsToMetadata($remote->annotations),
+                $metadata,
             );
         }
 

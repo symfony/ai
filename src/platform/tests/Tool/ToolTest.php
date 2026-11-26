@@ -88,6 +88,19 @@ final class ToolTest extends TestCase
         $this->assertSame('fallback', $tool->getMetadataValue('hitl', 'fallback'));
     }
 
+    public function testReturnsTheOutputSchemaFromMetadata()
+    {
+        $outputSchema = ['type' => 'object', 'properties' => ['fee' => ['type' => 'number']]];
+        $tool = new Tool(new ExecutionReference('MyClass'), 'tool', 'description', metadata: ['outputSchema' => $outputSchema]);
+
+        $this->assertSame($outputSchema, $tool->getOutputSchema());
+    }
+
+    public function testReturnsNullOutputSchemaByDefault()
+    {
+        $this->assertNull((new Tool(new ExecutionReference('MyClass'), 'tool', 'description'))->getOutputSchema());
+    }
+
     public function testEffectHintsDefaultToConservativeValues()
     {
         $tool = new Tool(new ExecutionReference('MyClass'), 'tool', 'description');
