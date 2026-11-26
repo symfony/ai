@@ -353,6 +353,34 @@ The MCP SDK, and therefore the MCP Bundle, supports two patterns for placing att
         public function toolTwo(): string { }
     }
 
+Decorating the Reference Handler
+................................
+
+Each server calls its tools, prompts and resources through the ``mcp.server.<name>.reference_handler``
+service. Decorate it to run code around every call, for example to check access before a tool runs::
+
+    use Mcp\Server\Capability\Registry\ElementReference;
+    use Mcp\Server\Capability\Registry\ReferenceHandlerInterface;
+    use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
+    use Symfony\Component\DependencyInjection\Attribute\AutowireDecorated;
+
+    #[AsDecorator('mcp.server.default.reference_handler')]
+    final class GuardedReferenceHandler implements ReferenceHandlerInterface
+    {
+        public function __construct(
+            #[AutowireDecorated]
+            private ReferenceHandlerInterface $inner,
+        ) {
+        }
+
+        public function handle(ElementReference $reference, array $arguments): mixed
+        {
+            // Check access to $reference here
+
+            return $this->inner->handle($reference, $arguments);
+        }
+    }
+
 MCP Apps
 ........
 
