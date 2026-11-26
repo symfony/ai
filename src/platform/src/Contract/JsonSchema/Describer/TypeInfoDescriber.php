@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Contract\JsonSchema\Subject\ObjectSubject;
 use Symfony\AI\Platform\Contract\JsonSchema\Subject\PropertySubject;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\Component\TypeInfo\Type;
+use Symfony\Component\TypeInfo\Type\ArrayShapeType;
 use Symfony\Component\TypeInfo\Type\BackedEnumType;
 use Symfony\Component\TypeInfo\Type\BuiltinType;
 use Symfony\Component\TypeInfo\Type\CollectionType;
@@ -132,6 +133,11 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
             case $type->isIdentifiedBy(TypeIdentifier::ARRAY):
                 \assert($type instanceof CollectionType);
 
+                // the keys of an array shape are names, which JSON only has for objects
+                if ($type instanceof ArrayShapeType) {
+                    return $this->buildArrayShapeSchema($type);
+                }
+
                 $items = $this->getTypeSchema($type->getCollectionValueType());
 
                 return ['type' => 'array'] + ($items ? ['items' => $items] : []);
@@ -155,6 +161,33 @@ final class TypeInfoDescriber implements ObjectDescriberInterface, PropertyDescr
             default:
                 return [];
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildArrayShapeSchema(ArrayShapeType $type): array
+    {
+        $schema = ['type' => 'object', 'properties' => []];
+
+        foreach ($type->getShape() as $key => ['type' => $valueType, 'optional' => $optional]) {
+            $valueSchema = $this->getTypeSchema($valueType);
+            if ($valueType->isNullable() && isset($valueSchema['type']) && !isset($valueSchema['anyOf'])) {
+                $valueSchema['type'] = [...(array) $valueSchema['type'], 'null'];
+            }
+
+            $schema['properties'][(string) $key] = $valueSchema;
+
+            if (!$optional) {
+                $schema['required'][] = (string) $key;
+            }
+        }
+
+        if ($type->isSealed()) {
+            $schema['additionalProperties'] = false;
+        }
+
+        return $schema;
     }
 
     /**
