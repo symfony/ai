@@ -21,6 +21,7 @@ use Symfony\AI\Platform\Exception\ExceedContextSizeException;
 use Symfony\AI\Platform\Exception\IncompleteStreamException;
 use Symfony\AI\Platform\Exception\MalformedToolCallException;
 use Symfony\AI\Platform\Exception\MaxOutputTokensException;
+use Symfony\AI\Platform\Exception\ModelNotFoundException;
 use Symfony\AI\Platform\Exception\RateLimitExceededException;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Exception\ServerException;
@@ -421,16 +422,14 @@ class ResultConverterTest extends TestCase
     public function testThrowsAuthenticationExceptionOnInvalidApiKey()
     {
         $converter = new ResultConverter();
-        $httpResponse = $this->createMock(ResponseInterface::class);
-        $httpResponse->method('getStatusCode')->willReturn(401);
-        $httpResponse->method('getContent')->willReturn(json_encode([
+        $httpResponse = $this->createResponse(json_encode([
             'error' => [
                 'message' => 'Invalid API key provided: sk-invalid',
             ],
-        ]));
+        ]), 401);
 
         $this->expectException(AuthenticationException::class);
-        $this->expectExceptionMessage('Invalid API key provided: sk-invalid');
+        $this->expectExceptionMessage('HTTP 401 returned for "https://api.example.com/v1/chat/completions": Invalid API key provided: sk-invalid');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }
@@ -438,29 +437,25 @@ class ResultConverterTest extends TestCase
     public function testThrowsAuthenticationExceptionOnDetailOnlyErrorPayload()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
-        $httpResponse->method('getStatusCode')->willReturn(401);
-        $httpResponse->method('getContent')->willReturn(json_encode([
+        $httpResponse = $this->createResponse(json_encode([
             'detail' => 'User not found',
-        ]));
+        ]), 401);
 
         $this->expectException(AuthenticationException::class);
-        $this->expectExceptionMessage('User not found');
+        $this->expectExceptionMessage('HTTP 401 returned for "https://api.example.com/v1/chat/completions": User not found');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }
 
-    public function testFallsBackToTheGenericMessageOnANonStringDetail()
+    public function testFormatsFastApiValidationDetailOnUnauthorized()
     {
         $converter = new ResultConverter();
-        $httpResponse = self::createMock(ResponseInterface::class);
-        $httpResponse->method('getStatusCode')->willReturn(401);
-        $httpResponse->method('getContent')->willReturn(json_encode([
+        $httpResponse = $this->createResponse(json_encode([
             'detail' => [['loc' => ['header', 'authorization'], 'msg' => 'Field required', 'type' => 'missing']],
-        ]));
+        ]), 401);
 
         $this->expectException(AuthenticationException::class);
-        $this->expectExceptionMessage('Authentication failed.');
+        $this->expectExceptionMessage('HTTP 401 returned for "https://api.example.com/v1/chat/completions": header.authorization: Field required');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }
@@ -506,9 +501,7 @@ class ResultConverterTest extends TestCase
     public function testThrowsExceedContextSizeExceptionOnContextOverflow(array $error)
     {
         $converter = new ResultConverter();
-        $httpResponse = $this->createMock(ResponseInterface::class);
-        $httpResponse->method('getStatusCode')->willReturn(400);
-        $httpResponse->method('getContent')->willReturn(json_encode(['error' => $error]));
+        $httpResponse = $this->createResponse(json_encode(['error' => $error]), 400);
 
         $this->expectException(ExceedContextSizeException::class);
         $this->expectExceptionMessage($error['message']);
@@ -529,16 +522,14 @@ class ResultConverterTest extends TestCase
     public function testThrowsBadRequestExceptionOnBadRequestResponse()
     {
         $converter = new ResultConverter();
-        $httpResponse = $this->createMock(ResponseInterface::class);
-        $httpResponse->method('getStatusCode')->willReturn(400);
-        $httpResponse->method('getContent')->willReturn(json_encode([
+        $httpResponse = $this->createResponse(json_encode([
             'error' => [
                 'message' => 'Bad Request: invalid parameters',
             ],
-        ]));
+        ]), 400);
 
         $this->expectException(BadRequestException::class);
-        $this->expectExceptionMessage('Bad Request: invalid parameters');
+        $this->expectExceptionMessage('HTTP 400 returned for "https://api.example.com/v1/chat/completions": Bad Request: invalid parameters');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }
@@ -546,11 +537,10 @@ class ResultConverterTest extends TestCase
     public function testThrowsBadRequestExceptionOnBadRequestResponseWithNoResponseBody()
     {
         $converter = new ResultConverter();
-        $httpResponse = $this->createMock(ResponseInterface::class);
-        $httpResponse->method('getStatusCode')->willReturn(400);
+        $httpResponse = $this->createResponse('', 400);
 
         $this->expectException(BadRequestException::class);
-        $this->expectExceptionMessage('Bad Request');
+        $this->expectExceptionMessage('HTTP 400 returned for "https://api.example.com/v1/chat/completions".');
 
         $converter->convert(new RawHttpResult($httpResponse));
     }
@@ -601,10 +591,102 @@ class ResultConverterTest extends TestCase
      */
     public static function provideNonStringErrorMessages(): iterable
     {
-        yield 'unauthorized' => [401, '{"message":["a","b"]}', AuthenticationException::class, 'Authentication failed.'];
-        yield 'bad request' => [400, '{"message":{"detail":[{"msg":"x"}]}}', BadRequestException::class, 'Bad Request'];
-        yield 'rate limit' => [429, '{"message":["a","b"]}', RateLimitExceededException::class, 'Rate limit exceeded.'];
-        yield 'server error' => [503, '{"error":{"message":{"detail":[{"msg":"x"}]}}}', ServerException::class, 'Server error (HTTP 503).'];
+        yield 'unauthorized' => [401, '{"message":["a","b"]}', AuthenticationException::class, 'HTTP 401 returned for "https://api.example.com/v1/chat/completions".'];
+        yield 'unauthorized non-string detail' => [401, '{"detail":{"foo":"bar"}}', AuthenticationException::class, 'HTTP 401 returned for "https://api.example.com/v1/chat/completions".'];
+        yield 'bad request' => [400, '{"message":{"detail":[{"msg":"x"}]}}', BadRequestException::class, 'HTTP 400 returned for "https://api.example.com/v1/chat/completions".'];
+        yield 'rate limit' => [429, '{"message":["a","b"]}', RateLimitExceededException::class, 'Rate limit exceeded. HTTP 429 returned for "https://api.example.com/v1/chat/completions".'];
+        yield 'server error' => [503, '{"error":{"message":{"detail":[{"msg":"x"}]}}}', ServerException::class, 'Server error (HTTP 503). HTTP 503 returned for "https://api.example.com/v1/chat/completions".'];
+    }
+
+    /**
+     * @param class-string<\Throwable> $exception
+     */
+    #[DataProvider('provideStringErrorPayloads')]
+    public function testThrowsWithStringErrorPayload(int $statusCode, string $body, string $exception, string $expectedMessage)
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createResponse($body, $statusCode);
+
+        $this->expectException($exception);
+        $this->expectExceptionMessage($expectedMessage);
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    /**
+     * @return iterable<string, array{int, string, class-string<\Throwable>, string}>
+     */
+    public static function provideStringErrorPayloads(): iterable
+    {
+        yield 'payment required' => [402, '{"error":"You have exceeded your monthly included credits."}', RuntimeException::class, 'HTTP 402 returned for "https://api.example.com/v1/chat/completions": You have exceeded your monthly included credits.'];
+        yield 'forbidden' => [403, '{"error":"Access to model is restricted"}', AuthenticationException::class, 'HTTP 403 returned for "https://api.example.com/v1/chat/completions": Access to model is restricted'];
+        yield 'not found' => [404, '{"error":"Model not found"}', ModelNotFoundException::class, 'HTTP 404 returned for "https://api.example.com/v1/chat/completions": Model not found'];
+        yield 'unprocessable entity' => [422, '{"error":"Unprocessable entity"}', BadRequestException::class, 'HTTP 422 returned for "https://api.example.com/v1/chat/completions": Unprocessable entity'];
+        yield 'service unavailable' => [503, '{"error":"Model is loading"}', ServerException::class, 'Server error (HTTP 503). HTTP 503 returned for "https://api.example.com/v1/chat/completions": Model is loading'];
+    }
+
+    public function testThrowsModelNotFoundExceptionOn404WithStructuredError()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createResponse('{"error":{"code":"model_not_found","message":"The requested model does not exist"}}', 404);
+
+        $this->expectException(ModelNotFoundException::class);
+        $this->expectExceptionMessage('HTTP 404 returned for "https://api.example.com/v1/chat/completions": The requested model does not exist');
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    /**
+     * @param class-string<\Throwable> $exception
+     */
+    #[DataProvider('provideNonJsonErrorBodies')]
+    public function testThrowsPlatformExceptionOnNonJsonErrorBody(int $statusCode, string $body, string $exception, string $expectedMessage)
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createResponse($body, $statusCode);
+
+        $this->expectException($exception);
+        $this->expectExceptionMessage($expectedMessage);
+
+        $converter->convert(new RawHttpResult($httpResponse));
+    }
+
+    /**
+     * @return iterable<string, array{int, string, class-string<\Throwable>, string}>
+     */
+    public static function provideNonJsonErrorBodies(): iterable
+    {
+        yield '402 html' => [402, '<html><body>Payment Required</body></html>', RuntimeException::class, 'HTTP 402 returned for "https://api.example.com/v1/chat/completions".'];
+        yield '403 plain text' => [403, 'Forbidden', AuthenticationException::class, 'HTTP 403 returned for "https://api.example.com/v1/chat/completions".'];
+        yield '404 html' => [404, '<html><body>Not Found</body></html>', ModelNotFoundException::class, 'HTTP 404 returned for "https://api.example.com/v1/chat/completions".'];
+    }
+
+    public function testThrowsRateLimitExceededExceptionWithRetryAfterHeader()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = (new MockHttpClient(new MockResponse('{"error":"Rate limit reached"}', [
+            'http_code' => 429,
+            'response_headers' => ['retry-after' => '7'],
+        ])))->request('POST', 'https://api.example.com/v1/chat/completions');
+
+        try {
+            $converter->convert(new RawHttpResult($httpResponse));
+            $this->fail('Expected RateLimitExceededException.');
+        } catch (RateLimitExceededException $e) {
+            $this->assertSame(7, $e->getRetryAfter());
+            $this->assertSame('Rate limit exceeded. HTTP 429 returned for "https://api.example.com/v1/chat/completions": Rate limit reached', $e->getMessage());
+        }
+    }
+
+    public function testThrowsRuntimeExceptionOnStringErrorInSuccessBody()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createResponse('{"error":"Upstream inference error"}', 200);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Upstream inference error');
+
+        $converter->convert(new RawHttpResult($httpResponse));
     }
 
     public function testThrowsExceedContextSizeExceptionOnATopLevelErrorCode()
@@ -621,12 +703,10 @@ class ResultConverterTest extends TestCase
     public function testThrowsOnUnhandledErrorStatusBeforeStreaming()
     {
         $converter = new ResultConverter();
-        $httpResponse = $this->createMock(ResponseInterface::class);
-        $httpResponse->method('getStatusCode')->willReturn(404);
-        $httpResponse->method('getContent')->willReturn('404 page not found');
+        $httpResponse = $this->createResponse('{"error":"Payment required"}', 402);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Unexpected response code 404: "404 page not found"');
+        $this->expectExceptionMessage('HTTP 402 returned for "https://api.example.com/v1/chat/completions": Payment required');
 
         $converter->convert(new RawHttpResult($httpResponse), ['stream' => true]);
     }
@@ -634,9 +714,7 @@ class ResultConverterTest extends TestCase
     public function testThrowsServerExceptionOnServerErrorStatus()
     {
         $converter = new ResultConverter();
-        $httpResponse = $this->createMock(ResponseInterface::class);
-        $httpResponse->method('getStatusCode')->willReturn(503);
-        $httpResponse->method('getContent')->willReturn('{"error":{"message":"service unavailable"}}');
+        $httpResponse = $this->createResponse('{"error":{"message":"service unavailable"}}', 503);
 
         try {
             $converter->convert(new RawHttpResult($httpResponse), ['stream' => true]);
