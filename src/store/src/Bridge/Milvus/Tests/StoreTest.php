@@ -77,6 +77,22 @@ final class StoreTest extends TestCase
         $this->assertSame(2, $httpClient->getRequestsCount());
     }
 
+    public function testStoreSetupLeavesRoomForTheTextInTheMetadata()
+    {
+        $body = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$body): JsonMockResponse {
+            $body = json_decode($options['body'] ?? '{}', true);
+
+            return new JsonMockResponse(['code' => 0, 'data' => []], ['http_code' => 200]);
+        }, 'http://127.0.0.1:19530');
+
+        $store = new Store($httpClient, 'test', 'test');
+        $store->setup();
+
+        $fields = array_column($body['schema']['fields'], null, 'fieldName');
+        $this->assertSame('65535', $fields['_metadata']['elementTypeParams']['max_length']);
+    }
+
     public function testStoreCannotDropOnInvalidResponse()
     {
         $httpClient = new MockHttpClient([
