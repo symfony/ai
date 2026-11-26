@@ -17,6 +17,8 @@ use Symfony\AI\Mate\Command\Trait\RendersToolResultTrait;
 use Symfony\AI\Mate\Discovery\CapabilityRegistry;
 use Symfony\AI\Mate\Encoding\ResponseEncoder;
 use Symfony\AI\Mate\Exception\InvalidArgumentException;
+use Symfony\AI\Mate\Invocation\PathResolver;
+use Symfony\AI\Mate\Invocation\ResultPicker;
 use Symfony\AI\Mate\Invocation\ToolInvoker;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -46,7 +48,7 @@ class ToolsCallCommand extends Command
     /**
      * Options consumed by the command itself, never treated as tool parameters.
      */
-    private const RESERVED_VALUE_OPTIONS = ['format', 'json'];
+    private const RESERVED_VALUE_OPTIONS = ['format', 'json', 'pick'];
 
     /**
      * Global console flags that carry no tool parameter meaning.
@@ -83,6 +85,7 @@ class ToolsCallCommand extends Command
             // token parser resolves the name whatever its position, and execute() reports a miss.
             ->addArgument('tool-name', InputArgument::OPTIONAL, 'Name of the tool to execute')
             ->addOption('json', null, InputOption::VALUE_REQUIRED, 'Tool parameters as a JSON object (merged under any --<param> options)')
+            ->addOption('pick', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Keep only this path of the result, repeatable. Supports a.b, [0], [*] and [:3]')
             ->addOption('format', null, InputOption::VALUE_REQUIRED, 'Output format (json, pretty, toon)', 'pretty')
             ->setHelp(
                 <<<HELP
@@ -103,8 +106,11 @@ The <info>%command.name%</info> command executes a tool, passing each of its par
   <comment># Pass complex/array parameters as a JSON object</comment>
   %command.full_name% some-tool --json='{"tags": ["a", "b"]}'
 
+  <comment># Keep only some paths of a large result (paths: a.b, [0], [*], [:3], repeatable)</comment>
+  %command.full_name% symfony-profiler-get --token=abc123 --pick=status_code --pick='collectors[:3]'
+
   <comment># --json is also the only way to pass a parameter whose name is taken by this
-  # command or by a global console flag: format, json, help, silent, quiet, verbose,
+  # command or by a global console flag: format, json, pick, help, silent, quiet, verbose,
   # version, ansi, no-ansi, no-interaction</comment>
   %command.full_name% some-tool --json='{"format": "csv"}'
 
@@ -125,7 +131,7 @@ HELP
         $io = new SymfonyStyle($input, $output);
         $verbose = $output->isVerbose();
 
-        [$toolName, $format, $jsonOption, $dynamicParams] = $this->resolveInput($input);
+        [$toolName, $format, $jsonOption, $dynamicParams, $picks] = $this->resolveInput($input);
 
         if (null === $toolName || '' === $toolName) {
             $io->error('Not enough arguments (missing: "tool-name").');
@@ -135,6 +141,16 @@ HELP
 
         if (!$this->ensureFormatSupported($io, $format, ['pretty', 'json', 'toon'])) {
             return Command::FAILURE;
+        }
+
+        foreach ($picks as $path) {
+            try {
+                PathResolver::assertValid($path);
+            } catch (InvalidArgumentException $e) {
+                $io->error($e->getMessage());
+
+                return Command::FAILURE;
+            }
         }
 
         $params = [];
@@ -199,6 +215,13 @@ HELP
             $result = ResponseEncoder::tryDecode($result);
         }
 
+        if ([] !== $picks) {
+            ['result' => $result, 'missing_paths' => $missing] = ResultPicker::pick($result, $picks);
+            if ([] !== $missing) {
+                $io->getErrorStyle()->warning(\sprintf('Paths without a value: %s', implode(', ', $missing)));
+            }
+        }
+
         if ('json' === $format) {
             $output->writeln(json_encode($result, \JSON_THROW_ON_ERROR | \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES));
         } elseif ('toon' === $format) {
@@ -220,7 +243,7 @@ HELP
      * options are supported. Other input types (used in tests) rely on the declared
      * options and the `--json` escape hatch only.
      *
-     * @return array{0: string|null, 1: string, 2: string|null, 3: array<string, string|bool|list<string>>}
+     * @return array{0: string|null, 1: string, 2: string|null, 3: array<string, string|bool|list<string>>, 4: list<string>}
      */
     private function resolveInput(InputInterface $input): array
     {
@@ -231,12 +254,14 @@ HELP
         $toolName = $input->getArgument('tool-name');
         $format = $input->getOption('format');
         $json = $input->getOption('json');
+        $picks = $input->getOption('pick');
 
         return [
             \is_string($toolName) ? $toolName : null,
             \is_string($format) ? $format : 'pretty',
             \is_string($json) ? $json : null,
             [],
+            \is_array($picks) ? array_values(array_filter($picks, \is_string(...))) : [],
         ];
     }
 
@@ -287,13 +312,14 @@ HELP
     /**
      * @param list<string> $tokens
      *
-     * @return array{0: string|null, 1: string, 2: string|null, 3: array<string, string|bool|list<string>>}
+     * @return array{0: string|null, 1: string, 2: string|null, 3: array<string, string|bool|list<string>>, 4: list<string>}
      */
     private function parseRawTokens(array $tokens): array
     {
         $toolName = null;
         $format = 'pretty';
         $json = null;
+        $picks = [];
         $params = [];
 
         $count = \count($tokens);
@@ -336,6 +362,8 @@ HELP
                 }
                 if ('format' === $name) {
                     $format = $value;
+                } elseif ('pick' === $name) {
+                    $picks[] = $value;
                 } else {
                     $json = $value;
                 }
@@ -365,7 +393,7 @@ HELP
             $params[$name] = $value;
         }
 
-        return [$toolName, $format, $json, $params];
+        return [$toolName, $format, $json, $params, $picks];
     }
 
     /**
