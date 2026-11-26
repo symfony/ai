@@ -127,16 +127,27 @@ final class TokenUsageAggregation implements TokenUsageInterface, MergeableMetad
      */
     public function getModel(): ?string
     {
-        $models = array_unique(array_filter(array_map(
-            static fn (TokenUsageInterface $usage) => $usage->getModel(),
-            $this->tokenUsages,
-        ), static fn (?string $model) => null !== $model));
+        $model = null;
+        $hasDifferentModels = false;
+        foreach ($this->tokenUsages as $usage) {
+            if (!$usage instanceof TokenUsageInterface) {
+                // A typed callback keeps invalid constructor entries raising TypeError.
+                (static fn (TokenUsageInterface $usage) => $usage->getModel())($usage);
+            }
 
-        if (1 !== \count($models)) {
-            return null;
+            $currentModel = $usage->getModel();
+            if (null === $currentModel) {
+                continue;
+            }
+
+            if (null === $model) {
+                $model = $currentModel;
+            } elseif ($model !== $currentModel) {
+                $hasDifferentModels = true;
+            }
         }
 
-        return reset($models);
+        return $hasDifferentModels ? null : $model;
     }
 
     private function sum(\Closure $mapFunction): ?int
