@@ -1,0 +1,71 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1/audio/transcriptions",
+                "signature": "c8a38883dcc4d7818e844d5ec4450ddb",
+                "signature_v2": "b52798c01755e24262111b2041668a24",
+                "headers": {
+                    "content-type": [
+                        "multipart/form-data"
+                    ],
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "language": "en",
+                    "model": "whisper-large-v3",
+                    "file": "[resource audio.mp3, 51019 bytes]"
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "494"
+                    ],
+                    "inference-id": [
+                        "7320db0325aec54b8d8d7505bfe8c77a"
+                    ],
+                    "x-ratelimit-remaining-minute": [
+                        "399"
+                    ],
+                    "x-ratelimit-limit-minute": [
+                        "400"
+                    ],
+                    "ratelimit-remaining": [
+                        "399"
+                    ],
+                    "ratelimit-reset": [
+                        "19"
+                    ],
+                    "ratelimit-limit": [
+                        "400"
+                    ],
+                    "vary": [
+                        "origin, access-control-request-method, access-control-request-headers"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "server": [
+                        "kong/3.9.4"
+                    ],
+                    "access-control-expose-headers": [
+                        "ratelimit-limit,ratelimit-remaining,ratelimit-reset,retry-after"
+                    ],
+                    "via": [
+                        "1.1 kong/3.9.4, 1.1 kong/3.9.4"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"task\":\"transcribe\",\"success\":true,\"language\":\"en\",\"duration\":2.594125,\"text\":\" Wishing you a Merry Christmas and a Happy New Year.\",\"words\":[],\"segments\":[{\"id\":1,\"seek\":0,\"start\":0.0,\"end\":2.48,\"text\":\" Wishing you a Merry Christmas and a Happy New Year.\",\"tokens\":[50365,343,3807,291,257,26572,5272,293,257,8277,1873,10289,13,50489],\"temperature\":0.0,\"avg_logprob\":-0.14036459,\"compression_ratio\":0.87931037,\"no_speech_prob\":0.0}],\"diarization\":[],\"usage\":{\"type\":\"duration\",\"seconds\":3.0}}"
+            }
+        }
+    ]
+}

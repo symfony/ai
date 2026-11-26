@@ -1,0 +1,71 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://nvr-tts-en-us.endpoints.kepler.ai.cloud.ovh.net/api/v1/tts/text_to_audio",
+                "signature": "cd59e575e5e8f9650f3e40e33a96b67c",
+                "signature_v2": "35f3d8ebfae5c33d0ef5d5b7ecc02be2",
+                "headers": {
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "text": "Hello world from Symfony AI!",
+                    "language_code": "en-US",
+                    "encoding": 1,
+                    "sample_rate_hz": 16000,
+                    "voice_name": "English-US.Male-1"
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/octet-stream"
+                    ],
+                    "content-length": [
+                        "57816"
+                    ],
+                    "x-ratelimit-remaining-minute": [
+                        "399"
+                    ],
+                    "x-ratelimit-limit-minute": [
+                        "400"
+                    ],
+                    "ratelimit-remaining": [
+                        "399"
+                    ],
+                    "ratelimit-reset": [
+                        "18"
+                    ],
+                    "ratelimit-limit": [
+                        "400"
+                    ],
+                    "content-disposition": [
+                        "attachment; filename=\"audio_file.wav\""
+                    ],
+                    "vary": [
+                        "origin, access-control-request-method, access-control-request-headers"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "server": [
+                        "kong/3.9.4"
+                    ],
+                    "access-control-expose-headers": [
+                        "ratelimit-limit,ratelimit-remaining,ratelimit-reset,retry-after"
+                    ],
+                    "via": [
+                        "1.1 kong/3.9.4"
+                    ]
+                },
+                "body_format": "binary",
+                "body": null,
+                "body_size": 57816
+            }
+        }
+    ]
+}
