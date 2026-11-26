@@ -92,31 +92,28 @@ final class StoreTest extends TestCase
         );
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:19530/v2/vectordb/databases/drop".');
+        $this->expectExceptionMessage('HTTP 400 returned for "http://127.0.0.1:19530/v2/vectordb/collections/drop".');
         $this->expectExceptionCode(400);
         $store->drop();
     }
 
     public function testStoreCanDrop()
     {
-        $httpClient = new MockHttpClient([
-            new JsonMockResponse([
-                'code' => 0,
-                'data' => [],
-            ], [
-                'http_code' => 200,
-            ]),
-        ], 'http://127.0.0.1:19530');
+        $requestedUrl = null;
+        $body = null;
+        $httpClient = new MockHttpClient(static function (string $method, string $url, array $options) use (&$requestedUrl, &$body): JsonMockResponse {
+            $requestedUrl = $url;
+            $body = json_decode($options['body'] ?? '{}', true);
 
-        $store = new Store(
-            $httpClient,
-            'test',
-            'test',
-        );
+            return new JsonMockResponse(['code' => 0, 'data' => []], ['http_code' => 200]);
+        }, 'http://127.0.0.1:19530');
 
+        $store = new Store($httpClient, 'test_database', 'test_collection');
         $store->drop();
 
         $this->assertSame(1, $httpClient->getRequestsCount());
+        $this->assertSame('http://127.0.0.1:19530/v2/vectordb/collections/drop', $requestedUrl);
+        $this->assertSame(['collectionName' => 'test_collection'], $body);
     }
 
     public function testStoreCannotAddOnInvalidResponse()

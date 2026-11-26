@@ -167,8 +167,8 @@ final class Store implements ManagedStoreInterface, StoreInterface
 
     public function drop(array $options = []): void
     {
-        $this->request('POST', 'v2/vectordb/databases/drop', [
-            'dbName' => $this->database,
+        $this->request('POST', 'v2/vectordb/collections/drop', [
+            'collectionName' => $this->collection,
         ]);
     }
 
