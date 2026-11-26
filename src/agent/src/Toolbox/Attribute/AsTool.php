@@ -22,6 +22,7 @@ final class AsTool
     /**
      * @param array<string, mixed> $metadata Arbitrary custom data attached to the tool, carried to
      *                                       {@see \Symfony\AI\Platform\Tool\Tool::getMetadata()}
+     * @param bool                 $deferred Whether the tool is only made available to the model through a tool search
      */
     public function __construct(
         public readonly string $name,
@@ -29,6 +30,7 @@ final class AsTool
         public readonly string $method = '__invoke',
         public readonly array $metadata = [],
         public readonly ToolEffectHints $effectHints = new ToolEffectHints(),
+        public readonly bool $deferred = false,
     ) {
     }
 }

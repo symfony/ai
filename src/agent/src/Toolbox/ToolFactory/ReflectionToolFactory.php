@@ -73,6 +73,7 @@ final class ReflectionToolFactory implements ToolFactoryInterface
                     $this->factory->buildParameters($className, $methodName),
                     $asTool->metadata,
                     $asTool->effectHints,
+                    $asTool->deferred,
                 );
             } catch (\ReflectionException $e) {
                 throw ToolConfigurationException::invalidMethod($className, $methodName, $e);

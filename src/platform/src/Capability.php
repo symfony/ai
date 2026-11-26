@@ -39,6 +39,7 @@ enum Capability: string
 
     // FUNCTIONALITY
     case TOOL_CALLING = 'tool-calling';
+    case TOOL_SEARCH = 'tool-search';
 
     // VOICE
     case TEXT_TO_SPEECH = 'text-to-speech';

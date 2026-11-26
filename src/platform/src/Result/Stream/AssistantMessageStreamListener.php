@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Result\Stream;
 use Symfony\AI\Platform\Message\AssistantMessage;
 use Symfony\AI\Platform\Message\Content\Commentary;
 use Symfony\AI\Platform\Message\Content\ContentInterface;
+use Symfony\AI\Platform\Message\Content\ServerToolCall;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Content\WebSearch;
@@ -21,6 +22,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\CommentaryComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\CommentaryDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\CommentaryStart;
 use Symfony\AI\Platform\Result\Stream\Delta\DeltaInterface;
+use Symfony\AI\Platform\Result\Stream\Delta\ServerToolCallComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingComplete;
 use Symfony\AI\Platform\Result\Stream\Delta\ThinkingDelta;
@@ -165,6 +167,20 @@ final class AssistantMessageStreamListener extends AbstractStreamListener
                 $webSearch->getStatus(),
                 $webSearch->getQueries(),
                 $webSearch->getSignature(),
+            );
+            $this->openThinking = null;
+
+            return;
+        }
+
+        if ($delta instanceof ServerToolCallComplete) {
+            $serverToolCall = $delta->getServerToolCall();
+            $this->content[] = new ServerToolCall(
+                $serverToolCall->getName(),
+                $serverToolCall->getId(),
+                $serverToolCall->getStatus(),
+                $serverToolCall->getDetails(),
+                $serverToolCall->getReplay(),
             );
             $this->openThinking = null;
 

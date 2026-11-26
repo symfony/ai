@@ -33,6 +33,7 @@ use Symfony\AI\Platform\Message\Content\LocalShellCall;
 use Symfony\AI\Platform\Message\Content\McpApprovalRequest;
 use Symfony\AI\Platform\Message\Content\McpCall;
 use Symfony\AI\Platform\Message\Content\McpListTools;
+use Symfony\AI\Platform\Message\Content\ServerToolCall;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Content\Thinking;
 use Symfony\AI\Platform\Message\Content\WebSearch;
@@ -99,6 +100,7 @@ final class MessageNormalizerTest extends TestCase
             new ExecutableCode('print(1)', 'python', 'code_1'),
             new CodeExecution(true, '1', 'exec_1'),
             new WebSearch('symfony', 'ws_1', 'completed', ['symfony', 'symfony ai'], 'ws-signature'),
+            new ServerToolCall('tool_search', 'srvtoolu_1', 'completed', ['query' => 'weather', 'tools' => ['get_weather']], 'ts-replay'),
             new FileSearch(['query'], [['file_id' => 'file_1', 'filename' => 'a.txt', 'text' => 'snippet', 'score' => 0.5, 'attributes' => []]], 'fs_1', 'completed'),
             new McpCall('server', 'tool', '{"a":1}', 'output', null, 'mcp_1', 'completed'),
             new McpListTools('server', [['name' => 'tool', 'description' => 'A tool', 'input_schema' => ['type' => 'object']]], 'mcpl_1'),
