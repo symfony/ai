@@ -11,6 +11,11 @@
 
 namespace Symfony\AI\Platform\Test\Recording;
 
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\Message\Content\ContentInterface;
+use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\Message\MessageInterface;
+use Symfony\AI\Platform\Message\UserMessage;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\PlainConverter;
@@ -18,6 +23,9 @@ use Symfony\AI\Platform\ProviderInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
 use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\ResultInterface;
+use Symfony\AI\Platform\Serializer\MessageNormalizer;
+use Symfony\AI\Platform\Tool\Tool;
+use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
 /**
  * Decorates a real provider to record its result once and replay it offline in later test runs.
@@ -111,22 +119,103 @@ final class RecordingProvider implements ProviderInterface
 
     /**
      * A fully defined model is reduced to its name and options, so an equivalent model instance
-     * built by a later run matches the recorded interaction. Everything else is hashed verbatim,
-     * so an input that varies between runs needs a custom signature (see the constructor).
+     * built by a later run matches the recorded interaction. Message bags, messages, content
+     * objects and tools are normalized without volatile identifiers or metadata so equivalent
+     * conversations match across runs while differing prompts produce distinct signatures.
+     * Everything else is hashed verbatim, so an input that varies between runs needs a custom
+     * signature (see the constructor).
      *
      * @param array<mixed>|string|object $input
      * @param array<string, mixed>       $options
      */
     private static function defaultSignature(string|Model $model, array|string|object $input, array $options): string
     {
-        $normalizedModel = $model instanceof Model ? [$model->getName(), $model->getOptions()] : $model;
+        $messageNormalizer = new MessageNormalizer();
+        $normalizedModel = $model instanceof Model
+            ? [$model->getName(), self::normalizeForSignature($model->getOptions(), $messageNormalizer)]
+            : $model;
+        $normalizedInput = self::normalizeForSignature($input, $messageNormalizer);
+        $normalizedOptions = self::normalizeForSignature($options, $messageNormalizer);
 
         try {
-            $payload = json_encode([$normalizedModel, $input, $options], \JSON_THROW_ON_ERROR);
+            $payload = json_encode([$normalizedModel, $normalizedInput, $normalizedOptions], \JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
-            $payload = serialize([$normalizedModel, $input, $options]);
+            $payload = serialize([$normalizedModel, $normalizedInput, $normalizedOptions]);
         }
 
         return hash('xxh128', $payload);
+    }
+
+    private static function normalizeForSignature(mixed $value, MessageNormalizer $messageNormalizer): mixed
+    {
+        if (\is_array($value)) {
+            return array_map(
+                static fn (mixed $item): mixed => self::normalizeForSignature($item, $messageNormalizer),
+                $value,
+            );
+        }
+
+        if (!\is_object($value)) {
+            return $value;
+        }
+
+        if ($value instanceof MessageBag) {
+            return [
+                $value::class,
+                array_map(
+                    static fn (MessageInterface $message): mixed => self::normalizeForSignature($message, $messageNormalizer),
+                    $value->getMessages(),
+                ),
+            ];
+        }
+
+        if ($value instanceof MessageInterface) {
+            try {
+                // ids and metadata differ between runs carrying the same conversation
+                $normalized = $messageNormalizer->normalize($value, context: [
+                    AbstractNormalizer::IGNORED_ATTRIBUTES => ['id', 'metadata', 'addedAt'],
+                ]);
+
+                return self::normalizeForSignature($normalized, $messageNormalizer);
+            } catch (InvalidArgumentException) {
+                // Fall through for custom MessageInterface implementations not handled by MessageNormalizer.
+            }
+        }
+
+        if ($value instanceof ContentInterface) {
+            try {
+                $normalized = $messageNormalizer->normalize(new UserMessage($value), context: [
+                    AbstractNormalizer::IGNORED_ATTRIBUTES => ['id', 'metadata', 'addedAt'],
+                ]);
+
+                return self::normalizeForSignature($normalized['parts'][0], $messageNormalizer);
+            } catch (InvalidArgumentException) {
+                // Fall through for custom ContentInterface implementations not handled by MessageNormalizer.
+            }
+        }
+
+        if ($value instanceof Tool) {
+            return [
+                $value::class,
+                $value->getName(),
+                $value->getDescription(),
+                self::normalizeForSignature($value->getParameters(), $messageNormalizer),
+                self::normalizeForSignature($value->getMetadata(), $messageNormalizer),
+            ];
+        }
+
+        if ($value instanceof Model) {
+            return [$value->getName(), self::normalizeForSignature($value->getOptions(), $messageNormalizer)];
+        }
+
+        if ($value instanceof \UnitEnum) {
+            return [$value::class, $value->name];
+        }
+
+        if ($value instanceof \JsonSerializable) {
+            return [$value::class, self::normalizeForSignature($value->jsonSerialize(), $messageNormalizer)];
+        }
+
+        return $value;
     }
 }

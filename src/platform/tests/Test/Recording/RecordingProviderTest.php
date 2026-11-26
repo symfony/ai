@@ -14,13 +14,18 @@ namespace Symfony\AI\Platform\Tests\Test\Recording;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Anthropic\Factory as AnthropicFactory;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Message\Content\DocumentUrl;
+use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\PlainConverter;
 use Symfony\AI\Platform\ProviderInterface;
 use Symfony\AI\Platform\Result\DeferredResult;
+use Symfony\AI\Platform\Result\InMemoryRawResult;
 use Symfony\AI\Platform\Result\ObjectResult;
+use Symfony\AI\Platform\Result\ResultInterface;
 use Symfony\AI\Platform\Result\Stream\Delta\TextDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
@@ -31,6 +36,8 @@ use Symfony\AI\Platform\Test\MockPlatformFactory as MockFactory;
 use Symfony\AI\Platform\Test\Recording\Cassette;
 use Symfony\AI\Platform\Test\Recording\RecordingProvider;
 use Symfony\AI\Platform\TokenUsage\TokenUsage;
+use Symfony\AI\Platform\Tool\ExecutionReference;
+use Symfony\AI\Platform\Tool\Tool;
 use Symfony\AI\Platform\Vector\Vector;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
@@ -231,6 +238,97 @@ final class RecordingProviderTest extends TestCase
         $replay->invoke('any-model', 'different-input');
     }
 
+    public function testDefaultSignatureReflectsMessageBagContent()
+    {
+        $inner = $this->stubProvider(static fn (string|Model $model, array|string|object $input): TextResult => new TextResult(
+            $input instanceof MessageBag ? 'answer:'.($input->getUserMessage()?->asText() ?? '') : 'other',
+        ));
+
+        $recorder = new RecordingProvider($inner, new Cassette($this->path), record: true);
+        $recorder->invoke('any-model', new MessageBag(Message::ofUser('first')));
+        $recorder->invoke('any-model', new MessageBag(Message::ofUser('second')));
+
+        $data = json_decode((string) file_get_contents($this->path), true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertNotSame($data['interactions'][0]['signature'], $data['interactions'][1]['signature']);
+
+        $replay = new RecordingProvider($this->throwingProvider(), new Cassette($this->path), record: false);
+        $this->assertSame('answer:second', $replay->invoke('any-model', new MessageBag(Message::ofUser('second')))->asText());
+        $this->assertSame('answer:first', $replay->invoke('any-model', new MessageBag(Message::ofUser('first')))->asText());
+    }
+
+    public function testReplayThrowsWhenMessageBagPromptChanges()
+    {
+        $recorder = new RecordingProvider(MockFactory::createProvider('hello'), new Cassette($this->path), record: true);
+        $recorder->invoke('any-model', new MessageBag(Message::ofUser('original prompt')));
+
+        $replay = new RecordingProvider($this->throwingProvider(), new Cassette($this->path), record: false);
+
+        $this->expectException(RuntimeException::class);
+        $replay->invoke('any-model', new MessageBag(Message::ofUser('changed prompt')));
+    }
+
+    public function testDefaultSignatureIgnoresVolatileMessageBagIdsAndMetadata()
+    {
+        $recordedBag = new MessageBag(
+            Message::forSystem('You are helpful.'),
+            Message::ofUser('Hello'),
+        );
+        $recordedBag->getMetadata()->add('trace_id', 'run-1');
+        $recordedBag->getMessages()[1]->getMetadata()->add('timestamp', 1000);
+
+        $recorder = new RecordingProvider(MockFactory::createProvider('hello'), new Cassette($this->path), record: true);
+        $recorder->invoke('any-model', $recordedBag);
+
+        $replayedBag = new MessageBag(
+            Message::forSystem('You are helpful.'),
+            Message::ofUser('Hello'),
+        );
+        $replayedBag->getMetadata()->add('trace_id', 'run-2');
+        $replayedBag->getMessages()[1]->getMetadata()->add('timestamp', 2000);
+
+        $replay = new RecordingProvider($this->throwingProvider(), new Cassette($this->path), record: false);
+        $this->assertSame('hello', $replay->invoke('any-model', $replayedBag)->asText());
+    }
+
+    public function testDefaultSignatureDistinguishesContentAndNestedMessageBags()
+    {
+        $inner = $this->stubProvider(static fn (): TextResult => new TextResult('ok'));
+        $recorder = new RecordingProvider($inner, new Cassette($this->path), record: true);
+        $recorder->invoke('any-model', new DocumentUrl('https://example.com/a.pdf'));
+        $recorder->invoke('any-model', new DocumentUrl('https://example.com/b.pdf'));
+        $recorder->invoke('any-model', new Image('bytes-a', 'image/png'));
+        $recorder->invoke('any-model', new Image('bytes-b', 'image/png'));
+        $recorder->invoke('any-model', ['first' => new MessageBag(Message::ofUser('a'))]);
+        $recorder->invoke('any-model', ['first' => new MessageBag(Message::ofUser('b'))]);
+
+        $data = json_decode((string) file_get_contents($this->path), true, flags: \JSON_THROW_ON_ERROR);
+        $signatures = array_column($data['interactions'], 'signature');
+
+        $this->assertCount(6, array_unique($signatures));
+
+        $replay = new RecordingProvider($this->throwingProvider(), new Cassette($this->path), record: false);
+        $this->assertSame('ok', $replay->invoke('any-model', new DocumentUrl('https://example.com/b.pdf'))->asText());
+        $this->assertSame('ok', $replay->invoke('any-model', new Image('bytes-a', 'image/png'))->asText());
+        $this->assertSame('ok', $replay->invoke('any-model', ['first' => new MessageBag(Message::ofUser('b'))])->asText());
+    }
+
+    public function testDefaultSignatureDistinguishesToolsInOptions()
+    {
+        $toolA = new Tool(new ExecutionReference(\stdClass::class, 'a'), 'weather', 'Get weather');
+        $toolB = new Tool(new ExecutionReference(\stdClass::class, 'b'), 'time', 'Get time');
+
+        $recorder = new RecordingProvider(MockFactory::createProvider('ok'), new Cassette($this->path), record: true);
+        $recorder->invoke('any-model', new MessageBag(Message::ofUser('hi')), ['tools' => [$toolA]]);
+
+        $replay = new RecordingProvider($this->throwingProvider(), new Cassette($this->path), record: false);
+        $this->assertSame('ok', $replay->invoke('any-model', new MessageBag(Message::ofUser('hi')), ['tools' => [
+            new Tool(new ExecutionReference(\stdClass::class, 'a'), 'weather', 'Get weather'),
+        ]])->asText());
+
+        $this->expectException(RuntimeException::class);
+        $replay->invoke('any-model', new MessageBag(Message::ofUser('hi')), ['tools' => [$toolB]]);
+    }
+
     public function testCustomSignatureMatchesDespiteVaryingInput()
     {
         $signature = static fn (string|Model $model, array|string|object $input, array $options): string => 'fixed';
@@ -262,6 +360,44 @@ final class RecordingProviderTest extends TestCase
     private function replay(): RecordingProvider
     {
         return new RecordingProvider($this->throwingProvider(), new Cassette($this->path), record: false);
+    }
+
+    /**
+     * @param \Closure(string|Model, array<mixed>|string|object, array<string, mixed>): ResultInterface $handler
+     */
+    private function stubProvider(\Closure $handler): ProviderInterface
+    {
+        return new class($handler) implements ProviderInterface {
+            /**
+             * @param \Closure(string|Model, array<mixed>|string|object, array<string, mixed>): ResultInterface $handler
+             */
+            public function __construct(
+                private readonly \Closure $handler,
+            ) {
+            }
+
+            public function getName(): string
+            {
+                return 'stub';
+            }
+
+            public function supports(string|Model $model): bool
+            {
+                return true;
+            }
+
+            public function getModelCatalog(): ModelCatalogInterface
+            {
+                throw new RuntimeException('Not used.');
+            }
+
+            public function invoke(string|Model $model, array|string|object $input, array $options = []): DeferredResult
+            {
+                $result = ($this->handler)($model, $input, $options);
+
+                return new DeferredResult(new PlainConverter($result), new InMemoryRawResult(), $options);
+            }
+        };
     }
 
     private function throwingProvider(): ProviderInterface
