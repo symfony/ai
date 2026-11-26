@@ -164,6 +164,105 @@ inject the summary into the system message::
 The older messages are condensed into a summary by a separate LLM call, while the most recent
 messages stay untouched so the agent has full detail for the immediate context.
 
+Step 5: Trigger on Tokens Instead of Message Count
+--------------------------------------------------
+
+Counting messages is a rough guide. Ten short questions cost less than one pasted log file, so the
+message count says little about how close the request is to the context limit. A better trigger is
+the token usage the platform already reported.
+
+Each assistant message carries the metadata of its own model request. The ``token_usage`` entry holds
+a :class:`Symfony\\AI\\Platform\\TokenUsage\\TokenUsageInterface`, and ``getTotalTokens()`` is the size of that
+request plus its answer. That is a good estimate for the next request, which starts with the same
+messages::
+
+    namespace App\Agent\InputProcessor;
+
+    use Symfony\AI\Platform\Message\AssistantMessage;
+    use Symfony\AI\Platform\Message\MessageInterface;
+
+    final class TokenThreshold
+    {
+        public function __construct(
+            private int $maxTokens = 100000,
+        ) {
+        }
+
+        /**
+         * @param list<MessageInterface> $messages
+         */
+        public function isExceeded(array $messages): bool
+        {
+            foreach ($messages as $message) {
+                if (!$message instanceof AssistantMessage) {
+                    continue;
+                }
+
+                $usage = $message->getMetadata()->get('token_usage');
+                if (($usage?->getTotalTokens() ?? 0) > $this->maxTokens) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+Both processors use it in place of the message count. Replace the ``$threshold`` argument and the
+early return::
+
+    public function __construct(
+        private int $maxMessages = 10,
+        private TokenThreshold $threshold = new TokenThreshold(),
+    ) {
+    }
+
+    public function processInput(Input $input): void
+    {
+        $messages = $input->getMessageBag();
+        $nonSystemMessages = $messages->withoutSystemMessage()->getMessages();
+
+        if (!$this->threshold->isExceeded($nonSystemMessages)) {
+            return;
+        }
+
+        // ... compress as before
+    }
+
+The summarization processor changes the same way. Three details matter:
+
+* The check looks at **every** assistant message, not only the last one. The store keeps the full
+  history, so after a compressed request the last message reports a small usage. If only that one
+  counted, the next call would send the full history again. Once any request has exceeded the limit,
+  the history stays above it and the processor keeps compressing.
+* The usage does not include the new user message and tool results that come after the last answer.
+  Set ``maxTokens`` well below the model's context window to leave room for them.
+* A platform that reports no usage never triggers the compression. A conversation without any
+  assistant message yet is not compressed either.
+
+.. note::
+
+    The summarization processor calls the model again on every request above the limit. Cache the
+    summary, for example keyed by the ID of the last summarized message, if that cost matters.
+
+What an Input Processor Can and Cannot See
+------------------------------------------
+
+An input processor runs once per ``Agent::call()``, before the model is asked for the first time.
+When the model calls tools, the agent appends the tool calls and their results to the request and
+asks the model again. The processor does not run again for these rounds.
+
+This has two consequences:
+
+* A conversation over many turns is covered. Every new turn starts with a fresh check.
+* A single turn that grows over many tool rounds is not covered. The processor only saw the
+  messages before the first round, so a tool that returns large results can still exceed the limit
+  within one turn.
+
+Compression never changes the stored conversation. The agent saves the full history to the message
+store before the input processors run, and the processors only replace the message bag of the
+request. The store, and the messages returned by the agent, still contain every message.
+
 Using the AI Bundle?
 --------------------
 
@@ -196,7 +295,8 @@ Best Practices
   preserves context at the cost of latency and an extra LLM call
 * **Use a Smaller Model**: Summarization does not need your strongest model — a small one
   (e.g. ``gpt-4o-mini``, ``gemini-2.0-flash``) keeps the overhead low
-* **Tune the Threshold**: Start with 20-30 messages and adjust based on your use case
+* **Tune the Threshold**: Start with 20-30 messages, or with about 60-70% of the context window
+  when you count tokens, and adjust based on your use case
 * **Preserve the System Message**: Compression must never drop the agent's instructions
 * **Keep Recent Messages Uncompressed**: 4-8 verbatim messages give the model enough immediate
   context

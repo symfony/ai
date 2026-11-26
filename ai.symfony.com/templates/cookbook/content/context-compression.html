@@ -336,6 +336,186 @@ inject the summary into the system message:</p>
 messages stay untouched so the agent has full detail for the immediate context.</p>
 </div>
 <div class="section">
+<h2 id="step-5-trigger-on-tokens-instead-of-message-count">
+    Step 5: Trigger on Tokens Instead of Message Count
+    
+</h2>
+<p>Counting messages is a rough guide. Ten short questions cost less than one pasted log file, so the
+message count says little about how close the request is to the context limit. A better trigger is
+the token usage the platform already reported.</p>
+<p>Each assistant message carries the metadata of its own model request. The <code translate="no" class="notranslate">token_usage</code> entry holds
+a <a href="https://github.com/symfony/ai/blob/main/src/platform/src/TokenUsage/TokenUsageInterface.php" class="reference external" title="Symfony\AI\Platform\TokenUsage\TokenUsageInterface" rel="external noopener noreferrer" target="_blank">TokenUsageInterface</a>, and <code translate="no" class="notranslate">getTotalTokens()</code> is the size of that
+request plus its answer. That is a good estimate for the next request, which starts with the same
+messages:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">namespace</span> <span class="hljs-title">App</span>\<span class="hljs-title">Agent</span>\<span class="hljs-title">InputProcessor</span>;
+
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">AssistantMessage</span>;
+<span class="hljs-keyword">use</span> <span class="hljs-title">Symfony</span>\<span class="hljs-title">AI</span>\<span class="hljs-title">Platform</span>\<span class="hljs-title">Message</span>\<span class="hljs-title">MessageInterface</span>;
+
+<span class="hljs-keyword">final</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">TokenThreshold</span>
+</span>{
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span><span class="hljs-params">(
+        <span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>maxTokens</span> = <span class="hljs-number">100000</span>,
+    )</span> </span>{
+    }
+
+    <span class="hljs-comment">/**
+     * <span class="hljs-doctag">@param</span> list&lt;MessageInterface&gt; $messages
+     */</span>
+    <span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isExceeded</span><span class="hljs-params">(<span class="hljs-keyword">array</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>)</span>: <span class="hljs-title">bool</span>
+    </span>{
+        <span class="hljs-keyword">foreach</span> (<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span> <span class="hljs-keyword">as</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>message</span>) {
+            <span class="hljs-keyword">if</span> (!<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>message</span> <span class="hljs-keyword">instanceof</span> AssistantMessage) {
+                <span class="hljs-keyword">continue</span>;
+            }
+
+            <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>usage</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>message</span>-&gt;<span class="hljs-title invoke__">getMetadata</span>()-&gt;<span class="hljs-title invoke__">get</span>(<span class="hljs-string">'token_usage'</span>);
+            <span class="hljs-keyword">if</span> ((<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>usage</span>?-&gt;<span class="hljs-title invoke__">getTotalTokens</span>() ?? <span class="hljs-number">0</span>) &gt; <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;maxTokens) {
+                <span class="hljs-keyword">return</span> <span class="hljs-keyword">true</span>;
+            }
+        }
+
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">false</span>;
+    }
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>Both processors use it in place of the message count. Replace the <code translate="no" class="notranslate">$threshold</code> argument and the
+early return:</p>
+<div translate="no" class="highlight-php notranslate">
+    <table class="highlighttable">
+        <tbody>
+            <tr>
+                <td class="linenos">
+                    <div class="linenodiv">
+                        <pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17</pre>
+                    </div>
+                </td>
+                <td class="code">
+                    <div class="highlight">
+                        <pre class="hljs php"><span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">__construct</span><span class="hljs-params">(
+    <span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>maxMessages</span> = <span class="hljs-number">10</span>,
+    <span class="hljs-keyword">private</span> TokenThreshold <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>threshold</span> = new TokenThreshold<span class="hljs-params">()</span>,
+)</span> </span>{
+}
+
+<span class="hljs-keyword">public</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">processInput</span><span class="hljs-params">(Input <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>input</span>)</span>: <span class="hljs-title">void</span>
+</span>{
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>input</span>-&gt;<span class="hljs-title invoke__">getMessageBag</span>();
+    <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>nonSystemMessages</span> = <span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>messages</span>-&gt;<span class="hljs-title invoke__">withoutSystemMessage</span>()-&gt;<span class="hljs-title invoke__">getMessages</span>();
+
+    <span class="hljs-keyword">if</span> (!<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>this</span>-&gt;threshold-&gt;<span class="hljs-title invoke__">isExceeded</span>(<span class="hljs-variable"><span class="hljs-variable-other-marker">$</span>nonSystemMessages</span>)) {
+        <span class="hljs-keyword">return</span>;
+    }
+
+    <span class="hljs-comment">// ... compress as before</span>
+}</pre>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<p>The summarization processor changes the same way. Three details matter:</p>
+<ul>
+    <li>The check looks at <strong>every</strong> assistant message, not only the last one. The store keeps the full
+history, so after a compressed request the last message reports a small usage. If only that one
+counted, the next call would send the full history again. Once any request has exceeded the limit,
+the history stays above it and the processor keeps compressing.</li>
+<li>The usage does not include the new user message and tool results that come after the last answer.
+Set <code translate="no" class="notranslate">maxTokens</code> well below the model's context window to leave room for them.</li>
+<li>A platform that reports no usage never triggers the compression. A conversation without any
+assistant message yet is not compressed either.</li>
+</ul>
+<div class="admonition admonition-note ">
+    <p class="admonition-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="24" height="24" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                <span>Note</span>
+    </p><p>The summarization processor calls the model again on every request above the limit. Cache the
+summary, for example keyed by the ID of the last summarized message, if that cost matters.</p>
+</div>
+</div>
+<div class="section">
+<h2 id="what-an-input-processor-can-and-cannot-see">
+    What an Input Processor Can and Cannot See
+    
+</h2>
+<p>An input processor runs once per <code translate="no" class="notranslate">Agent::call()</code>, before the model is asked for the first time.
+When the model calls tools, the agent appends the tool calls and their results to the request and
+asks the model again. The processor does not run again for these rounds.</p>
+<p>This has two consequences:</p>
+<ul>
+    <li>A conversation over many turns is covered. Every new turn starts with a fresh check.</li>
+<li>A single turn that grows over many tool rounds is not covered. The processor only saw the
+messages before the first round, so a tool that returns large results can still exceed the limit
+within one turn.</li>
+</ul>
+<p>Compression never changes the stored conversation. The agent saves the full history to the message
+store before the input processors run, and the processors only replace the message bag of the
+request. The store, and the messages returned by the agent, still contain every message.</p>
+</div>
+<div class="section">
 <h2 id="using-the-ai-bundle">
     Using the AI Bundle?
     
@@ -411,7 +591,8 @@ omitted:</p>
 preserves context at the cost of latency and an extra LLM call</li>
 <li><strong>Use a Smaller Model</strong>: Summarization does not need your strongest model — a small one
 (e.g. <code translate="no" class="notranslate">gpt-4o-mini</code>, <code translate="no" class="notranslate">gemini-2.0-flash</code>) keeps the overhead low</li>
-<li><strong>Tune the Threshold</strong>: Start with 20-30 messages and adjust based on your use case</li>
+<li><strong>Tune the Threshold</strong>: Start with 20-30 messages, or with about 60-70% of the context window
+when you count tokens, and adjust based on your use case</li>
 <li><strong>Preserve the System Message</strong>: Compression must never drop the agent's instructions</li>
 <li><strong>Keep Recent Messages Uncompressed</strong>: 4-8 verbatim messages give the model enough immediate
 context</li>
