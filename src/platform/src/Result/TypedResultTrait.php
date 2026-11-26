@@ -261,9 +261,27 @@ trait TypedResultTrait
         $result = $this->getResult();
 
         if ($result instanceof MultiPartResult) {
-            $parts = array_filter($result->getContent(), static fn (ResultInterface $part) => $part instanceof $type);
-            if (1 === \count($parts)) {
-                $result = array_first($parts);
+            $match = null;
+            $hasMultipleMatches = false;
+            foreach ($result->getContent() as $part) {
+                if (!$part instanceof ResultInterface) {
+                    // A typed callback keeps malformed parts raising TypeError.
+                    $part = (static fn (ResultInterface $part): ResultInterface => $part)($part);
+                }
+
+                if (!$part instanceof $type) {
+                    continue;
+                }
+
+                if (null !== $match) {
+                    $hasMultipleMatches = true;
+                } else {
+                    $match = $part;
+                }
+            }
+
+            if (null !== $match && !$hasMultipleMatches) {
+                $result = $match;
             }
         }
 
