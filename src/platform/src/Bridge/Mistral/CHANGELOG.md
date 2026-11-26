@@ -4,6 +4,8 @@ CHANGELOG
 1.0
 ---
 
+ * Add moderation support through the dedicated `/v1/moderations` and `/v1/chat/moderations` endpoints, exposing a `Moderation` model, model client and result converter; a text or a list of texts is moderated as raw text, a `MessageBag` as a conversation, and the `ModerationResult` gives the flagged categories and the score of each one
+ * Add `mistral-moderation-latest` and `mistral-moderation-2603` to the model catalog
  * Add Voxtral text-to-speech support through the dedicated `/v1/audio/speech` endpoint, exposing a `TextToSpeech` model, model client and result converter; the `voice` option maps to `voice_id`, and `ref_audio` clones a voice for a single request
  * Route `voxtral-mini-tts-latest` to the speech endpoint instead of chat completions, and add `voxtral-mini-tts-3-0`, `voxtral-mini-tts-3` and `voxtral-mini-tts-2603` to the model catalog
 

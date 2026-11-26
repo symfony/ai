@@ -156,6 +156,7 @@ Supported Models & Platforms
   * `OpenAI's GPT Image`_ with `OpenAI`_ as Platform (generation and editing)
   * `OpenAI's Whisper`_ with `OpenAI`_ and `Azure`_ as Platform
   * `Mistral OCR`_ with `Mistral`_ as Platform
+  * `Mistral Moderation`_ with `Mistral`_ as Platform
   * `TypeSafe's Jev`_ with `TypeSafe`_ and `OpenRouter`_ as Platform, see :doc:`platform/typesafe`
   * Decision models (e.g. Ollama's ``nimble``) with `Ollama`_ and `OpenRouter`_ as Platform, queried with the ``Evaluation`` of the ``Decision`` bridge
   * OCR and document parsing (invoices, resumes, identity documents) with `Eden AI`_ as Platform
@@ -1588,6 +1589,39 @@ Code Examples
 * `OCR with Mistral (URL)`_
 * `OCR with Mistral (binary)`_
 
+Moderation
+----------
+
+Mistral's ``mistral-moderation-latest`` model tells whether a text falls into categories such
+as hate, violence, self-harm, personal data or jailbreaking. A string or a list of strings is
+sent to the ``/v1/moderations`` endpoint, a
+:class:`Symfony\\AI\\Platform\\Message\\MessageBag` or a list of them to
+``/v1/chat/moderations``, which classifies the last message of each conversation in the
+context of the previous ones. Both return a typed
+:class:`Symfony\\AI\\Platform\\Bridge\\Mistral\\Moderation\\Result\\ModerationResult`::
+
+    use Symfony\AI\Platform\Bridge\Mistral\Factory;
+    use Symfony\AI\Platform\Bridge\Mistral\Moderation\Result\ModerationResult;
+
+    $platform = Factory::createPlatform($apiKey);
+
+    $result = $platform->invoke('mistral-moderation-latest', $userInput);
+
+    $moderation = $result->asObject(ModerationResult::class);
+
+    if ($moderation->isFlagged()) {
+        echo implode(', ', $moderation->getFlaggedCategories());
+    }
+
+The result holds one ``Verdict`` per text or per conversation. A category is flagged when its
+score is over the threshold Mistral set for it; read the scores of a verdict with
+``getScores()`` to apply your own thresholds instead.
+
+Code Examples
+~~~~~~~~~~~~~
+
+* `Moderation with Mistral`_
+
 Embeddings
 ----------
 
@@ -2442,6 +2476,7 @@ Code Examples
 .. _`OpenAI's GPT Image`: https://platform.openai.com/docs/guides/image-generation
 .. _`OpenAI's Whisper`: https://platform.openai.com/docs/guides/speech-to-text
 .. _`Mistral OCR`: https://docs.mistral.ai/api/endpoint/ocr
+.. _`Mistral Moderation`: https://docs.mistral.ai/studio/safety-moderation
 .. _`Mistral Voxtral TTS`: https://docs.mistral.ai/studio/audio/text-to-speech/overview
 .. _`HuggingFace`: https://huggingface.co/
 .. _`Mercure`: https://mercure.rocks/
@@ -2465,6 +2500,7 @@ Code Examples
 .. _`PDF Input with Claude`: https://github.com/symfony/ai/blob/main/examples/anthropic/pdf-input-binary.php
 .. _`OCR with Mistral (URL)`: https://github.com/symfony/ai/blob/main/examples/mistral/ocr-url.php
 .. _`OCR with Mistral (binary)`: https://github.com/symfony/ai/blob/main/examples/mistral/ocr-binary.php
+.. _`Moderation with Mistral`: https://github.com/symfony/ai/blob/main/examples/mistral/moderation.php
 .. _`Embeddings with OpenAI`: https://github.com/symfony/ai/blob/main/examples/openai/embeddings.php
 .. _`Embeddings with Voyage`: https://github.com/symfony/ai/blob/main/examples/voyage/text-embeddings.php
 .. _`Multimodal embeddings with Voyage`: https://github.com/symfony/ai/blob/main/examples/voyage/multimodal-embeddings.php
