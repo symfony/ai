@@ -8,6 +8,8 @@ pgvector Documentation
 
  * [pgvector (operators, indexes, vector/halfvec types)](https://github.com/pgvector/pgvector)
  * [PostgreSQL full-text search](https://www.postgresql.org/docs/current/textsearch.html)
+ * [Stored generated text-search columns](https://www.postgresql.org/docs/current/textsearch-tables.html#TEXTSEARCH-TABLES-INDEX)
+ * [Preferred full-text index types (GIN)](https://www.postgresql.org/docs/current/textsearch-indexes.html)
 
 Resources
 ---------
