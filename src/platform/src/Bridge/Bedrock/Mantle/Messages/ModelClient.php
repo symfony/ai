@@ -88,6 +88,11 @@ final class ModelClient implements ModelClientInterface
         $payload = $this->injectMessagesCacheControl($payload, $cacheControl);
         $payload = $this->injectSystemCacheControl($payload, $cacheControl);
 
+        // An empty tools option allows no tool, and Anthropic refuses a tool_choice without tools
+        if ([] === ($options['tools'] ?? null)) {
+            unset($options['tools']);
+        }
+
         if (isset($options['tools'])) {
             $options['tool_choice'] ??= ['type' => 'auto'];
             $options['tools'] = $this->injectToolsCacheControl($options['tools'], $cacheControl);
