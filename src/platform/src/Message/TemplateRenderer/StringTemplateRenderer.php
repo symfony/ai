@@ -60,14 +60,38 @@ final class StringTemplateRenderer implements TemplateRendererInterface
     private function flattenVariables(array $variables, string $prefix = ''): array
     {
         $flattened = [];
+        $hasNumericKeys = false;
 
         foreach ($variables as $key => $value) {
             $fullKey = $prefix ? $prefix.'.'.$key : $key;
 
             if (\is_array($value)) {
-                $flattened = array_merge($flattened, $this->flattenVariables($value, $fullKey));
+                if ([] === $flattened && $fullKey) {
+                    $flattened = $this->flattenVariables($value, $fullKey);
+
+                    continue;
+                }
+
+                if ($hasNumericKeys) {
+                    // Preserve array_merge() reindexing for numeric keys.
+                    $flattened = array_merge($flattened, $this->flattenVariables($value, $fullKey));
+
+                    continue;
+                }
+
+                foreach ($this->flattenVariables($value, $fullKey) as $nestedKey => $nestedValue) {
+                    if (\is_int($nestedKey)) {
+                        $flattened[] = $nestedValue;
+                        $hasNumericKeys = true;
+                    } else {
+                        $flattened[$nestedKey] = $nestedValue;
+                    }
+                }
             } else {
                 $flattened[$fullKey] = $value;
+                if (\is_int($fullKey)) {
+                    $hasNumericKeys = true;
+                }
             }
         }
 
