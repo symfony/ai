@@ -34,7 +34,7 @@ final class MappedToolArgument
      */
     public static function forMethod(\ReflectionMethod $method): ?self
     {
-        $parameters = $method->getParameters();
+        $parameters = array_values(array_filter($method->getParameters(), static fn (\ReflectionParameter $parameter): bool => ToolCallArgumentResolver::TOOL_CALL_ID_PARAMETER !== $parameter->getName()));
         $mappedParameter = null;
         foreach ($parameters as $parameter) {
             if ([] !== $parameter->getAttributes(MapToolArguments::class)) {
@@ -50,7 +50,7 @@ final class MappedToolArgument
         $className = $method->getDeclaringClass()->getName();
         $methodName = $method->getName();
         if (1 !== \count($parameters)) {
-            throw ToolConfigurationException::invalidMapToolArguments($className, $methodName, 'the attribute is only valid on a method with exactly one parameter, and that parameter must carry the attribute.');
+            throw ToolConfigurationException::invalidMapToolArguments($className, $methodName, 'the attribute is only valid on a method with exactly one parameter besides the reserved $_toolCallId parameter, and that parameter must carry the attribute.');
         }
 
         $parameter = $mappedParameter;
