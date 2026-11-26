@@ -58,6 +58,20 @@ final class DoctrineDbalMessageStoreTest extends TestCase
         $this->assertInstanceOf(MessageBag::class, $messages);
     }
 
+    public function testMessageStoreTableCanBeSetupTwiceWhenExcludedBySchemaFilter()
+    {
+        $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
+        $connection->getConfiguration()->setSchemaAssetsFilter(static fn (string $assetName): bool => 'foo' !== $assetName);
+
+        $messageStore = new DoctrineDbalMessageStore('foo', $connection);
+        $messageStore->setup();
+        $messageStore->setup();
+
+        $messages = $messageStore->load(Uuid::v7());
+        $this->assertInstanceOf(MessageBag::class, $messages);
+        $this->assertCount(0, $messages);
+    }
+
     public function testMessageStoreTableCanBeSetup()
     {
         $connection = DriverManager::getConnection(['driver' => 'pdo_sqlite', 'memory' => true]);
