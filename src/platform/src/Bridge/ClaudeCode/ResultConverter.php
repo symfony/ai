@@ -26,6 +26,7 @@ use Symfony\AI\Platform\Result\Stream\Delta\ToolInputDelta;
 use Symfony\AI\Platform\Result\StreamResult;
 use Symfony\AI\Platform\Result\TextResult;
 use Symfony\AI\Platform\ResultConverterInterface;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\TokenUsage\TokenUsageExtractorInterface;
 
 /**
@@ -42,30 +43,21 @@ final class ResultConverter implements ResultConverterInterface
 
     public function convert(RawResultInterface $result, array $options = []): ResultInterface
     {
+        $structured = isset($options[PlatformSubscriber::RESPONSE_FORMAT]) || \is_string($options['json_schema'] ?? null);
+
         if ($options['stream'] ?? false) {
-            return new StreamResult($this->convertStream($result));
+            return new StreamResult($structured ? $this->convertStructuredStream($result) : $this->convertStream($result));
         }
 
         $data = $result->getData();
-
-        if ([] === $data) {
-            throw new RuntimeException('Claude Code CLI did not return any result.');
-        }
-
-        if (isset($data['is_error']) && true === $data['is_error']) {
-            throw new RuntimeException(\sprintf('Claude Code CLI error: "%s"', $data['result'] ?? 'Unknown error'));
-        }
-
-        if (!isset($data['result'])) {
-            throw new RuntimeException('Claude Code CLI result does not contain a "result" field.');
-        }
+        $text = $this->resultText($data, $structured);
 
         $results = [];
         foreach ($data['tool_calls'] ?? [] as $toolCall) {
             $results[] = $this->convertExecutedToolCall($toolCall);
         }
 
-        $results[] = new TextResult($data['result']);
+        $results[] = new TextResult($text);
 
         if (1 === \count($results)) {
             return $results[0];
@@ -77,6 +69,51 @@ final class ResultConverter implements ResultConverterInterface
     public function getTokenUsageExtractor(): TokenUsageExtractorInterface
     {
         return new TokenUsageExtractor();
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function resultText(array $data, bool $structured): string
+    {
+        if ([] === $data) {
+            throw new RuntimeException('Claude Code CLI did not return any result.');
+        }
+
+        if (true === ($data['is_error'] ?? false)) {
+            throw new RuntimeException(\sprintf('Claude Code CLI error: "%s"', $data['result'] ?? $data['errors'][0] ?? $data['subtype'] ?? 'Unknown error'));
+        }
+
+        if (isset($data['structured_output'])) {
+            return json_encode($data['structured_output'], \JSON_THROW_ON_ERROR);
+        }
+
+        if ($structured) {
+            throw new RuntimeException('Claude Code CLI result does not contain a "structured_output" field.');
+        }
+
+        if (!isset($data['result'])) {
+            throw new RuntimeException('Claude Code CLI result does not contain a "result" field.');
+        }
+
+        return $data['result'];
+    }
+
+    /**
+     * The CLI supplies validated structured output in its final result event.
+     *
+     * @return \Generator<int, TextDelta>
+     */
+    private function convertStructuredStream(RawResultInterface $result): \Generator
+    {
+        $finalResult = [];
+        foreach ($result->getDataStream() as $event) {
+            if ('result' === ($event['type'] ?? null)) {
+                $finalResult = $event;
+            }
+        }
+
+        yield new TextDelta($this->resultText($finalResult, true));
     }
 
     /**

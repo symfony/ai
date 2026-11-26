@@ -14,10 +14,12 @@ namespace Symfony\AI\Platform\Bridge\ClaudeCode;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\AI\Platform\Bridge\ClaudeCode\Exception\CliNotFoundException;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Exception\MissingModelSupportException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
 use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 
@@ -94,6 +96,23 @@ final class ModelClient implements ModelClientInterface
      */
     public function buildCommand(string $prompt, array $options = []): array
     {
+        if (isset($options[PlatformSubscriber::RESPONSE_FORMAT])) {
+            $format = $options[PlatformSubscriber::RESPONSE_FORMAT];
+            $schema = \is_array($format) && 'json_schema' === ($format['type'] ?? null) && \is_array($format['json_schema'] ?? null)
+                ? ($format['json_schema']['schema'] ?? null)
+                : null;
+            if (!\is_array($schema) && !$schema instanceof \stdClass) {
+                throw new InvalidArgumentException('Claude Code expects a JSON Schema in the "response_format" option.');
+            }
+
+            if (isset($options['json_schema']) && false !== $options['json_schema']) {
+                throw new InvalidArgumentException('Specify either "response_format" or "json_schema" for Claude Code.');
+            }
+
+            $options['json_schema'] = json_encode($schema, \JSON_THROW_ON_ERROR);
+        }
+        unset($options[PlatformSubscriber::RESPONSE_FORMAT]);
+
         $command = [$this->getCliBinary(), '--output-format', 'stream-json', '--verbose', '--include-partial-messages'];
 
         foreach ($options as $key => $value) {

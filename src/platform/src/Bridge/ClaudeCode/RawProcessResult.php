@@ -48,14 +48,7 @@ final class RawProcessResult implements RawResultInterface
         $events = [];
 
         foreach (explode(\PHP_EOL, $output) as $line) {
-            $line = trim($line);
-
-            if ('' === $line) {
-                continue;
-            }
-
-            $decoded = json_decode($line, true);
-
+            $decoded = $this->decodeLine($line);
             if (null === $decoded) {
                 continue;
             }
@@ -99,15 +92,7 @@ final class RawProcessResult implements RawResultInterface
             $buffer = array_pop($lines);
 
             foreach ($lines as $line) {
-                $line = trim($line);
-
-                if ('' === $line) {
-                    continue;
-                }
-
-                $decoded = json_decode($line, true);
-
-                if (null !== $decoded) {
+                if (null !== $decoded = $this->decodeLine($line)) {
                     yield $decoded;
                 }
             }
@@ -117,15 +102,7 @@ final class RawProcessResult implements RawResultInterface
         $buffer .= $this->process->getIncrementalOutput();
 
         foreach (explode(\PHP_EOL, $buffer) as $line) {
-            $line = trim($line);
-
-            if ('' === $line) {
-                continue;
-            }
-
-            $decoded = json_decode($line, true);
-
-            if (null !== $decoded) {
+            if (null !== $decoded = $this->decodeLine($line)) {
                 yield $decoded;
             }
         }
@@ -138,6 +115,24 @@ final class RawProcessResult implements RawResultInterface
     public function getObject(): Process
     {
         return $this->process;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function decodeLine(string $line): ?array
+    {
+        $event = json_decode($line, true);
+        if (!\is_array($event)) {
+            return null;
+        }
+
+        if ('result' === ($event['type'] ?? null) && isset($event['structured_output'])) {
+            // Keep JSON objects such as {} distinct from arrays when the converter encodes the result.
+            $event['structured_output'] = json_decode($line)->structured_output;
+        }
+
+        return $event;
     }
 
     /**
