@@ -11,11 +11,13 @@
 
 namespace Symfony\AI\Platform\Bridge\Cohere\Tests\Llm;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Cohere\Cohere;
 use Symfony\AI\Platform\Bridge\Cohere\Embeddings;
 use Symfony\AI\Platform\Bridge\Cohere\Llm\ModelClient;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
@@ -93,5 +95,42 @@ final class ModelClientTest extends TestCase
         $client = new ModelClient($httpClient, 'test-key');
 
         $client->request(new Cohere('command-a-03-2025'), ['model' => 'command-a-03-2025', 'messages' => [['role' => 'user', 'content' => "tool output \xB1 here"]]]);
+    }
+
+    /**
+     * @param array<string, int> $options
+     */
+    #[DataProvider('provideTokenLimits')]
+    public function testOutputTokenOptions(array $options, ?int $expected)
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $httpOptions) use ($expected): MockResponse {
+            $body = json_decode($httpOptions['body'], true, flags: \JSON_THROW_ON_ERROR);
+
+            $this->assertSame($expected, $body['max_tokens'] ?? null);
+            $this->assertArrayNotHasKey(PlatformOptions::MAX_OUTPUT_TOKENS, $body);
+            $this->assertSame('command-a-03-2025', $body['model']);
+            $this->assertSame([['role' => 'user', 'content' => 'Hello']], $body['messages']);
+
+            return new MockResponse();
+        });
+        $client = new ModelClient($httpClient, 'test-key');
+
+        $client->request(new Cohere('command-a-03-2025'), [
+            'model' => 'command-a-03-2025',
+            'messages' => [['role' => 'user', 'content' => 'Hello']],
+        ], $options);
+    }
+
+    /**
+     * @return iterable<string, array{array<string, int>, int|null}>
+     */
+    public static function provideTokenLimits(): iterable
+    {
+        yield 'canonical limit' => [[PlatformOptions::MAX_OUTPUT_TOKENS => 500], 500];
+        yield 'provider limit' => [['max_tokens' => 2000], 2000];
+        yield 'provider limit wins' => [[PlatformOptions::MAX_OUTPUT_TOKENS => 500, 'max_tokens' => 2000], 2000];
+        yield 'zero provider limit is preserved' => [[PlatformOptions::MAX_OUTPUT_TOKENS => 500, 'max_tokens' => 0], 0];
+        yield 'zero canonical limit is forwarded' => [[PlatformOptions::MAX_OUTPUT_TOKENS => 0], 0];
+        yield 'no token limit' => [[], null];
     }
 }

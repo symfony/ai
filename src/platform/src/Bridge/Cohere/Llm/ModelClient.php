@@ -16,6 +16,7 @@ use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\JsonBodyEncodingTrait;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
+use Symfony\AI\Platform\PlatformOptions;
 use Symfony\AI\Platform\Result\RawHttpResult;
 use Symfony\AI\Platform\Result\RawResultInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -49,6 +50,11 @@ final class ModelClient implements ModelClientInterface
     {
         if (\is_string($payload)) {
             throw new InvalidArgumentException(\sprintf('Payload must be an array, but a string was given to "%s".', self::class));
+        }
+
+        if (isset($options[PlatformOptions::MAX_OUTPUT_TOKENS])) {
+            $options['max_tokens'] ??= $options[PlatformOptions::MAX_OUTPUT_TOKENS];
+            unset($options[PlatformOptions::MAX_OUTPUT_TOKENS]);
         }
 
         return new RawHttpResult($this->httpClient->request('POST', $this->baseUrl.'/v2/chat', [
