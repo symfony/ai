@@ -39,7 +39,14 @@ final class MultiPartResult extends BaseResult implements \IteratorAggregate
 
     public function asText(): string
     {
-        return implode('', array_map(static fn (TextResult $result) => $result->getContent(), array_filter($this->results, static fn (ResultInterface $result) => $result instanceof TextResult)));
+        $parts = [];
+        foreach ($this->results as $result) {
+            if ($result instanceof TextResult) {
+                $parts[] = $result->getContent();
+            }
+        }
+
+        return implode('', $parts);
     }
 
     /**
