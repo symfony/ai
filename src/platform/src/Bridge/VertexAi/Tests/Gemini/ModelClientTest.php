@@ -95,6 +95,35 @@ final class ModelClientTest extends TestCase
         $client->request(new Model('gemini-2.0-flash'), ['contents' => []]);
     }
 
+    public function testItSendsTheApiKeyAsHeaderInsteadOfInTheUrl()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertStringNotContainsString('test-key', $url);
+            $this->assertContains('x-goog-api-key: test-key', $options['headers']);
+
+            return new JsonMockResponse(['candidates' => []]);
+        });
+
+        $client = new ModelClient($httpClient, 'eu', 'test', 'test-key');
+        $client->request(new Model('gemini-2.0-flash'), ['contents' => []]);
+    }
+
+    public function testItKeepsTheStreamParameterInTheUrlWithAnApiKey()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options) {
+            $this->assertSame(
+                'https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.0-flash:streamGenerateContent?alt=sse',
+                $url,
+            );
+            $this->assertContains('x-goog-api-key: test-key', $options['headers']);
+
+            return new JsonMockResponse(['candidates' => []]);
+        });
+
+        $client = new ModelClient($httpClient, apiKey: 'test-key');
+        $client->request(new Model('gemini-2.0-flash'), ['contents' => []], ['stream' => true]);
+    }
+
     public function testItUsesTheGlobalEndpointWhenTheProjectIdIsMissing()
     {
         $httpClient = new MockHttpClient(function (string $method, string $url) {
