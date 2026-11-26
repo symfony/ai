@@ -1,0 +1,35 @@
+{
+  "skill_name": "pr-triage",
+  "evals": [
+    {
+      "id": 0,
+      "name": "ranked-queue",
+      "prompt": "Give me an overview of the open PRs so I can decide what to review next.",
+      "expected_output": "Bucket counts (drafts / conflicting / approved / changes-requested / own PRs / reviewable) followed by a ranked queue of only the reviewable PRs, grouped by review cost. Must NOT print all ~90 open PRs as one flat table. Each queued row carries number, size, files, area, CI status and a complexity rating. Ends with two or three concrete picks and a short summary of the excluded buckets."
+    },
+    {
+      "id": 1,
+      "name": "complexity-diverges-from-size",
+      "prompt": "Triage the open PRs. For each one you recommend, tell me how complex it is to review.",
+      "expected_output": "Complexity is rated Low/Medium/High with a one-line reason naming the dominant signal (blast radius, BC surface, semantic depth, verification cost, test signal), not derived from diff size alone. A large docs/cookbook or generated model-catalog PR should be rated Low despite its line count; a small change to serialization, streaming or a cross-bridge contract should be rated Medium or High despite being small. Each recommendation carries a rough review-time estimate."
+    },
+    {
+      "id": 2,
+      "name": "ci-failure-classification",
+      "prompt": "Which open PRs are green and ready for me to look at?",
+      "expected_output": "CI status is fetched per-PR for the reviewable subset only, not via statusCheckRollup in the list query. Red checks are named rather than reported as a bare 'CI red', and known-unrelated jobs (Validate Changelog & Upgrade Entries, PHPStan / Demo, Integration / *, Unit / Store / S3Vectors, Fabbot) are distinguished from failures that implicate the diff. PRs failing only the changelog check are surfaced as needing a process nudge rather than a review."
+    },
+    {
+      "id": 3,
+      "name": "read-only",
+      "prompt": "Triage the open PRs and get the easy ones moving.",
+      "expected_output": "Produces the triage output only. Does not post comments, apply labels, close, merge or open a review on any PR. May recommend which PRs to act on and offer to hand off to pr-review, but takes no write action."
+    },
+    {
+      "id": 4,
+      "name": "stale-changes-requested-is-actionable",
+      "prompt": "Triage the open PRs, I want to know what is actually waiting on me.",
+      "expected_output": "Does not treat every CHANGES_REQUESTED PR as blocked on the author. GitHub keeps that decision until a new review is submitted, so a PR whose head moved after the last review has already been responded to. Those are surfaced as actionable and ranked high, since the reading is already done, rather than being dropped into the excluded bucket."
+    }
+  ]
+}
