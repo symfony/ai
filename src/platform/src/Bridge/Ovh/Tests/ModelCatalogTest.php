@@ -13,7 +13,12 @@ namespace Symfony\AI\Platform\Bridge\Ovh\Tests;
 
 use Symfony\AI\Platform\Bridge\Generic\CompletionsModel;
 use Symfony\AI\Platform\Bridge\Generic\EmbeddingsModel;
+use Symfony\AI\Platform\Bridge\Ovh\DecisionModel;
+use Symfony\AI\Platform\Bridge\Ovh\Image;
+use Symfony\AI\Platform\Bridge\Ovh\LiveTranscription;
 use Symfony\AI\Platform\Bridge\Ovh\ModelCatalog;
+use Symfony\AI\Platform\Bridge\Ovh\SpeechToText;
+use Symfony\AI\Platform\Bridge\Ovh\TextToSpeech;
 use Symfony\AI\Platform\Capability;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Test\ModelCatalogTestCase;
@@ -28,20 +33,49 @@ final class ModelCatalogTest extends ModelCatalogTestCase
         // Completions models
         yield 'Qwen3Guard-Gen-8B' => ['Qwen3Guard-Gen-8B', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
         yield 'Qwen3Guard-Gen-0.6B' => ['Qwen3Guard-Gen-0.6B', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
-        yield 'Qwen3-Coder-30B-A3B-Instruct' => ['Qwen3-Coder-30B-A3B-Instruct', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
-        yield 'gpt-oss-20b' => ['gpt-oss-20b', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
-        yield 'gpt-oss-120b' => ['gpt-oss-120b', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
-        yield 'Qwen3-32B' => ['Qwen3-32B', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
+        yield 'gpt-oss-20b' => ['gpt-oss-20b', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING, Capability::THINKING]];
+        yield 'gpt-oss-120b' => ['gpt-oss-120b', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING, Capability::THINKING]];
+        yield 'gemma-4-26b-a4b' => ['gemma-4-26b-a4b', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING, Capability::THINKING]];
+        yield 'laguna-xs-2.1' => ['laguna-xs-2.1', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING, Capability::THINKING]];
+        yield 'nemotron3-nano-30b' => ['nemotron3-nano-30b', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING, Capability::THINKING]];
+        yield 'nemotron3-omni-30b' => ['nemotron3-omni-30b', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING, Capability::THINKING]];
+        yield 'DeepSeek-V4.1-Flash-1017' => ['DeepSeek-V4.1-Flash-1017', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING, Capability::THINKING]];
+        yield 'Qwen3.5-397B-A17B' => ['Qwen3.5-397B-A17B', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING, Capability::THINKING]];
+        yield 'Qwen3.5-9B' => ['Qwen3.5-9B', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING, Capability::THINKING]];
+        yield 'Qwen3.6-27B' => ['Qwen3.6-27B', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING, Capability::THINKING]];
+        yield 'Qwen3.8-27B' => ['Qwen3.8-27B', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING, Capability::THINKING]];
+        yield 'qwen3.6-35b-a3b' => ['qwen3.6-35b-a3b', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING, Capability::THINKING]];
+        yield 'qwen3-vl-30b-a3b' => ['qwen3-vl-30b-a3b', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'Mistral-Small-3.2-24B-Instruct-2506' => ['Mistral-Small-3.2-24B-Instruct-2506', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'Qwen2.5-VL-72B-Instruct' => ['Qwen2.5-VL-72B-Instruct', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::INPUT_IMAGE, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED]];
-        yield 'Llama-3.1-8B-Instruct' => ['Llama-3.1-8B-Instruct', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
-        yield 'Mistral-7B-Instruct-v0.3' => ['Mistral-7B-Instruct-v0.3', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
         yield 'Meta-Llama-3_3-70B-Instruct' => ['Meta-Llama-3_3-70B-Instruct', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING]];
-        yield 'Mistral-Nemo-Instruct-2407' => ['Mistral-Nemo-Instruct-2407', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::TOOL_CALLING]];
+        yield 'Olala-v1.0-mini-7A1B' => ['Olala-v1.0-mini-7A1B', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING, Capability::THINKING]];
+        yield 'Olala-v1.0-summarise' => ['Olala-v1.0-summarise', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING, Capability::OUTPUT_STRUCTURED, Capability::TOOL_CALLING, Capability::THINKING]];
+        yield 'Olala-v1.0-translate' => ['Olala-v1.0-translate', CompletionsModel::class, [Capability::INPUT_MESSAGES, Capability::OUTPUT_TEXT, Capability::OUTPUT_STREAMING]];
 
         // Embeddings models
         yield 'bge-multilingual-gemma2' => ['bge-multilingual-gemma2', EmbeddingsModel::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
         yield 'bge-m3' => ['bge-m3', EmbeddingsModel::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
+        yield 'Qwen3-Embedding-8B' => ['Qwen3-Embedding-8B', EmbeddingsModel::class, [Capability::INPUT_TEXT, Capability::EMBEDDINGS]];
+
+        // Speech-to-text models
+        yield 'whisper-large-v3' => ['whisper-large-v3', SpeechToText::class, [Capability::INPUT_AUDIO, Capability::OUTPUT_TEXT, Capability::SPEECH_TO_TEXT]];
+        yield 'whisper-large-v3-turbo' => ['whisper-large-v3-turbo', SpeechToText::class, [Capability::INPUT_AUDIO, Capability::OUTPUT_TEXT, Capability::SPEECH_TO_TEXT]];
+
+        // Text-to-speech models
+        yield 'nvr-tts-de-de' => ['nvr-tts-de-de', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
+        yield 'nvr-tts-en-us' => ['nvr-tts-en-us', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
+        yield 'nvr-tts-es-es' => ['nvr-tts-es-es', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
+        yield 'nvr-tts-it-it' => ['nvr-tts-it-it', TextToSpeech::class, [Capability::INPUT_TEXT, Capability::OUTPUT_AUDIO, Capability::TEXT_TO_SPEECH]];
+
+        // Image models
+        yield 'stable-diffusion-xl-base-v10' => ['stable-diffusion-xl-base-v10', Image::class, [Capability::INPUT_TEXT, Capability::OUTPUT_IMAGE, Capability::TEXT_TO_IMAGE]];
+
+        // Decision models
+        yield 'clef-flash' => ['clef-flash', DecisionModel::class, [Capability::INPUT_TEXT]];
+
+        // Live transcription models
+        yield 'solaria-3' => ['solaria-3', LiveTranscription::class, [Capability::INPUT_AUDIO, Capability::OUTPUT_TEXT, Capability::SPEECH_TO_TEXT, Capability::REALTIME_SESSION]];
     }
 
     protected function createModelCatalog(): ModelCatalogInterface

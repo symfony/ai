@@ -565,6 +565,7 @@ deptrac:
       - PlatformComponent
       - GenericPlatform
     OvhPlatform:
+      - DecisionPlatform
       - PlatformComponent
       - GenericPlatform
     PerplexityPlatform:

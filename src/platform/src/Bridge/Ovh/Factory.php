@@ -11,12 +11,14 @@
 
 namespace Symfony\AI\Platform\Bridge\Ovh;
 
-use Symfony\AI\Platform\Bridge\Generic\Factory as GenericFactory;
+use Symfony\AI\Platform\Bridge\Generic\Completions;
+use Symfony\AI\Platform\Bridge\Generic\Embeddings;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
 use Symfony\AI\Platform\ModelRouterInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
 use Symfony\AI\Platform\ProviderInterface;
 use Symfony\Component\HttpClient\EventSourceHttpClient;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -27,6 +29,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 final class Factory
 {
+    private const BASE_URL = 'https://oai.endpoints.kepler.ai.cloud.ovh.net';
+
     /**
      * @param non-empty-string $name
      */
@@ -40,14 +44,34 @@ final class Factory
     ): ProviderInterface {
         $httpClient = $httpClient instanceof EventSourceHttpClient ? $httpClient : new EventSourceHttpClient($httpClient);
 
-        return GenericFactory::createProvider(
-            baseUrl: 'https://oai.endpoints.kepler.ai.cloud.ovh.net',
-            apiKey: $apiKey,
-            httpClient: $httpClient,
-            modelCatalog: $modelCatalog,
-            contract: $contract,
-            eventDispatcher: $eventDispatcher,
-            name: $name,
+        $modelClients = [
+            new Completions\ModelClient($httpClient, self::BASE_URL, $apiKey),
+            new Embeddings\ModelClient($httpClient, self::BASE_URL, $apiKey),
+            new SpeechToText\ModelClient($httpClient, $apiKey, self::BASE_URL),
+            new TextToSpeech\ModelClient($httpClient, $apiKey),
+            new Image\ModelClient($httpClient, $apiKey, self::BASE_URL),
+            new Decision\ModelClient($httpClient, $apiKey, self::BASE_URL),
+            new LiveTranscription\ModelClient($httpClient, $apiKey, self::BASE_URL),
+        ];
+        $resultConverters = [
+            new Completions\ResultConverter(),
+            new Embeddings\ResultConverter(),
+            new SpeechToText\ResultConverter(),
+            new TextToSpeech\ResultConverter(),
+            new Image\ResultConverter(),
+            new Decision\ResultConverter(),
+            new LiveTranscription\ResultConverter(),
+        ];
+
+        return new Provider(
+            $name,
+            $modelClients,
+            $resultConverters,
+            $modelCatalog,
+            $contract ?? Contract::create([
+                new SpeechToText\AudioNormalizer(),
+            ]),
+            $eventDispatcher,
         );
     }
 

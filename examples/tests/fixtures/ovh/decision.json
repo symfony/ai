@@ -1,0 +1,95 @@
+{
+    "interactions": [
+        {
+            "request": {
+                "method": "POST",
+                "url": "https://oai.endpoints.kepler.ai.cloud.ovh.net/api/v1/systemone",
+                "signature": "b56e077ed5f06ba111a907ae7ff0404c",
+                "signature_v2": "743c1f4c57ad6bd8406d5c505fd9c3ee",
+                "headers": {
+                    "authorization": [
+                        "[redacted]"
+                    ]
+                },
+                "body": {
+                    "model": "clef-flash",
+                    "state": "Hi, I've been trying to connect my Stripe account for 3 days and it keeps failing. I'm losing sales. Please help ASAP.",
+                    "questions": {
+                        "department": {
+                            "type": "choice",
+                            "instructions": "Which team should handle this?",
+                            "criteria": {
+                                "billing": "Payment or subscription issues",
+                                "technical": "Bugs or integration problems",
+                                "sales": "Pricing or account questions"
+                            }
+                        },
+                        "frustration": {
+                            "type": "score",
+                            "instructions": "How frustrated does the customer appear?",
+                            "criteria": [
+                                "Calm, just stating facts",
+                                "Frustrated but civil",
+                                "Very angry, strong language"
+                            ]
+                        },
+                        "is_urgent": {
+                            "type": "noul",
+                            "instructions": "Does the message convey urgency or time-sensitivity?",
+                            "criteria": {
+                                "true": "Urgent or time-sensitive",
+                                "false": "No time pressure"
+                            }
+                        }
+                    }
+                }
+            },
+            "response": {
+                "status": 200,
+                "headers": {
+                    "content-type": [
+                        "application/json"
+                    ],
+                    "content-length": [
+                        "483"
+                    ],
+                    "inference-id": [
+                        "ee3ab02a7f810b66c1bc442a2689b01c"
+                    ],
+                    "x-ratelimit-remaining-minute": [
+                        "399"
+                    ],
+                    "x-ratelimit-limit-minute": [
+                        "400"
+                    ],
+                    "ratelimit-remaining": [
+                        "399"
+                    ],
+                    "ratelimit-limit": [
+                        "400"
+                    ],
+                    "ratelimit-reset": [
+                        "7"
+                    ],
+                    "vary": [
+                        "origin, access-control-request-method, access-control-request-headers"
+                    ],
+                    "access-control-allow-origin": [
+                        "*"
+                    ],
+                    "server": [
+                        "kong/3.9.4"
+                    ],
+                    "access-control-expose-headers": [
+                        "ratelimit-limit,ratelimit-remaining,ratelimit-reset,retry-after"
+                    ],
+                    "via": [
+                        "1.1 kong/3.9.4, 1.1 kong/3.9.4"
+                    ]
+                },
+                "body_format": "json",
+                "body": "{\"model\":\"clef-flash\",\"answers\":{\"department\":{\"type\":\"choice\",\"choice\":\"technical\",\"probabilities\":{\"billing\":0.2016,\"technical\":0.7851,\"sales\":0.0133},\"confidence\":0.7851},\"frustration\":{\"type\":\"score\",\"score\":1.2656,\"legend\":{\"0\":\"Calm, just stating facts\",\"1\":\"Frustrated but civil\",\"2\":\"Very angry, strong language\"},\"probabilities\":{\"0\":0.1055,\"1\":0.5234,\"2\":0.3711},\"confidence\":0.5234},\"is_urgent\":{\"type\":\"noul\",\"noul\":0.977}},\"usage\":{\"input_tokens\":354,\"output_tokens\":0}}"
+            }
+        }
+    ]
+}
