@@ -64,6 +64,13 @@ To get more insights into what is happening at runtime, e.g. HTTP and tool calls
 php openai/toolcall-stream.php -vvv
 ```
 
+#### GigaChat 4 via AI Studio
+
+To try GigaChat 4 through GigaPlatform AI Studio, create an API key in AI Studio and
+copy the model ID from its model list. Set `GIGACHAT_AI_STUDIO_API_KEY` and
+`GIGACHAT_AI_STUDIO_MODEL` in `.env.local`, then run `php gigachat/chat.php` from
+this directory. The example uses the Generic bridge with the AI Studio endpoint.
+
 ### Running examples via the example runner
 
 You can also run the examples via the example runner, which takes care of running the examples parallel in
