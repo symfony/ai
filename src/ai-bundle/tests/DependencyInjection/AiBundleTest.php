@@ -10960,6 +10960,27 @@ class AiBundleTest extends TestCase
         $this->assertNull($definition->getArgument(3));
     }
 
+    #[TestWith(['ovh'])]
+    #[TestWith(['scaleway'])]
+    public function testPlatformWithCustomHttpClient(string $platform)
+    {
+        $container = $this->buildContainer([
+            'ai' => [
+                'platform' => [
+                    $platform => [
+                        'api_key' => 'test-key',
+                        'http_client' => 'my.scoped_http_client',
+                    ],
+                ],
+            ],
+        ]);
+
+        $definition = $container->getDefinition('ai.platform.'.$platform);
+
+        $this->assertInstanceOf(Reference::class, $definition->getArgument(1));
+        $this->assertSame('my.scoped_http_client', (string) $definition->getArgument(1));
+    }
+
     public function testGenericPlatformConfiguration()
     {
         $container = $this->buildContainer([

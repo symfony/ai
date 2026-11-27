@@ -1461,7 +1461,7 @@ final class AiBundle extends AbstractBundle
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
                     $platform['api_key'],
-                    new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.scaleway')),
                     null,
                     new Reference('event_dispatcher'),
@@ -1535,7 +1535,7 @@ final class AiBundle extends AbstractBundle
                 ->addTag('proxy', ['interface' => PlatformInterface::class])
                 ->setArguments([
                     $platform['api_key'],
-                    new Reference('http_client', ContainerInterface::NULL_ON_INVALID_REFERENCE),
+                    new Reference($platform['http_client'], ContainerInterface::NULL_ON_INVALID_REFERENCE),
                     $this->createModelCatalog($platformId, $platform['model_catalog'], new Reference('ai.platform.model_catalog.ovh')),
                     null,
                     new Reference('event_dispatcher'),
