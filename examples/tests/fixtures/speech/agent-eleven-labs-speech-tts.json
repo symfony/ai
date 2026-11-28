@@ -133,9 +133,9 @@
         {
             "request": {
                 "method": "POST",
-                "url": "https://api.elevenlabs.io/v1/text-to-speech/pqHfZKP75CvOlQylNhV4",
-                "signature": "f6cf0249184394c6d6d4db3a552b8cf7",
-                "signature_v2": "dc7ce86c9859096fe2aff8d263999bce",
+                "url": "https://api.elevenlabs.io/v1/text-to-speech/FrS6cKLB1wg4WYgPa9GW",
+                "signature": "54d9f7bb83ba1137c2db83171cec79ec",
+                "signature_v2": "da4fc55148cbadc6134a43804b259a59",
                 "headers": {
                     "xi-api-key": [
                         "[redacted]"

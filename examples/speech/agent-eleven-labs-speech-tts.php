@@ -30,7 +30,7 @@ $elevenLabsPlatform = ElevenLabsFactory::createPlatform(
 $speechAgent = new SpeechAgent($agent, new SpeechConfiguration(
     ttsModel: 'eleven_multilingual_v2',
     ttsOptions: [
-        'voice' => 'pqHfZKP75CvOlQylNhV4', // Bill
+        'voice' => 'FrS6cKLB1wg4WYgPa9GW', // Wyatt - Seasoned Mentor
     ],
 ), textToSpeechPlatform: $elevenLabsPlatform);
 

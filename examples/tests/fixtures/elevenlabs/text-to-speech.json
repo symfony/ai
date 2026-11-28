@@ -59,9 +59,9 @@
         {
             "request": {
                 "method": "POST",
-                "url": "https://api.elevenlabs.io/v1/text-to-speech/pqHfZKP75CvOlQylNhV4",
-                "signature": "75fd2621db7b32abaf1442f33dd87607",
-                "signature_v2": "0f3b751f33fb36bcd6ace14e54c39db8",
+                "url": "https://api.elevenlabs.io/v1/text-to-speech/FrS6cKLB1wg4WYgPa9GW",
+                "signature": "3298e0ab6f9b45246373c17595b0e225",
+                "signature_v2": "8a25a8c08af099a3ae1efc2ec6b5dca0",
                 "headers": {
                     "xi-api-key": [
                         "[redacted]"
