@@ -180,6 +180,32 @@ final class HttpStatusErrorHandlingTraitTest extends TestCase
         $this->subject()->throwOnHttpError($response);
     }
 
+    /**
+     * @param array<string, mixed> $body
+     */
+    #[DataProvider('badRequestErrorFields')]
+    public function testKeepsTheProviderErrorCodeAndTypeOnBadRequest(array $body, ?string $code, ?string $type)
+    {
+        try {
+            $this->subject()->throwOnHttpError($this->response(json_encode($body), 400));
+            $this->fail('Expected BadRequestException.');
+        } catch (BadRequestException $e) {
+            $this->assertSame($code, $e->getErrorCode());
+            $this->assertSame($type, $e->getErrorType());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{array<string, mixed>, ?string, ?string}>
+     */
+    public static function badRequestErrorFields(): iterable
+    {
+        yield 'nested, Groq tool_use_failed' => [['error' => ['message' => 'Parsing failed.', 'type' => 'invalid_request_error', 'code' => 'tool_use_failed']], 'tool_use_failed', 'invalid_request_error'];
+        yield 'flat' => [['message' => 'Bad input', 'type' => 'invalid_request_error', 'code' => 'bad_input'], 'bad_input', 'invalid_request_error'];
+        yield 'numeric code' => [['error' => ['message' => 'Bad input', 'code' => 400]], null, null];
+        yield 'none' => [['error' => ['message' => 'Bad input']], null, null];
+    }
+
     public function testThrowsModelNotFoundExceptionOn404WithNestedErrorMessage()
     {
         $response = $this->response(json_encode([

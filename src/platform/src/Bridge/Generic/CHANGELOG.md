@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+1.0
+---
+
+ * Pass the error `code` and `type` of a 400 response to `BadRequestException`
+
 0.14
 ----
 
