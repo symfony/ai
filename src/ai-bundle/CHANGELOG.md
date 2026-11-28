@@ -5,6 +5,7 @@ CHANGELOG
 ---
 
  * Autoconfigure services with the `#[AsTool]` attribute on public methods
+ * Register the Gemini job client as `ai.platform.job_client.gemini`, tagged and autowired by argument name, so a stored batch handle can be resolved from a worker
  * Register `ModelOverrideInputProcessor` for every agent, so the `model` option of `AgentInterface::call()` selects the model of that call
  * Add the `base_url` option to the `mistral` platform
  * Reuse parameter constraints from MCP SDK `#[Schema]` attributes for agent tools when the SDK is installed, with Symfony schema attributes taking precedence

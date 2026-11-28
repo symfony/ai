@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Gemini\Tests\Gemini;
 use PHPUnit\Framework\TestCase;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini;
 use Symfony\AI\Platform\Bridge\Gemini\Gemini\ModelClient;
+use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\JsonMockResponse;
 
@@ -139,5 +140,66 @@ final class ModelClientTest extends TestCase
 
         $client = new ModelClient($httpClient, 'test-api-key');
         $client->request(new Gemini('gemini-1.5-flash'), ['contents' => [['parts' => [['text' => "tool output \xB1 here"]]]]]);
+    }
+
+    public function testItSubmitsABatchOfInputsInsteadOfOneRequest()
+    {
+        $httpClient = new MockHttpClient(function (string $method, string $url, array $options): JsonMockResponse {
+            $this->assertSame('POST', $method);
+            $this->assertSame('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:batchGenerateContent', $url);
+
+            $body = json_decode($options['body'], true);
+            $requests = $body['batch']['inputConfig']['requests']['requests'];
+
+            $this->assertCount(2, $requests);
+            $this->assertSame('first', $requests[0]['metadata']['key']);
+            $this->assertSame([['parts' => [['text' => 'France?']]]], $requests[0]['request']['contents']);
+            $this->assertSame(['maxOutputTokens' => 50], $requests[0]['request']['generationConfig']);
+            $this->assertSame('second', $requests[1]['metadata']['key']);
+            $this->assertStringNotContainsString('"batch":true', $options['body']);
+
+            return new JsonMockResponse(['name' => 'batches/123']);
+        });
+
+        $result = (new ModelClient($httpClient, 'test-api-key'))->request(new Gemini('gemini-2.5-flash'), [
+            'first' => ['contents' => [['parts' => [['text' => 'France?']]]]],
+            'second' => ['contents' => [['parts' => [['text' => 'Germany?']]]]],
+        ], ['batch' => true, 'maxOutputTokens' => 50]);
+
+        $this->assertSame('batches/123', $result->getData()['name']);
+    }
+
+    public function testItRefusesToStreamABatch()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('A batch is answered hours later, so it cannot be streamed.');
+
+        (new ModelClient(new MockHttpClient(), 'test-api-key'))->request(new Gemini('gemini-2.5-flash'), ['first' => ['contents' => []]], ['batch' => true, 'stream' => true]);
+    }
+
+    public function testItRefusesASingleInputAsABatch()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('expects an array of inputs, keyed by the identifier');
+
+        (new ModelClient(new MockHttpClient(), 'test-api-key'))->request(new Gemini('gemini-2.5-flash'), ['contents' => [['parts' => [['text' => 'Hi']]]]], ['batch' => true]);
+    }
+
+    public function testItRefusesABatchTooBigToSendInline()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Split them into several batches.');
+
+        (new ModelClient(new MockHttpClient(), 'test-api-key'))->request(new Gemini('gemini-2.5-flash'), [
+            'first' => ['contents' => [['parts' => [['text' => str_repeat('a', 20_000_001)]]]]],
+        ], ['batch' => true]);
+    }
+
+    public function testItRefusesAnInputThatIsNotARequest()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The input "first" of the batch did not normalize into a request');
+
+        (new ModelClient(new MockHttpClient(), 'test-api-key'))->request(new Gemini('gemini-2.5-flash'), ['first' => 'Hi'], ['batch' => true]);
     }
 }
