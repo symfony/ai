@@ -51,7 +51,18 @@ try {
     $containerFactory = new ContainerFactory($root);
     $container = $containerFactory->create();
     $application = App::build($container, $commandName);
-} catch (ContainerCompilationException|PhpVersionMismatchException $e) {
+} catch (Throwable $e) {
+    // "composer install" and "composer update" must not fail because discovery cannot boot.
+    if ('discover' === $commandName && in_array('--composer', $_SERVER['argv'] ?? [], true)) {
+        fwrite(\STDERR, 'AI Mate: Extension discovery failed: '.$e->getMessage().\PHP_EOL);
+
+        exit(0);
+    }
+
+    if (!$e instanceof ContainerCompilationException && !$e instanceof PhpVersionMismatchException) {
+        throw $e;
+    }
+
     // Thrown before the console exists, so report it here rather than as a stack trace.
     fwrite(\STDERR, \PHP_EOL.' [ERROR] '.$e->getMessage().\PHP_EOL.\PHP_EOL);
 

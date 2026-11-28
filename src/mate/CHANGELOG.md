@@ -4,6 +4,8 @@ CHANGELOG
 1.0
 ---
 
+ * Add `discover --ignore-missing-file` for Composer scripts: without `mate/extensions.php` it exits successfully without doing any work
+ * Change `discover --composer` to report a failure as a warning and exit successfully, so it no longer fails `composer install` and `composer update`
  * Change `init` and `discover` to stop creating a `CLAUDE.md`, since Claude Code falls back to `AGENTS.md` without one; an existing `CLAUDE.md` or `.claude/CLAUDE.md` still gets the managed `@AGENTS.md` import
 
 0.14

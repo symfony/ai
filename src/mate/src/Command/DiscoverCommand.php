@@ -72,6 +72,22 @@ class DiscoverCommand extends Command
             return Command::SUCCESS;
         }
 
+        if (!$composerMode) {
+            return $this->discover($io, false);
+        }
+
+        // A broken discovery must not fail the surrounding "composer install" or "composer update".
+        try {
+            return $this->discover($io, true);
+        } catch (\Throwable $e) {
+            $io->getErrorStyle()->writeln('<comment>AI Mate:</comment> Extension discovery failed: '.$e->getMessage());
+
+            return Command::SUCCESS;
+        }
+    }
+
+    private function discover(SymfonyStyle $io, bool $composerMode): int
+    {
         $extensions = $this->extensionDiscovery->discover();
         $rootProjectExtension = $this->extensionDiscovery->discoverRootProject();
 
