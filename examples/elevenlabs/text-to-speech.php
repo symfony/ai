@@ -17,7 +17,7 @@ require_once dirname(__DIR__).'/bootstrap.php';
 $platform = Factory::createPlatform(apiKey: env('ELEVEN_LABS_API_KEY'), httpClient: http_client());
 
 $result = $platform->invoke('eleven_multilingual_v2', new Text('Hello world'), [
-    'voice' => 'pqHfZKP75CvOlQylNhV4', // Bill
+    'voice' => 'FrS6cKLB1wg4WYgPa9GW', // Wyatt - Seasoned Mentor
 ]);
 
 echo $result->asBinary();
