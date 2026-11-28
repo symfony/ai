@@ -66,7 +66,9 @@ class ResultConverter implements ResultConverterInterface
                 throw new ExceedContextSizeException($errorMessage);
             }
 
-            throw new BadRequestException($errorMessage);
+            $errorType = $error['error']['type'] ?? $error['type'] ?? null;
+
+            throw new BadRequestException($errorMessage, \is_string($errorCode) ? $errorCode : null, \is_string($errorType) ? $errorType : null);
         }
 
         if (429 === $response->getStatusCode()) {

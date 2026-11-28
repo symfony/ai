@@ -51,7 +51,7 @@ trait HttpStatusErrorHandlingTrait
         }
 
         if (400 === $status || 422 === $status) {
-            throw new BadRequestException($this->buildHttpErrorMessage($response));
+            throw new BadRequestException($this->buildHttpErrorMessage($response), $this->extractErrorField($response, 'code'), $this->extractErrorField($response, 'type'));
         }
 
         if (404 === $status) {
@@ -118,6 +118,22 @@ trait HttpStatusErrorHandlingTrait
         }
 
         return $this->extractDetail($data['detail'] ?? $data['message']['detail'] ?? null);
+    }
+
+    /**
+     * Reads a string field of the error, nested under "error" (OpenAI, Groq) or at the top level.
+     */
+    private function extractErrorField(ResponseInterface $response, string $field): ?string
+    {
+        try {
+            $data = $response->toArray(false);
+        } catch (DecodingExceptionInterface) {
+            return null;
+        }
+
+        $value = $data['error'][$field] ?? $data[$field] ?? null;
+
+        return \is_string($value) ? $value : null;
     }
 
     private function extractDetail(mixed $detail): ?string

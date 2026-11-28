@@ -543,6 +543,28 @@ class ResultConverterTest extends TestCase
         $converter->convert(new RawHttpResult($httpResponse));
     }
 
+    public function testKeepsTheProviderErrorCodeAndTypeOnBadRequest()
+    {
+        $converter = new ResultConverter();
+        $httpResponse = $this->createMock(ResponseInterface::class);
+        $httpResponse->method('getStatusCode')->willReturn(400);
+        $httpResponse->method('getContent')->willReturn(json_encode([
+            'error' => [
+                'message' => 'Parsing failed. The model generated output that could not be parsed.',
+                'type' => 'invalid_request_error',
+                'code' => 'tool_use_failed',
+            ],
+        ]));
+
+        try {
+            $converter->convert(new RawHttpResult($httpResponse));
+            $this->fail('Expected BadRequestException.');
+        } catch (BadRequestException $e) {
+            $this->assertSame('tool_use_failed', $e->getErrorCode());
+            $this->assertSame('invalid_request_error', $e->getErrorType());
+        }
+    }
+
     public function testThrowsBadRequestExceptionOnBadRequestResponseWithNoResponseBody()
     {
         $converter = new ResultConverter();

@@ -215,6 +215,9 @@ Symfony\AI\Platform\Event\ResultEvent::setModel(): public function setModel(Symf
 Symfony\AI\Platform\Event\ResultEvent::setOptions(): public function setOptions(array $options): void
 Symfony\AI\Platform\Exception\AuthenticationException: class extends Symfony\AI\Platform\Exception\RuntimeException
 Symfony\AI\Platform\Exception\BadRequestException: class extends Symfony\AI\Platform\Exception\RuntimeException
+Symfony\AI\Platform\Exception\BadRequestException::__construct(): public function __construct(string $message = '', null|string $errorCode = null, null|string $errorType = null, Throwable|null $previous = null)
+Symfony\AI\Platform\Exception\BadRequestException::getErrorCode(): public function getErrorCode(): null|string
+Symfony\AI\Platform\Exception\BadRequestException::getErrorType(): public function getErrorType(): null|string
 Symfony\AI\Platform\Exception\ContentFilterException: class extends Symfony\AI\Platform\Exception\InvalidArgumentException
 Symfony\AI\Platform\Exception\ExceedContextSizeException: class extends Symfony\AI\Platform\Exception\InvalidArgumentException implements Symfony\AI\Platform\Exception\ExceptionInterface
 Symfony\AI\Platform\Exception\ExceptionInterface: interface extends Throwable
